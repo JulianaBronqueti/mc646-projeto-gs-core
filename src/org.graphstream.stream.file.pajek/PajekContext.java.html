@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>PajekContext.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.pajek</a> &gt; <span class="el_source">PajekContext.java</span></div><h1>PajekContext.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-23
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.pajek;
+
+import java.util.ArrayList;
+import java.util.Locale;
+
+import org.graphstream.graph.implementations.AbstractElement.AttributeChangeEvent;
+import org.graphstream.stream.SourceBase.ElementType;
+import org.graphstream.stream.file.FileSourcePajek;
+import org.graphstream.util.parser.ParseException;
+import org.graphstream.util.parser.Token;
+
+public class PajekContext {
+	FileSourcePajek pajek;
+	String sourceId;
+
+<span class="nc" id="L47">	protected boolean directed = false;</span>
+
+<span class="nc" id="L49">	protected String weightAttributeName = &quot;weight&quot;;</span>
+
+<span class="nc" id="L51">	public PajekContext(FileSourcePajek pajek) {</span>
+<span class="nc" id="L52">		this.pajek = pajek;</span>
+<span class="nc" id="L53">		this.sourceId = String.format(&quot;&lt;Pajek stream %d&gt;&quot;, System.currentTimeMillis());</span>
+<span class="nc" id="L54">	}</span>
+
+	protected void setDirected(boolean on) {
+<span class="nc" id="L57">		directed = on;</span>
+<span class="nc" id="L58">	}</span>
+
+	protected int addNodes(Token nb) throws ParseException {
+<span class="nc" id="L61">		int n = getInt(nb);</span>
+
+<span class="nc bnc" id="L63" title="All 2 branches missed.">		for (int i = 1; i &lt;= n; ++i) {</span>
+<span class="nc" id="L64">			pajek.sendNodeAdded(sourceId, String.format(&quot;%d&quot;, i));</span>
+		}
+
+<span class="nc" id="L67">		return n;</span>
+	}
+
+	protected void addGraphAttribute(String attr, String value) {
+<span class="nc" id="L71">		pajek.sendAttributeChangedEvent(sourceId, sourceId, ElementType.GRAPH, attr, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L72">				value);</span>
+<span class="nc" id="L73">	}</span>
+
+	protected void addNodeLabel(String nb, String label) {
+<span class="nc" id="L76">		pajek.sendAttributeChangedEvent(sourceId, nb, ElementType.NODE, &quot;ui.label&quot;, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L77">				label);</span>
+<span class="nc" id="L78">	}</span>
+
+	protected void addNodeGraphics(String id, NodeGraphics graphics) {
+<span class="nc" id="L81">		pajek.sendAttributeChangedEvent(sourceId, id, ElementType.NODE, &quot;ui.style&quot;, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L82">				graphics.getStyle());</span>
+<span class="nc" id="L83">	}</span>
+
+	protected void addNodePosition(String id, Token x, Token y, Token z) throws ParseException {
+<span class="nc" id="L86">		Object pos[] = new Object[3];</span>
+<span class="nc" id="L87">		pos[0] = (Double) getReal(x);</span>
+<span class="nc" id="L88">		pos[1] = (Double) getReal(y);</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">		pos[2] = z != null ? (Double) getReal(z) : 0;</span>
+
+<span class="nc" id="L91">		pajek.sendAttributeChangedEvent(sourceId, id, ElementType.NODE, &quot;xyz&quot;, AttributeChangeEvent.ADD, null, pos);</span>
+<span class="nc" id="L92">	}</span>
+
+	protected String addEdge(String src, String trg) {
+<span class="nc" id="L95">		String id = String.format(&quot;%s_%s_%d&quot;, src, trg, (long) (Math.random() * 100000) + System.currentTimeMillis());</span>
+
+<span class="nc" id="L97">		pajek.sendEdgeAdded(sourceId, id, src, trg, directed);</span>
+
+<span class="nc" id="L99">		return id;</span>
+	}
+
+	protected void addEdges(EdgeMatrix mat) {
+<span class="nc" id="L103">		int size = mat.size();</span>
+<span class="nc" id="L104">		int edgeid = 0;</span>
+
+<span class="nc bnc" id="L106" title="All 2 branches missed.">		for (int line = 0; line &lt; size; line++) {</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">			for (int col = 0; col &lt; size; col++) {</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">				if (mat.hasEdge(line, col)) {</span>
+<span class="nc" id="L109">					String id = String.format(&quot;%d_%d_%d&quot;, line + 1, col + 1, edgeid++);</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">					if (mat.hasEdge(col, line)) {</span>
+<span class="nc" id="L111">						pajek.sendEdgeAdded(sourceId, id, String.format(&quot;%d&quot;, line + 1), String.format(&quot;%d&quot;, col + 1),</span>
+<span class="nc" id="L112">								false);</span>
+<span class="nc" id="L113">						mat.set(col, line, false);</span>
+<span class="nc" id="L114">					} else {</span>
+<span class="nc" id="L115">						pajek.sendEdgeAdded(sourceId, id, String.format(&quot;%d&quot;, line + 1), String.format(&quot;%d&quot;, col + 1),</span>
+<span class="nc" id="L116">								true);</span>
+					}
+				}
+			}
+		}
+<span class="nc" id="L121">	}</span>
+
+	protected void addEdgeWeight(String id, Token nb) throws ParseException {
+<span class="nc" id="L124">		pajek.sendAttributeChangedEvent(sourceId, id, ElementType.EDGE, weightAttributeName, AttributeChangeEvent.ADD,</span>
+<span class="nc" id="L125">				null, getReal(nb));</span>
+<span class="nc" id="L126">	}</span>
+
+	protected void addEdgeGraphics(String id, EdgeGraphics graphics) {
+<span class="nc" id="L129">		pajek.sendAttributeChangedEvent(sourceId, id, ElementType.EDGE, &quot;ui.style&quot;, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L130">				graphics.getStyle());</span>
+<span class="nc" id="L131">	}</span>
+
+	protected static int getInt(Token nb) throws ParseException {
+		try {
+<span class="nc" id="L135">			return Integer.parseInt(nb.image);</span>
+<span class="nc" id="L136">		} catch (Exception e) {</span>
+<span class="nc" id="L137">			throw new ParseException(String.format(&quot;%d:%d: %s not an integer&quot;, nb.beginLine, nb.beginColumn, nb.image));</span>
+		}
+	}
+
+	protected static double getReal(Token nb) throws ParseException {
+		try {
+<span class="nc" id="L143">			return Double.parseDouble(nb.image);</span>
+<span class="nc" id="L144">		} catch (Exception e) {</span>
+<span class="nc" id="L145">			throw new ParseException(String.format(&quot;%d:%d: %s not a real&quot;, nb.beginLine, nb.beginColumn, nb.image));</span>
+		}
+	}
+
+	public static String toColorValue(Token R, Token G, Token B) throws ParseException {
+<span class="nc" id="L150">		double r = getReal(R);</span>
+<span class="nc" id="L151">		double g = getReal(G);</span>
+<span class="nc" id="L152">		double b = getReal(B);</span>
+
+<span class="nc" id="L154">		return String.format(&quot;rgb(%d, %d, %d)&quot;, (int) (r * 255), (int) (g * 255), (int) (b * 255));</span>
+	}
+}
+
+<span class="nc" id="L158">abstract class Graphics {</span>
+<span class="nc" id="L159">	protected StringBuffer graphics = new StringBuffer();</span>
+
+	public abstract void addKey(String key, String value, Token tk) throws ParseException;
+
+	public String getStyle() {
+<span class="nc" id="L164">		return graphics.toString();</span>
+	}
+
+	protected double getReal(String nb, Token tk) throws ParseException {
+		try {
+<span class="nc" id="L169">			return Double.parseDouble(nb);</span>
+<span class="nc" id="L170">		} catch (Exception e) {</span>
+<span class="nc" id="L171">			throw new ParseException(String.format(&quot;%d:%d: %s not a real&quot;, tk.beginLine, tk.beginColumn, nb));</span>
+		}
+	}
+
+	protected int getInt(String nb, Token tk) throws ParseException {
+		try {
+<span class="nc" id="L177">			return Integer.parseInt(nb);</span>
+<span class="nc" id="L178">		} catch (Exception e) {</span>
+<span class="nc" id="L179">			throw new ParseException(String.format(&quot;%d:%d: %s not an integer&quot;, tk.beginLine, tk.beginColumn, nb));</span>
+		}
+	}
+}
+
+<span class="nc" id="L184">class NodeGraphics extends Graphics {</span>
+	@Override
+	public void addKey(String key, String value, Token tk) throws ParseException {
+<span class="nc bnc" id="L187" title="All 2 branches missed.">		if (key.equals(&quot;shape&quot;)) {</span>
+<span class="nc" id="L188">			graphics.append(String.format(&quot;shape: %s;&quot;, value));</span>
+<span class="nc bnc" id="L189" title="All 2 branches missed.">		} else if (key.equals(&quot;ic&quot;)) {</span>
+<span class="nc" id="L190">			graphics.append(String.format(&quot;fill-color: %s;&quot;, value));</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">		} else if (key.equals(&quot;bc&quot;)) {</span>
+<span class="nc" id="L192">			graphics.append(String.format(&quot;stroke-color: %s; stroke-mode: plain;&quot;, value));</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">		} else if (key.equals(&quot;bw&quot;)) {</span>
+<span class="nc" id="L194">			graphics.append(String.format(Locale.US, &quot;stroke-width: %fpx;&quot;, getReal(value, tk)));</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">		} else if (key.equals(&quot;s_size&quot;)) {</span>
+<span class="nc" id="L196">			graphics.append(String.format(Locale.US, &quot;size: %fpx;&quot;, getReal(value, tk)));</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">		} else if (key.equals(&quot;lc&quot;)) {</span>
+<span class="nc" id="L198">			graphics.append(String.format(&quot;text-color: %s;&quot;, value));</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">		} else if (key.equals(&quot;fos&quot;)) {</span>
+<span class="nc" id="L200">			graphics.append(String.format(&quot;text-size: %d;&quot;, getInt(value, tk)));</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">		} else if (key.equals(&quot;font&quot;)) {</span>
+<span class="nc" id="L202">			graphics.append(String.format(&quot;text-font: %s;&quot;, value));</span>
+		}
+<span class="nc" id="L204">	}</span>
+}
+
+<span class="nc" id="L207">class EdgeGraphics extends Graphics {</span>
+	@Override
+	public void addKey(String key, String value, Token tk) throws ParseException {
+<span class="nc bnc" id="L210" title="All 2 branches missed.">		if (key.equals(&quot;w&quot;)) {</span>
+<span class="nc" id="L211">			graphics.append(String.format(Locale.US, &quot;size: %fpx;&quot;, getReal(value, tk)));</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">		} else if (key.equals(&quot;c&quot;)) {</span>
+<span class="nc" id="L213">			graphics.append(String.format(&quot;fill-color: %s;&quot;, value));</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">		} else if (key.equals(&quot;s&quot;)) {</span>
+<span class="nc" id="L215">			double s = getReal(value, tk);</span>
+<span class="nc" id="L216">			graphics.append(String.format(&quot;arrow-size: %spx, %spx;&quot;, s * 5, s * 3));</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">		} else if (key.equals(&quot;l&quot;)) {</span>
+			// ?
+<span class="nc bnc" id="L219" title="All 2 branches missed.">		} else if (key.equals(&quot;p&quot;)) {</span>
+			// ?
+<span class="nc bnc" id="L221" title="All 2 branches missed.">		} else if (key.equals(&quot;lc&quot;)) {</span>
+<span class="nc" id="L222">			graphics.append(String.format(&quot;text-color: %s;&quot;, value));</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">		} else if (key.equals(&quot;fos&quot;)) {</span>
+<span class="nc" id="L224">			graphics.append(String.format(&quot;text-size: %d;&quot;, getInt(value, tk)));</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">		} else if (key.equals(&quot;font&quot;)) {</span>
+<span class="nc" id="L226">			graphics.append(String.format(&quot;text-font: %s;&quot;, value));</span>
+		}
+<span class="nc" id="L228">	}</span>
+}
+
+class EdgeMatrix {
+	// Line first, col second.
+	// Line = from node, col = to node.
+	protected boolean mat[][];
+
+<span class="nc" id="L236">	protected int curLine = 0;</span>
+
+<span class="nc" id="L238">	public EdgeMatrix(int size) {</span>
+<span class="nc" id="L239">		mat = new boolean[size][size]; // Horror !</span>
+<span class="nc" id="L240">	}</span>
+
+	public int size() {
+<span class="nc" id="L243">		return mat.length;</span>
+	}
+
+	public boolean hasEdge(int line, int col) {
+<span class="nc" id="L247">		return mat[line][col];</span>
+	}
+
+	public void set(int line, int col, boolean value) {
+<span class="nc" id="L251">		mat[line][col] = value;</span>
+<span class="nc" id="L252">	}</span>
+
+	public void addLine(ArrayList&lt;String&gt; line) {
+<span class="nc bnc" id="L255" title="All 2 branches missed.">		if (curLine &lt; mat.length) {</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">			if (line.size() == mat.length) {</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">				for (int i = 0; i &lt; mat.length; i++) {</span>
+<span class="nc" id="L258">					mat[curLine][i] = line.get(i).equals(&quot;1&quot;);</span>
+				}
+<span class="nc" id="L260">				curLine++;</span>
+<span class="nc bnc" id="L261" title="All 2 branches missed.">			} else if (line.size() == mat.length * mat.length) {</span>
+<span class="nc" id="L262">				int n = mat.length * mat.length;</span>
+<span class="nc" id="L263">				curLine = -1;</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">				for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">					if (i % mat.length == 0)</span>
+<span class="nc" id="L266">						curLine++;</span>
+<span class="nc" id="L267">					mat[curLine][i - (curLine * mat.length)] = line.get(i).equals(&quot;1&quot;);</span>
+				}
+			}
+		}
+<span class="nc" id="L271">	}</span>
+
+	@Override
+	public String toString() {
+<span class="nc" id="L275">		StringBuffer buffer = new StringBuffer();</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		for (int line = 0; line &lt; mat.length; line++) {</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">			for (int col = 0; col &lt; mat.length; col++) {</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">				buffer.append(String.format(&quot;%s &quot;, mat[line][col] ? &quot;1&quot; : &quot;0&quot;));</span>
+			}
+<span class="nc" id="L280">			buffer.append(String.format(&quot;%n&quot;));</span>
+		}
+
+<span class="nc" id="L283">		return buffer.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

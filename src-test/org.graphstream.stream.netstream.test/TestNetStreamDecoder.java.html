@@ -1,0 +1,300 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestNetStreamDecoder.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.netstream.test</a> &gt; <span class="el_source">TestNetStreamDecoder.java</span></div><h1>TestNetStreamDecoder.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2016-02-01
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.netstream.test;
+
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.binary.ByteEncoder;
+import org.graphstream.stream.netstream.NetStreamDecoder;
+import org.graphstream.stream.netstream.NetStreamEncoder;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+
+/**
+ * @since 01/02/16.
+ */
+<span class="nc" id="L46">public class TestNetStreamDecoder {</span>
+
+	@Test
+	public void testEventNodeAdded() {
+<span class="nc" id="L50">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L51">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L52">		final String nodeId = &quot;node-test&quot;;</span>
+<span class="nc" id="L53">		final long timeId = 123;</span>
+
+<span class="nc" id="L55">		final NetStreamDecoder dec = new NetStreamDecoder();</span>
+
+<span class="nc" id="L57">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L60">				dec.decode(buffer);</span>
+<span class="nc" id="L61">			}</span>
+		});
+
+<span class="nc" id="L64">		FailSink sink = new FailSink() {</span>
+			public void nodeAdded(String sourceIdDec, long timeIdDec, String nodeIdDec) {
+<span class="nc" id="L66">				triggered = true;</span>
+
+<span class="nc" id="L68">				Assert.assertEquals(sourceId, sourceIdDec);</span>
+<span class="nc" id="L69">				Assert.assertEquals(timeId, timeIdDec);</span>
+<span class="nc" id="L70">				Assert.assertEquals(nodeId, nodeIdDec);</span>
+<span class="nc" id="L71">			}</span>
+		};
+
+<span class="nc" id="L74">		dec.addSink(sink);</span>
+
+<span class="nc" id="L76">		enc.nodeAdded(sourceId, timeId, nodeId);</span>
+
+<span class="nc" id="L78">		Assert.assertTrue(sink.triggered);</span>
+<span class="nc" id="L79">	}</span>
+
+	@Test
+	public void testEventNodeRemoved() {
+<span class="nc" id="L83">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L84">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L85">		final String nodeId = &quot;node-test&quot;;</span>
+<span class="nc" id="L86">		final long timeId = 123;</span>
+
+<span class="nc" id="L88">		final NetStreamDecoder dec = new NetStreamDecoder();</span>
+
+<span class="nc" id="L90">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L93">				dec.decode(buffer);</span>
+<span class="nc" id="L94">			}</span>
+		});
+
+<span class="nc" id="L97">		FailSink sink = new FailSink() {</span>
+			public void nodeRemoved(String sourceIdDec, long timeIdDec, String nodeIdDec) {
+<span class="nc" id="L99">				triggered = true;</span>
+
+<span class="nc" id="L101">				Assert.assertEquals(sourceId, sourceIdDec);</span>
+<span class="nc" id="L102">				Assert.assertEquals(timeId, timeIdDec);</span>
+<span class="nc" id="L103">				Assert.assertEquals(nodeId, nodeIdDec);</span>
+<span class="nc" id="L104">			}</span>
+		};
+
+<span class="nc" id="L107">		dec.addSink(sink);</span>
+
+<span class="nc" id="L109">		enc.nodeRemoved(sourceId, timeId, nodeId);</span>
+
+<span class="nc" id="L111">		Assert.assertTrue(sink.triggered);</span>
+<span class="nc" id="L112">	}</span>
+
+	@Test
+	public void testEventEdgeAdded() {
+<span class="nc" id="L116">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L117">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L118">		final String edgeId = &quot;edge-test&quot;;</span>
+<span class="nc" id="L119">		final String nodeA = &quot;node-a&quot;;</span>
+<span class="nc" id="L120">		final String nodeB = &quot;node-b&quot;;</span>
+<span class="nc" id="L121">		final long timeId = 123;</span>
+
+<span class="nc" id="L123">		final NetStreamDecoder dec = new NetStreamDecoder();</span>
+
+<span class="nc" id="L125">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L128">				dec.decode(buffer);</span>
+<span class="nc" id="L129">			}</span>
+		});
+
+<span class="nc" id="L132">		FailSink sink = new FailSink() {</span>
+			public void edgeAdded(String sourceIdDec, long timeIdDec, String edgeIdDec, String fromNodeId,
+					String toNodeId, boolean directed) {
+<span class="nc" id="L135">				triggered = true;</span>
+
+<span class="nc" id="L137">				Assert.assertEquals(sourceId, sourceIdDec);</span>
+<span class="nc" id="L138">				Assert.assertEquals(timeId, timeIdDec);</span>
+<span class="nc" id="L139">				Assert.assertEquals(edgeId, edgeIdDec);</span>
+<span class="nc" id="L140">				Assert.assertEquals(nodeA, fromNodeId);</span>
+<span class="nc" id="L141">				Assert.assertEquals(nodeB, toNodeId);</span>
+<span class="nc" id="L142">				Assert.assertEquals(true, directed);</span>
+<span class="nc" id="L143">			}</span>
+		};
+
+<span class="nc" id="L146">		dec.addSink(sink);</span>
+
+<span class="nc" id="L148">		enc.edgeAdded(sourceId, timeId, edgeId, nodeA, nodeB, true);</span>
+
+<span class="nc" id="L150">		Assert.assertTrue(sink.triggered);</span>
+<span class="nc" id="L151">	}</span>
+
+	@Test
+	public void testEventEdgeRemoved() {
+<span class="nc" id="L155">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L156">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L157">		final String edgeId = &quot;edge-test&quot;;</span>
+<span class="nc" id="L158">		final long timeId = 123;</span>
+
+<span class="nc" id="L160">		final NetStreamDecoder dec = new NetStreamDecoder();</span>
+
+<span class="nc" id="L162">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L165">				dec.decode(buffer);</span>
+<span class="nc" id="L166">			}</span>
+		});
+
+<span class="nc" id="L169">		FailSink sink = new FailSink() {</span>
+			public void edgeRemoved(String sourceIdDec, long timeIdDec, String edgeIdDec) {
+<span class="nc" id="L171">				triggered = true;</span>
+
+<span class="nc" id="L173">				Assert.assertEquals(sourceId, sourceIdDec);</span>
+<span class="nc" id="L174">				Assert.assertEquals(timeId, timeIdDec);</span>
+<span class="nc" id="L175">				Assert.assertEquals(edgeId, edgeIdDec);</span>
+<span class="nc" id="L176">			}</span>
+		};
+
+<span class="nc" id="L179">		dec.addSink(sink);</span>
+
+<span class="nc" id="L181">		enc.edgeRemoved(sourceId, timeId, edgeId);</span>
+
+<span class="nc" id="L183">		Assert.assertTrue(sink.triggered);</span>
+<span class="nc" id="L184">	}</span>
+
+	@Test
+	public void testEventGraphCleared() {
+<span class="nc" id="L188">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L189">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L190">		final long timeId = 123;</span>
+
+<span class="nc" id="L192">		final NetStreamDecoder dec = new NetStreamDecoder();</span>
+
+<span class="nc" id="L194">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L197">				dec.decode(buffer);</span>
+<span class="nc" id="L198">			}</span>
+		});
+
+<span class="nc" id="L201">		FailSink sink = new FailSink() {</span>
+			public void graphCleared(String sourceIdDec, long timeIdDec) {
+<span class="nc" id="L203">				triggered = true;</span>
+
+<span class="nc" id="L205">				Assert.assertEquals(sourceId, sourceIdDec);</span>
+<span class="nc" id="L206">				Assert.assertEquals(timeId, timeIdDec);</span>
+<span class="nc" id="L207">			}</span>
+		};
+
+<span class="nc" id="L210">		dec.addSink(sink);</span>
+
+<span class="nc" id="L212">		enc.graphCleared(sourceId, timeId);</span>
+
+<span class="nc" id="L214">		Assert.assertTrue(sink.triggered);</span>
+<span class="nc" id="L215">	}</span>
+
+<span class="nc" id="L217">	class FailSink implements Sink {</span>
+<span class="nc" id="L218">		boolean triggered = false;</span>
+
+		@Override
+		public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L222">			Assert.fail();</span>
+<span class="nc" id="L223">		}</span>
+
+		@Override
+		public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L228">			Assert.fail();</span>
+<span class="nc" id="L229">		}</span>
+
+		@Override
+		public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L233">			Assert.fail();</span>
+<span class="nc" id="L234">		}</span>
+
+		@Override
+		public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L238">			Assert.fail();</span>
+<span class="nc" id="L239">		}</span>
+
+		@Override
+		public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L244">			Assert.fail();</span>
+<span class="nc" id="L245">		}</span>
+
+		@Override
+		public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L249">			Assert.fail();</span>
+<span class="nc" id="L250">		}</span>
+
+		@Override
+		public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L254">			Assert.fail();</span>
+<span class="nc" id="L255">		}</span>
+
+		@Override
+		public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L260">			Assert.fail();</span>
+<span class="nc" id="L261">		}</span>
+
+		@Override
+		public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L265">			Assert.fail();</span>
+<span class="nc" id="L266">		}</span>
+
+		@Override
+		public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L270">			Assert.fail();</span>
+<span class="nc" id="L271">		}</span>
+
+		@Override
+		public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L275">			Assert.fail();</span>
+<span class="nc" id="L276">		}</span>
+
+		@Override
+		public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+				boolean directed) {
+<span class="nc" id="L281">			Assert.fail();</span>
+<span class="nc" id="L282">		}</span>
+
+		@Override
+		public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L286">			Assert.fail();</span>
+<span class="nc" id="L287">		}</span>
+
+		@Override
+		public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L291">			Assert.fail();</span>
+<span class="nc" id="L292">		}</span>
+
+		@Override
+		public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L296">			Assert.fail();</span>
+<span class="nc" id="L297">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

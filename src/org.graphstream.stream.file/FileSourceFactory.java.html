@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSourceFactory.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSourceFactory.java</span></div><h1>FileSourceFactory.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-05-09
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.RandomAccessFile;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+/**
+ * File source factory.
+ * 
+ * &lt;p&gt;
+ * A graph reader factory allow to create readers according to a given file. It
+ * both tries to read the start of the file to infer its type (works well for
+ * file formats with a magic cookie or header), and if it fails it tries to look
+ * at the file name extension.
+ * &lt;/p&gt;
+ */
+<span class="nc" id="L57">public class FileSourceFactory {</span>
+	/**
+	 * Create a file input for the given file name.
+	 * 
+	 * &lt;p&gt;
+	 * This method first tests if the file is a regular file and is readable. If so,
+	 * it opens it and reads the magic cookie to test the known file formats that
+	 * can be inferred from their header. If it works, it returns a file input for
+	 * the format. Else it looks at the file name extension, and returns a file
+	 * input for the extension. Finally if all fail, it throws a NotFoundException.
+	 * &lt;/p&gt;
+	 * 
+	 * &lt;p&gt;
+	 * Notice that this method only creates the file input and does not connect it
+	 * to a graph.
+	 * &lt;/p&gt;
+	 * 
+	 * @param fileName
+	 *            Name of the graph file.
+	 * @return A graph reader suitable for the fileName graph format.
+	 * @throws IOException
+	 *             If the file is not readable or accessible.
+	 */
+	public static FileSource sourceFor(String fileName) throws IOException {
+<span class="nc" id="L81">		File file = new File(fileName);</span>
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">		if (!file.isFile())</span>
+<span class="nc" id="L84">			throw new IOException(&quot;not a regular file '&quot; + fileName + &quot;'&quot;);</span>
+
+<span class="nc bnc" id="L86" title="All 2 branches missed.">		if (!file.canRead())</span>
+<span class="nc" id="L87">			throw new IOException(&quot;not a readable file '&quot; + fileName + &quot;'&quot;);</span>
+
+		// Try to read the beginning of the file.
+
+<span class="nc" id="L91">		RandomAccessFile in = new RandomAccessFile(fileName, &quot;r&quot;);</span>
+
+<span class="nc" id="L93">		byte b[] = new byte[10];</span>
+<span class="nc" id="L94">		int n = in.read(b, 0, 10);</span>
+
+		// System.err.printf( &quot;[&quot; );
+		// for( int i=0; i&lt;n; ++i )
+		// {
+		// System.err.printf( &quot;%c&quot;, (char)b[i] );
+		// }
+		// System.err.printf( &quot;]%n&quot; );
+
+<span class="nc" id="L103">		in.close();</span>
+
+		// Surely match a DGS file, as DGS files are well done and have a
+		// signature.
+
+<span class="nc bnc" id="L108" title="All 8 branches missed.">		if (n &gt;= 3 &amp;&amp; b[0] == 'D' &amp;&amp; b[1] == 'G' &amp;&amp; b[2] == 'S') {</span>
+<span class="nc bnc" id="L109" title="All 6 branches missed.">			if (n &gt;= 6 &amp;&amp; b[3] == '0' &amp;&amp; b[4] == '0') {</span>
+<span class="nc bnc" id="L110" title="All 4 branches missed.">				if (b[5] == '1' || b[5] == '2') {</span>
+<span class="nc" id="L111">					return new FileSourceDGS1And2();</span>
+<span class="nc bnc" id="L112" title="All 4 branches missed.">				} else if (b[5] == '3' || b[5] == '4') {</span>
+<span class="nc" id="L113">					return new FileSourceDGS();</span>
+				}
+			}
+		}
+
+		// Maybe match a GML file as most GML files begin by the line &quot;graph [&quot;,
+		// but not sure, you may create a GML file that starts by a comment, an
+		// empty line, with any kind of spaces, etc.
+
+<span class="nc bnc" id="L122" title="All 14 branches missed.">		if (n &gt;= 7 &amp;&amp; b[0] == 'g' &amp;&amp; b[1] == 'r' &amp;&amp; b[2] == 'a' &amp;&amp; b[3] == 'p' &amp;&amp; b[4] == 'h' &amp;&amp; b[5] == ' '</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">				&amp;&amp; b[6] == '[') {</span>
+<span class="nc" id="L124">			return new org.graphstream.stream.file.FileSourceGML();</span>
+		}
+
+<span class="nc bnc" id="L127" title="All 10 branches missed.">		if (n &gt;= 4 &amp;&amp; b[0] == '(' &amp;&amp; b[1] == 't' &amp;&amp; b[2] == 'l' &amp;&amp; b[3] == 'p')</span>
+<span class="nc" id="L128">			return new FileSourceTLP();</span>
+
+		// The web reader.
+
+<span class="nc" id="L132">		String flc = fileName.toLowerCase();</span>
+
+		// If we did not found anything, we try with the filename extension ...
+
+<span class="nc bnc" id="L136" title="All 2 branches missed.">		if (flc.endsWith(&quot;.dgs&quot;)) {</span>
+<span class="nc" id="L137">			return new FileSourceDGS();</span>
+		}
+
+<span class="nc bnc" id="L140" title="All 4 branches missed.">		if (flc.endsWith(&quot;.gml&quot;) || flc.endsWith(&quot;.dgml&quot;)) {</span>
+<span class="nc" id="L141">			return new org.graphstream.stream.file.FileSourceGML();</span>
+		}
+
+<span class="nc bnc" id="L144" title="All 2 branches missed.">		if (flc.endsWith(&quot;.net&quot;)) {</span>
+<span class="nc" id="L145">			return new FileSourcePajek();</span>
+		}
+
+<span class="nc bnc" id="L148" title="All 2 branches missed.">		if (flc.endsWith(&quot;.chaco&quot;) || flc.endsWith(&quot;.graph&quot;)) {</span>
+			// return new GraphReaderChaco();
+		}
+
+<span class="nc bnc" id="L152" title="All 2 branches missed.">		if (flc.endsWith(&quot;.dot&quot;)) {</span>
+<span class="nc" id="L153">			return new org.graphstream.stream.file.FileSourceDOT();</span>
+		}
+
+<span class="nc bnc" id="L156" title="All 2 branches missed.">		if (flc.endsWith(&quot;.edge&quot;)) {</span>
+<span class="nc" id="L157">			return new FileSourceEdge();</span>
+		}
+
+<span class="nc bnc" id="L160" title="All 2 branches missed.">		if (flc.endsWith(&quot;.lgl&quot;)) {</span>
+<span class="nc" id="L161">			return new FileSourceLGL();</span>
+		}
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">		if (flc.endsWith(&quot;.ncol&quot;)) {</span>
+<span class="nc" id="L165">			return new FileSourceNCol();</span>
+		}
+
+<span class="nc bnc" id="L168" title="All 2 branches missed.">		if (flc.endsWith(&quot;.tlp&quot;)) {</span>
+<span class="nc" id="L169">			return new FileSourceTLP();</span>
+		}
+
+<span class="nc bnc" id="L172" title="All 2 branches missed.">		if (flc.endsWith(&quot;.xml&quot;)) {</span>
+<span class="nc" id="L173">			String root = getXMLRootElement(fileName);</span>
+
+<span class="nc bnc" id="L175" title="All 2 branches missed.">			if (root.equalsIgnoreCase(&quot;gexf&quot;))</span>
+<span class="nc" id="L176">				return new FileSourceGEXF();</span>
+
+<span class="nc" id="L178">			return new FileSourceGraphML();</span>
+		}
+
+<span class="nc bnc" id="L181" title="All 2 branches missed.">		if (flc.endsWith(&quot;.gexf&quot;)) {</span>
+<span class="nc" id="L182">			return new FileSourceGEXF();</span>
+		}
+
+<span class="nc" id="L185">		return null;</span>
+	}
+
+	public static String getXMLRootElement(String fileName) throws IOException {
+<span class="nc" id="L189">		FileReader stream = new FileReader(fileName);</span>
+		XMLEventReader reader;
+		XMLEvent e;
+		String root;
+
+		try {
+<span class="nc" id="L195">			reader = XMLInputFactory.newInstance().createXMLEventReader(stream);</span>
+
+			do {
+<span class="nc" id="L198">				e = reader.nextEvent();</span>
+<span class="nc bnc" id="L199" title="All 4 branches missed.">			} while (!e.isStartElement() &amp;&amp; !e.isEndDocument());</span>
+
+<span class="nc bnc" id="L201" title="All 2 branches missed.">			if (e.isEndDocument())</span>
+<span class="nc" id="L202">				throw new IOException(&quot;document ended before catching root element&quot;);</span>
+
+<span class="nc" id="L204">			root = e.asStartElement().getName().getLocalPart();</span>
+<span class="nc" id="L205">			reader.close();</span>
+<span class="nc" id="L206">			stream.close();</span>
+
+<span class="nc" id="L208">			return root;</span>
+<span class="nc" id="L209">		} catch (XMLStreamException ex) {</span>
+<span class="nc" id="L210">			throw new IOException(ex);</span>
+<span class="nc" id="L211">		} catch (FactoryConfigurationError ex) {</span>
+<span class="nc" id="L212">			throw new IOException(ex);</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

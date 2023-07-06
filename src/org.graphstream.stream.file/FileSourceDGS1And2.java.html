@@ -1,0 +1,622 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSourceDGS1And2.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSourceDGS1And2.java</span></div><h1>FileSourceDGS1And2.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StreamTokenizer;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.zip.GZIPInputStream;
+
+/**
+ * Class responsible for parsing files in the DGS format (old versions of the
+ * format).
+ * 
+ * &lt;p&gt;
+ * The DGS file format is especially designed for storing dynamic graph
+ * definitions into a file. More information about the DGS file format will be
+ * found on the GraphStream web site:
+ * &lt;a href=&quot;http://graphstream-project.org/&quot;&gt;http://graphstream-project.org/&lt;/a&gt;
+ * &lt;/p&gt;
+ * 
+ * @see OldFileSourceDGS
+ * @see FileSource
+ */
+public class FileSourceDGS1And2 extends FileSourceBase {
+	// Constants
+
+	/**
+	 * Types of attributes.
+	 */
+<span class="nc" id="L69">	protected enum AttributeType {</span>
+<span class="nc" id="L70">		NUMBER, VECTOR, STRING</span>
+	};
+
+	/**
+	 * Pair &lt;name,type&gt; defining an attribute.
+	 */
+	protected static class AttributeFormat {
+		/**
+		 * Name of the attribute.
+		 */
+		public String name;
+
+		/**
+		 * Type of the attribute.
+		 */
+		public AttributeType type;
+
+		/**
+		 * New format descriptor for an attribute.
+		 * 
+		 * @param name
+		 *            The attribute name.
+		 * @param type
+		 *            The attribute type.
+		 */
+<span class="nc" id="L95">		public AttributeFormat(String name, AttributeType type) {</span>
+<span class="nc" id="L96">			this.name = name;</span>
+<span class="nc" id="L97">			this.type = type;</span>
+<span class="nc" id="L98">		}</span>
+
+		/**
+		 * Attribute name.
+		 * 
+		 * @return The name.
+		 */
+		public String getName() {
+<span class="nc" id="L106">			return name;</span>
+		}
+
+		/**
+		 * Attribute format.
+		 * 
+		 * @return The format.
+		 */
+		public AttributeType getType() {
+<span class="nc" id="L115">			return type;</span>
+		}
+	}
+
+	// Attributes
+
+	/**
+	 * Format version.
+	 */
+	protected int version;
+
+	/**
+	 * Name of the graph.
+	 */
+	protected String graphName;
+
+	/**
+	 * Number of step given in the header.
+	 */
+	protected int stepCountAnnounced;
+
+	/**
+	 * Number of events given in the header.
+	 */
+	protected int eventCountAnnounced;
+
+	/**
+	 * Real number of step at current time.
+	 */
+	protected int stepCount;
+
+	/**
+	 * Real number of events at current time.
+	 */
+	protected int eventCount;
+
+	/**
+	 * Attribute count and type expected for each node add and modify command.
+	 */
+<span class="nc" id="L154">	protected ArrayList&lt;AttributeFormat&gt; nodesFormat = new ArrayList&lt;AttributeFormat&gt;();</span>
+
+	/**
+	 * Attribute count and type expected for each edges add and modify command.
+	 */
+<span class="nc" id="L159">	protected ArrayList&lt;AttributeFormat&gt; edgesFormat = new ArrayList&lt;AttributeFormat&gt;();</span>
+
+	/**
+	 * An attribute set.
+	 */
+<span class="nc" id="L164">	protected HashMap&lt;String, Object&gt; attributes = new HashMap&lt;String, Object&gt;();</span>
+
+	// Constructors
+
+	/**
+	 * New reader for the DGS graph file format versions 1 and 2.
+	 */
+	public FileSourceDGS1And2() {
+<span class="nc" id="L172">		super(true /* EOL is significant */);</span>
+<span class="nc" id="L173">	}</span>
+
+	// Access
+
+	// Command
+
+	@Override
+	public boolean nextEvents() throws IOException {
+<span class="nc" id="L181">		String key = getWordOrSymbolOrStringOrEolOrEof();</span>
+<span class="nc" id="L182">		String tag = null;</span>
+
+<span class="nc bnc" id="L184" title="All 2 branches missed.">		if (key.equals(&quot;ce&quot;)) {</span>
+<span class="nc" id="L185">			tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L187">			readAttributes(edgesFormat);</span>
+
+<span class="nc bnc" id="L189" title="All 2 branches missed.">			for (String k : attributes.keySet()) {</span>
+<span class="nc" id="L190">				Object value = attributes.get(k);</span>
+<span class="nc" id="L191">				sendEdgeAttributeChanged(graphName, tag, k, null, value);</span>
+			}
+
+<span class="nc bnc" id="L194" title="All 2 branches missed.">			if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L195">				return false;</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		} else if (key.equals(&quot;cn&quot;)) {</span>
+<span class="nc" id="L197">			tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L199">			readAttributes(nodesFormat);</span>
+
+<span class="nc bnc" id="L201" title="All 2 branches missed.">			for (String k : attributes.keySet()) {</span>
+<span class="nc" id="L202">				Object value = attributes.get(k);</span>
+<span class="nc" id="L203">				sendNodeAttributeChanged(graphName, tag, k, null, value);</span>
+			}
+
+<span class="nc bnc" id="L206" title="All 2 branches missed.">			if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L207">				return false;</span>
+<span class="nc bnc" id="L208" title="All 2 branches missed.">		} else if (key.equals(&quot;ae&quot;)) {</span>
+<span class="nc" id="L209">			tag = getStringOrWordOrNumber();</span>
+<span class="nc" id="L210">			String fromTag = getStringOrWordOrNumber();</span>
+<span class="nc" id="L211">			String toTag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L213">			readAttributes(edgesFormat);</span>
+
+<span class="nc" id="L215">			sendEdgeAdded(graphName, tag, fromTag, toTag, false);</span>
+
+<span class="nc bnc" id="L217" title="All 2 branches missed.">			if (attributes != null) {</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">				for (String k : attributes.keySet()) {</span>
+<span class="nc" id="L219">					Object value = attributes.get(k);</span>
+<span class="nc" id="L220">					sendEdgeAttributeAdded(graphName, tag, k, value);</span>
+				}
+			}
+
+<span class="nc bnc" id="L224" title="All 2 branches missed.">			if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L225">				return false;</span>
+<span class="nc bnc" id="L226" title="All 2 branches missed.">		} else if (key.equals(&quot;an&quot;)) {</span>
+<span class="nc" id="L227">			tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L229">			readAttributes(nodesFormat);</span>
+<span class="nc" id="L230">			sendNodeAdded(graphName, tag);</span>
+
+<span class="nc bnc" id="L232" title="All 2 branches missed.">			if (attributes != null) {</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">				for (String k : attributes.keySet()) {</span>
+<span class="nc" id="L234">					Object value = attributes.get(k);</span>
+<span class="nc" id="L235">					sendNodeAttributeAdded(graphName, tag, k, value);</span>
+				}
+			}
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">			if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L240">				return false;</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">		} else if (key.equals(&quot;de&quot;)) {</span>
+<span class="nc" id="L242">			tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L244">			sendEdgeRemoved(graphName, tag);</span>
+
+<span class="nc bnc" id="L246" title="All 2 branches missed.">			if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L247">				return false;</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">		} else if (key.equals(&quot;dn&quot;)) {</span>
+<span class="nc" id="L249">			tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L251">			sendNodeRemoved(graphName, tag);</span>
+
+<span class="nc bnc" id="L253" title="All 2 branches missed.">			if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L254">				return false;</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">		} else if (key.equals(&quot;st&quot;)) {</span>
+<span class="nc" id="L256">			String w = getWordOrNumber();</span>
+
+			try {
+<span class="nc" id="L259">				double time = Double.parseDouble(w);</span>
+
+<span class="nc" id="L261">				sendStepBegins(graphName, time);</span>
+<span class="nc" id="L262">			} catch (NumberFormatException e) {</span>
+<span class="nc" id="L263">				parseError(&quot;expecting a number after `st', got `&quot; + w + &quot;'&quot;);</span>
+			}
+
+<span class="nc bnc" id="L266" title="All 2 branches missed.">			if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L267">				return false;</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">		} else if (key == &quot;#&quot;) {</span>
+<span class="nc" id="L269">			eatAllUntilEol();</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">		} else if (key == &quot;EOL&quot;) {</span>
+<span class="nc" id="L271">			return true;</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">		} else if (key == &quot;EOF&quot;) {</span>
+<span class="nc" id="L273">			return false;</span>
+		} else {
+<span class="nc" id="L275">			parseError(&quot;found an unknown key in file '&quot; + key + &quot;' (expecting an,ae,cn,ce,dn,de or st)&quot;);</span>
+		}
+
+<span class="nc" id="L278">		return true;</span>
+	}
+
+	/**
+	 * tries to read all the events between 2 steps
+	 */
+	public boolean nextStep() throws IOException {
+<span class="nc" id="L285">		String key = &quot;&quot;;</span>
+<span class="nc" id="L286">		String tag = null;</span>
+
+<span class="nc bnc" id="L288" title="All 4 branches missed.">		while (!key.equals(&quot;st&quot;) &amp;&amp; !key.equals(&quot;EOF&quot;)) {</span>
+<span class="nc" id="L289">			key = getWordOrSymbolOrStringOrEolOrEof();</span>
+
+<span class="nc bnc" id="L291" title="All 2 branches missed.">			if (key.equals(&quot;ce&quot;)) {</span>
+<span class="nc" id="L292">				tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L294">				readAttributes(edgesFormat);</span>
+
+<span class="nc bnc" id="L296" title="All 2 branches missed.">				for (String k : attributes.keySet()) {</span>
+<span class="nc" id="L297">					Object value = attributes.get(k);</span>
+<span class="nc" id="L298">					sendEdgeAttributeChanged(graphName, tag, k, null, value);</span>
+				}
+
+<span class="nc bnc" id="L301" title="All 2 branches missed.">				if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L302">					return false;</span>
+<span class="nc bnc" id="L303" title="All 2 branches missed.">			} else if (key.equals(&quot;cn&quot;)) {</span>
+<span class="nc" id="L304">				tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L306">				readAttributes(nodesFormat);</span>
+
+<span class="nc bnc" id="L308" title="All 2 branches missed.">				for (String k : attributes.keySet()) {</span>
+<span class="nc" id="L309">					Object value = attributes.get(k);</span>
+<span class="nc" id="L310">					sendNodeAttributeChanged(graphName, tag, k, null, value);</span>
+				}
+
+<span class="nc bnc" id="L313" title="All 2 branches missed.">				if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L314">					return false;</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">			} else if (key.equals(&quot;ae&quot;)) {</span>
+<span class="nc" id="L316">				tag = getStringOrWordOrNumber();</span>
+<span class="nc" id="L317">				String fromTag = getStringOrWordOrNumber();</span>
+<span class="nc" id="L318">				String toTag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L320">				readAttributes(edgesFormat);</span>
+<span class="nc" id="L321">				sendEdgeAdded(graphName, tag, fromTag, toTag, false);</span>
+
+<span class="nc bnc" id="L323" title="All 2 branches missed.">				if (attributes != null) {</span>
+<span class="nc bnc" id="L324" title="All 2 branches missed.">					for (String k : attributes.keySet()) {</span>
+<span class="nc" id="L325">						Object value = attributes.get(k);</span>
+<span class="nc" id="L326">						sendNodeAttributeAdded(graphName, tag, k, value);</span>
+					}
+				}
+
+<span class="nc bnc" id="L330" title="All 2 branches missed.">				if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L331">					return false;</span>
+<span class="nc bnc" id="L332" title="All 2 branches missed.">			} else if (key.equals(&quot;an&quot;)) {</span>
+<span class="nc" id="L333">				tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L335">				readAttributes(nodesFormat);</span>
+<span class="nc" id="L336">				sendNodeAdded(graphName, tag);</span>
+
+<span class="nc bnc" id="L338" title="All 2 branches missed.">				if (attributes != null) {</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">					for (String k : attributes.keySet()) {</span>
+<span class="nc" id="L340">						Object value = attributes.get(k);</span>
+<span class="nc" id="L341">						sendNodeAttributeAdded(graphName, tag, k, value);</span>
+					}
+				}
+
+<span class="nc bnc" id="L345" title="All 2 branches missed.">				if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L346">					return false;</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">			} else if (key.equals(&quot;de&quot;)) {</span>
+<span class="nc" id="L348">				tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L350">				sendEdgeRemoved(graphName, tag);</span>
+
+<span class="nc bnc" id="L352" title="All 2 branches missed.">				if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L353">					return false;</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">			} else if (key.equals(&quot;dn&quot;)) {</span>
+<span class="nc" id="L355">				tag = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L357">				sendNodeRemoved(graphName, tag);</span>
+
+<span class="nc bnc" id="L359" title="All 2 branches missed.">				if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L360">					return false;</span>
+<span class="nc bnc" id="L361" title="All 2 branches missed.">			} else if (key.equals(&quot;st&quot;)) {</span>
+<span class="nc" id="L362">				String w = getWordOrNumber();</span>
+
+				try {
+<span class="nc" id="L365">					double time = Double.parseDouble(w);</span>
+<span class="nc" id="L366">					sendStepBegins(graphName, time);</span>
+<span class="nc" id="L367">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L368">					parseError(&quot;expecting a number after `st', got `&quot; + w + &quot;'&quot;);</span>
+				}
+
+<span class="nc bnc" id="L371" title="All 2 branches missed.">				if (eatEolOrEof() == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L372">					return false;</span>
+<span class="nc bnc" id="L373" title="All 2 branches missed.">			} else if (key == &quot;#&quot;) {</span>
+<span class="nc" id="L374">				eatAllUntilEol();</span>
+<span class="nc bnc" id="L375" title="All 2 branches missed.">			} else if (key == &quot;EOL&quot;) {</span>
+				// NOP
+<span class="nc bnc" id="L377" title="All 2 branches missed.">			} else if (key == &quot;EOF&quot;) {</span>
+<span class="nc" id="L378">				return false;</span>
+			} else {
+<span class="nc" id="L380">				parseError(&quot;found an unknown key in file '&quot; + key + &quot;' (expecting an,ae,cn,ce,dn,de or st)&quot;);</span>
+			}
+		}
+
+<span class="nc" id="L384">		return true;</span>
+	}
+
+	protected void readAttributes(ArrayList&lt;AttributeFormat&gt; formats) throws IOException {
+<span class="nc" id="L388">		attributes.clear();</span>
+
+<span class="nc bnc" id="L390" title="All 2 branches missed.">		if (formats.size() &gt; 0) {</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">			for (AttributeFormat format : formats) {</span>
+<span class="nc bnc" id="L392" title="All 2 branches missed.">				if (format.type == AttributeType.NUMBER) {</span>
+<span class="nc" id="L393">					readNumberAttribute(format.name);</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">				} else if (format.type == AttributeType.VECTOR) {</span>
+<span class="nc" id="L395">					readVectorAttribute(format.name);</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">				} else if (format.type == AttributeType.STRING) {</span>
+<span class="nc" id="L397">					readStringAttribute(format.name);</span>
+				}
+			}
+		}
+<span class="nc" id="L401">	}</span>
+
+	protected void readNumberAttribute(String name) throws IOException {
+<span class="nc" id="L404">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L406" title="All 2 branches missed.">		if (isNull(tok)) {</span>
+<span class="nc" id="L407">			attributes.put(name, new Double(0));</span>
+<span class="nc" id="L408">		} else {</span>
+<span class="nc" id="L409">			st.pushBack();</span>
+
+<span class="nc" id="L411">			double n = getNumber();</span>
+
+<span class="nc" id="L413">			attributes.put(name, new Double(n));</span>
+		}
+<span class="nc" id="L415">	}</span>
+
+	protected void readVectorAttribute(String name) throws IOException {
+<span class="nc" id="L418">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L420" title="All 2 branches missed.">		if (isNull(tok)) {</span>
+<span class="nc" id="L421">			attributes.put(name, new ArrayList&lt;Double&gt;());</span>
+<span class="nc" id="L422">		} else {</span>
+
+<span class="nc" id="L424">			boolean loop = true;</span>
+
+<span class="nc" id="L426">			ArrayList&lt;Double&gt; vector = new ArrayList&lt;Double&gt;();</span>
+
+<span class="nc bnc" id="L428" title="All 2 branches missed.">			while (loop) {</span>
+<span class="nc bnc" id="L429" title="All 2 branches missed.">				if (tok != StreamTokenizer.TT_NUMBER)</span>
+<span class="nc" id="L430">					parseError(&quot;expecting a number, &quot; + gotWhat(tok));</span>
+
+<span class="nc" id="L432">				vector.add(st.nval);</span>
+
+<span class="nc" id="L434">				tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L436" title="All 2 branches missed.">				if (tok != ',') {</span>
+<span class="nc" id="L437">					loop = false;</span>
+<span class="nc" id="L438">					st.pushBack();</span>
+<span class="nc" id="L439">				} else {</span>
+<span class="nc" id="L440">					tok = st.nextToken();</span>
+				}
+			}
+
+<span class="nc" id="L444">			attributes.put(name, vector);</span>
+		}
+<span class="nc" id="L446">	}</span>
+
+	protected void readStringAttribute(String name) throws IOException {
+<span class="nc" id="L449">		String s = getStringOrWordOrNumber();</span>
+
+<span class="nc" id="L451">		attributes.put(name, s);</span>
+<span class="nc" id="L452">	}</span>
+
+	protected boolean isNull(int tok) {
+<span class="nc bnc" id="L455" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L456">			return (st.sval.equals(&quot;null&quot;));</span>
+
+<span class="nc" id="L458">		return false;</span>
+	}
+
+	@Override
+	public void begin(String filename) throws IOException {
+<span class="nc" id="L463">		super.begin(filename);</span>
+<span class="nc" id="L464">		init();</span>
+<span class="nc" id="L465">	}</span>
+
+	@Override
+	public void begin(InputStream stream) throws IOException {
+<span class="nc" id="L469">		super.begin(stream);</span>
+<span class="nc" id="L470">		init();</span>
+<span class="nc" id="L471">	}</span>
+
+	@Override
+	public void begin(Reader reader) throws IOException {
+<span class="nc" id="L475">		super.begin(reader);</span>
+<span class="nc" id="L476">		init();</span>
+<span class="nc" id="L477">	}</span>
+
+	@Override
+	public void begin(URL url) throws IOException {
+<span class="nc" id="L481">		super.begin(url);</span>
+<span class="nc" id="L482">		init();</span>
+<span class="nc" id="L483">	}</span>
+
+	protected void init() throws IOException {
+<span class="nc" id="L486">		st.parseNumbers();</span>
+
+<span class="nc" id="L488">		String magic = eatOneOfTwoWords(&quot;DGS001&quot;, &quot;DGS002&quot;);</span>
+
+<span class="nc bnc" id="L490" title="All 2 branches missed.">		if (magic.equals(&quot;DGS001&quot;))</span>
+<span class="nc" id="L491">			version = 1;</span>
+		else
+<span class="nc" id="L493">			version = 2;</span>
+
+<span class="nc" id="L495">		eatEol();</span>
+<span class="nc" id="L496">		graphName = getWord();</span>
+<span class="nc" id="L497">		stepCountAnnounced = (int) getNumber();// Integer.parseInt( getWord() );</span>
+<span class="nc" id="L498">		eventCountAnnounced = (int) getNumber();// Integer.parseInt( getWord()</span>
+												// );
+<span class="nc" id="L500">		eatEol();</span>
+
+<span class="nc bnc" id="L502" title="All 2 branches missed.">		if (graphName != null) {</span>
+<span class="nc" id="L503">			attributes.clear();</span>
+<span class="nc" id="L504">			attributes.put(&quot;label&quot;, graphName);</span>
+<span class="nc" id="L505">			sendGraphAttributeAdded(graphName, &quot;label&quot;, graphName);</span>
+<span class="nc" id="L506">		} else {</span>
+<span class="nc" id="L507">			graphName = &quot;DGS_&quot;;</span>
+		}
+
+<span class="nc" id="L510">		graphName = String.format(&quot;%s_%d&quot;, graphName, System.currentTimeMillis() + ((long) Math.random() * 10));</span>
+
+<span class="nc" id="L512">		readAttributeFormat();</span>
+<span class="nc" id="L513">	}</span>
+
+	protected void readAttributeFormat() throws IOException {
+<span class="nc" id="L516">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L518" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_WORD &amp;&amp; st.sval.equals(&quot;nodes&quot;)) {</span>
+<span class="nc" id="L519">			parseAttributeFormat(nodesFormat);</span>
+<span class="nc" id="L520">			tok = st.nextToken();</span>
+		}
+
+<span class="nc bnc" id="L523" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_WORD &amp;&amp; st.sval.equals(&quot;edges&quot;)) {</span>
+<span class="nc" id="L524">			parseAttributeFormat(edgesFormat);</span>
+<span class="nc" id="L525">		} else {</span>
+<span class="nc" id="L526">			st.pushBack();</span>
+		}
+<span class="nc" id="L528">	}</span>
+
+	protected void parseAttributeFormat(ArrayList&lt;AttributeFormat&gt; format) throws IOException {
+<span class="nc" id="L531">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L533" title="All 2 branches missed.">		while (tok != StreamTokenizer.TT_EOL) {</span>
+<span class="nc bnc" id="L534" title="All 2 branches missed.">			if (tok == StreamTokenizer.TT_WORD) {</span>
+<span class="nc" id="L535">				String name = st.sval;</span>
+
+<span class="nc" id="L537">				eatSymbol(':');</span>
+
+<span class="nc" id="L539">				tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L541" title="All 2 branches missed.">				if (tok == StreamTokenizer.TT_WORD) {</span>
+<span class="nc" id="L542">					String type = st.sval.toLowerCase();</span>
+
+<span class="nc bnc" id="L544" title="All 4 branches missed.">					if (type.equals(&quot;number&quot;) || type.equals(&quot;n&quot;)) {</span>
+<span class="nc" id="L545">						format.add(new AttributeFormat(name, AttributeType.NUMBER));</span>
+<span class="nc bnc" id="L546" title="All 4 branches missed.">					} else if (type.equals(&quot;string&quot;) || type.equals(&quot;s&quot;)) {</span>
+<span class="nc" id="L547">						format.add(new AttributeFormat(name, AttributeType.STRING));</span>
+<span class="nc bnc" id="L548" title="All 4 branches missed.">					} else if (type.equals(&quot;vector&quot;) || type.equals(&quot;v&quot;)) {</span>
+<span class="nc" id="L549">						format.add(new AttributeFormat(name, AttributeType.VECTOR));</span>
+<span class="nc" id="L550">					} else {</span>
+<span class="nc" id="L551">						parseError(&quot;unknown attribute type `&quot; + type</span>
+<span class="nc" id="L552">								+ &quot;' (only `number', `vector' and `string' are accepted)&quot;);</span>
+					}
+<span class="nc" id="L554">				} else {</span>
+<span class="nc" id="L555">					parseError(&quot;expecting an attribute type, got `&quot; + gotWhat(tok) + &quot;'&quot;);</span>
+				}
+<span class="nc" id="L557">			} else {</span>
+<span class="nc" id="L558">				parseError(&quot;expecting an attribute name, got `&quot; + gotWhat(tok) + &quot;'&quot;);</span>
+			}
+
+<span class="nc" id="L561">			tok = st.nextToken();</span>
+		}
+<span class="nc" id="L563">	}</span>
+
+	@Override
+	protected void continueParsingInInclude() throws IOException {
+<span class="nc" id="L567">	}</span>
+
+	@Override
+	protected Reader createReaderFrom(String file) throws FileNotFoundException {
+<span class="nc" id="L571">		InputStream is = null;</span>
+
+		try {
+<span class="nc" id="L574">			is = new GZIPInputStream(new FileInputStream(file));</span>
+<span class="nc" id="L575">		} catch (IOException e) {</span>
+<span class="nc" id="L576">			is = new FileInputStream(file);</span>
+		}
+
+<span class="nc" id="L579">		return new BufferedReader(new InputStreamReader(is));</span>
+	}
+
+	@Override
+	protected Reader createReaderFrom(InputStream stream) {
+
+<span class="nc" id="L585">		return new BufferedReader(new InputStreamReader(stream));</span>
+	}
+
+	@Override
+	protected void configureTokenizer(StreamTokenizer tok) throws IOException {
+<span class="nc bnc" id="L590" title="All 2 branches missed.">		if (COMMENT_CHAR &gt; 0)</span>
+<span class="nc" id="L591">			tok.commentChar(COMMENT_CHAR);</span>
+		// tok.quoteChar( QUOTE_CHAR );
+<span class="nc" id="L593">		tok.eolIsSignificant(eol_is_significant);</span>
+<span class="nc" id="L594">		tok.wordChars('_', '_');</span>
+<span class="nc" id="L595">		tok.ordinaryChar('1');</span>
+<span class="nc" id="L596">		tok.ordinaryChar('2');</span>
+<span class="nc" id="L597">		tok.ordinaryChar('3');</span>
+<span class="nc" id="L598">		tok.ordinaryChar('4');</span>
+<span class="nc" id="L599">		tok.ordinaryChar('5');</span>
+<span class="nc" id="L600">		tok.ordinaryChar('6');</span>
+<span class="nc" id="L601">		tok.ordinaryChar('7');</span>
+<span class="nc" id="L602">		tok.ordinaryChar('8');</span>
+<span class="nc" id="L603">		tok.ordinaryChar('9');</span>
+<span class="nc" id="L604">		tok.ordinaryChar('0');</span>
+<span class="nc" id="L605">		tok.ordinaryChar('.');</span>
+<span class="nc" id="L606">		tok.ordinaryChar('-');</span>
+<span class="nc" id="L607">		tok.wordChars('1', '1');</span>
+<span class="nc" id="L608">		tok.wordChars('2', '2');</span>
+<span class="nc" id="L609">		tok.wordChars('3', '3');</span>
+<span class="nc" id="L610">		tok.wordChars('4', '4');</span>
+<span class="nc" id="L611">		tok.wordChars('5', '5');</span>
+<span class="nc" id="L612">		tok.wordChars('6', '6');</span>
+<span class="nc" id="L613">		tok.wordChars('7', '7');</span>
+<span class="nc" id="L614">		tok.wordChars('8', '8');</span>
+<span class="nc" id="L615">		tok.wordChars('9', '9');</span>
+<span class="nc" id="L616">		tok.wordChars('0', '0');</span>
+<span class="nc" id="L617">		tok.wordChars('.', '.');</span>
+<span class="nc" id="L618">		tok.wordChars('-', '-');</span>
+		// tok.parseNumbers();
+<span class="nc" id="L620">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

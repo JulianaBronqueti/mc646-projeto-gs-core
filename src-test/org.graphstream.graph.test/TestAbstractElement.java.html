@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestAbstractElement.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.test</a> &gt; <span class="el_source">TestAbstractElement.java</span></div><h1>TestAbstractElement.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2017-03-07
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.test;
+
+import org.graphstream.graph.implementations.AbstractElement;
+import org.junit.Test;
+
+import java.util.*;
+
+import static org.junit.Assert.*;
+
+/**
+ * @since 04/03/17.
+ */
+<span class="nc" id="L44">public class TestAbstractElement {</span>
+	@Test
+	public void testGetId() {
+<span class="nc" id="L47">		final String id = String.format(&quot;test-%x&quot;, System.currentTimeMillis());</span>
+
+<span class="nc" id="L49">		AbstractElement e = new LocalAbstractElement(id);</span>
+<span class="nc" id="L50">		assertEquals(id, e.getId());</span>
+<span class="nc" id="L51">	}</span>
+
+	@Test
+	public void testGetIndex() {
+<span class="nc" id="L55">		AbstractElement e = new LocalAbstractElement(1337);</span>
+<span class="nc" id="L56">		assertEquals(1337, e.getIndex());</span>
+<span class="nc" id="L57">	}</span>
+
+	@Test
+	public void testGetAttribute() {
+<span class="nc" id="L61">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L62">		Object o = new Object();</span>
+
+<span class="nc" id="L64">		e.setAttribute(&quot;A&quot;, o);</span>
+<span class="nc" id="L65">		e.setAttribute(&quot;C&quot;, &quot;TEST&quot;);</span>
+<span class="nc" id="L66">		e.setAttribute(&quot;D&quot;);</span>
+<span class="nc" id="L67">		e.setAttribute(&quot;E&quot;, (Object) null);</span>
+
+<span class="nc" id="L69">		assertSame(o, e.getAttribute(&quot;A&quot;));</span>
+<span class="nc" id="L70">		assertNull(e.getAttribute(&quot;B&quot;));</span>
+<span class="nc" id="L71">		assertNull(e.getAttribute(&quot;A&quot;, String.class));</span>
+<span class="nc" id="L72">		assertEquals(&quot;TEST&quot;, e.getAttribute(&quot;C&quot;, String.class));</span>
+<span class="nc" id="L73">		assertEquals(true, e.getAttribute(&quot;D&quot;));</span>
+<span class="nc" id="L74">		assertNull(e.getAttribute(&quot;E&quot;));</span>
+<span class="nc" id="L75">	}</span>
+
+	@Test
+	public void testGetFirstAttributeOf() {
+<span class="nc" id="L79">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L81">		e.setAttribute(&quot;A&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L82">		e.setAttribute(&quot;C&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L83">		e.setAttribute(&quot;D&quot;, 13.37);</span>
+
+<span class="nc" id="L85">		assertEquals(&quot;C&quot;, e.getFirstAttributeOf(&quot;B&quot;, &quot;C&quot;, &quot;A&quot;));</span>
+<span class="nc" id="L86">		assertEquals(13.37, e.getFirstAttributeOf(Number.class, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;, &quot;A&quot;));</span>
+<span class="nc" id="L87">	}</span>
+
+	@Test
+	public void testGetLabel() {
+<span class="nc" id="L91">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L93">		e.setAttribute(&quot;A&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L94">		e.setAttribute(&quot;B&quot;, 13.37);</span>
+
+<span class="nc" id="L96">		assertEquals(&quot;A&quot;, e.getLabel(&quot;A&quot;));</span>
+<span class="nc" id="L97">		assertNull(e.getLabel(&quot;B&quot;));</span>
+<span class="nc" id="L98">		assertNull(e.getLabel(&quot;C&quot;));</span>
+<span class="nc" id="L99">	}</span>
+
+	@Test
+	public void testGetNumber() {
+<span class="nc" id="L103">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L105">		e.setAttribute(&quot;A&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L106">		e.setAttribute(&quot;B&quot;, 13.37);</span>
+
+<span class="nc" id="L108">		assertEquals(13.37, e.getNumber(&quot;B&quot;), 0);</span>
+<span class="nc" id="L109">		assertTrue(Double.isNaN(e.getNumber(&quot;A&quot;)));</span>
+<span class="nc" id="L110">		assertTrue(Double.isNaN(e.getNumber(&quot;C&quot;)));</span>
+<span class="nc" id="L111">	}</span>
+
+	@Test
+	public void testGetVector() {
+<span class="nc" id="L115">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L116">		List&lt;Number&gt; vec1 = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L117">		List&lt;Number&gt; vec2 = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L118">		List&lt;Number&gt; vec3 = new Vector&lt;&gt;();</span>
+<span class="nc" id="L119">		List&lt;Object&gt; vec4 = new Vector&lt;&gt;();</span>
+<span class="nc" id="L120">		List&lt;Object&gt; vec5 = new Vector&lt;&gt;();</span>
+
+<span class="nc bnc" id="L122" title="All 2 branches missed.">		for (int i = 0; i &lt; 10; i++) {</span>
+<span class="nc" id="L123">			vec1.add(Math.random());</span>
+<span class="nc" id="L124">			vec2.add((int) (Math.random() * 100));</span>
+<span class="nc" id="L125">			vec3.add(Math.random());</span>
+<span class="nc" id="L126">			vec4.add(new Object());</span>
+		}
+
+<span class="nc" id="L129">		e.setAttribute(&quot;vec1&quot;, vec1);</span>
+<span class="nc" id="L130">		e.setAttribute(&quot;vec2&quot;, vec2);</span>
+<span class="nc" id="L131">		e.setAttribute(&quot;vec3&quot;, vec3);</span>
+<span class="nc" id="L132">		e.setAttribute(&quot;vec4&quot;, vec4);</span>
+<span class="nc" id="L133">		e.setAttribute(&quot;vec5&quot;, vec5);</span>
+<span class="nc" id="L134">		e.setAttribute(&quot;vec6&quot;, new Object());</span>
+
+<span class="nc" id="L136">		assertNotNull(e.getVector(&quot;vec1&quot;));</span>
+<span class="nc" id="L137">		assertNotNull(e.getVector(&quot;vec2&quot;));</span>
+<span class="nc" id="L138">		assertNotNull(e.getVector(&quot;vec3&quot;));</span>
+<span class="nc" id="L139">		assertNull(e.getVector(&quot;vec4&quot;));</span>
+<span class="nc" id="L140">		assertNull(e.getVector(&quot;vec5&quot;));</span>
+<span class="nc" id="L141">		assertNull(e.getVector(&quot;vec6&quot;));</span>
+<span class="nc" id="L142">		assertNull(e.getVector(&quot;vec7&quot;));</span>
+
+<span class="nc" id="L144">		assertEquals(vec1, e.getVector(&quot;vec1&quot;));</span>
+<span class="nc" id="L145">		assertEquals(vec2, e.getVector(&quot;vec2&quot;));</span>
+<span class="nc" id="L146">		assertEquals(vec3, e.getVector(&quot;vec3&quot;));</span>
+<span class="nc" id="L147">	}</span>
+
+	@Test
+	public void testGetArray() {
+<span class="nc" id="L151">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L153">		e.setAttribute(&quot;array1&quot;, 1, 2, 3);</span>
+<span class="nc" id="L154">		e.setAttribute(&quot;array2&quot;, (Object) new Integer[] { 1, 2, 3 });</span>
+<span class="nc" id="L155">		e.setAttribute(&quot;array3&quot;, (Object) new Integer[] {});</span>
+<span class="nc" id="L156">		e.setAttribute(&quot;attr1&quot;, new Object());</span>
+
+<span class="nc" id="L158">		assertNotNull(e.getArray(&quot;array1&quot;));</span>
+<span class="nc" id="L159">		assertNotNull(e.getArray(&quot;array2&quot;));</span>
+<span class="nc" id="L160">		assertNotNull(e.getArray(&quot;array3&quot;));</span>
+<span class="nc" id="L161">		assertNull(e.getArray(&quot;attr1&quot;));</span>
+
+<span class="nc" id="L163">		assertArrayEquals(new Integer[] { 1, 2, 3 }, e.getArray(&quot;array1&quot;));</span>
+<span class="nc" id="L164">		assertArrayEquals(new Integer[] { 1, 2, 3 }, e.getArray(&quot;array2&quot;));</span>
+<span class="nc" id="L165">		assertArrayEquals(new Integer[] {}, e.getArray(&quot;array3&quot;));</span>
+<span class="nc" id="L166">	}</span>
+
+	@Test
+	public void testGetMap() {
+<span class="nc" id="L170">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L171">		Map&lt;String, Integer&gt; map = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L173">		map.put(&quot;T&quot;, 1);</span>
+<span class="nc" id="L174">		map.put(&quot;E&quot;, 2);</span>
+<span class="nc" id="L175">		map.put(&quot;S&quot;, 3);</span>
+<span class="nc" id="L176">		map.put(&quot;T&quot;, 4);</span>
+
+<span class="nc" id="L178">		e.setAttribute(&quot;map&quot;, map);</span>
+
+<span class="nc" id="L180">		assertTrue(e.hasMap(&quot;map&quot;));</span>
+<span class="nc" id="L181">		assertEquals(map, e.getAttribute(&quot;map&quot;));</span>
+<span class="nc" id="L182">	}</span>
+
+	@Test
+	public void testHasAttribute() {
+<span class="nc" id="L186">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L188">		e.setAttribute(&quot;A&quot;, new Object());</span>
+<span class="nc" id="L189">		e.setAttribute(&quot;B&quot;, new Object());</span>
+
+<span class="nc" id="L191">		assertTrue(e.hasAttribute(&quot;A&quot;));</span>
+<span class="nc" id="L192">		assertTrue(e.hasAttribute(&quot;B&quot;));</span>
+<span class="nc" id="L193">		assertFalse(e.hasAttribute(&quot;C&quot;));</span>
+
+<span class="nc" id="L195">		e.setAttribute(&quot;C&quot;, e);</span>
+
+<span class="nc" id="L197">		assertTrue(e.hasAttribute(&quot;C&quot;));</span>
+<span class="nc" id="L198">		assertTrue(e.hasAttribute(&quot;C&quot;, LocalAbstractElement.class));</span>
+<span class="nc" id="L199">		assertFalse(e.hasAttribute(&quot;C&quot;, String.class));</span>
+<span class="nc" id="L200">	}</span>
+
+	@Test
+	public void testHasLabel() {
+<span class="nc" id="L204">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L206">		e.setAttribute(&quot;A&quot;, new Object());</span>
+<span class="nc" id="L207">		e.setAttribute(&quot;B&quot;, &quot;LABEL&quot;);</span>
+
+<span class="nc" id="L209">		assertTrue(e.hasLabel(&quot;B&quot;));</span>
+<span class="nc" id="L210">		assertFalse(e.hasLabel(&quot;A&quot;));</span>
+<span class="nc" id="L211">		assertFalse(e.hasLabel(&quot;C&quot;));</span>
+<span class="nc" id="L212">	}</span>
+
+	@Test
+	public void testHasNumber() {
+<span class="nc" id="L216">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L218">		e.setAttribute(&quot;A&quot;, new Object());</span>
+<span class="nc" id="L219">		e.setAttribute(&quot;B&quot;, 13.37);</span>
+<span class="nc" id="L220">		e.setAttribute(&quot;C&quot;, Double.valueOf(13.37));</span>
+<span class="nc" id="L221">		e.setAttribute(&quot;D&quot;, 1337);</span>
+<span class="nc" id="L222">		e.setAttribute(&quot;E&quot;, Integer.valueOf(1337));</span>
+<span class="nc" id="L223">		e.setAttribute(&quot;G&quot;, &quot;13.37&quot;);</span>
+<span class="nc" id="L224">		e.setAttribute(&quot;H&quot;, &quot;AD3.37&quot;);</span>
+
+<span class="nc" id="L226">		assertFalse(e.hasNumber(&quot;A&quot;));</span>
+<span class="nc" id="L227">		assertTrue(e.hasNumber(&quot;B&quot;));</span>
+<span class="nc" id="L228">		assertTrue(e.hasNumber(&quot;C&quot;));</span>
+<span class="nc" id="L229">		assertTrue(e.hasNumber(&quot;D&quot;));</span>
+<span class="nc" id="L230">		assertTrue(e.hasNumber(&quot;E&quot;));</span>
+<span class="nc" id="L231">		assertFalse(e.hasNumber(&quot;F&quot;));</span>
+<span class="nc" id="L232">		assertTrue(e.hasNumber(&quot;G&quot;));</span>
+<span class="nc" id="L233">		assertFalse(e.hasNumber(&quot;H&quot;));</span>
+<span class="nc" id="L234">	}</span>
+
+	@Test
+	public void testHasVector() {
+<span class="nc" id="L238">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L239">		List&lt;Number&gt; vec1 = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L240">		List&lt;Number&gt; vec2 = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L241">		List&lt;Number&gt; vec3 = new Vector&lt;&gt;();</span>
+<span class="nc" id="L242">		List&lt;Object&gt; vec4 = new Vector&lt;&gt;();</span>
+<span class="nc" id="L243">		List&lt;Object&gt; vec5 = new Vector&lt;&gt;();</span>
+
+<span class="nc bnc" id="L245" title="All 2 branches missed.">		for (int i = 0; i &lt; 10; i++) {</span>
+<span class="nc" id="L246">			vec1.add(Math.random());</span>
+<span class="nc" id="L247">			vec2.add((int) (Math.random() * 100));</span>
+<span class="nc" id="L248">			vec3.add(Math.random());</span>
+<span class="nc" id="L249">			vec4.add(new Object());</span>
+		}
+
+<span class="nc" id="L252">		e.setAttribute(&quot;vec1&quot;, vec1);</span>
+<span class="nc" id="L253">		e.setAttribute(&quot;vec2&quot;, vec2);</span>
+<span class="nc" id="L254">		e.setAttribute(&quot;vec3&quot;, vec3);</span>
+<span class="nc" id="L255">		e.setAttribute(&quot;vec4&quot;, vec4);</span>
+<span class="nc" id="L256">		e.setAttribute(&quot;vec5&quot;, vec5);</span>
+<span class="nc" id="L257">		e.setAttribute(&quot;vec6&quot;, new Object());</span>
+
+<span class="nc" id="L259">		assertTrue(e.hasVector(&quot;vec1&quot;));</span>
+<span class="nc" id="L260">		assertTrue(e.hasVector(&quot;vec2&quot;));</span>
+<span class="nc" id="L261">		assertTrue(e.hasVector(&quot;vec3&quot;));</span>
+<span class="nc" id="L262">		assertFalse(e.hasVector(&quot;vec4&quot;));</span>
+<span class="nc" id="L263">		assertFalse(e.hasVector(&quot;vec5&quot;));</span>
+<span class="nc" id="L264">		assertFalse(e.hasVector(&quot;vec6&quot;));</span>
+<span class="nc" id="L265">		assertFalse(e.hasVector(&quot;vec7&quot;));</span>
+<span class="nc" id="L266">	}</span>
+
+	@Test
+	public void testHasArray() {
+<span class="nc" id="L270">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L272">		e.setAttribute(&quot;array1&quot;, 1, 2, 3);</span>
+<span class="nc" id="L273">		e.setAttribute(&quot;array2&quot;, (Object) new Integer[] { 1, 2, 3 });</span>
+<span class="nc" id="L274">		e.setAttribute(&quot;array3&quot;, (Object) new Integer[] {});</span>
+<span class="nc" id="L275">		e.setAttribute(&quot;array4&quot;, (Object) new int[] { 1, 2, 3 });</span>
+<span class="nc" id="L276">		e.setAttribute(&quot;attr1&quot;, new Object());</span>
+
+<span class="nc" id="L278">		assertTrue(e.hasArray(&quot;array1&quot;));</span>
+<span class="nc" id="L279">		assertTrue(e.hasArray(&quot;array2&quot;));</span>
+<span class="nc" id="L280">		assertTrue(e.hasArray(&quot;array3&quot;));</span>
+<span class="nc" id="L281">		assertFalse(e.hasArray(&quot;array4&quot;));</span>
+<span class="nc" id="L282">		assertFalse(e.hasArray(&quot;attr1&quot;));</span>
+<span class="nc" id="L283">		assertFalse(e.hasArray(&quot;attr2&quot;));</span>
+<span class="nc" id="L284">	}</span>
+
+	@Test
+	public void testHasMap() {
+<span class="nc" id="L288">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+
+<span class="nc" id="L290">		e.setAttribute(&quot;map&quot;, new HashMap&lt;String, Object&gt;());</span>
+<span class="nc" id="L291">		e.setAttribute(&quot;attr&quot;, new Object());</span>
+
+<span class="nc" id="L293">		assertTrue(e.hasMap(&quot;map&quot;));</span>
+<span class="nc" id="L294">		assertFalse(e.hasMap(&quot;attr1&quot;));</span>
+<span class="nc" id="L295">		assertFalse(e.hasMap(&quot;attr2&quot;));</span>
+<span class="nc" id="L296">	}</span>
+
+	@Test
+	public void testAttributeKeys() {
+<span class="nc" id="L300">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L301">		final int count = 10 + (int) (Math.random() * 90);</span>
+<span class="nc" id="L302">		List&lt;String&gt; keys = new LinkedList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L304" title="All 2 branches missed.">		for (int j = 0; j &lt; count; j++) {</span>
+<span class="nc" id="L305">			String key = String.format(&quot;attribute%d&quot;, j);</span>
+<span class="nc" id="L306">			e.setAttribute(key, new Object());</span>
+<span class="nc" id="L307">			keys.add(key);</span>
+		}
+
+<span class="nc" id="L310">		assertEquals(count, keys.size());</span>
+
+<span class="nc" id="L312">		e.attributeKeys().forEach(keys::remove);</span>
+
+<span class="nc" id="L314">		assertEquals(0, keys.size());</span>
+<span class="nc" id="L315">	}</span>
+
+	@Test
+	public void testGetAttributeCount() {
+<span class="nc" id="L319">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L320">		final int count = 10 + (int) (Math.random() * 90);</span>
+
+<span class="nc bnc" id="L322" title="All 2 branches missed.">		for (int j = 0; j &lt; count; j++) {</span>
+<span class="nc" id="L323">			e.setAttribute(String.format(&quot;attribute%d&quot;, j), new Object());</span>
+		}
+
+<span class="nc" id="L326">		assertEquals(count, e.getAttributeCount());</span>
+<span class="nc" id="L327">	}</span>
+
+	@Test
+	public void testClearAttributes() {
+<span class="nc" id="L331">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L332">		final int count = 10 + (int) (Math.random() * 90);</span>
+
+<span class="nc bnc" id="L334" title="All 2 branches missed.">		for (int j = 0; j &lt; count; j++) {</span>
+<span class="nc" id="L335">			e.setAttribute(String.format(&quot;attribute%d&quot;, j), new Object());</span>
+		}
+
+<span class="nc" id="L338">		e.clearAttributes();</span>
+<span class="nc" id="L339">		assertEquals(0, e.getAttributeCount());</span>
+<span class="nc" id="L340">	}</span>
+
+	@Test
+	public void testAddAttribute() {
+<span class="nc" id="L344">		LocalAbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L345">		Object o = new Object();</span>
+
+<span class="nc" id="L347">		e.setAttribute(&quot;A&quot;, o);</span>
+
+<span class="nc" id="L349">		assertEquals(1, e.getTheMap().size());</span>
+<span class="nc" id="L350">		assertTrue(e.getTheMap().containsKey(&quot;A&quot;));</span>
+<span class="nc" id="L351">		assertSame(o, e.getTheMap().get(&quot;A&quot;));</span>
+
+<span class="nc" id="L353">		e.setAttribute(&quot;B&quot;);</span>
+
+<span class="nc" id="L355">		assertTrue(e.hasAttribute(&quot;B&quot;));</span>
+<span class="nc" id="L356">		assertEquals(true, e.getAttribute(&quot;B&quot;));</span>
+
+<span class="nc" id="L358">		e.setAttribute(&quot;C&quot;, (Object) null);</span>
+
+<span class="nc" id="L360">		assertTrue(e.hasAttribute(&quot;C&quot;));</span>
+<span class="nc" id="L361">		assertNull(e.getAttribute(&quot;C&quot;));</span>
+
+<span class="nc" id="L363">		e.setAttribute(&quot;D&quot;, &quot;T&quot;, &quot;E&quot;, &quot;S&quot;, &quot;T&quot;);</span>
+
+<span class="nc" id="L365">		assertTrue(e.hasAttribute(&quot;D&quot;));</span>
+<span class="nc" id="L366">		assertTrue(e.hasArray(&quot;D&quot;));</span>
+<span class="nc" id="L367">		assertArrayEquals(new String[] { &quot;T&quot;, &quot;E&quot;, &quot;S&quot;, &quot;T&quot; }, e.getArray(&quot;D&quot;));</span>
+<span class="nc" id="L368">	}</span>
+
+	@Test
+	public void testAddAttributes() {
+<span class="nc" id="L372">		Map&lt;String, Object&gt; attributes = new HashMap&lt;&gt;();</span>
+
+<span class="nc bnc" id="L374" title="All 2 branches missed.">		for (int i = 0; i &lt; 100; i++)</span>
+<span class="nc" id="L375">			attributes.put(String.format(&quot;attr%d&quot;, i), new Object());</span>
+
+<span class="nc" id="L377">		AbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L378">		e.setAttributes(attributes);</span>
+
+<span class="nc" id="L380">		e.attributeKeys().forEach(key -&gt; {</span>
+<span class="nc" id="L381">			assertNotNull(attributes.get(key));</span>
+<span class="nc" id="L382">			assertEquals(attributes.get(key), e.getAttribute(key));</span>
+
+<span class="nc" id="L384">			attributes.remove(key);</span>
+<span class="nc" id="L385">		});</span>
+
+<span class="nc" id="L387">		assertEquals(0, attributes.size());</span>
+<span class="nc" id="L388">	}</span>
+
+	@Test
+	public void testRemoveAttribute() {
+<span class="nc" id="L392">		LocalAbstractElement e = new LocalAbstractElement(&quot;test&quot;);</span>
+<span class="nc" id="L393">		Object o = new Object();</span>
+
+<span class="nc" id="L395">		e.setAttribute(&quot;A&quot;, o);</span>
+<span class="nc bnc" id="L396" title="All 4 branches missed.">		assertTrue(e.getTheMap() != null &amp;&amp; e.getTheMap().containsKey(&quot;A&quot;));</span>
+
+<span class="nc" id="L398">		e.removeAttribute(&quot;A&quot;);</span>
+<span class="nc bnc" id="L399" title="All 4 branches missed.">		assertFalse(e.getTheMap() != null &amp;&amp; e.getTheMap().containsKey(&quot;A&quot;));</span>
+<span class="nc" id="L400">	}</span>
+
+	protected static class LocalAbstractElement extends AbstractElement {
+		LocalAbstractElement(int index) {
+<span class="nc" id="L404">			this(Integer.toString(index));</span>
+<span class="nc" id="L405">			setIndex(index);</span>
+<span class="nc" id="L406">		}</span>
+
+		LocalAbstractElement(String id) {
+<span class="nc" id="L409">			super(id);</span>
+<span class="nc" id="L410">		}</span>
+
+		@Override
+		protected void attributeChanged(AttributeChangeEvent event, String attribute, Object oldValue,
+				Object newValue) {
+
+<span class="nc" id="L416">		}</span>
+
+		Map&lt;String, Object&gt; getTheMap() {
+<span class="nc" id="L419">			return this.attributes;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

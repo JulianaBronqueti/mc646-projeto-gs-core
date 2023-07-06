@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ExampleByteProxy.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.binary.test</a> &gt; <span class="el_source">ExampleByteProxy.java</span></div><h1>ExampleByteProxy.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2016-02-01
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.binary.test;
+
+import org.graphstream.graph.implementations.DefaultGraph;
+import org.graphstream.stream.SourceBase;
+import org.graphstream.stream.binary.ByteDecoder;
+import org.graphstream.stream.binary.ByteEncoder;
+import org.graphstream.stream.binary.ByteFactory;
+import org.graphstream.stream.binary.ByteProxy;
+
+import java.nio.ByteBuffer;
+
+/**
+ * @since 01/02/16.
+ */
+<span class="nc" id="L46">public class ExampleByteProxy {</span>
+	public static void main(String... args) throws Exception {
+<span class="nc" id="L48">		ByteProxy proxy = new ByteProxy(new ByteFactory() {</span>
+			@Override
+			public ByteEncoder createByteEncoder() {
+<span class="nc" id="L51">				return new InternalByteEncoder();</span>
+			}
+
+			@Override
+			public ByteDecoder createByteDecoder() {
+<span class="nc" id="L56">				return new InternalByteDecoder();</span>
+			}
+<span class="nc" id="L58">		}, 10000);</span>
+
+<span class="nc" id="L60">		DefaultGraph g = new DefaultGraph(&quot;g&quot;);</span>
+<span class="nc" id="L61">		g.addSink(proxy);</span>
+
+<span class="nc" id="L63">		proxy.setReplayable(g);</span>
+<span class="nc" id="L64">		proxy.start();</span>
+
+<span class="nc" id="L66">		int idx = 0;</span>
+
+<span class="nc" id="L68">		while (true) {</span>
+<span class="nc" id="L69">			String a = String.format(&quot;node-%03d&quot;, idx++);</span>
+<span class="nc" id="L70">			String b = String.format(&quot;node-%03d&quot;, idx++);</span>
+
+<span class="nc" id="L72">			g.addNode(a);</span>
+<span class="nc" id="L73">			g.addNode(b);</span>
+<span class="nc" id="L74">			g.addEdge(&quot;edge-&quot; + a + &quot;-&quot; + b, a, b);</span>
+
+<span class="nc" id="L76">			Thread.sleep(1000);</span>
+		}
+	}
+
+<span class="nc" id="L80">	static class InternalByteDecoder extends SourceBase implements ByteDecoder {</span>
+		@Override
+		public void decode(ByteBuffer buffer) {
+<span class="nc" id="L83">			System.out.printf(&quot;%X%n&quot;, buffer.get());</span>
+<span class="nc" id="L84">		}</span>
+
+		@Override
+		public boolean validate(ByteBuffer buffer) {
+<span class="nc bnc" id="L88" title="All 2 branches missed.">			return buffer.position() &gt; 0;</span>
+		}
+	}
+
+<span class="nc" id="L92">	static class InternalByteEncoder implements ByteEncoder {</span>
+		Transport transport;
+
+		@Override
+		public void addTransport(Transport transport) {
+<span class="nc" id="L97">			this.transport = transport;</span>
+<span class="nc" id="L98">		}</span>
+
+		@Override
+		public void removeTransport(Transport transport) {
+
+<span class="nc" id="L103">		}</span>
+
+		void send(ByteBuffer buffer) {
+<span class="nc" id="L106">			buffer.rewind();</span>
+<span class="nc" id="L107">			transport.send(buffer);</span>
+<span class="nc" id="L108">		}</span>
+
+		@Override
+		public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L112">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L113">			buffer.put((byte) 0x01);</span>
+
+<span class="nc" id="L115">			send(buffer);</span>
+<span class="nc" id="L116">		}</span>
+
+		@Override
+		public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L121">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L122">			buffer.put((byte) 0x02);</span>
+
+<span class="nc" id="L124">			send(buffer);</span>
+<span class="nc" id="L125">		}</span>
+
+		@Override
+		public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L129">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L130">			buffer.put((byte) 0x03);</span>
+
+<span class="nc" id="L132">			send(buffer);</span>
+<span class="nc" id="L133">		}</span>
+
+		@Override
+		public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L137">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L138">			buffer.put((byte) 0x11);</span>
+
+<span class="nc" id="L140">			send(buffer);</span>
+<span class="nc" id="L141">		}</span>
+
+		@Override
+		public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L146">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L147">			buffer.put((byte) 0x12);</span>
+
+<span class="nc" id="L149">			send(buffer);</span>
+<span class="nc" id="L150">		}</span>
+
+		@Override
+		public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L154">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L155">			buffer.put((byte) 0x13);</span>
+
+<span class="nc" id="L157">			send(buffer);</span>
+<span class="nc" id="L158">		}</span>
+
+		@Override
+		public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L162">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L163">			buffer.put((byte) 0x21);</span>
+
+<span class="nc" id="L165">			send(buffer);</span>
+<span class="nc" id="L166">		}</span>
+
+		@Override
+		public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L171">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L172">			buffer.put((byte) 0x22);</span>
+
+<span class="nc" id="L174">			send(buffer);</span>
+<span class="nc" id="L175">		}</span>
+
+		@Override
+		public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L179">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L180">			buffer.put((byte) 0x23);</span>
+
+<span class="nc" id="L182">			send(buffer);</span>
+<span class="nc" id="L183">		}</span>
+
+		@Override
+		public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L187">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L188">			buffer.put((byte) 0x31);</span>
+
+<span class="nc" id="L190">			send(buffer);</span>
+<span class="nc" id="L191">		}</span>
+
+		@Override
+		public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L195">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L196">			buffer.put((byte) 0x32);</span>
+
+<span class="nc" id="L198">			send(buffer);</span>
+<span class="nc" id="L199">		}</span>
+
+		@Override
+		public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+				boolean directed) {
+<span class="nc" id="L204">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L205">			buffer.put((byte) 0x41);</span>
+
+<span class="nc" id="L207">			send(buffer);</span>
+<span class="nc" id="L208">		}</span>
+
+		@Override
+		public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L212">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L213">			buffer.put((byte) 0x42);</span>
+
+<span class="nc" id="L215">			send(buffer);</span>
+<span class="nc" id="L216">		}</span>
+
+		@Override
+		public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L220">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L221">			buffer.put((byte) 0x50);</span>
+
+<span class="nc" id="L223">			send(buffer);</span>
+<span class="nc" id="L224">		}</span>
+
+		@Override
+		public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L228">			ByteBuffer buffer = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L229">			buffer.put((byte) 0x60);</span>
+
+<span class="nc" id="L231">			send(buffer);</span>
+<span class="nc" id="L232">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

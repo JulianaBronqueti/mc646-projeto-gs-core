@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GraphCellData.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.layout.springbox</a> &gt; <span class="el_source">GraphCellData.java</span></div><h1>GraphCellData.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2012-06-26
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.layout.springbox;
+
+import java.util.Iterator;
+
+import org.miv.pherd.Particle;
+import org.miv.pherd.ntree.BarycenterCellData;
+import org.miv.pherd.ntree.Cell;
+import org.miv.pherd.ntree.CellData;
+import org.miv.pherd.ntree.NTreeListener;
+
+/**
+ * A N-Tree cell data that both compute the barycenter of each cell (aggregate
+ * position), the aggregate weight of each cell (sum of all of the cell node
+ * weights) and the aggregate degree of each cell (sum of all of the cell node
+ * degree).
+ */
+<span class="nc" id="L49">public class GraphCellData extends BarycenterCellData {</span>
+	/**
+	 * Aggregate degree. The sum of the degrees of each node aggregated in this
+	 * barycenter.
+	 */
+	public double degree;
+
+	/**
+	 * Aggregate degree. The sum of the degrees of each node aggregated in this
+	 * barycenter.
+	 */
+	public double getDegree() {
+<span class="nc" id="L61">		return degree;</span>
+	}
+
+	@Override
+	public CellData newCellData() {
+<span class="nc" id="L66">		return new GraphCellData();</span>
+	}
+
+	@Override
+	public void recompute() {
+<span class="nc" id="L71">		double x = 0;</span>
+<span class="nc" id="L72">		double y = 0;</span>
+<span class="nc" id="L73">		double z = 0;</span>
+<span class="nc" id="L74">		double n = 0;</span>
+
+<span class="nc" id="L76">		weight = 0;</span>
+<span class="nc" id="L77">		degree = 0;</span>
+
+<span class="nc bnc" id="L79" title="All 2 branches missed.">		if (cell.isLeaf()) {</span>
+<span class="nc" id="L80">			Iterator&lt;? extends Particle&gt; particles = cell.getParticles();</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">			while (particles.hasNext()) {</span>
+<span class="nc" id="L83">				NodeParticle particle = (NodeParticle) particles.next();</span>
+
+<span class="nc" id="L85">				x += particle.getPosition().x;</span>
+<span class="nc" id="L86">				y += particle.getPosition().y;</span>
+<span class="nc" id="L87">				z += particle.getPosition().z;</span>
+
+<span class="nc" id="L89">				weight += particle.getWeight();</span>
+<span class="nc" id="L90">				degree += particle.getEdges().size();</span>
+
+<span class="nc" id="L92">				n++;</span>
+			}
+
+<span class="nc bnc" id="L95" title="All 2 branches missed.">			if (n &gt; 0) {</span>
+<span class="nc" id="L96">				x /= n;</span>
+<span class="nc" id="L97">				y /= n;</span>
+<span class="nc" id="L98">				z /= n;</span>
+			}
+
+<span class="nc" id="L101">			center.set(x, y, z);</span>
+<span class="nc" id="L102">		} else {</span>
+<span class="nc" id="L103">			double subcnt = cell.getSpace().getDivisions();</span>
+<span class="nc" id="L104">			double totpop = cell.getPopulation();</span>
+<span class="nc" id="L105">			int verif = 0;</span>
+
+<span class="nc bnc" id="L107" title="All 2 branches missed.">			if (totpop &gt; 0) {</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">				for (int i = 0; i &lt; subcnt; ++i) {</span>
+<span class="nc" id="L109">					Cell subcell = cell.getSub(i);</span>
+<span class="nc" id="L110">					GraphCellData data = (GraphCellData) subcell.getData();</span>
+<span class="nc" id="L111">					double pop = subcell.getPopulation();</span>
+
+<span class="nc" id="L113">					verif += pop;</span>
+
+<span class="nc" id="L115">					x += data.center.x * pop;</span>
+<span class="nc" id="L116">					y += data.center.y * pop;</span>
+<span class="nc" id="L117">					z += data.center.z * pop;</span>
+
+<span class="nc" id="L119">					weight += data.weight;</span>
+<span class="nc" id="L120">					degree += data.degree;</span>
+				}
+
+<span class="nc bnc" id="L123" title="All 2 branches missed.">				assert verif == totpop : &quot;Discrepancy in population counts ?&quot;;</span>
+
+<span class="nc" id="L125">				x /= totpop;</span>
+<span class="nc" id="L126">				y /= totpop;</span>
+<span class="nc" id="L127">				z /= totpop;</span>
+			}
+
+<span class="nc" id="L130">			center.set(x, y, z);</span>
+		}
+
+<span class="nc bnc" id="L133" title="All 2 branches missed.">		for (NTreeListener listener : cell.getTree().getListeners()) {</span>
+<span class="nc" id="L134">			listener.cellData(cell.getId(), &quot;barycenter&quot;, this);</span>
+		}
+<span class="nc" id="L136">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Vector2.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.geom</a> &gt; <span class="el_source">Vector2.java</span></div><h1>Vector2.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-12-22
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Richard O. Legendi &lt;richard.legendi@gmail.com&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.geom;
+
+import java.util.Arrays;
+
+public class Vector2 implements java.io.Serializable {
+	// Attributes
+
+	private static final long serialVersionUID = 8839258036865851454L;
+
+	/**
+	 * Sequence of 3 coefficients.
+	 */
+	public double data[];
+
+	// Constructors
+
+	/**
+	 * New zero vector.
+	 */
+<span class="nc" id="L55">	public Vector2() {</span>
+<span class="nc" id="L56">		data = new double[2];</span>
+<span class="nc" id="L57">		data[0] = 0;</span>
+<span class="nc" id="L58">		data[1] = 0;</span>
+<span class="nc" id="L59">	}</span>
+
+	/**
+	 * New (&lt;code&gt;x&lt;/code&gt;,&lt;code&gt;y&lt;/code&gt;) vector.
+	 */
+<span class="nc" id="L64">	public Vector2(double x, double y) {</span>
+<span class="nc" id="L65">		data = new double[2];</span>
+<span class="nc" id="L66">		data[0] = x;</span>
+<span class="nc" id="L67">		data[1] = y;</span>
+<span class="nc" id="L68">	}</span>
+
+	/**
+	 * New vector copy of &lt;code&gt;other&lt;/code&gt;.
+	 */
+<span class="nc" id="L73">	public Vector2(Vector2 other) {</span>
+<span class="nc" id="L74">		data = new double[2];</span>
+<span class="nc" id="L75">		copy(other);</span>
+<span class="nc" id="L76">	}</span>
+
+	/**
+	 * New vector copy of &lt;code&gt;point&lt;/code&gt;.
+	 */
+<span class="nc" id="L81">	public Vector2(Point2 point) {</span>
+<span class="nc" id="L82">		data = new double[2];</span>
+<span class="nc" id="L83">		copy(point);</span>
+<span class="nc" id="L84">	}</span>
+
+<span class="nc" id="L86">	public Vector2(Point2 from, Point2 to) {</span>
+<span class="nc" id="L87">		data = new double[2];</span>
+<span class="nc" id="L88">		data[0] = to.x - from.x;</span>
+<span class="nc" id="L89">		data[1] = to.y - from.y;</span>
+<span class="nc" id="L90">	}</span>
+
+	// Predicates
+
+	/**
+	 * Are all components to zero?.
+	 */
+	public boolean isZero() {
+<span class="nc bnc" id="L98" title="All 4 branches missed.">		return (data[0] == 0 &amp;&amp; data[1] == 0);</span>
+	}
+
+	/**
+	 * Is this equal to other ?
+	 */
+	@Override
+	public boolean equals(Object other) {
+		Vector2 v;
+
+<span class="nc bnc" id="L108" title="All 2 branches missed.">		if (!(other instanceof Vector2)) {</span>
+<span class="nc" id="L109">			return false;</span>
+		}
+
+<span class="nc" id="L112">		v = (Vector2) other;</span>
+
+<span class="nc bnc" id="L114" title="All 4 branches missed.">		return (data[0] == v.data[0] &amp;&amp; data[1] == v.data[1]);</span>
+	}
+
+	/**
+	 * Is i the index of a component ?
+	 * 
+	 * In other words, is i &amp;gt;= 0 &amp;amp;&amp;amp; &amp;lt; than #count() ?
+	 */
+	public boolean validComponent(int i) {
+<span class="nc bnc" id="L123" title="All 4 branches missed.">		return (i &gt;= 0 &amp;&amp; i &lt; 2);</span>
+	}
+
+	// Accessors:
+
+	/**
+	 * i-th element.
+	 */
+	public double at(int i) {
+<span class="nc" id="L132">		return data[i];</span>
+	}
+
+	public double x() {
+<span class="nc" id="L136">		return data[0];</span>
+	}
+
+	public double y() {
+<span class="nc" id="L140">		return data[1];</span>
+	}
+
+	@Override
+	public Object clone() {
+<span class="nc" id="L145">		return new Vector2(this);</span>
+	}
+
+	// Accessors
+
+	public double dotProduct(double ox, double oy) {
+<span class="nc" id="L151">		return ((data[0] * ox) + (data[1] * oy));</span>
+	}
+
+	/**
+	 * Dot product of this and other.
+	 */
+	public double dotProduct(Vector2 other) {
+<span class="nc" id="L158">		return ((data[0] * other.data[0]) + (data[1] * other.data[1]));</span>
+	}
+
+	/**
+	 * Cartesian length.
+	 */
+	public double length() {
+<span class="nc" id="L165">		return Math.sqrt((data[0] * data[0]) + (data[1] * data[1]));</span>
+	}
+
+	// Commands
+
+	/**
+	 * Assign value to all elements.
+	 */
+	public void fill(double value) {
+<span class="nc" id="L174">		data[0] = data[1] = value;</span>
+<span class="nc" id="L175">	}</span>
+
+	/**
+	 * Explicitly set the i-th component to value.
+	 */
+	public void set(int i, double value) {
+<span class="nc" id="L181">		data[i] = value;</span>
+<span class="nc" id="L182">	}</span>
+
+	/**
+	 * Explicitly set the three components.
+	 */
+	public void set(double x, double y) {
+<span class="nc" id="L188">		data[0] = x;</span>
+<span class="nc" id="L189">		data[1] = y;</span>
+<span class="nc" id="L190">	}</span>
+
+	/**
+	 * Add each element of other to the corresponding element of this.
+	 */
+	public void add(Vector2 other) {
+<span class="nc" id="L196">		data[0] += other.data[0];</span>
+<span class="nc" id="L197">		data[1] += other.data[1];</span>
+<span class="nc" id="L198">	}</span>
+
+	/**
+	 * Subtract each element of other to the corresponding element of this.
+	 */
+	public void sub(Vector2 other) {
+<span class="nc" id="L204">		data[0] -= other.data[0];</span>
+<span class="nc" id="L205">		data[1] -= other.data[1];</span>
+<span class="nc" id="L206">	}</span>
+
+	/**
+	 * Multiply each element of this by the corresponding element of other.
+	 */
+	public void mult(Vector2 other) {
+<span class="nc" id="L212">		data[0] *= other.data[0];</span>
+<span class="nc" id="L213">		data[1] *= other.data[1];</span>
+<span class="nc" id="L214">	}</span>
+
+	/**
+	 * Add value to each element.
+	 */
+	public void scalarAdd(double value) {
+<span class="nc" id="L220">		data[0] += value;</span>
+<span class="nc" id="L221">		data[1] += value;</span>
+<span class="nc" id="L222">	}</span>
+
+	/**
+	 * Substract value to each element.
+	 */
+	public void scalarSub(double value) {
+<span class="nc" id="L228">		data[0] -= value;</span>
+<span class="nc" id="L229">		data[1] -= value;</span>
+<span class="nc" id="L230">	}</span>
+
+	/**
+	 * Multiply each element by value.
+	 */
+	public void scalarMult(double value) {
+<span class="nc" id="L236">		data[0] *= value;</span>
+<span class="nc" id="L237">		data[1] *= value;</span>
+<span class="nc" id="L238">	}</span>
+
+	/**
+	 * Divide each element by value.
+	 */
+	public void scalarDiv(double value) {
+<span class="nc" id="L244">		data[0] /= value;</span>
+<span class="nc" id="L245">		data[1] /= value;</span>
+<span class="nc" id="L246">	}</span>
+
+	/**
+	 * Transform this into an unit vector.
+	 * 
+	 * @return the vector length.
+	 */
+	public double normalize() {
+<span class="nc" id="L254">		double len = length();</span>
+
+<span class="nc bnc" id="L256" title="All 2 branches missed.">		if (len != 0) {</span>
+<span class="nc" id="L257">			data[0] /= len;</span>
+<span class="nc" id="L258">			data[1] /= len;</span>
+		}
+
+<span class="nc" id="L261">		return len;</span>
+	}
+
+	// Utility
+
+	/**
+	 * Make this a copy of other.
+	 */
+	public void copy(Vector2 other) {
+<span class="nc" id="L270">		data[0] = other.data[0];</span>
+<span class="nc" id="L271">		data[1] = other.data[1];</span>
+<span class="nc" id="L272">	}</span>
+
+	/**
+	 * Make this a copy of &lt;code&gt;point&lt;/code&gt;.
+	 */
+	public void copy(Point2 point) {
+<span class="nc" id="L278">		data[0] = point.x;</span>
+<span class="nc" id="L279">		data[1] = point.y;</span>
+<span class="nc" id="L280">	}</span>
+
+	// Misc.
+
+	@Override
+	public String toString() {
+<span class="nc" id="L286">		StringBuffer sb = new StringBuffer(&quot;[&quot;);</span>
+
+<span class="nc" id="L288">		sb.append(data[0]);</span>
+<span class="nc" id="L289">		sb.append('|');</span>
+<span class="nc" id="L290">		sb.append(data[1]);</span>
+<span class="nc" id="L291">		sb.append(']');</span>
+
+<span class="nc" id="L293">		return sb.toString();</span>
+	}
+
+	@Override
+	public int hashCode() {
+<span class="nc bnc" id="L298" title="All 2 branches missed.">		return data != null ? Arrays.hashCode(data) : 0;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

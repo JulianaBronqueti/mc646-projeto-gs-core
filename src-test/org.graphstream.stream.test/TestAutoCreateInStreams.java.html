@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestAutoCreateInStreams.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.test</a> &gt; <span class="el_source">TestAutoCreateInStreams.java</span></div><h1>TestAutoCreateInStreams.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2015-10-15
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.test;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.SinkAdapter;
+import org.graphstream.stream.file.FileSource;
+import org.graphstream.stream.file.FileSourceDGS;
+import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.util.LinkedList;
+
+import static org.junit.Assert.assertEquals;
+
+/**
+ * Test the ability of Graphs to insert events in between actual streams. Two
+ * cases are envisioned. First, while autocreate mode is activated, when an Add
+ * Edge event is created with non existing nodes, the forwarded stream of events
+ * must include Add Node events prior to the Add Edge Event. Second, when a node
+ * is removed, Graphs should generate and stream Edge Remove events for all
+ * edges connected to the node to be removed.
+ */
+<span class="nc" id="L57">public class TestAutoCreateInStreams {</span>
+
+	@Test
+	public void testAutoCreate() {
+<span class="nc" id="L61">		Graph g = new AdjacencyListGraph(&quot;ok&quot;, false, true);</span>
+
+<span class="nc" id="L63">		final LinkedList&lt;String&gt; an = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L64">		final String[] expectedAn = { &quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;, &quot;e&quot; };</span>
+
+<span class="nc" id="L66">		Sink sink = new SinkAdapter() {</span>
+			@Override
+			public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L69">				an.add(nodeId);</span>
+<span class="nc" id="L70">			}</span>
+		};
+<span class="nc" id="L72">		g.addSink(sink);</span>
+
+		// event from the constructivist API
+<span class="nc" id="L75">		g.addEdge(&quot;ab&quot;, &quot;a&quot;, &quot;b&quot;);</span>
+
+		// events from a pipe
+<span class="nc" id="L78">		FileSource fs = new FileSourceDGS();</span>
+		try {
+<span class="nc" id="L80">			fs.begin(new ByteArrayInputStream(&quot;DGS004\n0 0\nae bc b c\nae ac a c&quot;.getBytes()));</span>
+<span class="nc" id="L81">		} catch (IOException e) {</span>
+<span class="nc" id="L82">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L84">		fs.addSink(g);</span>
+		try {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">			while (fs.nextEvents())</span>
+				;
+<span class="nc" id="L88">		} catch (IOException e) {</span>
+<span class="nc" id="L89">			e.printStackTrace();</span>
+		}
+
+		// events from another pipe
+<span class="nc" id="L93">		fs = new FileSourceDGS();</span>
+		try {
+<span class="nc" id="L95">			fs.begin(new ByteArrayInputStream(&quot;DGS004\n0 0\nae dc d c\nae de d e&quot;.getBytes()));</span>
+<span class="nc" id="L96">		} catch (IOException e) {</span>
+<span class="nc" id="L97">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L99">		fs.addSink(g);</span>
+		try {
+<span class="nc bnc" id="L101" title="All 2 branches missed.">			while (fs.nextEvents())</span>
+				;
+<span class="nc" id="L103">		} catch (IOException e) {</span>
+<span class="nc" id="L104">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L107">		assertEquals(expectedAn.length, an.size());</span>
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">		for (String nId : expectedAn) {</span>
+<span class="nc" id="L110">			assertEquals(nId, an.remove(0));</span>
+		}
+<span class="nc" id="L112">	}</span>
+
+	@Test
+	public void testAutoRemove() {
+<span class="nc" id="L116">		Graph g = new AdjacencyListGraph(&quot;ok&quot;);</span>
+
+<span class="nc" id="L118">		final LinkedList&lt;String&gt; de = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L119">		final String[] expectedDe = { &quot;ab&quot;, &quot;ca&quot;, &quot;bc&quot; };</span>
+
+<span class="nc" id="L121">		Sink sink = new SinkAdapter() {</span>
+			@Override
+			public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L124">				de.add(edgeId);</span>
+<span class="nc" id="L125">			}</span>
+		};
+<span class="nc" id="L127">		g.addSink(sink);</span>
+
+<span class="nc" id="L129">		g.addNode(&quot;a&quot;);</span>
+<span class="nc" id="L130">		g.addNode(&quot;b&quot;);</span>
+<span class="nc" id="L131">		g.addNode(&quot;c&quot;);</span>
+
+<span class="nc" id="L133">		g.addEdge(&quot;ab&quot;, &quot;a&quot;, &quot;b&quot;);</span>
+<span class="nc" id="L134">		g.addEdge(&quot;bc&quot;, &quot;b&quot;, &quot;c&quot;);</span>
+<span class="nc" id="L135">		g.addEdge(&quot;ca&quot;, &quot;c&quot;, &quot;a&quot;);</span>
+
+		// event from the constructivist API
+<span class="nc" id="L138">		g.removeNode(&quot;a&quot;);</span>
+
+		// events from a pipe
+<span class="nc" id="L141">		FileSource fs = new FileSourceDGS();</span>
+		try {
+<span class="nc" id="L143">			fs.begin(new ByteArrayInputStream(&quot;DGS004\n0 0\ndn b&quot;.getBytes()));</span>
+<span class="nc" id="L144">		} catch (IOException e) {</span>
+<span class="nc" id="L145">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L147">		fs.addSink(g);</span>
+		try {
+<span class="nc bnc" id="L149" title="All 2 branches missed.">			while (fs.nextEvents())</span>
+				;
+<span class="nc" id="L151">		} catch (IOException e) {</span>
+<span class="nc" id="L152">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L155">		assertEquals(expectedDe.length, de.size());</span>
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">		for (String eId : expectedDe) {</span>
+<span class="nc" id="L158">			assertEquals(eId, de.remove(0));</span>
+		}
+<span class="nc" id="L160">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

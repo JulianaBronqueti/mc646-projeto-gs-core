@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LinLogNodeParticle.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.layout.springbox.implementations</a> &gt; <span class="el_source">LinLogNodeParticle.java</span></div><h1>LinLogNodeParticle.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2012-06-19
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.layout.springbox.implementations;
+
+import java.util.Iterator;
+
+import org.graphstream.ui.geom.Vector3;
+import org.graphstream.ui.layout.springbox.EdgeSpring;
+import org.graphstream.ui.layout.springbox.Energies;
+import org.graphstream.ui.layout.springbox.GraphCellData;
+import org.graphstream.ui.layout.springbox.NodeParticle;
+import org.miv.pherd.Particle;
+import org.miv.pherd.ParticleBox;
+import org.miv.pherd.ntree.Cell;
+
+public class LinLogNodeParticle extends NodeParticle {
+	/**
+	 * New node.
+	 * 
+	 * The node is placed at random in the space of the simulation.
+	 * 
+	 * @param box
+	 *            The spring box.
+	 * @param id
+	 *            The node identifier.
+	 */
+	public LinLogNodeParticle(LinLog box, String id) {
+<span class="nc" id="L59">		this(box, id, (box.getRandom().nextDouble() * 2 * box.k) - box.k,</span>
+<span class="nc" id="L60">				(box.getRandom().nextDouble() * 2 * box.k) - box.k,</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">				box.is3D() ? (box.getRandom().nextDouble() * 2 * box.k) - box.k : 0);</span>
+
+<span class="nc" id="L63">		this.box = box;</span>
+<span class="nc" id="L64">	}</span>
+
+	/**
+	 * New node at a given position.
+	 * 
+	 * @param box
+	 *            The spring box.
+	 * @param id
+	 *            The node identifier.
+	 * @param x
+	 *            The abscissa.
+	 * @param y
+	 *            The ordinate.
+	 * @param z
+	 *            The depth.
+	 */
+	public LinLogNodeParticle(LinLog box, String id, double x, double y, double z) {
+<span class="nc" id="L81">		super(box, id, x, y, z);</span>
+<span class="nc" id="L82">	}</span>
+
+	@Override
+	protected void repulsionN2(Vector3 delta) {
+<span class="nc" id="L86">		LinLog box = (LinLog) this.box;</span>
+<span class="nc" id="L87">		boolean is3D = box.is3D();</span>
+<span class="nc" id="L88">		ParticleBox nodes = box.getSpatialIndex();</span>
+<span class="nc" id="L89">		Energies energies = box.getEnergies();</span>
+<span class="nc" id="L90">		Iterator&lt;Object&gt; i = nodes.getParticleIdIterator();</span>
+<span class="nc" id="L91">		int deg = neighbours.size();</span>
+
+<span class="nc bnc" id="L93" title="All 2 branches missed.">		while (i.hasNext()) {</span>
+<span class="nc" id="L94">			LinLogNodeParticle node = (LinLogNodeParticle) nodes.getParticle(i.next());</span>
+
+<span class="nc bnc" id="L96" title="All 2 branches missed.">			if (node != this) {</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">				delta.set(node.pos.x - pos.x, node.pos.y - pos.y, is3D ? node.pos.z - pos.z : 0);</span>
+
+				// double len = delta.normalize();
+<span class="nc" id="L100">				double len = delta.length();</span>
+
+<span class="nc bnc" id="L102" title="All 2 branches missed.">				if (len &gt; 0) {</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">					double degFactor = box.edgeBased ? deg * node.neighbours.size() : 1;</span>
+<span class="nc" id="L104">					double factor = 1;</span>
+<span class="nc" id="L105">					double r = box.r;</span>
+
+<span class="nc" id="L107">					factor = -degFactor * (Math.pow(len, r - 2)) * node.weight * weight * box.rFactor;</span>
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">					if (factor &lt; -box.maxR) {</span>
+<span class="nc" id="L110">						factor = -box.maxR;</span>
+					}
+
+<span class="nc" id="L113">					energies.accumulateEnergy(factor); // TODO check this</span>
+<span class="nc" id="L114">					delta.scalarMult(factor);</span>
+<span class="nc" id="L115">					disp.add(delta);</span>
+<span class="nc" id="L116">					repE += factor;</span>
+				}
+			}
+		}
+<span class="nc" id="L120">	}</span>
+
+	@Override
+	protected void repulsionNLogN(Vector3 delta) {
+		// Explore the n-tree from the root cell and consider the contents
+		// of one cell only if it does intersect an area around the current
+		// node. Else take its (weighted) barycenter into account.
+
+<span class="nc" id="L128">		recurseRepulsion(box.getSpatialIndex().getNTree().getRootCell(), delta);</span>
+<span class="nc" id="L129">	}</span>
+
+	protected void recurseRepulsion(Cell cell, Vector3 delta) {
+<span class="nc" id="L132">		LinLog box = (LinLog) this.box;</span>
+<span class="nc" id="L133">		boolean is3D = box.is3D();</span>
+<span class="nc" id="L134">		Energies energies = box.getEnergies();</span>
+<span class="nc" id="L135">		int deg = neighbours.size();</span>
+
+<span class="nc bnc" id="L137" title="All 2 branches missed.">		if (intersection(cell)) {</span>
+<span class="nc bnc" id="L138" title="All 2 branches missed.">			if (cell.isLeaf()) {</span>
+<span class="nc" id="L139">				Iterator&lt;? extends Particle&gt; i = cell.getParticles();</span>
+
+<span class="nc bnc" id="L141" title="All 2 branches missed.">				while (i.hasNext()) {</span>
+<span class="nc" id="L142">					LinLogNodeParticle node = (LinLogNodeParticle) i.next();</span>
+
+<span class="nc bnc" id="L144" title="All 2 branches missed.">					if (node != this) {</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">						delta.set(node.pos.x - pos.x, node.pos.y - pos.y, is3D ? node.pos.z - pos.z : 0);</span>
+
+						// double len = delta.normalize();
+<span class="nc" id="L148">						double len = delta.length();</span>
+
+<span class="nc bnc" id="L150" title="All 2 branches missed.">						if (len &gt; 0) {</span>
+<span class="nc bnc" id="L151" title="All 2 branches missed.">							double degFactor = box.edgeBased ? deg * node.neighbours.size() : 1;</span>
+<span class="nc" id="L152">							double factor = 1;</span>
+<span class="nc" id="L153">							double r = box.r;</span>
+
+<span class="nc" id="L155">							factor = -degFactor * (Math.pow(len, r - 2)) * node.weight * weight * box.rFactor;</span>
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">							if (factor &lt; -box.maxR) {</span>
+<span class="nc" id="L158">								factor = -box.maxR;</span>
+							}
+
+<span class="nc" id="L161">							energies.accumulateEnergy(factor); // TODO check this</span>
+<span class="nc" id="L162">							delta.scalarMult(factor);</span>
+<span class="nc" id="L163">							disp.add(delta);</span>
+<span class="nc" id="L164">							repE += factor;</span>
+						}
+					}
+				}
+<span class="nc" id="L168">			} else {</span>
+<span class="nc" id="L169">				int div = cell.getSpace().getDivisions();</span>
+
+<span class="nc bnc" id="L171" title="All 2 branches missed.">				for (int i = 0; i &lt; div; i++)</span>
+<span class="nc" id="L172">					recurseRepulsion(cell.getSub(i), delta);</span>
+			}
+<span class="nc" id="L174">		} else {</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">			if (cell != this.cell) {</span>
+<span class="nc" id="L176">				GraphCellData bary = (GraphCellData) cell.getData();</span>
+<span class="nc" id="L177">				double dist = bary.distanceFrom(pos);</span>
+<span class="nc" id="L178">				double size = cell.getSpace().getSize();</span>
+
+<span class="nc bnc" id="L180" title="All 4 branches missed.">				if ((!cell.isLeaf()) &amp;&amp; ((size / dist) &gt; box.getBarnesHutTheta())) {</span>
+<span class="nc" id="L181">					int div = cell.getSpace().getDivisions();</span>
+
+<span class="nc bnc" id="L183" title="All 2 branches missed.">					for (int i = 0; i &lt; div; i++)</span>
+<span class="nc" id="L184">						recurseRepulsion(cell.getSub(i), delta);</span>
+<span class="nc" id="L185">				} else {</span>
+<span class="nc bnc" id="L186" title="All 2 branches missed.">					if (bary.weight != 0) {</span>
+<span class="nc bnc" id="L187" title="All 2 branches missed.">						delta.set(bary.center.x - pos.x, bary.center.y - pos.y, is3D ? bary.center.z - pos.z : 0);</span>
+
+						// double len = delta.normalize();
+<span class="nc" id="L190">						double len = delta.length();</span>
+
+<span class="nc bnc" id="L192" title="All 2 branches missed.">						if (len &gt; 0) {</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">							double degFactor = box.edgeBased ? deg * bary.degree : 1;</span>
+<span class="nc" id="L194">							double factor = 1;</span>
+<span class="nc" id="L195">							double r = box.r;</span>
+
+<span class="nc" id="L197">							factor = -degFactor * (Math.pow(len, r - 2)) * bary.weight * weight * box.rFactor;</span>
+
+<span class="nc bnc" id="L199" title="All 2 branches missed.">							if (factor &lt; -box.maxR) {</span>
+<span class="nc" id="L200">								factor = -box.maxR;</span>
+							}
+
+<span class="nc" id="L203">							energies.accumulateEnergy(factor); // TODO check this</span>
+<span class="nc" id="L204">							delta.scalarMult(factor);</span>
+<span class="nc" id="L205">							disp.add(delta);</span>
+<span class="nc" id="L206">							repE += factor;</span>
+						}
+					}
+				}
+			}
+		}
+<span class="nc" id="L212">	}</span>
+
+	@Override
+	protected void attraction(Vector3 delta) {
+<span class="nc" id="L216">		LinLog box = (LinLog) this.box;</span>
+<span class="nc" id="L217">		boolean is3D = box.is3D();</span>
+<span class="nc" id="L218">		Energies energies = box.getEnergies();</span>
+
+<span class="nc bnc" id="L220" title="All 2 branches missed.">		for (EdgeSpring edge : neighbours) {</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">			if (!edge.ignored) {</span>
+<span class="nc" id="L222">				LinLogNodeParticle other = (LinLogNodeParticle) edge.getOpposite(this);</span>
+
+<span class="nc bnc" id="L224" title="All 2 branches missed.">				delta.set(other.pos.x - pos.x, other.pos.y - pos.y, is3D ? other.pos.z - pos.z : 0);</span>
+
+				// double len = delta.normalize();
+<span class="nc" id="L227">				double len = delta.length();</span>
+
+<span class="nc bnc" id="L229" title="All 2 branches missed.">				if (len &gt; 0) {</span>
+<span class="nc" id="L230">					double factor = 1;</span>
+<span class="nc" id="L231">					double a = box.a;</span>
+
+<span class="nc" id="L233">					factor = (Math.pow(len, a - 2)) * edge.weight * box.aFactor;</span>
+
+<span class="nc" id="L235">					energies.accumulateEnergy(factor);</span>
+<span class="nc" id="L236">					delta.scalarMult(factor);</span>
+<span class="nc" id="L237">					disp.add(delta);</span>
+<span class="nc" id="L238">					attE += factor;</span>
+				}
+			}
+		}
+<span class="nc" id="L242">	}</span>
+
+	@Override
+	protected void gravity(Vector3 delta) {
+<span class="nc" id="L246">	}</span>
+
+	protected boolean intersection(Cell cell) {
+<span class="nc" id="L249">		LinLog box = (LinLog) this.box;</span>
+
+<span class="nc" id="L251">		double k = box.k;</span>
+<span class="nc" id="L252">		double vz = box.getViewZone();</span>
+
+<span class="nc" id="L254">		double x1 = cell.getSpace().getLoAnchor().x;</span>
+<span class="nc" id="L255">		double y1 = cell.getSpace().getLoAnchor().y;</span>
+<span class="nc" id="L256">		double z1 = cell.getSpace().getLoAnchor().z;</span>
+
+<span class="nc" id="L258">		double x2 = cell.getSpace().getHiAnchor().x;</span>
+<span class="nc" id="L259">		double y2 = cell.getSpace().getHiAnchor().y;</span>
+<span class="nc" id="L260">		double z2 = cell.getSpace().getHiAnchor().z;</span>
+
+<span class="nc" id="L262">		double X1 = pos.x - (k * vz);</span>
+<span class="nc" id="L263">		double Y1 = pos.y - (k * vz);</span>
+<span class="nc" id="L264">		double Z1 = pos.z - (k * vz);</span>
+<span class="nc" id="L265">		double X2 = pos.x + (k * vz);</span>
+<span class="nc" id="L266">		double Y2 = pos.y + (k * vz);</span>
+<span class="nc" id="L267">		double Z2 = pos.z + (k * vz);</span>
+
+<span class="nc bnc" id="L269" title="All 4 branches missed.">		if (X2 &lt; x1 || X1 &gt; x2)</span>
+<span class="nc" id="L270">			return false;</span>
+
+<span class="nc bnc" id="L272" title="All 4 branches missed.">		if (Y2 &lt; y1 || Y1 &gt; y2)</span>
+<span class="nc" id="L273">			return false;</span>
+
+<span class="nc bnc" id="L275" title="All 4 branches missed.">		if (Z2 &lt; z1 || Z1 &gt; z2)</span>
+<span class="nc" id="L276">			return false;</span>
+
+<span class="nc" id="L278">		return true;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

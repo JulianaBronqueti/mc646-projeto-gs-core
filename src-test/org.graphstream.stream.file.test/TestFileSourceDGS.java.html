@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestFileSourceDGS.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.test</a> &gt; <span class="el_source">TestFileSourceDGS.java</span></div><h1>TestFileSourceDGS.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-04-22
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.test;
+
+import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.stream.file.FileSourceDGS;
+import org.junit.*;
+
+/**
+ * Test the file input in DGS format.
+ */
+<span class="nc" id="L41">public class TestFileSourceDGS extends TestFileSourceBase {</span>
+	// Before
+
+	@Before
+	public void setUp() {
+<span class="nc" id="L46">		graph = new MultiGraph(&quot;g1&quot;);</span>
+<span class="nc" id="L47">		input = new FileSourceDGS();</span>
+<span class="nc" id="L48">	}</span>
+
+	// Test
+
+	@Override
+	public String anUndirectedTriangle() {
+<span class="nc" id="L54">		return TEST1_TRIANGLE;</span>
+	}
+
+<span class="nc" id="L57">	protected static String TEST1_TRIANGLE = &quot;DGS004\n&quot; + &quot;\&quot;test1\&quot; 0 0\n&quot; + &quot;an A\n&quot; + &quot;an B\n&quot; + &quot;an C\n&quot;</span>
+			+ &quot;ae AB A B\n&quot; + &quot;ae BC B C\n&quot; + &quot;ae CA C A\n&quot;;
+
+	@Override
+	public String aDirectedTriangle() {
+<span class="nc" id="L62">		return TEST2_DIRECTED_TRIANGLE;</span>
+	}
+
+<span class="nc" id="L65">	protected static String TEST2_DIRECTED_TRIANGLE = &quot;DGS004\n&quot; + &quot;\&quot;test2\&quot; 0 0\n&quot; + &quot;an A\n&quot; + &quot;an B\n&quot; + &quot;an C\n&quot;</span>
+			+ &quot;ae AB A &gt; B\n&quot; + &quot;ae BC B C\n&quot; + &quot;ae CA C &lt; A\n&quot;;
+
+	@Override
+	public String basicAttributes() {
+<span class="nc" id="L70">		return TEST3_ATTRIBUTES;</span>
+	}
+
+<span class="nc" id="L73">	protected static String TEST3_ATTRIBUTES = &quot;DGS004\n&quot; + &quot;\&quot;test3\&quot; 0 0\n&quot; + &quot;an A a:1 b:\&quot;truc\&quot; c:\&quot;true\&quot;\n&quot;</span>
+<span class="nc" id="L74">			+ &quot;an B aa:1,2,3,4 bb:foo cc:bar\n&quot; + &quot;an C aaa=1.234\n&quot; + &quot;ae AB A B\n&quot; + &quot;ae BC B C\n&quot; + &quot;ae CA C A\n&quot;;</span>
+
+	@Override
+	public String anUndirectedTriangleFileName() {
+<span class="nc" id="L78">		return &quot;src-test/org/graphstream/stream/file/test/data/undirectedTriangle.dgs&quot;;</span>
+	}
+
+	@Override
+	public String anUndirectedTriangleHttpURL() {
+<span class="nc" id="L83">		return &quot;http://graphstream-project.org/media/data/undirectedTriangle.dgs&quot;;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

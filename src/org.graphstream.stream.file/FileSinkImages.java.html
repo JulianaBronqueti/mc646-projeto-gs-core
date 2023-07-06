@@ -1,0 +1,1255 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkImages.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkImages.java</span></div><h1>FileSinkImages.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ *
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ *
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ *
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @since 2010-07-23
+ */
+package org.graphstream.stream.file;
+
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import javax.imageio.ImageIO;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.stream.GraphReplay;
+import org.graphstream.stream.ProxyPipe;
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.file.images.*;
+import org.graphstream.stream.file.images.filters.AddLogoFilter;
+import org.graphstream.stream.thread.ThreadProxyPipe;
+import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.graphicGraph.GraphicGraph;
+import org.graphstream.ui.layout.Layout;
+import org.graphstream.ui.layout.LayoutRunner;
+import org.graphstream.ui.layout.Layouts;
+import org.graphstream.ui.view.camera.Camera;
+import org.graphstream.util.Display;
+import org.graphstream.util.MissingDisplayException;
+
+/**
+ * Output graph in image files.
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * Given a prefix &quot;dir/prefix_&quot; and an output policy, this sink will output
+ * graph in an image file which name is prefix + a growing counter.
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ * Then images can be processed to produce a movie. For example, with mencoder,
+ * the following produce high quality movie :
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ * &lt;pre&gt;
+ *
+ * #!/bin/bash
+ *
+ * EXT=png
+ * BITRATE=2M
+ * FPS=15
+ * PREFIX=$1
+ * OUTPUT=$2
+ *
+ * ffmpeg -framerate $FPS -i &quot;$PREFIX%06d.$EXT&quot; -b:v $BITRATE -r $FPS -an $OUTPUT
+ *
+ * &lt;/pre&gt;
+ */
+public abstract class FileSinkImages implements FileSink {
+	/**
+	 * Create a FileSinkImages object according to the UI module specified in &quot;org.graphstream.ui&quot; property.
+	 * If no valid module has been set null will be returned.
+	 *
+	 * @return an implementation of FileSinkImages using the current UI module
+	 */
+	public static FileSinkImages createDefault() {
+		try {
+<span class="nc" id="L103">			Display display = Display.getDefault();</span>
+
+<span class="nc bnc" id="L105" title="All 2 branches missed.">			if (display instanceof FileSinkImagesFactory) {</span>
+<span class="nc" id="L106">				return ((FileSinkImagesFactory) display).createFileSinkImages();</span>
+			} else {
+<span class="nc" id="L108">				LOGGER.warning(&quot;Default UI module does not provide a FileSinkImages implementation&quot;);</span>
+			}
+<span class="nc" id="L110">		} catch (MissingDisplayException e) {</span>
+<span class="nc" id="L111">			LOGGER.warning(&quot;No valid UI module specified in \&quot;org.graphstream.ui\&quot; system property&quot;);</span>
+		}
+
+<span class="nc" id="L114">		return null;</span>
+	}
+
+	/**
+	 * Output image type.
+	 */
+<span class="nc" id="L120">	public static enum OutputType {</span>
+<span class="nc" id="L121">		PNG(BufferedImage.TYPE_INT_ARGB, &quot;png&quot;), JPG(BufferedImage.TYPE_INT_RGB, &quot;jpg&quot;), png(</span>
+<span class="nc" id="L122">				BufferedImage.TYPE_INT_ARGB, &quot;png&quot;), jpg(BufferedImage.TYPE_INT_RGB, &quot;jpg&quot;);</span>
+
+		public final int imageType;
+		public final String ext;
+
+<span class="nc" id="L127">		OutputType(int imageType, String ext) {</span>
+<span class="nc" id="L128">			this.imageType = imageType;</span>
+<span class="nc" id="L129">			this.ext = ext;</span>
+<span class="nc" id="L130">		}</span>
+	}
+
+	/**
+	 * Output policy. Specify when an image is written. This is an important choice.
+	 * Best choice is to divide the graph in steps and choose the *ByStepOutput*.
+	 * Remember that if your graph has x nodes and *ByEventOutput* or
+	 * *ByNodeEventOutput* is chosen, this will produce x images just for nodes
+	 * creation.
+	 */
+<span class="nc" id="L140">	public static enum OutputPolicy {</span>
+<span class="nc" id="L141">		BY_EVENT, BY_ELEMENT_EVENT, BY_ATTRIBUTE_EVENT, BY_NODE_EVENT, BY_EDGE_EVENT, BY_GRAPH_EVENT, BY_STEP, BY_NODE_ADDED_REMOVED, BY_EDGE_ADDED_REMOVED, BY_NODE_ATTRIBUTE, BY_EDGE_ATTRIBUTE, BY_GRAPH_ATTRIBUTE, BY_LAYOUT_STEP, BY_NODE_MOVED, ON_RUNNER, NONE</span>
+	}
+
+	/**
+	 * Layout policy. Specify how layout is computed. It can be computed in its own
+	 * thread with a LayoutRunner but if image rendering takes too much time, node
+	 * positions will be very different between two images. To have a better result,
+	 * we can choose to compute layout when a new image is rendered. This will
+	 * smooth the move of nodes in the movie.
+	 */
+<span class="nc" id="L151">	public static enum LayoutPolicy {</span>
+<span class="nc" id="L152">		NO_LAYOUT, COMPUTED_IN_LAYOUT_RUNNER, COMPUTED_ONCE_AT_NEW_IMAGE, COMPUTED_FULLY_AT_NEW_IMAGE</span>
+	}
+
+	/**
+	 * Defines the quality of the rendering.
+	 * It uses &quot;ui.quality&quot; and &quot;ui.antialias&quot; graph attributes. If quality is set to low,
+	 * both attributes will be disabled. On medium quality, only &quot;ui.quality&quot; is enable,
+	 * and on high quality, both attributes are enabled.
+	 */
+<span class="nc" id="L161">	public static enum Quality {</span>
+<span class="nc" id="L162">		LOW, MEDIUM, HIGH</span>
+	}
+
+<span class="nc" id="L165">	private static final Logger LOGGER = Logger.getLogger(FileSinkImages.class.getName());</span>
+
+	protected Resolution resolution;
+	protected OutputType outputType;
+	protected String filePrefix;
+	protected final GraphicGraph gg;
+	protected Sink sink;
+	protected int counter;
+	protected OutputPolicy outputPolicy;
+	protected LinkedList&lt;Filter&gt; filters;
+	protected LayoutPolicy layoutPolicy;
+	protected LayoutRunner optLayout;
+	protected ProxyPipe layoutPipeIn;
+	protected Layout layout;
+<span class="nc" id="L179">	protected float layoutStabilizationLimit = 0.9f;</span>
+<span class="nc" id="L180">	protected int layoutStepAfterStabilization = 10;</span>
+<span class="nc" id="L181">	protected int layoutStepPerFrame = 4;</span>
+<span class="nc" id="L182">	protected int layoutStepWithoutFrame = 0;</span>
+<span class="nc" id="L183">	protected long outputRunnerDelay = 10;</span>
+<span class="nc" id="L184">	protected boolean outputRunnerAlive = false;</span>
+	protected OutputRunner outputRunner;
+	protected ThreadProxyPipe outputRunnerProxy;
+<span class="nc" id="L187">	protected boolean clearImageBeforeOutput = false;</span>
+<span class="nc" id="L188">	protected boolean hasBegun = false;</span>
+<span class="nc" id="L189">	protected boolean autofit = true;</span>
+<span class="nc" id="L190">	protected String styleSheet = null;</span>
+
+	protected FileSinkImages() {
+<span class="nc" id="L193">		this(OutputType.PNG, Resolutions.HD720);</span>
+<span class="nc" id="L194">	}</span>
+
+	protected FileSinkImages(OutputType type, Resolution resolution) {
+<span class="nc" id="L197">		this(type, resolution, OutputPolicy.NONE);</span>
+<span class="nc" id="L198">	}</span>
+
+<span class="nc" id="L200">	protected FileSinkImages(OutputType type, Resolution resolution, OutputPolicy outputPolicy) {</span>
+<span class="nc" id="L201">		this.resolution = resolution;</span>
+<span class="nc" id="L202">		this.outputType = type;</span>
+<span class="nc" id="L203">		this.filePrefix = &quot;frame_&quot;;</span>
+<span class="nc" id="L204">		this.counter = 0;</span>
+<span class="nc" id="L205">		this.gg = new GraphicGraph(String.format(&quot;images-%x&quot;, System.currentTimeMillis()));</span>
+<span class="nc" id="L206">		this.filters = new LinkedList&lt;Filter&gt;();</span>
+<span class="nc" id="L207">		this.layoutPolicy = LayoutPolicy.NO_LAYOUT;</span>
+<span class="nc" id="L208">		this.layout = null;</span>
+<span class="nc" id="L209">		this.optLayout = null;</span>
+<span class="nc" id="L210">		this.layoutPipeIn = null;</span>
+<span class="nc" id="L211">		this.sink = gg;</span>
+
+<span class="nc" id="L213">		setOutputPolicy(outputPolicy);</span>
+<span class="nc" id="L214">	}</span>
+
+	/**
+	 * Get the camera that controls view position and boundaries.
+	 *
+	 * @return a camera object, associated with the {@link org.graphstream.ui.view.GraphRenderer} use for rendering.
+	 */
+	protected abstract Camera getCamera();
+
+	/**
+	 * Render the graph.
+	 */
+	protected abstract void render();
+
+	/**
+	 * Get the image in which graph has been rendered.
+	 *
+	 * @return an image of the graph
+	 */
+	protected abstract BufferedImage getRenderedImage();
+
+	/**
+	 * Initialize the image data. This method is called at sink creation and each time there is a change
+	 * in image specifications (resolution, type).
+	 */
+	protected abstract void initImage();
+
+	/**
+	 * Clear the image. This will fill the image with the specified color.
+	 *
+	 * @param color color to fill the image with
+	 */
+	protected abstract void clearImage(int color);
+
+	/**
+	 * Enable high-quality rendering and anti-aliasing.
+	 */
+	public void setQuality(Quality q) {
+<span class="nc bnc" id="L252" title="All 4 branches missed.">		switch (q) {</span>
+		case LOW:
+<span class="nc bnc" id="L254" title="All 2 branches missed.">			if (gg.hasAttribute(&quot;ui.quality&quot;))</span>
+<span class="nc" id="L255">				gg.removeAttribute(&quot;ui.quality&quot;);</span>
+<span class="nc bnc" id="L256" title="All 2 branches missed.">			if (gg.hasAttribute(&quot;ui.antialias&quot;))</span>
+<span class="nc" id="L257">				gg.removeAttribute(&quot;ui.antialias&quot;);</span>
+
+<span class="nc" id="L259">			break;</span>
+		case MEDIUM:
+<span class="nc bnc" id="L261" title="All 2 branches missed.">			if (!gg.hasAttribute(&quot;ui.quality&quot;))</span>
+<span class="nc" id="L262">				gg.setAttribute(&quot;ui.quality&quot;);</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">			if (gg.hasAttribute(&quot;ui.antialias&quot;))</span>
+<span class="nc" id="L264">				gg.removeAttribute(&quot;ui.antialias&quot;);</span>
+
+<span class="nc" id="L266">			break;</span>
+		case HIGH:
+<span class="nc bnc" id="L268" title="All 2 branches missed.">			if (!gg.hasAttribute(&quot;ui.quality&quot;))</span>
+<span class="nc" id="L269">				gg.setAttribute(&quot;ui.quality&quot;);</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">			if (!gg.hasAttribute(&quot;ui.antialias&quot;))</span>
+<span class="nc" id="L271">				gg.setAttribute(&quot;ui.antialias&quot;);</span>
+
+			break;
+		}
+<span class="nc" id="L275">	}</span>
+
+	/**
+	 * Defines style of the graph as a css stylesheet.
+	 *
+	 * @param styleSheet the style sheet
+	 */
+	public void setStyleSheet(String styleSheet) {
+<span class="nc" id="L283">		this.styleSheet = styleSheet;</span>
+<span class="nc" id="L284">		gg.setAttribute(&quot;ui.stylesheet&quot;, styleSheet);</span>
+<span class="nc" id="L285">	}</span>
+
+	/**
+	 * Set resolution of images.
+	 *
+	 * @param r resolution
+	 */
+	public void setResolution(Resolution r) {
+<span class="nc bnc" id="L293" title="All 2 branches missed.">		if (r != resolution) {</span>
+<span class="nc" id="L294">			resolution = r;</span>
+<span class="nc" id="L295">			initImage();</span>
+		}
+<span class="nc" id="L297">	}</span>
+
+	/**
+	 * Set a custom resolution.
+	 *
+	 * @param width
+	 * @param height
+	 */
+	public void setResolution(int width, int height) {
+<span class="nc bnc" id="L306" title="All 6 branches missed.">		if (resolution == null || resolution.getWidth() != width || resolution.getHeight() != height) {</span>
+<span class="nc" id="L307">			setResolution(new CustomResolution(width, height));</span>
+		}
+<span class="nc" id="L309">	}</span>
+
+	/**
+	 * Set the output policy.
+	 *
+	 * @param policy policy defining when images are produced
+	 */
+	public void setOutputPolicy(OutputPolicy policy) {
+<span class="nc" id="L317">		this.outputPolicy = policy;</span>
+<span class="nc" id="L318">	}</span>
+
+	/**
+	 * Set the output type.
+	 *
+	 * @param outputType type of outputted images
+	 */
+	public void setOutputType(OutputType outputType) {
+<span class="nc bnc" id="L326" title="All 2 branches missed.">		if (outputType != this.outputType) {</span>
+<span class="nc" id="L327">			this.outputType = outputType;</span>
+<span class="nc" id="L328">			initImage();</span>
+		}
+<span class="nc" id="L330">	}</span>
+
+	/**
+	 * Set the layout policy.
+	 *
+	 * @param policy policy defining how the layout is computed
+	 */
+	public synchronized void setLayoutPolicy(LayoutPolicy policy) {
+<span class="nc bnc" id="L338" title="All 2 branches missed.">		if (policy != layoutPolicy) {</span>
+<span class="nc bnc" id="L339" title="All 3 branches missed.">			switch (layoutPolicy) {</span>
+			case COMPUTED_IN_LAYOUT_RUNNER:
+				// layout.removeListener(this);
+<span class="nc" id="L342">				optLayout.release();</span>
+<span class="nc" id="L343">				optLayout = null;</span>
+<span class="nc" id="L344">				layoutPipeIn.removeAttributeSink(gg);</span>
+<span class="nc" id="L345">				layoutPipeIn = null;</span>
+<span class="nc" id="L346">				layout = null;</span>
+<span class="nc" id="L347">				break;</span>
+			case COMPUTED_ONCE_AT_NEW_IMAGE:
+				// layout.removeListener(this);
+<span class="nc" id="L350">				gg.removeSink(layout);</span>
+<span class="nc" id="L351">				layout.removeAttributeSink(gg);</span>
+<span class="nc" id="L352">				layout = null;</span>
+<span class="nc" id="L353">				break;</span>
+			default:
+<span class="nc" id="L355">				break;</span>
+			}
+
+<span class="nc bnc" id="L358" title="All 3 branches missed.">			switch (policy) {</span>
+			case COMPUTED_IN_LAYOUT_RUNNER:
+<span class="nc" id="L360">				layout = Layouts.newLayoutAlgorithm();</span>
+<span class="nc" id="L361">				optLayout = new InnerLayoutRunner();</span>
+<span class="nc" id="L362">				break;</span>
+			case COMPUTED_FULLY_AT_NEW_IMAGE:
+			case COMPUTED_ONCE_AT_NEW_IMAGE:
+<span class="nc" id="L365">				layout = Layouts.newLayoutAlgorithm();</span>
+<span class="nc" id="L366">				gg.addSink(layout);</span>
+<span class="nc" id="L367">				layout.addAttributeSink(gg);</span>
+<span class="nc" id="L368">				break;</span>
+			default:
+				break;
+			}
+
+			// layout.addListener(this);
+<span class="nc" id="L374">			layoutPolicy = policy;</span>
+		}
+<span class="nc" id="L376">	}</span>
+
+	/**
+	 * Set the amount of step before output a new image. This is used only in
+	 * ByLayoutStepOutput output policy.
+	 *
+	 * @param spf step per frame
+	 */
+	public void setLayoutStepPerFrame(int spf) {
+<span class="nc" id="L385">		this.layoutStepPerFrame = spf;</span>
+<span class="nc" id="L386">	}</span>
+
+	/**
+	 * Set the amount of steps after the stabilization of the algorithm.
+	 *
+	 * @param sas step after stabilization.
+	 */
+	public void setLayoutStepAfterStabilization(int sas) {
+<span class="nc" id="L394">		this.layoutStepAfterStabilization = sas;</span>
+<span class="nc" id="L395">	}</span>
+
+	/**
+	 * Set the stabilization limit of the layout used to compute coordinates of
+	 * nodes. See
+	 * {@link org.graphstream.ui.layout.Layout#setStabilizationLimit(double)} for
+	 * more informations about this limit.
+	 *
+	 * @param limit
+	 */
+	public void setLayoutStabilizationLimit(double limit) {
+<span class="nc bnc" id="L406" title="All 2 branches missed.">		if (layout == null)</span>
+<span class="nc" id="L407">			throw new NullPointerException(&quot;did you enable layout ?&quot;);</span>
+
+<span class="nc" id="L409">		layout.setStabilizationLimit(limit);</span>
+<span class="nc" id="L410">	}</span>
+
+	/**
+	 * Add a filter.
+	 *
+	 * @param filter the filter to add
+	 */
+	public void addFilter(Filter filter) {
+<span class="nc" id="L418">		filters.add(filter);</span>
+<span class="nc" id="L419">	}</span>
+
+	/**
+	 * Remove a filter.
+	 *
+	 * @param filter the filter to remove
+	 */
+	public void removeFilter(Filter filter) {
+<span class="nc" id="L427">		filters.remove(filter);</span>
+<span class="nc" id="L428">	}</span>
+
+	public synchronized void setOutputRunnerEnabled(boolean on) {
+<span class="nc bnc" id="L431" title="All 4 branches missed.">		if (!on &amp;&amp; outputRunnerAlive) {</span>
+<span class="nc" id="L432">			outputRunnerAlive = false;</span>
+
+			try {
+<span class="nc bnc" id="L435" title="All 2 branches missed.">				if (outputRunner != null)</span>
+<span class="nc" id="L436">					outputRunner.join();</span>
+<span class="nc" id="L437">			} catch (InterruptedException e) {</span>
+				// ... ?
+			}
+
+<span class="nc" id="L441">			outputRunner = null;</span>
+<span class="nc" id="L442">			sink = gg;</span>
+
+<span class="nc bnc" id="L444" title="All 2 branches missed.">			if (outputRunnerProxy != null)</span>
+<span class="nc" id="L445">				outputRunnerProxy.pump();</span>
+		}
+
+<span class="nc" id="L448">		outputRunnerAlive = on;</span>
+
+<span class="nc bnc" id="L450" title="All 2 branches missed.">		if (outputRunnerAlive) {</span>
+<span class="nc bnc" id="L451" title="All 2 branches missed.">			if (outputRunnerProxy == null) {</span>
+<span class="nc" id="L452">				outputRunnerProxy = new ThreadProxyPipe();</span>
+<span class="nc" id="L453">				outputRunnerProxy.init(gg);</span>
+			}
+
+<span class="nc" id="L456">			sink = outputRunnerProxy;</span>
+<span class="nc" id="L457">			outputRunner = new OutputRunner();</span>
+<span class="nc" id="L458">			outputRunner.start();</span>
+		}
+<span class="nc" id="L460">	}</span>
+
+	public void setOutputRunnerDelay(long delay) {
+<span class="nc" id="L463">		outputRunnerDelay = delay;</span>
+<span class="nc" id="L464">	}</span>
+
+	public void stabilizeLayout(double limit) {
+<span class="nc bnc" id="L467" title="All 2 branches missed.">		if (layout != null) {</span>
+<span class="nc bnc" id="L468" title="All 2 branches missed.">			while (layout.getStabilization() &lt; limit)</span>
+<span class="nc" id="L469">				layout.compute();</span>
+		}
+<span class="nc" id="L471">	}</span>
+
+	public Point3 getViewCenter() {
+<span class="nc" id="L474">		return getCamera().getViewCenter();</span>
+	}
+
+	public void setViewCenter(double x, double y) {
+<span class="nc" id="L478">		getCamera().setViewCenter(x, y, 0);</span>
+<span class="nc" id="L479">	}</span>
+
+	public double getViewPercent() {
+<span class="nc" id="L482">		return getCamera().getViewPercent();</span>
+	}
+
+	public void setViewPercent(double zoom) {
+<span class="nc" id="L486">		getCamera().setViewPercent(zoom);</span>
+<span class="nc" id="L487">	}</span>
+
+	public void setGraphViewport(double minx, double miny, double maxx, double maxy) {
+<span class="nc" id="L490">		getCamera().setGraphViewport(minx, miny, maxx, maxy);</span>
+<span class="nc" id="L491">	}</span>
+
+	public void setClearImageBeforeOutputEnabled(boolean on) {
+<span class="nc" id="L494">		clearImageBeforeOutput = on;</span>
+<span class="nc" id="L495">	}</span>
+
+	public void setAutofit(boolean on) {
+<span class="nc" id="L498">		autofit = on;</span>
+<span class="nc" id="L499">	}</span>
+
+	protected void clearGG() {
+<span class="nc" id="L502">		gg.clear();</span>
+
+<span class="nc bnc" id="L504" title="All 2 branches missed.">		if (styleSheet != null)</span>
+<span class="nc" id="L505">			gg.setAttribute(&quot;ui.stylesheet&quot;, styleSheet);</span>
+
+<span class="nc bnc" id="L507" title="All 2 branches missed.">		if (layout != null)</span>
+<span class="nc" id="L508">			layout.clear();</span>
+<span class="nc" id="L509">	}</span>
+
+	/**
+	 * Produce a new image.
+	 */
+	public void outputNewImage() {
+<span class="nc" id="L515">		outputNewImage(String.format(&quot;%s%06d.%s&quot;, filePrefix, counter++, outputType.ext));</span>
+<span class="nc" id="L516">	}</span>
+
+	public synchronized void outputNewImage(String filename) {
+<span class="nc bnc" id="L519" title="All 4 branches missed.">		switch (layoutPolicy) {</span>
+		case COMPUTED_IN_LAYOUT_RUNNER:
+<span class="nc" id="L521">			layoutPipeIn.pump();</span>
+<span class="nc" id="L522">			break;</span>
+		case COMPUTED_ONCE_AT_NEW_IMAGE:
+<span class="nc bnc" id="L524" title="All 2 branches missed.">			if (layout != null)</span>
+<span class="nc" id="L525">				layout.compute();</span>
+<span class="nc" id="L526">			break;</span>
+		case COMPUTED_FULLY_AT_NEW_IMAGE:
+<span class="nc" id="L528">			stabilizeLayout(layout.getStabilizationLimit());</span>
+<span class="nc" id="L529">			break;</span>
+		default:
+			break;
+		}
+
+<span class="nc bnc" id="L534" title="All 4 branches missed.">		if (clearImageBeforeOutput || gg.getNodeCount() == 0) {</span>
+<span class="nc" id="L535">			clearImage(0x00000000);</span>
+		}
+
+<span class="nc bnc" id="L538" title="All 2 branches missed.">		if (gg.getNodeCount() &gt; 0) {</span>
+<span class="nc bnc" id="L539" title="All 2 branches missed.">			if (autofit) {</span>
+<span class="nc" id="L540">				gg.computeBounds();</span>
+
+<span class="nc" id="L542">				Point3 lo = gg.getMinPos();</span>
+<span class="nc" id="L543">				Point3 hi = gg.getMaxPos();</span>
+
+<span class="nc" id="L545">				getCamera().setBounds(lo.x, lo.y, lo.z, hi.x, hi.y, hi.z);</span>
+			}
+
+<span class="nc" id="L548">			render();</span>
+		}
+
+<span class="nc" id="L551">		BufferedImage image = getRenderedImage();</span>
+
+<span class="nc bnc" id="L553" title="All 2 branches missed.">		for (Filter action : filters)</span>
+<span class="nc" id="L554">			action.apply(image);</span>
+
+<span class="nc" id="L556">		image.flush();</span>
+
+		try {
+<span class="nc" id="L559">			writeImage(image, filename);</span>
+<span class="nc" id="L560">			printProgress();</span>
+<span class="nc" id="L561">		} catch (IOException e) {</span>
+<span class="nc" id="L562">			LOGGER.log(Level.WARNING, &quot;Failed to write image&quot;, e);</span>
+		}
+<span class="nc" id="L564">	}</span>
+
+	protected void writeImage(BufferedImage image, String filename) throws IOException {
+<span class="nc" id="L567">		File out = new File(filename);</span>
+
+<span class="nc bnc" id="L569" title="All 4 branches missed.">		if (out.getParent() != null &amp;&amp; !out.getParentFile().exists())</span>
+<span class="nc" id="L570">			out.getParentFile().mkdirs();</span>
+
+<span class="nc" id="L572">		ImageIO.write(image, outputType.name(), out);</span>
+<span class="nc" id="L573">	}</span>
+
+	protected void printProgress() {
+<span class="nc" id="L576">		LOGGER.info(String.format(&quot;\033[s\033[K%d images written\033[u&quot;, counter));</span>
+<span class="nc" id="L577">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSink#begin(java.io.OutputStream)
+	 */
+	public void begin(OutputStream stream) throws IOException {
+<span class="nc" id="L585">		throw new IOException(&quot;not implemented&quot;);</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSink#begin(java.io.Writer)
+	 */
+	public void begin(Writer writer) throws IOException {
+<span class="nc" id="L594">		throw new IOException(&quot;not implemented&quot;);</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSink#begin(java.lang.String)
+	 */
+	public void begin(String prefix) throws IOException {
+<span class="nc" id="L603">		initImage();</span>
+
+<span class="nc" id="L605">		this.filePrefix = prefix;</span>
+<span class="nc" id="L606">		this.hasBegun = true;</span>
+<span class="nc" id="L607">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSink#flush()
+	 */
+	public void flush() throws IOException {
+		// Nothing to do
+<span class="nc" id="L616">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSink#end()
+	 */
+	public void end() throws IOException {
+<span class="nc" id="L624">		flush();</span>
+<span class="nc" id="L625">		this.hasBegun = false;</span>
+<span class="nc" id="L626">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.file.FileSink#writeAll(org.graphstream.graph.Graph ,
+	 * java.io.OutputStream)
+	 */
+	public void writeAll(Graph g, OutputStream stream) throws IOException {
+<span class="nc" id="L636">		throw new IOException(&quot;not implemented&quot;);</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.file.FileSink#writeAll(org.graphstream.graph.Graph ,
+	 * java.io.Writer)
+	 */
+	public void writeAll(Graph g, Writer writer) throws IOException {
+<span class="nc" id="L647">		throw new IOException(&quot;not implemented&quot;);</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.file.FileSink#writeAll(org.graphstream.graph.Graph ,
+	 * java.lang.String)
+	 */
+	public synchronized void writeAll(Graph g, String filename) throws IOException {
+<span class="nc" id="L658">		clearGG();</span>
+
+<span class="nc" id="L660">		GraphReplay replay = new GraphReplay(String.format(&quot;file_sink_image-write_all-replay-%x&quot;, System.nanoTime()));</span>
+
+<span class="nc" id="L662">		replay.addSink(gg);</span>
+<span class="nc" id="L663">		replay.replay(g);</span>
+<span class="nc" id="L664">		replay.removeSink(gg);</span>
+
+<span class="nc" id="L666">		initImage();</span>
+<span class="nc" id="L667">		outputNewImage(filename);</span>
+
+<span class="nc" id="L669">		clearGG();</span>
+<span class="nc" id="L670">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L676">		sink.edgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);</span>
+
+<span class="nc bnc" id="L678" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_EDGE_EVENT:
+		case BY_EDGE_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L683" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L684">				outputNewImage();</span>
+<span class="nc" id="L685">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L689">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L696">		sink.edgeAttributeChanged(sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+
+<span class="nc bnc" id="L698" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_EDGE_EVENT:
+		case BY_EDGE_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L703" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L704">				outputNewImage();</span>
+<span class="nc" id="L705">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L709">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L715">		sink.edgeAttributeRemoved(sourceId, timeId, edgeId, attribute);</span>
+
+<span class="nc bnc" id="L717" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_EDGE_EVENT:
+		case BY_EDGE_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L722" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L723">				outputNewImage();</span>
+<span class="nc" id="L724">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L728">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L734">		sink.graphAttributeAdded(sourceId, timeId, attribute, value);</span>
+
+<span class="nc bnc" id="L736" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_GRAPH_EVENT:
+		case BY_GRAPH_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L741" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L742">				outputNewImage();</span>
+<span class="nc" id="L743">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L747">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L754">		sink.graphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+
+<span class="nc bnc" id="L756" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_GRAPH_EVENT:
+		case BY_GRAPH_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L761" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L762">				outputNewImage();</span>
+<span class="nc" id="L763">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L767">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L773">		sink.graphAttributeRemoved(sourceId, timeId, attribute);</span>
+
+<span class="nc bnc" id="L775" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_GRAPH_EVENT:
+		case BY_GRAPH_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L780" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L781">				outputNewImage();</span>
+<span class="nc" id="L782">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L786">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L792">		sink.nodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);</span>
+
+<span class="nc bnc" id="L794" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_NODE_EVENT:
+		case BY_NODE_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L799" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L800">				outputNewImage();</span>
+<span class="nc" id="L801">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L805">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L812">		sink.nodeAttributeChanged(sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+
+<span class="nc bnc" id="L814" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_NODE_EVENT:
+		case BY_NODE_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L819" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L820">				outputNewImage();</span>
+<span class="nc" id="L821">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L825">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L831">		sink.nodeAttributeRemoved(sourceId, timeId, nodeId, attribute);</span>
+
+<span class="nc bnc" id="L833" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_NODE_EVENT:
+		case BY_NODE_ATTRIBUTE:
+		case BY_ATTRIBUTE_EVENT:
+<span class="nc bnc" id="L838" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L839">				outputNewImage();</span>
+<span class="nc" id="L840">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L844">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L851">		sink.edgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+
+<span class="nc bnc" id="L853" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_EDGE_EVENT:
+		case BY_EDGE_ADDED_REMOVED:
+		case BY_ELEMENT_EVENT:
+<span class="nc bnc" id="L858" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L859">				outputNewImage();</span>
+<span class="nc" id="L860">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L864">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L870">		sink.edgeRemoved(sourceId, timeId, edgeId);</span>
+
+<span class="nc bnc" id="L872" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_EDGE_EVENT:
+		case BY_EDGE_ADDED_REMOVED:
+		case BY_ELEMENT_EVENT:
+<span class="nc bnc" id="L877" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L878">				outputNewImage();</span>
+<span class="nc" id="L879">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L883">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L889">		sink.graphCleared(sourceId, timeId);</span>
+
+<span class="nc bnc" id="L891" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_GRAPH_EVENT:
+		case BY_NODE_ADDED_REMOVED:
+		case BY_EDGE_ADDED_REMOVED:
+		case BY_ELEMENT_EVENT:
+<span class="nc bnc" id="L897" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L898">				outputNewImage();</span>
+<span class="nc" id="L899">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L903">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L909">		sink.nodeAdded(sourceId, timeId, nodeId);</span>
+
+<span class="nc bnc" id="L911" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_NODE_EVENT:
+		case BY_NODE_ADDED_REMOVED:
+		case BY_ELEMENT_EVENT:
+<span class="nc bnc" id="L916" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L917">				outputNewImage();</span>
+<span class="nc" id="L918">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L922">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L928">		sink.nodeRemoved(sourceId, timeId, nodeId);</span>
+
+<span class="nc bnc" id="L930" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_NODE_EVENT:
+		case BY_NODE_ADDED_REMOVED:
+		case BY_ELEMENT_EVENT:
+<span class="nc bnc" id="L935" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L936">				outputNewImage();</span>
+<span class="nc" id="L937">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L941">	}</span>
+
+	/**
+	 * @see org.graphstream.stream.Sink
+	 */
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L947">		sink.stepBegins(sourceId, timeId, step);</span>
+
+<span class="nc bnc" id="L949" title="All 2 branches missed.">		switch (outputPolicy) {</span>
+		case BY_EVENT:
+		case BY_STEP:
+<span class="nc bnc" id="L952" title="All 2 branches missed.">			if (hasBegun)</span>
+<span class="nc" id="L953">				outputNewImage();</span>
+<span class="nc" id="L954">			break;</span>
+		default:
+			break;
+		}
+<span class="nc" id="L958">	}</span>
+
+	// public void nodeMoved(String id, double x, double y, double z) {
+	// switch (outputPolicy) {
+	// case BY_NODE_MOVED:
+	// if (hasBegun)
+	// outputNewImage();
+	// break;
+	// }
+	// }
+
+	// public void nodeInfos(String id, double dx, double dy, double dz) {
+	// }
+
+	// public void edgeChanged(String id, double[] points) {
+	// }
+
+	// public void nodesMoved(Map&lt;String, double[]&gt; nodes) {
+	// switch (outputPolicy) {
+	// case BY_NODE_MOVED:
+	// if (hasBegun)
+	// outputNewImage();
+	// break;
+	// }
+	// }
+
+	// public void edgesChanged(Map&lt;String, double[]&gt; edges) {
+	// }
+
+	// public void stepCompletion(double percent) {
+	// switch (outputPolicy) {
+	// case BY_LAYOUT_STEP:
+	// layoutStepWithoutFrame++;
+	//
+	// if (layoutStepWithoutFrame &gt;= layoutStepPerFrame) {
+	// if (hasBegun)
+	// outputNewImage();
+	// layoutStepWithoutFrame = 0;
+	// }
+	//
+	// break;
+	// }
+	// }
+
+<span class="nc" id="L1002">	public static enum Option {</span>
+<span class="nc" id="L1003">		IMAGE_PREFIX(&quot;image-prefix&quot;, 'p', &quot;prefix of outputted images&quot;, true, true, &quot;image_&quot;), IMAGE_TYPE(&quot;image-type&quot;,</span>
+<span class="nc" id="L1004">				't', &quot;image type. one of &quot; + Arrays.toString(OutputType.values()), true, true, &quot;PNG&quot;), IMAGE_RESOLUTION(</span>
+<span class="nc" id="L1005">				&quot;image-resolution&quot;, 'r',</span>
+<span class="nc" id="L1006">				&quot;defines images resolution. \&quot;width x height\&quot; or one of &quot; + Arrays.toString(Resolutions.values()),</span>
+<span class="nc" id="L1007">				true, true, &quot;HD720&quot;), OUTPUT_POLICY(&quot;output-policy&quot;, 'e',</span>
+<span class="nc" id="L1008">				&quot;defines when images are outputted. one of &quot; + Arrays.toString(OutputPolicy.values()), true, true,</span>
+<span class="nc" id="L1009">				&quot;ByStepOutput&quot;), LOGO(&quot;logo&quot;, 'l', &quot;add a logo to images&quot;, true, true, null), STYLESHEET(&quot;stylesheet&quot;,</span>
+<span class="nc" id="L1010">				's', &quot;defines stylesheet of graph. can be a file or a string.&quot;, true, true, null), QUALITY(&quot;quality&quot;,</span>
+<span class="nc" id="L1011">				'q', &quot;defines quality of rendering. one of &quot; + Arrays.toString(Quality.values()), true, true, &quot;HIGH&quot;);</span>
+		String fullopts;
+		char shortopts;
+		String description;
+		boolean optional;
+		boolean valuable;
+		String defaultValue;
+
+<span class="nc" id="L1019">		Option(String fullopts, char shortopts, String description, boolean optional, boolean valuable,</span>
+				String defaultValue) {
+<span class="nc" id="L1021">			this.fullopts = fullopts;</span>
+<span class="nc" id="L1022">			this.shortopts = shortopts;</span>
+<span class="nc" id="L1023">			this.description = description;</span>
+<span class="nc" id="L1024">			this.optional = optional;</span>
+<span class="nc" id="L1025">			this.valuable = valuable;</span>
+<span class="nc" id="L1026">			this.defaultValue = defaultValue;</span>
+<span class="nc" id="L1027">		}</span>
+	}
+
+	protected class InnerLayoutRunner extends LayoutRunner {
+
+<span class="nc" id="L1032">		public InnerLayoutRunner() {</span>
+<span class="nc" id="L1033">			super(FileSinkImages.this.gg, FileSinkImages.this.layout, true, true);</span>
+
+<span class="nc" id="L1035">			FileSinkImages.this.layoutPipeIn = newLayoutPipe();</span>
+<span class="nc" id="L1036">			FileSinkImages.this.layoutPipeIn.addAttributeSink(FileSinkImages.this.gg);</span>
+<span class="nc" id="L1037">		}</span>
+
+		public void run() {
+
+<span class="nc" id="L1041">			int stepAfterStabilization = 0;</span>
+
+			do {
+<span class="nc" id="L1044">				pumpPipe.pump();</span>
+<span class="nc" id="L1045">				layout.compute();</span>
+
+<span class="nc bnc" id="L1047" title="All 2 branches missed.">				if (layout.getStabilization() &gt; layout.getStabilizationLimit())</span>
+<span class="nc" id="L1048">					stepAfterStabilization++;</span>
+				else
+<span class="nc" id="L1050">					stepAfterStabilization = 0;</span>
+
+<span class="nc" id="L1052">				nap(80);</span>
+
+<span class="nc bnc" id="L1054" title="All 2 branches missed.">				if (stepAfterStabilization &gt; layoutStepAfterStabilization)</span>
+<span class="nc" id="L1055">					loop = false;</span>
+<span class="nc bnc" id="L1056" title="All 2 branches missed.">			} while (loop);</span>
+<span class="nc" id="L1057">		}</span>
+	}
+
+	protected class OutputRunner extends Thread {
+<span class="nc" id="L1061">		public OutputRunner() {</span>
+<span class="nc" id="L1062">			setDaemon(true);</span>
+<span class="nc" id="L1063">		}</span>
+
+		public void run() {
+<span class="nc bnc" id="L1066" title="All 4 branches missed.">			while (outputRunnerAlive &amp;&amp; outputPolicy == OutputPolicy.ON_RUNNER) {</span>
+<span class="nc" id="L1067">				outputRunnerProxy.pump();</span>
+<span class="nc bnc" id="L1068" title="All 2 branches missed.">				if (hasBegun)</span>
+<span class="nc" id="L1069">					outputNewImage();</span>
+
+				try {
+<span class="nc" id="L1072">					Thread.sleep(outputRunnerDelay);</span>
+<span class="nc" id="L1073">				} catch (InterruptedException e) {</span>
+<span class="nc" id="L1074">					outputRunnerAlive = false;</span>
+				}
+			}
+<span class="nc" id="L1077">		}</span>
+	}
+
+	public static void usage() {
+<span class="nc" id="L1081">		LOGGER.info(String.format(&quot;usage: java %s [options] fichier.dgs%n&quot;, FileSinkImages.class.getName()));</span>
+<span class="nc" id="L1082">		LOGGER.info(String.format(&quot;where options in:%n&quot;));</span>
+<span class="nc bnc" id="L1083" title="All 2 branches missed.">		for (Option option : Option.values()) {</span>
+<span class="nc bnc" id="L1084" title="All 2 branches missed.">			LOGGER.info(String.format(&quot;%n --%s%s , -%s %s%n%s%n&quot;, option.fullopts, option.valuable ? &quot;=...&quot; : &quot;&quot;,</span>
+<span class="nc bnc" id="L1085" title="All 2 branches missed.">					option.shortopts, option.valuable ? &quot;...&quot; : &quot;&quot;, option.description));</span>
+		}
+<span class="nc" id="L1087">	}</span>
+
+	public static void main(String... args) throws IOException {
+
+<span class="nc" id="L1091">		HashMap&lt;Option, String&gt; options = new HashMap&lt;Option, String&gt;();</span>
+<span class="nc" id="L1092">		LinkedList&lt;String&gt; others = new LinkedList&lt;String&gt;();</span>
+
+<span class="nc bnc" id="L1094" title="All 2 branches missed.">		for (Option option : Option.values())</span>
+<span class="nc bnc" id="L1095" title="All 2 branches missed.">			if (option.defaultValue != null)</span>
+<span class="nc" id="L1096">				options.put(option, option.defaultValue);</span>
+
+<span class="nc bnc" id="L1098" title="All 4 branches missed.">		if (args != null &amp;&amp; args.length &gt; 0) {</span>
+<span class="nc" id="L1099">			Pattern valueGetter = Pattern.compile(&quot;^--\\w[\\w-]*\\w?(?:=(?:\&quot;([^\&quot;]*)\&quot;|([^\\s]*)))$&quot;);</span>
+
+<span class="nc bnc" id="L1101" title="All 2 branches missed.">			for (int i = 0; i &lt; args.length; i++) {</span>
+
+<span class="nc bnc" id="L1103" title="All 2 branches missed.">				if (args[i].matches(&quot;^--\\w[\\w-]*\\w?(=(\&quot;[^\&quot;]*\&quot;|[^\\s]*))?$&quot;)) {</span>
+<span class="nc" id="L1104">					boolean found = false;</span>
+<span class="nc bnc" id="L1105" title="All 2 branches missed.">					for (Option option : Option.values()) {</span>
+<span class="nc bnc" id="L1106" title="All 2 branches missed.">						if (args[i].startsWith(&quot;--&quot; + option.fullopts + &quot;=&quot;)) {</span>
+<span class="nc" id="L1107">							Matcher m = valueGetter.matcher(args[i]);</span>
+
+<span class="nc bnc" id="L1109" title="All 2 branches missed.">							if (m.matches()) {</span>
+<span class="nc bnc" id="L1110" title="All 2 branches missed.">								options.put(option, m.group(1) == null ? m.group(2) : m.group(1));</span>
+							}
+
+<span class="nc" id="L1113">							found = true;</span>
+<span class="nc" id="L1114">							break;</span>
+						}
+					}
+
+<span class="nc bnc" id="L1118" title="All 2 branches missed.">					if (!found) {</span>
+<span class="nc" id="L1119">						LOGGER.severe(</span>
+<span class="nc" id="L1120">								String.format(&quot;unknown option: %s%n&quot;, args[i].substring(0, args[i].indexOf('='))));</span>
+<span class="nc" id="L1121">						System.exit(1);</span>
+					}
+<span class="nc bnc" id="L1123" title="All 2 branches missed.">				} else if (args[i].matches(&quot;^-\\w$&quot;)) {</span>
+<span class="nc" id="L1124">					boolean found = false;</span>
+
+<span class="nc bnc" id="L1126" title="All 2 branches missed.">					for (Option option : Option.values()) {</span>
+<span class="nc bnc" id="L1127" title="All 2 branches missed.">						if (args[i].equals(&quot;-&quot; + option.shortopts)) {</span>
+<span class="nc" id="L1128">							options.put(option, args[++i]);</span>
+<span class="nc" id="L1129">							break;</span>
+						}
+					}
+
+<span class="nc bnc" id="L1133" title="All 2 branches missed.">					if (!found) {</span>
+<span class="nc" id="L1134">						LOGGER.severe(String.format(&quot;unknown option: %s%n&quot;, args[i]));</span>
+<span class="nc" id="L1135">						System.exit(1);</span>
+					}
+<span class="nc" id="L1137">				} else {</span>
+<span class="nc" id="L1138">					others.addLast(args[i]);</span>
+				}
+			}
+<span class="nc" id="L1141">		} else {</span>
+<span class="nc" id="L1142">			usage();</span>
+<span class="nc" id="L1143">			System.exit(0);</span>
+		}
+
+<span class="nc" id="L1146">		LinkedList&lt;String&gt; errors = new LinkedList&lt;String&gt;();</span>
+
+<span class="nc bnc" id="L1148" title="All 2 branches missed.">		if (others.size() == 0) {</span>
+<span class="nc" id="L1149">			errors.add(&quot;dgs file name missing.&quot;);</span>
+		}
+
+		String imagePrefix;
+<span class="nc" id="L1153">		OutputType outputType = null;</span>
+<span class="nc" id="L1154">		OutputPolicy outputPolicy = null;</span>
+<span class="nc" id="L1155">		Resolution resolution = null;</span>
+<span class="nc" id="L1156">		Quality quality = null;</span>
+		String logo;
+		String stylesheet;
+
+<span class="nc" id="L1160">		imagePrefix = options.get(Option.IMAGE_PREFIX);</span>
+
+		try {
+<span class="nc" id="L1163">			outputType = OutputType.valueOf(options.get(Option.IMAGE_TYPE));</span>
+<span class="nc" id="L1164">		} catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L1165">			errors.add(&quot;bad image type: &quot; + options.get(Option.IMAGE_TYPE));</span>
+		}
+
+		try {
+<span class="nc" id="L1169">			outputPolicy = OutputPolicy.valueOf(options.get(Option.OUTPUT_POLICY));</span>
+<span class="nc" id="L1170">		} catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L1171">			errors.add(&quot;bad output policy: &quot; + options.get(Option.OUTPUT_POLICY));</span>
+		}
+
+		try {
+<span class="nc" id="L1175">			quality = Quality.valueOf(options.get(Option.QUALITY));</span>
+<span class="nc" id="L1176">		} catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L1177">			errors.add(&quot;bad quality: &quot; + options.get(Option.QUALITY));</span>
+		}
+
+<span class="nc" id="L1180">		logo = options.get(Option.LOGO);</span>
+<span class="nc" id="L1181">		stylesheet = options.get(Option.STYLESHEET);</span>
+
+		try {
+<span class="nc" id="L1184">			resolution = Resolutions.valueOf(options.get(Option.IMAGE_RESOLUTION));</span>
+<span class="nc" id="L1185">		} catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L1186">			Pattern p = Pattern.compile(&quot;^\\s*(\\d+)\\s*x\\s*(\\d+)\\s*$&quot;);</span>
+<span class="nc" id="L1187">			Matcher m = p.matcher(options.get(Option.IMAGE_RESOLUTION));</span>
+
+<span class="nc bnc" id="L1189" title="All 2 branches missed.">			if (m.matches()) {</span>
+<span class="nc" id="L1190">				resolution = new CustomResolution(Integer.parseInt(m.group(1)), Integer.parseInt(m.group(2)));</span>
+<span class="nc" id="L1191">			} else {</span>
+<span class="nc" id="L1192">				errors.add(&quot;bad resolution: &quot; + options.get(Option.IMAGE_RESOLUTION));</span>
+			}
+		}
+
+<span class="nc bnc" id="L1196" title="All 4 branches missed.">		if (stylesheet != null &amp;&amp; stylesheet.length() &lt; 1024) {</span>
+<span class="nc" id="L1197">			File test = new File(stylesheet);</span>
+
+<span class="nc bnc" id="L1199" title="All 2 branches missed.">			if (test.exists()) {</span>
+<span class="nc" id="L1200">				FileReader in = new FileReader(test);</span>
+<span class="nc" id="L1201">				char[] buffer = new char[128];</span>
+<span class="nc" id="L1202">				String content = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L1204" title="All 2 branches missed.">				while (in.ready()) {</span>
+<span class="nc" id="L1205">					int c = in.read(buffer, 0, 128);</span>
+<span class="nc" id="L1206">					content += new String(buffer, 0, c);</span>
+				}
+
+<span class="nc" id="L1209">				stylesheet = content;</span>
+<span class="nc" id="L1210">				in.close();</span>
+			}
+		}
+
+		{
+<span class="nc" id="L1215">			File test = new File(others.peek());</span>
+<span class="nc bnc" id="L1216" title="All 2 branches missed.">			if (!test.exists())</span>
+<span class="nc" id="L1217">				errors.add(String.format(&quot;file \&quot;%s\&quot; does not exist&quot;, others.peek()));</span>
+		}
+
+<span class="nc bnc" id="L1220" title="All 2 branches missed.">		if (errors.size() &gt; 0) {</span>
+<span class="nc" id="L1221">			LOGGER.info(String.format(&quot;error:%n&quot;));</span>
+
+<span class="nc bnc" id="L1223" title="All 2 branches missed.">			for (String error : errors)</span>
+<span class="nc" id="L1224">				LOGGER.info(String.format(&quot;- %s%n&quot;, error));</span>
+
+<span class="nc" id="L1226">			System.exit(1);</span>
+		}
+
+<span class="nc" id="L1229">		FileSourceDGS dgs = new FileSourceDGS();</span>
+<span class="nc" id="L1230">		FileSinkImages fsi = FileSinkImages.createDefault();</span>
+
+<span class="nc" id="L1232">		fsi.setOutputPolicy(outputPolicy);</span>
+<span class="nc" id="L1233">		fsi.setResolution(resolution);</span>
+<span class="nc" id="L1234">		fsi.setOutputType(outputType);</span>
+
+<span class="nc" id="L1236">		dgs.addSink(fsi);</span>
+
+<span class="nc bnc" id="L1238" title="All 2 branches missed.">		if (logo != null)</span>
+<span class="nc" id="L1239">			fsi.addFilter(new AddLogoFilter(logo, 0, 0));</span>
+
+<span class="nc" id="L1241">		fsi.setQuality(quality);</span>
+<span class="nc bnc" id="L1242" title="All 2 branches missed.">		if (stylesheet != null)</span>
+<span class="nc" id="L1243">			fsi.setStyleSheet(stylesheet);</span>
+
+<span class="nc" id="L1245">		boolean next = true;</span>
+
+<span class="nc" id="L1247">		dgs.begin(others.get(0));</span>
+
+<span class="nc bnc" id="L1249" title="All 2 branches missed.">		while (next)</span>
+<span class="nc" id="L1250">			next = dgs.nextStep();</span>
+
+<span class="nc" id="L1252">		dgs.end();</span>
+<span class="nc" id="L1253">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

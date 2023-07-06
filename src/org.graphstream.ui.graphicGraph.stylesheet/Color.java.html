@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Color.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.stylesheet</a> &gt; <span class="el_source">Color.java</span></div><h1>Color.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2017-12-21
+ * 
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.stylesheet;
+
+/**
+ * GraphStream representation of Color Usable by all UI
+ */
+public class Color {
+	private int r;
+	private int g;
+	private int b;
+	private int a;
+
+<span class="nc" id="L43">	public final static Color white = new Color(255, 255, 255);</span>
+<span class="nc" id="L44">	public final static Color WHITE = white;</span>
+<span class="nc" id="L45">	public final static Color lightGray = new Color(192, 192, 192);</span>
+<span class="nc" id="L46">	public final static Color LIGHT_GRAY = lightGray;</span>
+<span class="nc" id="L47">	public final static Color gray = new Color(128, 128, 128);</span>
+<span class="nc" id="L48">	public final static Color GRAY = gray;</span>
+<span class="nc" id="L49">	public final static Color darkGray = new Color(64, 64, 64);</span>
+<span class="nc" id="L50">	public final static Color DARK_GRAY = darkGray;</span>
+<span class="nc" id="L51">	public final static Color black = new Color(0, 0, 0);</span>
+<span class="nc" id="L52">	public final static Color BLACK = black;</span>
+<span class="nc" id="L53">	public final static Color red = new Color(255, 0, 0);</span>
+<span class="nc" id="L54">	public final static Color RED = red;</span>
+<span class="nc" id="L55">	public final static Color pink = new Color(255, 175, 175);</span>
+<span class="nc" id="L56">	public final static Color PINK = pink;</span>
+<span class="nc" id="L57">	public final static Color orange = new Color(255, 200, 0);</span>
+<span class="nc" id="L58">	public final static Color ORANGE = orange;</span>
+<span class="nc" id="L59">	public final static Color yellow = new Color(255, 255, 0);</span>
+<span class="nc" id="L60">	public final static Color YELLOW = yellow;</span>
+<span class="nc" id="L61">	public final static Color green = new Color(0, 255, 0);</span>
+<span class="nc" id="L62">	public final static Color GREEN = green;</span>
+<span class="nc" id="L63">	public final static Color magenta = new Color(255, 0, 255);</span>
+<span class="nc" id="L64">	public final static Color MAGENTA = magenta;</span>
+<span class="nc" id="L65">	public final static Color cyan = new Color(0, 255, 255);</span>
+<span class="nc" id="L66">	public final static Color CYAN = cyan;</span>
+<span class="nc" id="L67">	public final static Color blue = new Color(0, 0, 255);</span>
+<span class="nc" id="L68">	public final static Color BLUE = blue;</span>
+
+	public Color(int r, int g, int b, int a) {
+<span class="nc" id="L71">		super();</span>
+<span class="nc" id="L72">		this.r = r;</span>
+<span class="nc" id="L73">		this.g = g;</span>
+<span class="nc" id="L74">		this.b = b;</span>
+<span class="nc" id="L75">		this.a = a;</span>
+<span class="nc" id="L76">	}</span>
+
+	public Color(int r, int g, int b) {
+<span class="nc" id="L79">		super();</span>
+<span class="nc" id="L80">		this.r = r;</span>
+<span class="nc" id="L81">		this.g = g;</span>
+<span class="nc" id="L82">		this.b = b;</span>
+<span class="nc" id="L83">		this.a = 255;</span>
+<span class="nc" id="L84">	}</span>
+
+	public int getRed() {
+<span class="nc" id="L87">		return r;</span>
+	}
+
+	public void setRed(int r) {
+<span class="nc" id="L91">		this.r = r;</span>
+<span class="nc" id="L92">	}</span>
+
+	public int getGreen() {
+<span class="nc" id="L95">		return g;</span>
+	}
+
+	public void setGreen(int g) {
+<span class="nc" id="L99">		this.g = g;</span>
+<span class="nc" id="L100">	}</span>
+
+	public int getBlue() {
+<span class="nc" id="L103">		return b;</span>
+	}
+
+	public void setBlue(int b) {
+<span class="nc" id="L107">		this.b = b;</span>
+<span class="nc" id="L108">	}</span>
+
+	public int getAlpha() {
+<span class="nc" id="L111">		return a;</span>
+	}
+
+	public void setAlpha(int a) {
+<span class="nc" id="L115">		this.a = a;</span>
+<span class="nc" id="L116">	}</span>
+
+	public static Color decode(String nm) throws NumberFormatException {
+<span class="nc" id="L119">		Integer intval = Integer.decode(nm);</span>
+<span class="nc" id="L120">		int i = intval.intValue();</span>
+<span class="nc" id="L121">		return new Color((i &gt;&gt; 16) &amp; 0xFF, (i &gt;&gt; 8) &amp; 0xFF, i &amp; 0xFF);</span>
+	}
+
+	@Override
+	public boolean equals(Object o) {
+<span class="nc" id="L126">		Color c = (Color) o;</span>
+<span class="nc bnc" id="L127" title="All 8 branches missed.">		return (this.r == c.r &amp;&amp; this.g == c.g &amp;&amp; this.b == c.b &amp;&amp; this.a == c.a);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

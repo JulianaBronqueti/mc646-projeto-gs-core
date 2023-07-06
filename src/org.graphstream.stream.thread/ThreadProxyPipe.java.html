@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ThreadProxyPipe.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.thread</a> &gt; <span class="el_source">ThreadProxyPipe.java</span></div><h1>ThreadProxyPipe.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-07-04
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.thread;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.stream.ProxyPipe;
+import org.graphstream.stream.Replayable;
+import org.graphstream.stream.Replayable.Controller;
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.Source;
+import org.graphstream.stream.SourceBase;
+
+import java.util.LinkedList;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
+
+/**
+ * Filter that allows to pass graph events between two threads without explicit
+ * synchronization.
+ * 
+ * &lt;p&gt;
+ * This filter allows to register it as an output for some source of events in a
+ * source thread (hereafter called the input thread) and to register listening
+ * outputs in a destination thread (hereafter called the sink thread).
+ * &lt;/p&gt;
+ * 
+ * &lt;pre&gt;
+ *                       |
+ *   Source ---&gt; ThreadProxyFilter ----&gt; Sink
+ *  Thread 1             |              Thread 2
+ *                       |
+ * &lt;/pre&gt;
+ * 
+ * &lt;p&gt;
+ * In other words, this class allows to listen in a sink thread graph events
+ * that are produced in another source thread without any explicit
+ * synchronization on the source of events.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * The only restriction is that the sink thread must regularly call the
+ * {@link #pump()} method to dispatch events coming from the source to all sinks
+ * registered (see the explanation in {@link org.graphstream.stream.ProxyPipe}).
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * You can register any kind of input as source of event, but if the input is a
+ * graph, then you can choose to &quot;replay&quot; all the content of the graph so that
+ * at the other end of the filter, all outputs receive the complete content of
+ * the graph. This is the default behavior if this filter is constructed with a
+ * graph as input.
+ * &lt;/p&gt;
+ */
+public class ThreadProxyPipe extends SourceBase implements ProxyPipe {
+
+	/**
+	 * class level logger
+	 */
+<span class="nc" id="L94">	private static final Logger logger = Logger.getLogger(ThreadProxyPipe.class.getSimpleName());</span>
+
+	/**
+	 * Proxy id.
+	 */
+	protected String id;
+
+	/**
+	 * The event sender name, usually the graph name.
+	 */
+	protected String from;
+
+	/**
+	 * The message box used to exchange messages between the two threads.
+	 */
+	protected LinkedList&lt;GraphEvents&gt; events;
+	protected LinkedList&lt;Object[]&gt; eventsData;
+
+	protected ReentrantLock lock;
+	protected Condition notEmpty;
+
+	/**
+	 * Used only to remove the listener. We ensure this is done in the source
+	 * thread.
+	 */
+	protected Source input;
+
+	/**
+	 * Signals that this proxy must be removed from the source input.
+	 */
+<span class="nc" id="L124">	protected boolean unregisterWhenPossible = false;</span>
+
+<span class="nc" id="L126">	public ThreadProxyPipe() {</span>
+<span class="nc" id="L127">		this.events = new LinkedList&lt;GraphEvents&gt;();</span>
+<span class="nc" id="L128">		this.eventsData = new LinkedList&lt;Object[]&gt;();</span>
+<span class="nc" id="L129">		this.lock = new ReentrantLock();</span>
+<span class="nc" id="L130">		this.notEmpty = this.lock.newCondition();</span>
+<span class="nc" id="L131">		this.from = &quot;&lt;in&gt;&quot;;</span>
+<span class="nc" id="L132">		this.input = null;</span>
+<span class="nc" id="L133">	}</span>
+
+	/**
+	 * 
+	 * @param input
+	 *            The source of events we listen at.
+	 * 
+	 * @deprecated Use the default constructor and then call the
+	 *             {@link #init(Source)} method.
+	 */
+	@Deprecated
+	public ThreadProxyPipe(Source input) {
+<span class="nc" id="L145">		this(input, null, input instanceof Replayable);</span>
+<span class="nc" id="L146">	}</span>
+
+	/**
+	 * 
+	 * @param input
+	 * @param replay
+	 * 
+	 * @deprecated Use the default constructor and then call the
+	 *             {@link #init(Source)} method.
+	 */
+	@Deprecated
+	public ThreadProxyPipe(Source input, boolean replay) {
+<span class="nc" id="L158">		this(input, null, replay);</span>
+<span class="nc" id="L159">	}</span>
+
+	/**
+	 * 
+	 * @param input
+	 * @param initialListener
+	 * @param replay
+	 * 
+	 * @deprecated Use the default constructor and then call the
+	 *             {@link #init(Source)} method.
+	 */
+	@Deprecated
+	public ThreadProxyPipe(Source input, Sink initialListener, boolean replay) {
+<span class="nc" id="L172">		this();</span>
+
+<span class="nc bnc" id="L174" title="All 2 branches missed.">		if (initialListener != null)</span>
+<span class="nc" id="L175">			addSink(initialListener);</span>
+
+<span class="nc" id="L177">		init(input, replay);</span>
+<span class="nc" id="L178">	}</span>
+
+	public void init() {
+<span class="nc" id="L181">		init(null, false);</span>
+<span class="nc" id="L182">	}</span>
+
+	/**
+	 * Init the proxy. If there are previous events, they will be cleared.
+	 * 
+	 * @param source
+	 *            source of the events
+	 */
+	public void init(Source source) {
+<span class="nc" id="L191">		init(source, source instanceof Replayable);</span>
+<span class="nc" id="L192">	}</span>
+
+	/**
+	 * Init the proxy. If there are previous events, they will be cleared.
+	 * 
+	 * @param source
+	 *            source of the events
+	 * @param replay
+	 *            true if the source should be replayed. You need a
+	 *            {@link org.graphstream.stream.Replayable} source to enable replay,
+	 *            else nothing happens.
+	 */
+	public void init(Source source, boolean replay) {
+<span class="nc" id="L205">		lock.lock();</span>
+
+		try {
+<span class="nc bnc" id="L208" title="All 2 branches missed.">			if (this.input != null)</span>
+<span class="nc" id="L209">				this.input.removeSink(this);</span>
+
+<span class="nc" id="L211">			this.input = source;</span>
+
+<span class="nc" id="L213">			this.events.clear();</span>
+<span class="nc" id="L214">			this.eventsData.clear();</span>
+<span class="nc" id="L215">		} finally {</span>
+<span class="nc" id="L216">			lock.unlock();</span>
+		}
+
+<span class="nc bnc" id="L219" title="All 2 branches missed.">		if (source != null) {</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">			if (source instanceof Graph)</span>
+<span class="nc" id="L221">				this.from = ((Graph) source).getId();</span>
+
+<span class="nc" id="L223">			this.input.addSink(this);</span>
+
+<span class="nc bnc" id="L225" title="All 4 branches missed.">			if (replay &amp;&amp; source instanceof Replayable) {</span>
+<span class="nc" id="L226">				Replayable r = (Replayable) source;</span>
+<span class="nc" id="L227">				Controller rc = r.getReplayController();</span>
+
+<span class="nc" id="L229">				rc.addSink(this);</span>
+<span class="nc" id="L230">				rc.replay();</span>
+			}
+		}
+<span class="nc" id="L233">	}</span>
+
+	@Override
+	public String toString() {
+<span class="nc" id="L237">		String dest = &quot;nil&quot;;</span>
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">		if (attrSinks.size() &gt; 0)</span>
+<span class="nc" id="L240">			dest = attrSinks.get(0).toString();</span>
+
+<span class="nc" id="L242">		return String.format(&quot;thread-proxy(from %s to %s)&quot;, from, dest);</span>
+	}
+
+	/**
+	 * Ask the proxy to unregister from the event input source (stop receive events)
+	 * as soon as possible (when the next event will occur in the graph).
+	 */
+	public void unregisterFromSource() {
+<span class="nc" id="L250">		unregisterWhenPossible = true;</span>
+<span class="nc" id="L251">	}</span>
+
+	/**
+	 * This method must be called regularly in the output thread to check if the
+	 * input source sent events. If some event occurred, the listeners will be
+	 * called.
+	 */
+	public void pump() {
+<span class="nc" id="L259">		GraphEvents e = null;</span>
+<span class="nc" id="L260">		Object[] data = null;</span>
+
+		do {
+<span class="nc" id="L263">			lock.lock();</span>
+
+			try {
+<span class="nc" id="L266">				e = events.poll();</span>
+<span class="nc" id="L267">				data = eventsData.poll();</span>
+<span class="nc" id="L268">			} finally {</span>
+<span class="nc" id="L269">				lock.unlock();</span>
+			}
+
+<span class="nc bnc" id="L272" title="All 2 branches missed.">			if (e != null)</span>
+<span class="nc" id="L273">				processMessage(e, data);</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">		} while (e != null);</span>
+<span class="nc" id="L275">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ProxyPipe#blockingPump()
+	 */
+	public void blockingPump() throws InterruptedException {
+<span class="nc" id="L283">		blockingPump(0);</span>
+<span class="nc" id="L284">	}</span>
+
+	public void blockingPump(long timeout) throws InterruptedException {
+		GraphEvents e;
+		Object[] data;
+
+<span class="nc" id="L290">		lock.lock();</span>
+
+		try {
+<span class="nc bnc" id="L293" title="All 2 branches missed.">			if (timeout &gt; 0)</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">				while (events.size() == 0)</span>
+<span class="nc" id="L295">					notEmpty.await(timeout, TimeUnit.MILLISECONDS);</span>
+			else
+<span class="nc bnc" id="L297" title="All 2 branches missed.">				while (events.size() == 0)</span>
+<span class="nc" id="L298">					notEmpty.await();</span>
+<span class="nc" id="L299">		} finally {</span>
+<span class="nc" id="L300">			lock.unlock();</span>
+		}
+
+		do {
+<span class="nc" id="L304">			lock.lock();</span>
+
+			try {
+<span class="nc" id="L307">				e = events.poll();</span>
+<span class="nc" id="L308">				data = eventsData.poll();</span>
+<span class="nc" id="L309">			} finally {</span>
+<span class="nc" id="L310">				lock.unlock();</span>
+			}
+
+<span class="nc bnc" id="L313" title="All 2 branches missed.">			if (e != null)</span>
+<span class="nc" id="L314">				processMessage(e, data);</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">		} while (e != null);</span>
+<span class="nc" id="L316">	}</span>
+
+	public boolean hasPostRemaining() {
+<span class="nc" id="L319">		boolean r = true;</span>
+<span class="nc" id="L320">		lock.lock();</span>
+
+		try {
+<span class="nc bnc" id="L323" title="All 2 branches missed.">			r = events.size() &gt; 0;</span>
+<span class="nc" id="L324">		} finally {</span>
+<span class="nc" id="L325">			lock.unlock();</span>
+		}
+
+<span class="nc" id="L328">		return r;</span>
+	}
+
+	/**
+	 * Set of events sent via the message box.
+	 */
+<span class="nc" id="L334">	protected static enum GraphEvents {</span>
+<span class="nc" id="L335">		ADD_NODE, DEL_NODE, ADD_EDGE, DEL_EDGE, STEP, CLEARED, ADD_GRAPH_ATTR, CHG_GRAPH_ATTR, DEL_GRAPH_ATTR, ADD_NODE_ATTR, CHG_NODE_ATTR, DEL_NODE_ATTR, ADD_EDGE_ATTR, CHG_EDGE_ATTR, DEL_EDGE_ATTR</span>
+	};
+
+	protected boolean maybeUnregister() {
+<span class="nc bnc" id="L339" title="All 2 branches missed.">		if (unregisterWhenPossible) {</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">			if (input != null)</span>
+<span class="nc" id="L341">				input.removeSink(this);</span>
+<span class="nc" id="L342">			return true;</span>
+		}
+
+<span class="nc" id="L345">		return false;</span>
+	}
+
+	protected void post(GraphEvents e, Object... data) {
+<span class="nc" id="L349">		lock.lock();</span>
+
+		try {
+<span class="nc" id="L352">			events.add(e);</span>
+<span class="nc" id="L353">			eventsData.add(data);</span>
+
+<span class="nc" id="L355">			notEmpty.signal();</span>
+<span class="nc" id="L356">		} finally {</span>
+<span class="nc" id="L357">			lock.unlock();</span>
+		}
+<span class="nc" id="L359">	}</span>
+
+	public void edgeAttributeAdded(String graphId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc bnc" id="L362" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L363">			return;</span>
+
+<span class="nc" id="L365">		post(GraphEvents.ADD_EDGE_ATTR, graphId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L366">	}</span>
+
+	public void edgeAttributeChanged(String graphId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L370" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L371">			return;</span>
+
+<span class="nc" id="L373">		post(GraphEvents.CHG_EDGE_ATTR, graphId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L374">	}</span>
+
+	public void edgeAttributeRemoved(String graphId, long timeId, String edgeId, String attribute) {
+<span class="nc bnc" id="L377" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L378">			return;</span>
+
+<span class="nc" id="L380">		post(GraphEvents.DEL_EDGE_ATTR, graphId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L381">	}</span>
+
+	public void graphAttributeAdded(String graphId, long timeId, String attribute, Object value) {
+<span class="nc bnc" id="L384" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L385">			return;</span>
+
+<span class="nc" id="L387">		post(GraphEvents.ADD_GRAPH_ATTR, graphId, timeId, attribute, value);</span>
+<span class="nc" id="L388">	}</span>
+
+	public void graphAttributeChanged(String graphId, long timeId, String attribute, Object oldValue, Object newValue) {
+<span class="nc bnc" id="L391" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L392">			return;</span>
+
+<span class="nc" id="L394">		post(GraphEvents.CHG_GRAPH_ATTR, graphId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L395">	}</span>
+
+	public void graphAttributeRemoved(String graphId, long timeId, String attribute) {
+<span class="nc bnc" id="L398" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L399">			return;</span>
+
+<span class="nc" id="L401">		post(GraphEvents.DEL_GRAPH_ATTR, graphId, timeId, attribute);</span>
+<span class="nc" id="L402">	}</span>
+
+	public void nodeAttributeAdded(String graphId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc bnc" id="L405" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L406">			return;</span>
+
+<span class="nc" id="L408">		post(GraphEvents.ADD_NODE_ATTR, graphId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L409">	}</span>
+
+	public void nodeAttributeChanged(String graphId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L413" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L414">			return;</span>
+
+<span class="nc" id="L416">		post(GraphEvents.CHG_NODE_ATTR, graphId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L417">	}</span>
+
+	public void nodeAttributeRemoved(String graphId, long timeId, String nodeId, String attribute) {
+<span class="nc bnc" id="L420" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L421">			return;</span>
+
+<span class="nc" id="L423">		post(GraphEvents.DEL_NODE_ATTR, graphId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L424">	}</span>
+
+	public void edgeAdded(String graphId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc bnc" id="L428" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L429">			return;</span>
+
+<span class="nc" id="L431">		post(GraphEvents.ADD_EDGE, graphId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L432">	}</span>
+
+	public void edgeRemoved(String graphId, long timeId, String edgeId) {
+<span class="nc bnc" id="L435" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L436">			return;</span>
+
+<span class="nc" id="L438">		post(GraphEvents.DEL_EDGE, graphId, timeId, edgeId);</span>
+<span class="nc" id="L439">	}</span>
+
+	public void graphCleared(String graphId, long timeId) {
+<span class="nc bnc" id="L442" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L443">			return;</span>
+
+<span class="nc" id="L445">		post(GraphEvents.CLEARED, graphId, timeId);</span>
+<span class="nc" id="L446">	}</span>
+
+	public void nodeAdded(String graphId, long timeId, String nodeId) {
+<span class="nc bnc" id="L449" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L450">			return;</span>
+
+<span class="nc" id="L452">		post(GraphEvents.ADD_NODE, graphId, timeId, nodeId);</span>
+<span class="nc" id="L453">	}</span>
+
+	public void nodeRemoved(String graphId, long timeId, String nodeId) {
+<span class="nc bnc" id="L456" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L457">			return;</span>
+
+<span class="nc" id="L459">		post(GraphEvents.DEL_NODE, graphId, timeId, nodeId);</span>
+<span class="nc" id="L460">	}</span>
+
+	public void stepBegins(String graphId, long timeId, double step) {
+<span class="nc bnc" id="L463" title="All 2 branches missed.">		if (maybeUnregister())</span>
+<span class="nc" id="L464">			return;</span>
+
+<span class="nc" id="L466">		post(GraphEvents.STEP, graphId, timeId, step);</span>
+<span class="nc" id="L467">	}</span>
+
+	// MBoxListener
+
+	protected void processMessage(GraphEvents e, Object[] data) {
+		String graphId, elementId, attribute;
+		Long timeId;
+		Object newValue, oldValue;
+
+<span class="nc bnc" id="L476" title="All 16 branches missed.">		switch (e) {</span>
+		case ADD_NODE:
+<span class="nc" id="L478">			graphId = (String) data[0];</span>
+<span class="nc" id="L479">			timeId = (Long) data[1];</span>
+<span class="nc" id="L480">			elementId = (String) data[2];</span>
+
+<span class="nc" id="L482">			sendNodeAdded(graphId, timeId, elementId);</span>
+<span class="nc" id="L483">			break;</span>
+		case DEL_NODE:
+<span class="nc" id="L485">			graphId = (String) data[0];</span>
+<span class="nc" id="L486">			timeId = (Long) data[1];</span>
+<span class="nc" id="L487">			elementId = (String) data[2];</span>
+
+<span class="nc" id="L489">			sendNodeRemoved(graphId, timeId, elementId);</span>
+<span class="nc" id="L490">			break;</span>
+		case ADD_EDGE:
+<span class="nc" id="L492">			graphId = (String) data[0];</span>
+<span class="nc" id="L493">			timeId = (Long) data[1];</span>
+<span class="nc" id="L494">			elementId = (String) data[2];</span>
+
+<span class="nc" id="L496">			String fromId = (String) data[3];</span>
+<span class="nc" id="L497">			String toId = (String) data[4];</span>
+<span class="nc" id="L498">			boolean directed = (Boolean) data[5];</span>
+
+<span class="nc" id="L500">			sendEdgeAdded(graphId, timeId, elementId, fromId, toId, directed);</span>
+<span class="nc" id="L501">			break;</span>
+		case DEL_EDGE:
+<span class="nc" id="L503">			graphId = (String) data[0];</span>
+<span class="nc" id="L504">			timeId = (Long) data[1];</span>
+<span class="nc" id="L505">			elementId = (String) data[2];</span>
+
+<span class="nc" id="L507">			sendEdgeRemoved(graphId, timeId, elementId);</span>
+<span class="nc" id="L508">			break;</span>
+		case STEP:
+<span class="nc" id="L510">			graphId = (String) data[0];</span>
+<span class="nc" id="L511">			timeId = (Long) data[1];</span>
+
+<span class="nc" id="L513">			double step = (Double) data[2];</span>
+
+<span class="nc" id="L515">			sendStepBegins(graphId, timeId, step);</span>
+<span class="nc" id="L516">			break;</span>
+		case ADD_GRAPH_ATTR:
+<span class="nc" id="L518">			graphId = (String) data[0];</span>
+<span class="nc" id="L519">			timeId = (Long) data[1];</span>
+<span class="nc" id="L520">			attribute = (String) data[2];</span>
+<span class="nc" id="L521">			newValue = data[3];</span>
+
+<span class="nc" id="L523">			sendGraphAttributeAdded(graphId, timeId, attribute, newValue);</span>
+<span class="nc" id="L524">			break;</span>
+		case CHG_GRAPH_ATTR:
+<span class="nc" id="L526">			graphId = (String) data[0];</span>
+<span class="nc" id="L527">			timeId = (Long) data[1];</span>
+<span class="nc" id="L528">			attribute = (String) data[2];</span>
+<span class="nc" id="L529">			oldValue = data[3];</span>
+<span class="nc" id="L530">			newValue = data[4];</span>
+
+<span class="nc" id="L532">			sendGraphAttributeChanged(graphId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L533">			break;</span>
+		case DEL_GRAPH_ATTR:
+<span class="nc" id="L535">			graphId = (String) data[0];</span>
+<span class="nc" id="L536">			timeId = (Long) data[1];</span>
+<span class="nc" id="L537">			attribute = (String) data[2];</span>
+
+<span class="nc" id="L539">			sendGraphAttributeRemoved(graphId, timeId, attribute);</span>
+<span class="nc" id="L540">			break;</span>
+		case ADD_EDGE_ATTR:
+<span class="nc" id="L542">			graphId = (String) data[0];</span>
+<span class="nc" id="L543">			timeId = (Long) data[1];</span>
+<span class="nc" id="L544">			elementId = (String) data[2];</span>
+<span class="nc" id="L545">			attribute = (String) data[3];</span>
+<span class="nc" id="L546">			newValue = data[4];</span>
+
+<span class="nc" id="L548">			sendEdgeAttributeAdded(graphId, timeId, elementId, attribute, newValue);</span>
+<span class="nc" id="L549">			break;</span>
+		case CHG_EDGE_ATTR:
+<span class="nc" id="L551">			graphId = (String) data[0];</span>
+<span class="nc" id="L552">			timeId = (Long) data[1];</span>
+<span class="nc" id="L553">			elementId = (String) data[2];</span>
+<span class="nc" id="L554">			attribute = (String) data[3];</span>
+<span class="nc" id="L555">			oldValue = data[4];</span>
+<span class="nc" id="L556">			newValue = data[5];</span>
+
+<span class="nc" id="L558">			sendEdgeAttributeChanged(graphId, timeId, elementId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L559">			break;</span>
+		case DEL_EDGE_ATTR:
+<span class="nc" id="L561">			graphId = (String) data[0];</span>
+<span class="nc" id="L562">			timeId = (Long) data[1];</span>
+<span class="nc" id="L563">			elementId = (String) data[2];</span>
+<span class="nc" id="L564">			attribute = (String) data[3];</span>
+
+<span class="nc" id="L566">			sendEdgeAttributeRemoved(graphId, timeId, elementId, attribute);</span>
+<span class="nc" id="L567">			break;</span>
+		case ADD_NODE_ATTR:
+<span class="nc" id="L569">			graphId = (String) data[0];</span>
+<span class="nc" id="L570">			timeId = (Long) data[1];</span>
+<span class="nc" id="L571">			elementId = (String) data[2];</span>
+<span class="nc" id="L572">			attribute = (String) data[3];</span>
+<span class="nc" id="L573">			newValue = data[4];</span>
+
+<span class="nc" id="L575">			sendNodeAttributeAdded(graphId, timeId, elementId, attribute, newValue);</span>
+<span class="nc" id="L576">			break;</span>
+		case CHG_NODE_ATTR:
+<span class="nc" id="L578">			graphId = (String) data[0];</span>
+<span class="nc" id="L579">			timeId = (Long) data[1];</span>
+<span class="nc" id="L580">			elementId = (String) data[2];</span>
+<span class="nc" id="L581">			attribute = (String) data[3];</span>
+<span class="nc" id="L582">			oldValue = data[4];</span>
+<span class="nc" id="L583">			newValue = data[5];</span>
+
+<span class="nc" id="L585">			sendNodeAttributeChanged(graphId, timeId, elementId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L586">			break;</span>
+		case DEL_NODE_ATTR:
+<span class="nc" id="L588">			graphId = (String) data[0];</span>
+<span class="nc" id="L589">			timeId = (Long) data[1];</span>
+<span class="nc" id="L590">			elementId = (String) data[2];</span>
+<span class="nc" id="L591">			attribute = (String) data[3];</span>
+
+<span class="nc" id="L593">			sendNodeAttributeRemoved(graphId, timeId, elementId, attribute);</span>
+<span class="nc" id="L594">			break;</span>
+		case CLEARED:
+<span class="nc" id="L596">			graphId = (String) data[0];</span>
+<span class="nc" id="L597">			timeId = (Long) data[1];</span>
+
+<span class="nc" id="L599">			sendGraphCleared(graphId, timeId);</span>
+<span class="nc" id="L600">			break;</span>
+		default:
+<span class="nc" id="L602">			logger.warning(String.format(&quot;Unknown message %s.&quot;, e));</span>
+			break;
+		}
+<span class="nc" id="L605">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

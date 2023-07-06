@@ -1,0 +1,459 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GraphListeners.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util</a> &gt; <span class="el_source">GraphListeners.java</span></div><h1>GraphListeners.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-09-20
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.util;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.AbstractElement.AttributeChangeEvent;
+import org.graphstream.stream.Pipe;
+import org.graphstream.stream.SourceBase;
+import org.graphstream.stream.sync.SinkTime;
+
+/**
+ * Helper object to handle events producted by a graph.
+ * 
+ */
+public class GraphListeners extends SourceBase implements Pipe {
+
+	SinkTime sinkTime;
+	boolean passYourWay, passYourWayAE;
+	String dnSourceId;
+	long dnTimeId;
+
+	Graph g;
+
+	public GraphListeners(Graph g) {
+<span class="fc" id="L56">		super(g.getId());</span>
+
+<span class="fc" id="L58">		this.sinkTime = new SinkTime();</span>
+<span class="fc" id="L59">		this.sourceTime.setSinkTime(sinkTime);</span>
+<span class="fc" id="L60">		this.passYourWay = false;</span>
+<span class="fc" id="L61">		this.passYourWayAE = false;</span>
+<span class="fc" id="L62">		this.dnSourceId = null;</span>
+<span class="fc" id="L63">		this.dnTimeId = Long.MIN_VALUE;</span>
+<span class="fc" id="L64">		this.g = g;</span>
+<span class="fc" id="L65">	}</span>
+
+	public long newEvent() {
+<span class="fc" id="L68">		return sourceTime.newEvent();</span>
+	}
+
+	public void sendAttributeChangedEvent(String eltId, ElementType eltType, String attribute,
+			AttributeChangeEvent event, Object oldValue, Object newValue) {
+		//
+		// Attributes with name beginnig with a dot are hidden.
+		//
+<span class="nc bnc" id="L76" title="All 4 branches missed.">		if (passYourWay || attribute.charAt(0) == '.')</span>
+<span class="nc" id="L77">			return;</span>
+
+<span class="nc" id="L79">		sendAttributeChangedEvent(sourceId, newEvent(), eltId, eltType, attribute, event, oldValue, newValue);</span>
+<span class="nc" id="L80">	}</span>
+
+	public void sendNodeAdded(String nodeId) {
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">		if (passYourWay)</span>
+<span class="nc" id="L84">			return;</span>
+
+<span class="fc" id="L86">		sendNodeAdded(sourceId, newEvent(), nodeId);</span>
+<span class="fc" id="L87">	}</span>
+
+	public void sendNodeRemoved(String nodeId) {
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">		if (dnSourceId != null) {</span>
+<span class="nc" id="L91">			sendNodeRemoved(dnSourceId, dnTimeId, nodeId);</span>
+<span class="nc" id="L92">		} else {</span>
+<span class="fc" id="L93">			sendNodeRemoved(sourceId, newEvent(), nodeId);</span>
+		}
+<span class="fc" id="L95">	}</span>
+
+	public void sendEdgeAdded(String edgeId, String source, String target, boolean directed) {
+<span class="pc bpc" id="L98" title="1 of 2 branches missed.">		if (passYourWayAE)</span>
+<span class="nc" id="L99">			return;</span>
+
+<span class="fc" id="L101">		sendEdgeAdded(sourceId, newEvent(), edgeId, source, target, directed);</span>
+<span class="fc" id="L102">	}</span>
+
+	public void sendEdgeRemoved(String edgeId) {
+<span class="nc bnc" id="L105" title="All 2 branches missed.">		if (passYourWay)</span>
+<span class="nc" id="L106">			return;</span>
+
+<span class="nc" id="L108">		sendEdgeRemoved(sourceId, newEvent(), edgeId);</span>
+<span class="nc" id="L109">	}</span>
+
+	public void sendGraphCleared() {
+<span class="pc bpc" id="L112" title="1 of 2 branches missed.">		if (passYourWay)</span>
+<span class="nc" id="L113">			return;</span>
+
+<span class="fc" id="L115">		sendGraphCleared(sourceId, newEvent());</span>
+<span class="fc" id="L116">	}</span>
+
+	public void sendStepBegins(double step) {
+<span class="nc bnc" id="L119" title="All 2 branches missed.">		if (passYourWay)</span>
+<span class="nc" id="L120">			return;</span>
+
+<span class="nc" id="L122">		sendStepBegins(sourceId, newEvent(), step);</span>
+<span class="nc" id="L123">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#edgeAttributeAdded(java.lang
+	 * .String, long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc bnc" id="L132" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L133">			Edge edge = g.getEdge(edgeId);</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">			if (edge != null) {</span>
+<span class="nc" id="L135">				passYourWay = true;</span>
+
+				try {
+<span class="nc" id="L138">					edge.setAttribute(attribute, value);</span>
+<span class="nc" id="L139">				} finally {</span>
+<span class="nc" id="L140">					passYourWay = false;</span>
+				}
+
+<span class="nc" id="L143">				sendEdgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);</span>
+			}
+		}
+<span class="nc" id="L146">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#edgeAttributeChanged(java.lang
+	 * .String, long, java.lang.String, java.lang.String, java.lang.Object,
+	 * java.lang.Object)
+	 */
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L157" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L158">			Edge edge = g.getEdge(edgeId);</span>
+<span class="nc bnc" id="L159" title="All 2 branches missed.">			if (edge != null) {</span>
+<span class="nc" id="L160">				passYourWay = true;</span>
+
+<span class="nc bnc" id="L162" title="All 2 branches missed.">				if (oldValue == null)</span>
+<span class="nc" id="L163">					oldValue = edge.getAttribute(attribute);</span>
+
+				try {
+<span class="nc" id="L166">					edge.setAttribute(attribute, newValue);</span>
+<span class="nc" id="L167">				} finally {</span>
+<span class="nc" id="L168">					passYourWay = false;</span>
+				}
+
+<span class="nc" id="L171">				sendEdgeAttributeChanged(sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+			}
+		}
+<span class="nc" id="L174">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#edgeAttributeRemoved(java.lang
+	 * .String, long, java.lang.String, java.lang.String)
+	 */
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc bnc" id="L183" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L184">			Edge edge = g.getEdge(edgeId);</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">			if (edge != null) {</span>
+<span class="nc" id="L186">				sendEdgeAttributeRemoved(sourceId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L187">				passYourWay = true;</span>
+
+				try {
+<span class="nc" id="L190">					edge.removeAttribute(attribute);</span>
+<span class="nc" id="L191">				} finally {</span>
+<span class="nc" id="L192">					passYourWay = false;</span>
+				}
+
+			}
+		}
+<span class="nc" id="L197">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#graphAttributeAdded(java.lang
+	 * .String, long, java.lang.String, java.lang.Object)
+	 */
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc bnc" id="L206" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L207">			passYourWay = true;</span>
+
+			try {
+<span class="nc" id="L210">				g.setAttribute(attribute, value);</span>
+<span class="nc" id="L211">			} finally {</span>
+<span class="nc" id="L212">				passYourWay = false;</span>
+			}
+
+<span class="nc" id="L215">			sendGraphAttributeAdded(sourceId, timeId, attribute, value);</span>
+		}
+<span class="nc" id="L217">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#graphAttributeChanged(java.lang
+	 * .String, long, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L228">			passYourWay = true;</span>
+
+<span class="nc bnc" id="L230" title="All 2 branches missed.">			if (oldValue == null)</span>
+<span class="nc" id="L231">				oldValue = g.getAttribute(attribute);</span>
+
+			try {
+<span class="nc" id="L234">				g.setAttribute(attribute, newValue);</span>
+<span class="nc" id="L235">			} finally {</span>
+<span class="nc" id="L236">				passYourWay = false;</span>
+			}
+
+<span class="nc" id="L239">			sendGraphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+		}
+<span class="nc" id="L241">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#graphAttributeRemoved(java.lang
+	 * .String, long, java.lang.String)
+	 */
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc bnc" id="L250" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L251">			sendGraphAttributeRemoved(sourceId, timeId, attribute);</span>
+<span class="nc" id="L252">			passYourWay = true;</span>
+
+			try {
+<span class="nc" id="L255">				g.removeAttribute(attribute);</span>
+<span class="nc" id="L256">			} finally {</span>
+<span class="nc" id="L257">				passYourWay = false;</span>
+			}
+		}
+<span class="nc" id="L260">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#nodeAttributeAdded(java.lang
+	 * .String, long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc bnc" id="L269" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L270">			Node node = g.getNode(nodeId);</span>
+<span class="nc bnc" id="L271" title="All 2 branches missed.">			if (node != null) {</span>
+<span class="nc" id="L272">				passYourWay = true;</span>
+
+				try {
+<span class="nc" id="L275">					node.setAttribute(attribute, value);</span>
+<span class="nc" id="L276">				} finally {</span>
+<span class="nc" id="L277">					passYourWay = false;</span>
+				}
+
+<span class="nc" id="L280">				sendNodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);</span>
+			}
+		}
+<span class="nc" id="L283">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#nodeAttributeChanged(java.lang
+	 * .String, long, java.lang.String, java.lang.String, java.lang.Object,
+	 * java.lang.Object)
+	 */
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L294" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L295">			Node node = g.getNode(nodeId);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">			if (node != null) {</span>
+<span class="nc" id="L297">				passYourWay = true;</span>
+
+<span class="nc bnc" id="L299" title="All 2 branches missed.">				if (oldValue == null)</span>
+<span class="nc" id="L300">					oldValue = node.getAttribute(attribute);</span>
+
+				try {
+<span class="nc" id="L303">					node.setAttribute(attribute, newValue);</span>
+<span class="nc" id="L304">				} finally {</span>
+<span class="nc" id="L305">					passYourWay = false;</span>
+				}
+
+<span class="nc" id="L308">				sendNodeAttributeChanged(sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+			}
+		}
+<span class="nc" id="L311">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#nodeAttributeRemoved(java.lang
+	 * .String, long, java.lang.String, java.lang.String)
+	 */
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc bnc" id="L320" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L321">			Node node = g.getNode(nodeId);</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">			if (node != null) {</span>
+<span class="nc" id="L323">				sendNodeAttributeRemoved(sourceId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L324">				passYourWay = true;</span>
+
+				try {
+<span class="nc" id="L327">					node.removeAttribute(attribute);</span>
+<span class="nc" id="L328">				} finally {</span>
+<span class="nc" id="L329">					passYourWay = false;</span>
+				}
+			}
+		}
+<span class="nc" id="L333">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#edgeAdded(java.lang.String, long,
+	 * java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc bnc" id="L343" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L344">			passYourWayAE = true;</span>
+
+			try {
+<span class="nc" id="L347">				g.addEdge(edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L348">			} finally {</span>
+<span class="nc" id="L349">				passYourWayAE = false;</span>
+			}
+
+<span class="nc" id="L352">			sendEdgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+		}
+<span class="nc" id="L354">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#edgeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc bnc" id="L363" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L364">			sendEdgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L365">			passYourWay = true;</span>
+
+			try {
+<span class="nc" id="L368">				g.removeEdge(edgeId);</span>
+<span class="nc" id="L369">			} finally {</span>
+<span class="nc" id="L370">				passYourWay = false;</span>
+			}
+		}
+<span class="nc" id="L373">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#graphCleared(java.lang.String, long)
+	 */
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc bnc" id="L381" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L382">			sendGraphCleared(sourceId, timeId);</span>
+<span class="nc" id="L383">			passYourWay = true;</span>
+
+			try {
+<span class="nc" id="L386">				g.clear();</span>
+<span class="nc" id="L387">			} finally {</span>
+<span class="nc" id="L388">				passYourWay = false;</span>
+			}
+		}
+<span class="nc" id="L391">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#nodeAdded(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc bnc" id="L400" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L401">			passYourWay = true;</span>
+
+			try {
+<span class="nc" id="L404">				g.addNode(nodeId);</span>
+<span class="nc" id="L405">			} finally {</span>
+<span class="nc" id="L406">				passYourWay = false;</span>
+			}
+
+<span class="nc" id="L409">			sendNodeAdded(sourceId, timeId, nodeId);</span>
+		}
+<span class="nc" id="L411">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#nodeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc bnc" id="L420" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+			// sendNodeRemoved(sourceId, timeId, nodeId);
+<span class="nc" id="L422">			dnSourceId = sourceId;</span>
+<span class="nc" id="L423">			dnTimeId = timeId;</span>
+
+			try {
+<span class="nc" id="L426">				g.removeNode(nodeId);</span>
+<span class="nc" id="L427">			} finally {</span>
+<span class="nc" id="L428">				dnSourceId = null;</span>
+<span class="nc" id="L429">				dnTimeId = Long.MIN_VALUE;</span>
+			}
+		}
+<span class="nc" id="L432">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#stepBegins(java.lang.String, long,
+	 * double)
+	 */
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc bnc" id="L441" title="All 2 branches missed.">		if (sinkTime.isNewEvent(sourceId, timeId)) {</span>
+<span class="nc" id="L442">			passYourWay = true;</span>
+
+			try {
+<span class="nc" id="L445">				g.stepBegins(step);</span>
+<span class="nc" id="L446">			} finally {</span>
+<span class="nc" id="L447">				passYourWay = false;</span>
+			}
+
+<span class="nc" id="L450">			sendStepBegins(sourceId, timeId, step);</span>
+		}
+<span class="nc" id="L452">	}</span>
+
+	@Override
+	public String toString() {
+<span class="nc" id="L456">		return String.format(&quot;GraphListeners of %s.%s&quot;, g.getClass().getSimpleName(), g.getId());</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

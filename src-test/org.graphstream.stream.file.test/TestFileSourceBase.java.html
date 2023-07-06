@@ -1,0 +1,346 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestFileSourceBase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.test</a> &gt; <span class="el_source">TestFileSourceBase.java</span></div><h1>TestFileSourceBase.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.StringReader;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.HttpURLConnection;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.stream.file.FileSource;
+import org.junit.Test;
+
+/**
+ * Base test class for file inputs.
+ * 
+ * &lt;p&gt;
+ * This test class propose a set of JUnit standard tests that can apply to any
+ * file format.
+ * &lt;/p&gt;
+ */
+<span class="nc" id="L60">public abstract class TestFileSourceBase {</span>
+	// Attribute
+
+	/**
+	 * The graph built when reading the file.
+	 */
+	protected Graph graph;
+
+	/**
+	 * The current input tested.
+	 */
+	protected FileSource input;
+
+	/**
+	 * If false, edge identifiers are not tested (some format cannot specify edge
+	 * identifiers).
+	 */
+<span class="nc" id="L77">	protected boolean testEdgeIds = true;</span>
+
+	// Access
+
+	/**
+	 * Return a string containing a file defining a simple triangle made of three
+	 * nodes named &quot;A&quot;, &quot;B&quot; and &quot;C&quot;, tied with three edges &quot;AB&quot;, &quot;BC&quot; and &quot;CA&quot;.
+	 */
+	public abstract String anUndirectedTriangle();
+
+	/**
+	 * Return a string containing a file defining a simple triangle made of three
+	 * nodes named &quot;A&quot;, &quot;B&quot; and &quot;C&quot;, tied with three edges &quot;AB&quot;, &quot;BC&quot; and &quot;CA&quot;, with
+	 * direction &quot;A&quot; toward &quot;B&quot;, undirected between &quot;B&quot; and &quot;C&quot; and directed from
+	 * &quot;A&quot; to &quot;C&quot;.
+	 */
+	public abstract String aDirectedTriangle();
+
+	/**
+	 * Return a string containing the triangle of {@link #anUndirectedTriangle()},
+	 * but each element has attributes :
+	 * &lt;ul&gt;
+	 * &lt;li&gt;node &quot;A&quot; as three attributes&lt;/li&gt;
+	 * &lt;/ul&gt;
+	 */
+	public abstract String basicAttributes();
+
+	/**
+	 * Return a string containing the name of a local file pointing at the
+	 * definition of the triangle evoked in {@link #anUndirectedTriangle()}.
+	 */
+	public abstract String anUndirectedTriangleFileName();
+
+	/**
+	 * Return a string containing an HTTP URL pointing at the definition of the
+	 * triangle evoked in {@link #anUndirectedTriangle()}.
+	 */
+	public abstract String anUndirectedTriangleHttpURL();
+
+	// Test
+
+	@Test
+	public void test_Access_ReadAll_Reader() {
+		try {
+<span class="nc" id="L121">			input.addSink(graph);</span>
+<span class="nc" id="L122">			input.readAll(new StringReader(anUndirectedTriangle()));</span>
+<span class="nc" id="L123">			undirectedTriangleTests();</span>
+<span class="nc" id="L124">		} catch (IOException e) {</span>
+<span class="nc" id="L125">			assertTrue(&quot;IOException, should not happen&quot; + e.getMessage(), false);</span>
+<span class="nc" id="L126">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L128">	}</span>
+
+	@Test
+	public void test_Access_ByStep_Reader() {
+		try {
+<span class="nc" id="L133">			input.addSink(graph);</span>
+<span class="nc" id="L134">			input.begin(new StringReader(anUndirectedTriangle()));</span>
+<span class="nc bnc" id="L135" title="All 2 branches missed.">			while (input.nextEvents())</span>
+				;
+<span class="nc" id="L137">			input.end();</span>
+
+<span class="nc" id="L139">			undirectedTriangleTests();</span>
+<span class="nc" id="L140">		} catch (IOException e) {</span>
+<span class="nc" id="L141">			assertTrue(&quot;IOException, should not happen&quot; + e.getMessage(), false);</span>
+<span class="nc" id="L142">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L144">	}</span>
+
+	@Test
+	public void test_Access_ReadAll_Stream() {
+		try {
+<span class="nc" id="L149">			input.addSink(graph);</span>
+<span class="nc" id="L150">			input.readAll(new FileInputStream(anUndirectedTriangleFileName()));</span>
+<span class="nc" id="L151">			undirectedTriangleTests();</span>
+<span class="nc" id="L152">		} catch (IOException e) {</span>
+<span class="nc" id="L153">			assertTrue(&quot;IOException, should not happen&quot; + e.getMessage(), false);</span>
+<span class="nc" id="L154">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L156">	}</span>
+
+	@Test
+	public void test_Access_ReadAll_URL() {
+		try {
+<span class="nc" id="L161">			URL url = new URL(anUndirectedTriangleHttpURL());</span>
+
+<span class="nc" id="L163">			HttpURLConnection c = (HttpURLConnection)url.openConnection();</span>
+<span class="nc" id="L164">			c.setDefaultUseCaches(false);</span>
+<span class="nc" id="L165">			c.setReadTimeout(5000);</span>
+<span class="nc" id="L166">			c.addRequestProperty(&quot;Accept-Language&quot;, &quot;en-US,en;q=0.8&quot;);</span>
+<span class="nc" id="L167">			c.addRequestProperty(&quot;User-Agent&quot;, &quot;Mozilla&quot;);</span>
+<span class="nc" id="L168">			c.addRequestProperty(&quot;Referer&quot;, &quot;google.com&quot;);</span>
+<span class="nc" id="L169">			boolean redirect = false;</span>
+<span class="nc" id="L170">			int status = c.getResponseCode();</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">			if (status != HttpURLConnection.HTTP_OK) {</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">				if (status == HttpURLConnection.HTTP_MOVED_TEMP</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">					|| status == HttpURLConnection.HTTP_MOVED_PERM</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">					|| status == HttpURLConnection.HTTP_SEE_OTHER)</span>
+<span class="nc" id="L175">			redirect = true;</span>
+<span class="nc bnc" id="L176" title="All 2 branches missed.">			if (redirect) {</span>
+
+				// get redirect url from &quot;location&quot; header field
+<span class="nc" id="L179">				String newUrl = c.getHeaderField(&quot;Location&quot;);</span>
+	
+				// get the cookie if need, for login
+<span class="nc" id="L182">				String cookies = c.getHeaderField(&quot;Set-Cookie&quot;);</span>
+		
+				// open the new connection again
+<span class="nc" id="L185">				url = new URL(newUrl);</span>
+<span class="nc" id="L186">				c = (HttpURLConnection) url.openConnection();</span>
+<span class="nc" id="L187">				c.setRequestProperty(&quot;Cookie&quot;, cookies);</span>
+<span class="nc" id="L188">				c.addRequestProperty(&quot;Accept-Language&quot;, &quot;en-US,en;q=0.8&quot;);</span>
+<span class="nc" id="L189">				c.addRequestProperty(&quot;User-Agent&quot;, &quot;Mozilla&quot;);</span>
+<span class="nc" id="L190">				c.addRequestProperty(&quot;Referer&quot;, &quot;google.com&quot;);</span>
+		
+<span class="nc" id="L192">				System.out.println(&quot;Redirect to URL : &quot; + newUrl);</span>
+		
+			}
+	
+		}
+
+<span class="nc" id="L198">			input.addSink(graph);</span>
+<span class="nc" id="L199">			input.readAll(url);</span>
+<span class="nc" id="L200">			undirectedTriangleTests();</span>
+<span class="nc" id="L201">		} catch (IOException e) {</span>
+<span class="nc" id="L202">			e.printStackTrace();</span>
+<span class="nc" id="L203">			assertTrue(&quot;IOException, should not happen&quot; + e.getMessage(), false);</span>
+		}
+<span class="nc" id="L205">	}</span>
+
+	@Test
+	public void test_Access_ReadAll_FileName() {
+		try {
+<span class="nc" id="L210">			input.addSink(graph);</span>
+<span class="nc" id="L211">			input.readAll(anUndirectedTriangleFileName());</span>
+<span class="nc" id="L212">			undirectedTriangleTests();</span>
+<span class="nc" id="L213">		} catch (IOException e) {</span>
+<span class="nc" id="L214">			e.printStackTrace();</span>
+<span class="nc" id="L215">			assertTrue(&quot;IOException, should not happen&quot; + e.getMessage(), false);</span>
+		}
+<span class="nc" id="L217">	}</span>
+
+	@Test
+	public void test_DirectedTriangle() {
+		try {
+<span class="nc" id="L222">			input.addSink(graph);</span>
+<span class="nc" id="L223">			input.readAll(new StringReader(aDirectedTriangle()));</span>
+<span class="nc" id="L224">			directedTriangleTests();</span>
+<span class="nc" id="L225">		} catch (IOException e) {</span>
+<span class="nc" id="L226">			e.printStackTrace();</span>
+<span class="nc" id="L227">			assertTrue(&quot;IOException, should not happen&quot; + e.getMessage(), false);</span>
+		}
+<span class="nc" id="L229">	}</span>
+
+	@Test
+	public void test_Attributes() {
+		try {
+<span class="nc" id="L234">			input.addSink(graph);</span>
+<span class="nc" id="L235">			input.readAll(new StringReader(basicAttributes()));</span>
+<span class="nc" id="L236">			basicAttributesTests();</span>
+<span class="nc" id="L237">		} catch (IOException e) {</span>
+<span class="nc" id="L238">			e.printStackTrace();</span>
+<span class="nc" id="L239">			assertTrue(&quot;IOException, should not happen&quot; + e.getMessage(), true);</span>
+		}
+<span class="nc" id="L241">	}</span>
+
+	// Test
+
+	protected void undirectedTriangleTests() {
+<span class="nc" id="L246">		assertEquals(3, graph.getEdgeCount());</span>
+<span class="nc" id="L247">		assertEquals(3, graph.getNodeCount());</span>
+<span class="nc" id="L248">		assertNotNull(graph.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L249">		assertNotNull(graph.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L250">		assertNotNull(graph.getNode(&quot;C&quot;));</span>
+
+<span class="nc bnc" id="L252" title="All 2 branches missed.">		if (testEdgeIds) {</span>
+<span class="nc" id="L253">			assertNotNull(graph.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L254">			assertNotNull(graph.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L255">			assertNotNull(graph.getEdge(&quot;CA&quot;));</span>
+		}
+<span class="nc" id="L257">	}</span>
+
+	protected void directedTriangleTests() {
+<span class="nc" id="L260">		assertEquals(3, graph.getEdgeCount());</span>
+<span class="nc" id="L261">		assertEquals(3, graph.getNodeCount());</span>
+
+<span class="nc" id="L263">		Node A = graph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L264">		Node B = graph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L265">		Node C = graph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L267">		assertNotNull(A);</span>
+<span class="nc" id="L268">		assertNotNull(B);</span>
+<span class="nc" id="L269">		assertNotNull(C);</span>
+
+<span class="nc bnc" id="L271" title="All 2 branches missed.">		if (testEdgeIds) {</span>
+<span class="nc" id="L272">			Edge AB = graph.getEdge(&quot;AB&quot;);</span>
+<span class="nc" id="L273">			Edge BC = graph.getEdge(&quot;BC&quot;);</span>
+<span class="nc" id="L274">			Edge CA = graph.getEdge(&quot;CA&quot;);</span>
+
+<span class="nc" id="L276">			assertNotNull(AB);</span>
+<span class="nc" id="L277">			assertNotNull(BC);</span>
+<span class="nc" id="L278">			assertNotNull(CA);</span>
+
+<span class="nc" id="L280">			assertTrue(AB.isDirected());</span>
+<span class="nc" id="L281">			assertFalse(BC.isDirected());</span>
+<span class="nc" id="L282">			assertTrue(CA.isDirected());</span>
+
+<span class="nc" id="L284">			assertEquals(&quot;A&quot;, AB.getNode0().getId());</span>
+<span class="nc" id="L285">			assertEquals(&quot;B&quot;, AB.getNode1().getId());</span>
+<span class="nc" id="L286">			assertEquals(&quot;B&quot;, BC.getNode0().getId());</span>
+<span class="nc" id="L287">			assertEquals(&quot;C&quot;, BC.getNode1().getId());</span>
+<span class="nc" id="L288">			assertEquals(&quot;A&quot;, CA.getNode0().getId());</span>
+<span class="nc" id="L289">			assertEquals(&quot;C&quot;, CA.getNode1().getId());</span>
+		}
+
+<span class="nc" id="L292">		assertTrue(A.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L293">		assertTrue(A.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L294">		assertTrue(B.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L295">		assertFalse(B.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L296">		assertFalse(C.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L297">		assertTrue(C.hasEdgeToward(&quot;B&quot;));</span>
+
+<span class="nc" id="L299">		Edge AB = A.getEdgeToward(&quot;B&quot;);</span>
+<span class="nc" id="L300">		Edge BC = B.getEdgeToward(&quot;C&quot;);</span>
+<span class="nc" id="L301">		Edge CA = A.getEdgeToward(&quot;C&quot;);</span>
+
+<span class="nc" id="L303">		assertNotNull(AB);</span>
+<span class="nc" id="L304">		assertNotNull(BC);</span>
+<span class="nc" id="L305">		assertNotNull(CA);</span>
+
+<span class="nc" id="L307">		assertTrue(AB.isDirected());</span>
+<span class="nc" id="L308">		assertFalse(BC.isDirected());</span>
+<span class="nc" id="L309">		assertTrue(CA.isDirected());</span>
+<span class="nc" id="L310">		assertEquals(&quot;B&quot;, AB.getNode1().getId());</span>
+<span class="nc" id="L311">		assertEquals(&quot;C&quot;, BC.getNode1().getId());</span>
+<span class="nc" id="L312">		assertEquals(&quot;C&quot;, CA.getNode1().getId());</span>
+<span class="nc" id="L313">	}</span>
+
+	protected void basicAttributesTests() {
+<span class="nc" id="L316">		assertEquals(3, graph.getEdgeCount());</span>
+<span class="nc" id="L317">		assertEquals(3, graph.getNodeCount());</span>
+
+<span class="nc" id="L319">		Node A = graph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L320">		Node B = graph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L321">		Node C = graph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L323">		assertNotNull(A);</span>
+<span class="nc" id="L324">		assertNotNull(B);</span>
+<span class="nc" id="L325">		assertNotNull(C);</span>
+
+<span class="nc" id="L327">		assertTrue(A.hasAttribute(&quot;a&quot;));</span>
+<span class="nc" id="L328">		assertTrue(A.hasAttribute(&quot;b&quot;));</span>
+<span class="nc" id="L329">		assertTrue(A.hasAttribute(&quot;c&quot;));</span>
+<span class="nc" id="L330">		assertTrue(B.hasAttribute(&quot;aa&quot;));</span>
+<span class="nc" id="L331">		assertTrue(B.hasAttribute(&quot;bb&quot;));</span>
+<span class="nc" id="L332">		assertTrue(B.hasAttribute(&quot;cc&quot;));</span>
+<span class="nc" id="L333">		assertTrue(C.hasAttribute(&quot;aaa&quot;));</span>
+
+<span class="nc" id="L335">		assertEquals(1.0, ((Number) A.getAttribute(&quot;a&quot;)).doubleValue(), 1E-12);</span>
+<span class="nc" id="L336">		assertEquals(&quot;truc&quot;, A.getAttribute(&quot;b&quot;));</span>
+<span class="nc" id="L337">		assertEquals(&quot;true&quot;, A.getAttribute(&quot;c&quot;));</span>
+
+<span class="nc" id="L339">		assertNotNull(B.getAttribute(&quot;aa&quot;));</span>
+<span class="nc" id="L340">		assertEquals(&quot;foo&quot;, B.getAttribute(&quot;bb&quot;));</span>
+<span class="nc" id="L341">		assertEquals(&quot;bar&quot;, B.getAttribute(&quot;cc&quot;));</span>
+
+<span class="nc" id="L343">		assertEquals(1.234, C.getNumber(&quot;aaa&quot;), 0);</span>
+<span class="nc" id="L344">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

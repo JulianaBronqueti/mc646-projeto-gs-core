@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkUnstyledSVG.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkUnstyledSVG.java</span></div><h1>FileSinkUnstyledSVG.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-05-11
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Iterator;
+
+import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.graphicGraph.stylesheet.Rule;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
+
+/**
+ * Transforms a graph into a SVG description.
+ * 
+ * &lt;p&gt;
+ * Do not confuse this with the SVG export capabilities of the graph viewer. The
+ * SVG export of the viewer provides the most exact copy of what you see on
+ * screen. This class is made to export only nodes and edges without styling to
+ * SVG.
+ * &lt;/p&gt;
+ * 
+ * 
+ * &lt;p&gt;
+ * Although there is no styling, each node and edge is put in a SVG group with
+ * the identifier of the corresponding element in the graph. A minimal CSS style
+ * sheet is included in the generated file and it is easy to add another.
+ * &lt;/p&gt;
+ */
+public class FileSinkUnstyledSVG extends FileSinkBase {
+	// Attribute
+
+	/**
+	 * The output.
+	 */
+	protected PrintWriter out;
+
+	/**
+	 * What element ?.
+	 */
+<span class="nc" id="L74">	protected enum What {</span>
+<span class="nc" id="L75">		NODE, EDGE, OTHER</span>
+	};
+
+	/**
+	 * The positions of each node.
+	 */
+<span class="nc" id="L81">	protected HashMap&lt;String, Point3&gt; nodePos = new HashMap&lt;String, Point3&gt;();</span>
+
+	// Construction
+
+<span class="nc" id="L85">	public FileSinkUnstyledSVG() {</span>
+		// NOP.
+<span class="nc" id="L87">	}</span>
+
+	// Command
+
+	@Override
+	public void end() throws IOException {
+<span class="nc bnc" id="L93" title="All 2 branches missed.">		if (out != null) {</span>
+<span class="nc" id="L94">			out.flush();</span>
+<span class="nc" id="L95">			out.close();</span>
+<span class="nc" id="L96">			out = null;</span>
+		}
+<span class="nc" id="L98">	}</span>
+
+	// Command
+
+	@Override
+	protected void outputHeader() throws IOException {
+<span class="nc" id="L104">		out = (PrintWriter) output;</span>
+
+<span class="nc" id="L106">		out.printf(&quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot; standalone=\&quot;yes\&quot;?&gt;%n&quot;);</span>
+<span class="nc" id="L107">		out.printf(&quot;&lt;svg&quot; + &quot; xmlns:svg=\&quot;http://www.w3.org/2000/svg\&quot;&quot; + &quot; width=\&quot;100%%\&quot;&quot; + &quot; height=\&quot;100%%\&quot;&quot;</span>
+				+ &quot;&gt;%n&quot;);
+
+		// TODO
+		// outputStyle( styleSheet );
+<span class="nc" id="L112">	}</span>
+
+	@Override
+	protected void outputEndOfFile() throws IOException {
+<span class="nc" id="L116">		outputNodes();</span>
+<span class="nc" id="L117">		out.printf(&quot;&lt;/svg&gt;%n&quot;);</span>
+<span class="nc" id="L118">	}</span>
+
+	public void edgeAttributeAdded(String graphId, long timeId, String edgeId, String attribute, Object value) {
+		// NOP
+<span class="nc" id="L122">	}</span>
+
+	public void edgeAttributeChanged(String graphId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+		// NOP
+<span class="nc" id="L127">	}</span>
+
+	public void edgeAttributeRemoved(String graphId, long timeId, String edgeId, String attribute) {
+		// NOP
+<span class="nc" id="L131">	}</span>
+
+	public void graphAttributeAdded(String graphId, long timeId, String attribute, Object value) {
+		// NOP
+<span class="nc" id="L135">	}</span>
+
+	public void graphAttributeChanged(String graphId, long timeId, String attribute, Object oldValue, Object newValue) {
+		// NOP
+<span class="nc" id="L139">	}</span>
+
+	public void graphAttributeRemoved(String graphId, long timeId, String attribute) {
+		// NOP
+<span class="nc" id="L143">	}</span>
+
+	public void nodeAttributeAdded(String graphId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L146">		setNodePos(nodeId, attribute, value);</span>
+<span class="nc" id="L147">	}</span>
+
+	public void nodeAttributeChanged(String graphId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L151">		setNodePos(nodeId, attribute, newValue);</span>
+<span class="nc" id="L152">	}</span>
+
+	public void nodeAttributeRemoved(String graphId, long timeId, String nodeId, String attribute) {
+		// NOP
+<span class="nc" id="L156">	}</span>
+
+	public void edgeAdded(String graphId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L160">		Point3 p0 = nodePos.get(fromNodeId);</span>
+<span class="nc" id="L161">		Point3 p1 = nodePos.get(toNodeId);</span>
+
+<span class="nc bnc" id="L163" title="All 4 branches missed.">		if (p0 != null &amp;&amp; p1 != null) {</span>
+<span class="nc" id="L164">			out.printf(&quot;  &lt;g id=\&quot;%s\&quot;&gt;%n&quot;, edgeId);</span>
+<span class="nc" id="L165">			out.printf(&quot;    &lt;line x1=\&quot;%f\&quot; y1=\&quot;%f\&quot; x2=\&quot;%f\&quot; y2=\&quot;%f\&quot;/&gt;%n&quot;, p0.x, p0.y, p1.x, p1.y);</span>
+<span class="nc" id="L166">			out.printf(&quot;  &lt;/g&gt;%n&quot;);</span>
+		}
+<span class="nc" id="L168">	}</span>
+
+	public void edgeRemoved(String graphId, long timeId, String edgeId) {
+		// NOP
+<span class="nc" id="L172">	}</span>
+
+	public void graphCleared(String graphId, long timeId) {
+		// NOP
+<span class="nc" id="L176">	}</span>
+
+	public void nodeAdded(String graphId, long timeId, String nodeId) {
+<span class="nc" id="L179">		nodePos.put(nodeId, new Point3());</span>
+<span class="nc" id="L180">	}</span>
+
+	public void nodeRemoved(String graphId, long timeId, String nodeId) {
+<span class="nc" id="L183">		nodePos.remove(nodeId);</span>
+<span class="nc" id="L184">	}</span>
+
+	public void stepBegins(String graphId, long timeId, double time) {
+		// NOP
+<span class="nc" id="L188">	}</span>
+
+	// Utility
+
+	protected void setNodePos(String nodeId, String attribute, Object value) {
+<span class="nc" id="L193">		Point3 p = nodePos.get(nodeId);</span>
+
+		double x, y, z;
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		if (p == null) {</span>
+<span class="nc" id="L197">			x = Math.random();</span>
+<span class="nc" id="L198">			y = Math.random();</span>
+<span class="nc" id="L199">			z = 0;</span>
+<span class="nc" id="L200">		} else {</span>
+<span class="nc" id="L201">			x = p.x;</span>
+<span class="nc" id="L202">			y = p.y;</span>
+<span class="nc" id="L203">			z = p.z;</span>
+		}
+
+<span class="nc bnc" id="L206" title="All 2 branches missed.">		if (attribute.equals(&quot;x&quot;)) {</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">			if (value instanceof Number)</span>
+<span class="nc" id="L208">				x = ((Number) value).floatValue();</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">		} else if (attribute.equals(&quot;y&quot;)) {</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">			if (value instanceof Number)</span>
+<span class="nc" id="L211">				y = ((Number) value).floatValue();</span>
+<span class="nc bnc" id="L212" title="All 2 branches missed.">		} else if (attribute.equals(&quot;z&quot;)) {</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">			if (value instanceof Number)</span>
+<span class="nc" id="L214">				z = ((Number) value).floatValue();</span>
+<span class="nc" id="L215">		}</span>
+
+<span class="nc bnc" id="L217" title="All 2 branches missed.">		else if (attribute.equals(&quot;xy&quot;)) {</span>
+<span class="nc bnc" id="L218" title="All 2 branches missed.">			if (value instanceof Object[]) {</span>
+<span class="nc" id="L219">				Object xy[] = ((Object[]) value);</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">				if (xy.length &gt; 1) {</span>
+<span class="nc" id="L222">					x = ((Number) xy[0]).floatValue();</span>
+<span class="nc" id="L223">					y = ((Number) xy[1]).floatValue();</span>
+				}
+			}
+<span class="nc bnc" id="L226" title="All 2 branches missed.">		} else if (attribute.equals(&quot;xyz&quot;)) {</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">			if (value instanceof Object[]) {</span>
+<span class="nc" id="L228">				Object xyz[] = ((Object[]) value);</span>
+
+<span class="nc bnc" id="L230" title="All 2 branches missed.">				if (xyz.length &gt; 1) {</span>
+<span class="nc" id="L231">					x = ((Number) xyz[0]).floatValue();</span>
+<span class="nc" id="L232">					y = ((Number) xyz[1]).floatValue();</span>
+				}
+
+<span class="nc bnc" id="L235" title="All 2 branches missed.">				if (xyz.length &gt; 2) {</span>
+<span class="nc" id="L236">					z = ((Number) xyz[2]).floatValue();</span>
+				}
+			}
+		}
+<span class="nc" id="L240">		nodePos.put(nodeId, new Point3(x, y, z));</span>
+<span class="nc" id="L241">	}</span>
+
+	protected void outputStyle(String styleSheet) {
+<span class="nc" id="L244">		String style = null;</span>
+
+<span class="nc bnc" id="L246" title="All 2 branches missed.">		if (styleSheet != null) {</span>
+<span class="nc" id="L247">			StyleSheet ssheet = new StyleSheet();</span>
+
+			try {
+<span class="nc bnc" id="L250" title="All 2 branches missed.">				if (styleSheet.startsWith(&quot;url(&quot;)) {</span>
+<span class="nc" id="L251">					styleSheet = styleSheet.substring(5);</span>
+
+<span class="nc" id="L253">					int pos = styleSheet.lastIndexOf(')');</span>
+
+<span class="nc" id="L255">					styleSheet = styleSheet.substring(0, pos);</span>
+
+<span class="nc" id="L257">					ssheet.parseFromFile(styleSheet);</span>
+<span class="nc" id="L258">				} else {</span>
+<span class="nc" id="L259">					ssheet.parseFromString(styleSheet);</span>
+				}
+
+<span class="nc" id="L262">				style = styleSheetToSVG(ssheet);</span>
+<span class="nc" id="L263">			} catch (IOException e) {</span>
+<span class="nc" id="L264">				e.printStackTrace();</span>
+<span class="nc" id="L265">				ssheet = null;</span>
+			}
+		}
+
+<span class="nc bnc" id="L269" title="All 2 branches missed.">		if (style == null)</span>
+<span class="nc" id="L270">			style = &quot;circle { fill: grey; stroke: none; } line { stroke-width: 1; stroke: black; }&quot;;</span>
+
+<span class="nc" id="L272">		out.printf(&quot;&lt;defs&gt;&lt;style type=\&quot;text/css\&quot;&gt;&lt;![CDATA[%n&quot;);</span>
+<span class="nc" id="L273">		out.printf(&quot;    %s%n&quot;, style);</span>
+<span class="nc" id="L274">		out.printf(&quot;]]&gt;&lt;/style&gt;&lt;/defs&gt;%n&quot;);</span>
+<span class="nc" id="L275">	}</span>
+
+	protected void outputNodes() {
+<span class="nc" id="L278">		Iterator&lt;? extends String&gt; keys = nodePos.keySet().iterator();</span>
+
+<span class="nc bnc" id="L280" title="All 2 branches missed.">		while (keys.hasNext()) {</span>
+<span class="nc" id="L281">			String key = keys.next();</span>
+<span class="nc" id="L282">			Point3 pos = nodePos.get(key);</span>
+
+<span class="nc" id="L284">			out.printf(&quot;  &lt;g id=\&quot;%s\&quot;&gt;%n&quot;, key);</span>
+<span class="nc" id="L285">			out.printf(&quot;    &lt;circle cx=\&quot;%f\&quot; cy=\&quot;%f\&quot; r=\&quot;4\&quot;/&gt;%n&quot;, pos.x, pos.y);</span>
+<span class="nc" id="L286">			out.printf(&quot;  &lt;/g&gt;%n&quot;);</span>
+		}
+<span class="nc" id="L288">	}</span>
+
+	protected String styleSheetToSVG(StyleSheet sheet) {
+<span class="nc" id="L291">		StringBuilder out = new StringBuilder();</span>
+
+<span class="nc" id="L293">		addRule(out, sheet.getDefaultGraphRule());</span>
+
+<span class="nc" id="L295">		return out.toString();</span>
+	}
+
+	protected void addRule(StringBuilder out, Rule rule) {
+		// Style style = rule.getStyle();
+
+		// TODO
+<span class="nc" id="L302">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GraphMetrics.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.view.util</a> &gt; <span class="el_source">GraphMetrics.java</span></div><h1>GraphMetrics.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-07-26
+ * 
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.view.util;
+
+import java.util.logging.Logger;
+
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.graphicGraph.stylesheet.Value;
+import org.graphstream.ui.graphicGraph.stylesheet.Values;
+import org.graphstream.ui.geom.Point3;
+import org.miv.pherd.geom.Vector3;
+
+/**
+ * p Various geometric informations on the graphic graph.
+ * 
+ * &lt;p&gt;
+ * This class extends the GraphMetrics to provide not only metrics on the
+ * graphic graph but also on the rendering canvas, and allow to convert from
+ * graph metrics to canvas metrics and the reverse.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * Here we call the canvas &quot;view port&quot; since this class allows to place a view
+ * port inside the graph in order to zoom and pan the view.
+ * &lt;/p&gt;
+ */
+public class GraphMetrics {
+
+	/**
+	 * class level logger
+	 */
+<span class="nc" id="L62">	private static final Logger logger = Logger.getLogger(GraphMetrics.class.getSimpleName());</span>
+
+	// Attribute
+
+	/**
+	 * Graph lower position (bottom,left,front).
+	 */
+<span class="nc" id="L69">	public Point3 lo = new Point3();</span>
+
+	/**
+	 * Graph higher position (top,right,back).
+	 */
+<span class="nc" id="L74">	public Point3 hi = new Point3();</span>
+
+	/**
+	 * The lowest visible point.
+	 */
+<span class="nc" id="L79">	public Point3 loVisible = new Point3();</span>
+
+	/**
+	 * The highest visible point.
+	 */
+<span class="nc" id="L84">	public Point3 hiVisible = new Point3();</span>
+
+	/**
+	 * Graph dimension.
+	 */
+<span class="nc" id="L89">	public Vector3 size = new Vector3();</span>
+
+	/**
+	 * The graph diagonal.
+	 */
+<span class="nc" id="L94">	public double diagonal = 1;</span>
+
+	/**
+	 * The view port size.
+	 */
+<span class="nc" id="L99">	public double viewport[] = new double[4];</span>
+
+	/**
+	 * The scaling factor to pass from graph units to pixels.
+	 */
+	public double ratioPx2Gu;
+
+	/**
+	 * The length for one pixel, according to the current transformation.
+	 */
+	public double px1;
+
+	// Construction
+
+	/**
+	 * New canvas metrics with default values.
+	 */
+<span class="nc" id="L116">	public GraphMetrics() {</span>
+<span class="nc" id="L117">		setDefaults();</span>
+<span class="nc" id="L118">	}</span>
+
+	/**
+	 * Set defaults value in the lo, hi and size fields to (-1) and (1)
+	 * respectively.
+	 */
+	protected void setDefaults() {
+<span class="nc" id="L125">		lo.set(-1, -1, -1);</span>
+<span class="nc" id="L126">		hi.set(1, 1, 1);</span>
+<span class="nc" id="L127">		size.set(2, 2, 2);</span>
+
+<span class="nc" id="L129">		diagonal = 1;</span>
+<span class="nc" id="L130">		ratioPx2Gu = 1;</span>
+<span class="nc" id="L131">		px1 = 1;</span>
+<span class="nc" id="L132">	}</span>
+
+	// Access
+
+	/**
+	 * The graph diagonal (the overall width).
+	 * 
+	 * @return The diagonal.
+	 */
+	public double getDiagonal() {
+<span class="nc" id="L142">		return diagonal;</span>
+	}
+
+	/**
+	 * The graph bounds.
+	 * 
+	 * @return The size.
+	 */
+	public Vector3 getSize() {
+<span class="nc" id="L151">		return size;</span>
+	}
+
+	/**
+	 * The graph lowest (bottom,left,front) point.
+	 * 
+	 * @return The lowest point.
+	 */
+	public Point3 getLowPoint() {
+<span class="nc" id="L160">		return lo;</span>
+	}
+
+	/**
+	 * The graph highest (top,right,back) point.
+	 * 
+	 * @return The highest point.
+	 */
+	public Point3 getHighPoint() {
+<span class="nc" id="L169">		return hi;</span>
+	}
+
+	public double graphWidthGU() {
+<span class="nc" id="L173">		return hi.x - lo.x;</span>
+	}
+
+	public double graphHeightGU() {
+<span class="nc" id="L177">		return hi.y - lo.y;</span>
+	}
+
+	public double graphDepthGU() {
+<span class="nc" id="L181">		return hi.z - lo.z;</span>
+	}
+
+	// Access -- Convert values
+
+	/**
+	 * Convert a value in given units to graph units.
+	 * 
+	 * @param value
+	 *            The value to convert.
+	 * @param units
+	 *            The units the value to convert is expressed in.
+	 * @return The value converted to GU.
+	 */
+	public double lengthToGu(double value, StyleConstants.Units units) {
+<span class="nc bnc" id="L196" title="All 3 branches missed.">		switch (units) {</span>
+		case PX:
+			// return (value - 0.01f) / ratioPx2Gu;
+<span class="nc" id="L199">			return value / ratioPx2Gu;</span>
+		case PERCENTS:
+<span class="nc" id="L201">			return (diagonal * value);</span>
+		case GU:
+		default:
+<span class="nc" id="L204">			return value;</span>
+		}
+	}
+
+	/**
+	 * Convert a value in a given units to graph units.
+	 * 
+	 * @param value
+	 *            The value to convert (it contains its own units).
+	 */
+	public double lengthToGu(Value value) {
+<span class="nc" id="L215">		return lengthToGu(value.value, value.units);</span>
+	}
+
+	/**
+	 * Convert one of the given values in a given units to graph units.
+	 * 
+	 * @param values
+	 *            The values set containing the value to convert (it contains its
+	 *            own units).
+	 * @param index
+	 *            Index of the value to convert.
+	 */
+	public double lengthToGu(Values values, int index) {
+<span class="nc" id="L228">		return lengthToGu(values.get(index), values.units);</span>
+	}
+
+	/**
+	 * Convert a value in a given units to pixels.
+	 * 
+	 * @param value
+	 *            The value to convert.
+	 * @param units
+	 *            The units the value to convert is expressed in.
+	 * @return The value converted in pixels.
+	 */
+	public double lengthToPx(double value, StyleConstants.Units units) {
+<span class="nc bnc" id="L241" title="All 3 branches missed.">		switch (units) {</span>
+		case GU:
+			// return (value - 0.01f) * ratioPx2Gu;
+<span class="nc" id="L244">			return value * ratioPx2Gu;</span>
+		case PERCENTS:
+<span class="nc" id="L246">			return (diagonal * value) * ratioPx2Gu;</span>
+		case PX:
+		default:
+<span class="nc" id="L249">			return value;</span>
+		}
+	}
+
+	/**
+	 * Convert a value in a given units to pixels.
+	 * 
+	 * @param value
+	 *            The value to convert (it contains its own units).
+	 */
+	public double lengthToPx(Value value) {
+<span class="nc" id="L260">		return lengthToPx(value.value, value.units);</span>
+	}
+
+	/**
+	 * Convert one of the given values in a given units pixels.
+	 * 
+	 * @param values
+	 *            The values set containing the value to convert (it contains its
+	 *            own units).
+	 * @param index
+	 *            Index of the value to convert.
+	 */
+	public double lengthToPx(Values values, int index) {
+<span class="nc" id="L273">		return lengthToPx(values.get(index), values.units);</span>
+	}
+
+	public double positionPixelToGu(int pixels, int index) {
+<span class="nc" id="L277">		double l = lengthToGu(pixels, Units.PX);</span>
+
+<span class="nc bnc" id="L279" title="All 3 branches missed.">		switch (index) {</span>
+		case 0:
+<span class="nc" id="L281">			l -= graphWidthGU() / 2.0;</span>
+<span class="nc" id="L282">			l = (hi.x + lo.x) / 2.0 + l;</span>
+<span class="nc" id="L283">			break;</span>
+		case 1:
+<span class="nc" id="L285">			l -= graphHeightGU() / 2.0;</span>
+<span class="nc" id="L286">			l = (hi.y + lo.y) / 2.0 + l;</span>
+<span class="nc" id="L287">			break;</span>
+		default:
+<span class="nc" id="L289">			throw new IllegalArgumentException();</span>
+		}
+
+<span class="nc" id="L292">		logger.fine(String.format(&quot;%spixel[%d] %d --&gt; %fgu&quot;, this, index, pixels, l));</span>
+
+<span class="nc" id="L294">		return l;</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L299">		StringBuilder builder = new StringBuilder(String.format(&quot;Graph Metrics :%n&quot;));</span>
+
+<span class="nc" id="L301">		builder.append(String.format(&quot;        lo         = %s%n&quot;, lo));</span>
+<span class="nc" id="L302">		builder.append(String.format(&quot;        hi         = %s%n&quot;, hi));</span>
+<span class="nc" id="L303">		builder.append(String.format(&quot;        visible lo = %s%n&quot;, loVisible));</span>
+<span class="nc" id="L304">		builder.append(String.format(&quot;        visible hi = %s%n&quot;, hiVisible));</span>
+<span class="nc" id="L305">		builder.append(String.format(&quot;        size       = %s%n&quot;, size));</span>
+<span class="nc" id="L306">		builder.append(String.format(&quot;        diag       = %f%n&quot;, diagonal));</span>
+<span class="nc" id="L307">		builder.append(String.format(&quot;        viewport   = %s%n&quot;, viewport));</span>
+<span class="nc" id="L308">		builder.append(String.format(&quot;        ratio      = %fpx = 1gu%n&quot;, ratioPx2Gu));</span>
+
+<span class="nc" id="L310">		return builder.toString();</span>
+	}
+
+	// Command
+
+	/**
+	 * Set the output view port size in pixels.
+	 * 
+	 * @param viewportWidth
+	 *            The width in pixels of the view port.
+	 * @param viewportHeight
+	 *            The width in pixels of the view port.
+	 */
+	public void setViewport(double viewportX, double viewportY, double viewportWidth, double viewportHeight) {
+<span class="nc" id="L324">		viewport[0] = viewportX;</span>
+<span class="nc" id="L325">		viewport[1] = viewportY;</span>
+<span class="nc" id="L326">		viewport[2] = viewportWidth;</span>
+<span class="nc" id="L327">		viewport[3] = viewportHeight;</span>
+<span class="nc" id="L328">	}</span>
+
+	/**
+	 * The ratio to pass by multiplication from pixels to graph units. This ratio
+	 * must be larger than zero, else nothing is changed.
+	 * 
+	 * @param ratio
+	 *            The ratio.
+	 */
+	public void setRatioPx2Gu(double ratio) {
+<span class="nc bnc" id="L338" title="All 2 branches missed.">		if (ratio &gt; 0) {</span>
+<span class="nc" id="L339">			ratioPx2Gu = ratio;</span>
+<span class="nc" id="L340">			px1 = 0.95f / ratioPx2Gu;</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">		} else if (ratio == 0)</span>
+<span class="nc" id="L342">			throw new RuntimeException(&quot;ratio PX to GU cannot be zero&quot;);</span>
+<span class="nc bnc" id="L343" title="All 2 branches missed.">		else if (ratio &lt; 0)</span>
+<span class="nc" id="L344">			throw new RuntimeException(String.format(&quot;ratio PX to GU cannot be negative (%f)&quot;, ratio));</span>
+<span class="nc" id="L345">	}</span>
+
+	/**
+	 * Set the graphic graph bounds (the lowest and highest points).
+	 * 
+	 * @param minx
+	 *            Lowest abscissa.
+	 * @param miny
+	 *            Lowest ordinate.
+	 * @param minz
+	 *            Lowest depth.
+	 * @param maxx
+	 *            Highest abscissa.
+	 * @param maxy
+	 *            Highest ordinate.
+	 * @param maxz
+	 *            Highest depth.
+	 */
+	public void setBounds(double minx, double miny, double minz, double maxx, double maxy, double maxz) {
+<span class="nc" id="L364">		lo.x = minx;</span>
+<span class="nc" id="L365">		lo.y = miny;</span>
+<span class="nc" id="L366">		lo.z = minz;</span>
+<span class="nc" id="L367">		hi.x = maxx;</span>
+<span class="nc" id="L368">		hi.y = maxy;</span>
+<span class="nc" id="L369">		hi.z = maxz;</span>
+
+<span class="nc" id="L371">		size.data[0] = hi.x - lo.x;</span>
+<span class="nc" id="L372">		size.data[1] = hi.y - lo.y;</span>
+<span class="nc" id="L373">		size.data[2] = hi.z - lo.z;</span>
+<span class="nc" id="L374">		diagonal = Math.sqrt(size.data[0] * size.data[0] + size.data[1] * size.data[1] + size.data[2] * size.data[2]);</span>
+<span class="nc" id="L375">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Point3.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.geom</a> &gt; <span class="el_source">Point3.java</span></div><h1>Point3.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-12-22
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.geom;
+
+/**
+ * 3D point.
+ * 
+ * A Point3 is a 3D location in an affine space described by three values along
+ * the X, the Y and the Z axis. Note the difference with Vector3 wich is defined
+ * as an array and ensures that the three coordinates X, Y and Z are consecutive
+ * in memory. Here there are three separate attributes. Further, a point has no
+ * vector arithmetic bound to it (to points cannot be added, this would have no
+ * mathematical meaning).
+ * 
+ * @author Antoine Dutot
+ * @since 19990829
+ * @version 0.1
+ */
+public class Point3 extends Point2 implements java.io.Serializable {
+	// Attributes
+
+	private static final long serialVersionUID = 5971336344439693816L;
+
+	/**
+	 * Z axis value.
+	 */
+	public double z;
+
+	// Attributes -- Shared
+
+	/**
+	 * Specific point at (0,0,0).
+	 */
+<span class="nc" id="L66">	public static final Point3 NULL_POINT3 = new Point3(0, 0, 0);</span>
+
+	// Constructors
+
+	/**
+	 * New 3D point at(0,0,0).
+	 */
+<span class="nc" id="L73">	public Point3() {</span>
+<span class="nc" id="L74">	}</span>
+
+	/**
+	 * New 3D point at (x,y,0).
+	 */
+<span class="nc" id="L79">	public Point3(double x, double y) {</span>
+<span class="nc" id="L80">		set(x, y, 0);</span>
+<span class="nc" id="L81">	}</span>
+
+	/**
+	 * New 3D point at(x,y,z).
+	 */
+<span class="nc" id="L86">	public Point3(double x, double y, double z) {</span>
+<span class="nc" id="L87">		set(x, y, z);</span>
+<span class="nc" id="L88">	}</span>
+
+	/**
+	 * New copy of other.
+	 */
+<span class="nc" id="L93">	public Point3(Point3 other) {</span>
+<span class="nc" id="L94">		copy(other);</span>
+<span class="nc" id="L95">	}</span>
+
+<span class="nc" id="L97">	public Point3(Vector3 vec) {</span>
+<span class="nc" id="L98">		copy(vec);</span>
+<span class="nc" id="L99">	}</span>
+
+	public Point3(float data[]) {
+<span class="nc" id="L102">		this(0, data);</span>
+<span class="nc" id="L103">	}</span>
+
+	public Point3(double data[]) {
+<span class="nc" id="L106">		this(0, data);</span>
+<span class="nc" id="L107">	}</span>
+
+<span class="nc" id="L109">	public Point3(int start, float data[]) {</span>
+<span class="nc bnc" id="L110" title="All 2 branches missed.">		if (data != null) {</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">			if (data.length &gt; start + 0)</span>
+<span class="nc" id="L112">				x = data[start + 0];</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">			if (data.length &gt; start + 1)</span>
+<span class="nc" id="L114">				y = data[start + 1];</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">			if (data.length &gt; start + 2)</span>
+<span class="nc" id="L116">				z = data[start + 2];</span>
+		}
+<span class="nc" id="L118">	}</span>
+
+<span class="nc" id="L120">	public Point3(int start, double data[]) {</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">		if (data != null) {</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">			if (data.length &gt; start + 0)</span>
+<span class="nc" id="L123">				x = data[start + 0];</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">			if (data.length &gt; start + 1)</span>
+<span class="nc" id="L125">				y = data[start + 1];</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">			if (data.length &gt; start + 2)</span>
+<span class="nc" id="L127">				z = data[start + 2];</span>
+		}
+<span class="nc" id="L129">	}</span>
+
+	// Predicates
+
+	/**
+	 * Are all components to zero?.
+	 */
+	@Override
+	public boolean isZero() {
+<span class="nc bnc" id="L138" title="All 6 branches missed.">		return (x == 0 &amp;&amp; y == 0 &amp;&amp; z == 0);</span>
+	}
+
+	// /**
+	// * Is other equal to this ?
+	// */
+	// public boolean
+	// equals( const Point3 &lt; double &gt; &amp; other ) const
+	// {
+	// return( x == other.x
+	// and y == other.y
+	// and z == other.z );
+	// }
+
+	/**
+	 * Create a new point linear interpolation of this and &lt;code&gt;other&lt;/code&gt;. The
+	 * new point is located between this and &lt;code&gt;other&lt;/code&gt; if
+	 * &lt;code&gt;factor&lt;/code&gt; is between 0 and 1 (0 yields this point, 1 yields the
+	 * &lt;code&gt;other&lt;/code&gt; point).
+	 */
+	public Point3 interpolate(Point3 other, double factor) {
+<span class="nc" id="L159">		Point3 p = new Point3(x + ((other.x - x) * factor), y + ((other.y - y) * factor), z + ((other.z - z) * factor));</span>
+
+<span class="nc" id="L161">		return p;</span>
+	}
+
+	/**
+	 * Distance between this and &lt;code&gt;other&lt;/code&gt;.
+	 */
+	public double distance(Point3 other) {
+<span class="nc" id="L168">		double xx = other.x - x;</span>
+<span class="nc" id="L169">		double yy = other.y - y;</span>
+<span class="nc" id="L170">		double zz = other.z - z;</span>
+<span class="nc" id="L171">		return Math.abs(Math.sqrt((xx * xx) + (yy * yy) + (zz * zz)));</span>
+	}
+
+	/**
+	 * Distance between this and point (x,y,z).
+	 */
+	public double distance(double x, double y, double z) {
+<span class="nc" id="L178">		double xx = x - this.x;</span>
+<span class="nc" id="L179">		double yy = y - this.y;</span>
+<span class="nc" id="L180">		double zz = z - this.z;</span>
+<span class="nc" id="L181">		return Math.abs(Math.sqrt((xx * xx) + (yy * yy) + (zz * zz)));</span>
+	}
+
+	// Commands
+
+	/**
+	 * Make this a copy of other.
+	 */
+	public void copy(Point3 other) {
+<span class="nc" id="L190">		x = other.x;</span>
+<span class="nc" id="L191">		y = other.y;</span>
+<span class="nc" id="L192">		z = other.z;</span>
+<span class="nc" id="L193">	}</span>
+
+	public void copy(Vector3 vec) {
+<span class="nc" id="L196">		x = vec.data[0];</span>
+<span class="nc" id="L197">		y = vec.data[1];</span>
+<span class="nc" id="L198">		z = vec.data[2];</span>
+<span class="nc" id="L199">	}</span>
+
+	/**
+	 * Like #moveTo().
+	 */
+	public void set(double x, double y, double z) {
+<span class="nc" id="L205">		this.x = x;</span>
+<span class="nc" id="L206">		this.y = y;</span>
+<span class="nc" id="L207">		this.z = z;</span>
+<span class="nc" id="L208">	}</span>
+
+	// Commands -- moving
+
+	/**
+	 * Move to absolute position (x,y,z).
+	 */
+	public void moveTo(double x, double y, double z) {
+<span class="nc" id="L216">		this.x = x;</span>
+<span class="nc" id="L217">		this.y = y;</span>
+<span class="nc" id="L218">		this.z = z;</span>
+<span class="nc" id="L219">	}</span>
+
+	/**
+	 * Move of given vector(dx,dy,dz).
+	 */
+	public void move(double dx, double dy, double dz) {
+<span class="nc" id="L225">		this.x += dx;</span>
+<span class="nc" id="L226">		this.y += dy;</span>
+<span class="nc" id="L227">		this.z += dz;</span>
+<span class="nc" id="L228">	}</span>
+
+	/**
+	 * Move of given point &lt;code&gt;p&lt;/code&gt;.
+	 */
+	public void move(Point3 p) {
+<span class="nc" id="L234">		this.x += p.x;</span>
+<span class="nc" id="L235">		this.y += p.y;</span>
+<span class="nc" id="L236">		this.z += p.z;</span>
+<span class="nc" id="L237">	}</span>
+
+	/**
+	 * Move of given vector d.
+	 */
+	public void move(Vector3 d) {
+<span class="nc" id="L243">		this.x += d.data[0];</span>
+<span class="nc" id="L244">		this.y += d.data[1];</span>
+<span class="nc" id="L245">		this.z += d.data[2];</span>
+<span class="nc" id="L246">	}</span>
+
+	/**
+	 * Move in depth of dz.
+	 */
+	public void moveZ(double dz) {
+<span class="nc" id="L252">		z += dz;</span>
+<span class="nc" id="L253">	}</span>
+
+	/**
+	 * Scale of factor (sx,sy,sz).
+	 */
+	public void scale(double sx, double sy, double sz) {
+<span class="nc" id="L259">		x *= sx;</span>
+<span class="nc" id="L260">		y *= sy;</span>
+<span class="nc" id="L261">		z *= sz;</span>
+<span class="nc" id="L262">	}</span>
+
+	/**
+	 * Scale by factor s.
+	 */
+	public void scale(Point3 s) {
+<span class="nc" id="L268">		x *= s.x;</span>
+<span class="nc" id="L269">		y *= s.y;</span>
+<span class="nc" id="L270">		z *= s.z;</span>
+<span class="nc" id="L271">	}</span>
+
+	/**
+	 * Scale by factor s.
+	 */
+	public void scale(Vector3 s) {
+<span class="nc" id="L277">		x *= s.data[0];</span>
+<span class="nc" id="L278">		y *= s.data[1];</span>
+<span class="nc" id="L279">		z *= s.data[2];</span>
+<span class="nc" id="L280">	}</span>
+
+	/**
+	 * Scale by a given scalar.
+	 * 
+	 * @param scalar
+	 *            The multiplier.
+	 */
+	public void scale(double scalar) {
+<span class="nc" id="L289">		x *= scalar;</span>
+<span class="nc" id="L290">		y *= scalar;</span>
+<span class="nc" id="L291">		z *= scalar;</span>
+<span class="nc" id="L292">	}</span>
+
+	/**
+	 * Change only depth at absolute coordinate z.
+	 */
+	public void setZ(double z) {
+<span class="nc" id="L298">		this.z = z;</span>
+<span class="nc" id="L299">	}</span>
+
+	/**
+	 * Exchange the values of this and other.
+	 */
+	public void swap(Point3 other) {
+		double t;
+
+<span class="nc bnc" id="L307" title="All 2 branches missed.">		if (other != this) {</span>
+<span class="nc" id="L308">			t = this.x;</span>
+<span class="nc" id="L309">			this.x = other.x;</span>
+<span class="nc" id="L310">			other.x = t;</span>
+
+<span class="nc" id="L312">			t = this.y;</span>
+<span class="nc" id="L313">			this.y = other.y;</span>
+<span class="nc" id="L314">			other.y = t;</span>
+
+<span class="nc" id="L316">			t = this.z;</span>
+<span class="nc" id="L317">			this.z = other.z;</span>
+<span class="nc" id="L318">			other.z = t;</span>
+		}
+<span class="nc" id="L320">	}</span>
+
+	// Commands -- misc.
+
+	@Override
+	public String toString() {
+		StringBuffer buf;
+
+<span class="nc" id="L328">		buf = new StringBuffer(&quot;Point3[&quot;);</span>
+
+<span class="nc" id="L330">		buf.append(x);</span>
+<span class="nc" id="L331">		buf.append('|');</span>
+<span class="nc" id="L332">		buf.append(y);</span>
+<span class="nc" id="L333">		buf.append('|');</span>
+<span class="nc" id="L334">		buf.append(z);</span>
+<span class="nc" id="L335">		buf.append(&quot;]&quot;);</span>
+
+<span class="nc" id="L337">		return buf.toString();</span>
+	}
+
+	@Override
+	public boolean equals(Object o) {
+<span class="nc bnc" id="L342" title="All 2 branches missed.">		if (this == o) {</span>
+<span class="nc" id="L343">			return true;</span>
+		}
+<span class="nc bnc" id="L345" title="All 4 branches missed.">		if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L346">			return false;</span>
+		}
+<span class="nc bnc" id="L348" title="All 2 branches missed.">		if (!super.equals(o)) {</span>
+<span class="nc" id="L349">			return false;</span>
+		}
+
+<span class="nc" id="L352">		Point3 point3 = (Point3) o;</span>
+
+<span class="nc bnc" id="L354" title="All 2 branches missed.">		if (Double.compare(point3.z, z) != 0) {</span>
+<span class="nc" id="L355">			return false;</span>
+		}
+
+<span class="nc" id="L358">		return true;</span>
+	}
+
+	@Override
+	public int hashCode() {
+<span class="nc" id="L363">		int result = super.hashCode();</span>
+		long temp;
+<span class="nc" id="L365">		temp = Double.doubleToLongBits(z);</span>
+<span class="nc" id="L366">		result = 31 * result + (int) (temp ^ (temp &gt;&gt;&gt; 32));</span>
+<span class="nc" id="L367">		return result;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

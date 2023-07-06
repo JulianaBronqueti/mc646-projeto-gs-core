@@ -1,0 +1,586 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkGEXF.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkGEXF.java</span></div><h1>FileSinkGEXF.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-12-06
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.util.cumulative.CumulativeAttributes;
+import org.graphstream.util.cumulative.CumulativeSpells;
+import org.graphstream.util.cumulative.CumulativeSpells.Spell;
+import org.graphstream.util.cumulative.GraphSpells;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URL;
+import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+
+public class FileSinkGEXF extends FileSinkBase {
+<span class="nc" id="L65">	public static enum TimeFormat {</span>
+<span class="nc" id="L66">		INTEGER(new DecimalFormat(&quot;#&quot;, new DecimalFormatSymbols(Locale.ROOT))), DOUBLE(</span>
+<span class="nc" id="L67">				new DecimalFormat(&quot;#.0###################&quot;, new DecimalFormatSymbols(Locale.ROOT))), DATE(</span>
+<span class="nc" id="L68">						new SimpleDateFormat(&quot;yyyy-MM-dd&quot;)), DATETIME(</span>
+<span class="nc" id="L69">								new SimpleDateFormat(&quot;yyyy-MM-dd'T'hh:mm:ss.SSSZ&quot;));</span>
+		Format format;
+
+<span class="nc" id="L72">		TimeFormat(Format f) {</span>
+<span class="nc" id="L73">			this.format = f;</span>
+<span class="nc" id="L74">		}</span>
+	}
+
+	XMLStreamWriter stream;
+	boolean smart;
+	int depth;
+<span class="nc" id="L80">	int currentAttributeIndex = 0;</span>
+	GraphSpells graphSpells;
+	TimeFormat timeFormat;
+
+<span class="nc" id="L84">	public FileSinkGEXF() {</span>
+<span class="nc" id="L85">		smart = true;</span>
+<span class="nc" id="L86">		depth = 0;</span>
+<span class="nc" id="L87">		graphSpells = null;</span>
+<span class="nc" id="L88">		timeFormat = TimeFormat.DOUBLE;</span>
+<span class="nc" id="L89">	}</span>
+
+	public void setTimeFormat(TimeFormat format) {
+<span class="nc" id="L92">		this.timeFormat = format;</span>
+<span class="nc" id="L93">	}</span>
+
+	protected void putSpellAttributes(Spell s) throws XMLStreamException {
+<span class="nc bnc" id="L96" title="All 2 branches missed.">		if (s.isStarted()) {</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">			String start = s.isStartOpen() ? &quot;startopen&quot; : &quot;start&quot;;</span>
+<span class="nc" id="L98">			String date = timeFormat.format.format(s.getStartDate());</span>
+
+<span class="nc" id="L100">			stream.writeAttribute(start, date);</span>
+		}
+
+<span class="nc bnc" id="L103" title="All 2 branches missed.">		if (s.isEnded()) {</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">			String end = s.isEndOpen() ? &quot;endopen&quot; : &quot;end&quot;;</span>
+<span class="nc" id="L105">			String date = timeFormat.format.format(s.getEndDate());</span>
+
+<span class="nc" id="L107">			stream.writeAttribute(end, date);</span>
+		}
+<span class="nc" id="L109">	}</span>
+
+	protected void outputEndOfFile() throws IOException {
+		try {
+<span class="nc bnc" id="L113" title="All 2 branches missed.">			if (graphSpells != null) {</span>
+<span class="nc" id="L114">				exportGraphSpells();</span>
+<span class="nc" id="L115">				graphSpells = null;</span>
+			}
+
+<span class="nc" id="L118">			endElement(stream, false);</span>
+<span class="nc" id="L119">			stream.writeEndDocument();</span>
+<span class="nc" id="L120">			stream.flush();</span>
+<span class="nc" id="L121">		} catch (XMLStreamException e) {</span>
+<span class="nc" id="L122">			throw new IOException(e);</span>
+		}
+<span class="nc" id="L124">	}</span>
+
+	protected void outputHeader() throws IOException {
+<span class="nc" id="L127">		Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L128">		Date date = cal.getTime();</span>
+<span class="nc" id="L129">		DateFormat df = DateFormat.getDateTimeInstance(DateFormat.SHORT, DateFormat.SHORT);</span>
+
+		try {
+<span class="nc" id="L132">			stream = XMLOutputFactory.newFactory().createXMLStreamWriter(output);</span>
+<span class="nc" id="L133">			stream.writeStartDocument(&quot;UTF-8&quot;, &quot;1.0&quot;);</span>
+
+<span class="nc" id="L135">			startElement(stream, &quot;gexf&quot;);</span>
+<span class="nc" id="L136">			stream.writeAttribute(&quot;xmlns&quot;, &quot;http://www.gexf.net/1.2draft&quot;);</span>
+<span class="nc" id="L137">			stream.writeAttribute(&quot;xmlns:xsi&quot;, &quot;http://www.w3.org/2001/XMLSchema-instance&quot;);</span>
+<span class="nc" id="L138">			stream.writeAttribute(&quot;xsi:schemaLocation&quot;,</span>
+<span class="nc" id="L139">					&quot;http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd&quot;);</span>
+<span class="nc" id="L140">			stream.writeAttribute(&quot;version&quot;, &quot;1.2&quot;);</span>
+
+<span class="nc" id="L142">			startElement(stream, &quot;meta&quot;);</span>
+<span class="nc" id="L143">			stream.writeAttribute(&quot;lastmodifieddate&quot;, df.format(date));</span>
+<span class="nc" id="L144">			startElement(stream, &quot;creator&quot;);</span>
+<span class="nc" id="L145">			stream.writeCharacters(&quot;GraphStream - &quot; + getClass().getName());</span>
+<span class="nc" id="L146">			endElement(stream, true);</span>
+<span class="nc" id="L147">			endElement(stream, false);</span>
+<span class="nc" id="L148">		} catch (XMLStreamException | FactoryConfigurationError e) {</span>
+<span class="nc" id="L149">			throw new IOException(e);</span>
+		}
+<span class="nc" id="L151">	}</span>
+
+	protected void startElement(XMLStreamWriter stream, String name) throws XMLStreamException {
+<span class="nc bnc" id="L154" title="All 2 branches missed.">		if (smart) {</span>
+<span class="nc" id="L155">			stream.writeCharacters(&quot;\n&quot;);</span>
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">			for (int i = 0; i &lt; depth; i++)</span>
+<span class="nc" id="L158">				stream.writeCharacters(&quot; &quot;);</span>
+		}
+
+<span class="nc" id="L161">		stream.writeStartElement(name);</span>
+<span class="nc" id="L162">		depth++;</span>
+<span class="nc" id="L163">	}</span>
+
+	protected void endElement(XMLStreamWriter stream, boolean leaf) throws XMLStreamException {
+<span class="nc" id="L166">		depth--;</span>
+
+<span class="nc bnc" id="L168" title="All 4 branches missed.">		if (smart &amp;&amp; !leaf) {</span>
+<span class="nc" id="L169">			stream.writeCharacters(&quot;\n&quot;);</span>
+
+<span class="nc bnc" id="L171" title="All 2 branches missed.">			for (int i = 0; i &lt; depth; i++)</span>
+<span class="nc" id="L172">				stream.writeCharacters(&quot; &quot;);</span>
+		}
+
+<span class="nc" id="L175">		stream.writeEndElement();</span>
+<span class="nc" id="L176">	}</span>
+
+	@Override
+	protected void exportGraph(Graph g) {
+<span class="nc" id="L180">		GEXFAttributeMap nodeAttributes = new GEXFAttributeMap(&quot;node&quot;, g);</span>
+<span class="nc" id="L181">		GEXFAttributeMap edgeAttributes = new GEXFAttributeMap(&quot;edge&quot;, g);</span>
+
+<span class="nc" id="L183">		final Consumer&lt;Exception&gt; onException = Exception::printStackTrace;</span>
+
+		try {
+<span class="nc" id="L186">			startElement(stream, &quot;graph&quot;);</span>
+<span class="nc" id="L187">			stream.writeAttribute(&quot;defaultedgetype&quot;, &quot;undirected&quot;);</span>
+
+<span class="nc" id="L189">			nodeAttributes.export(stream);</span>
+<span class="nc" id="L190">			edgeAttributes.export(stream);</span>
+
+<span class="nc" id="L192">			startElement(stream, &quot;nodes&quot;);</span>
+
+<span class="nc" id="L194">			g.nodes().forEach(n -&gt; {</span>
+				try {
+<span class="nc" id="L196">					startElement(stream, &quot;node&quot;);</span>
+<span class="nc" id="L197">					stream.writeAttribute(&quot;id&quot;, n.getId());</span>
+
+<span class="nc bnc" id="L199" title="All 2 branches missed.">					if (n.hasAttribute(&quot;label&quot;))</span>
+<span class="nc" id="L200">						stream.writeAttribute(&quot;label&quot;, n.getAttribute(&quot;label&quot;).toString());</span>
+
+<span class="nc bnc" id="L202" title="All 2 branches missed.">					if (n.getAttributeCount() &gt; 0) {</span>
+<span class="nc" id="L203">						startElement(stream, &quot;attvalues&quot;);</span>
+
+<span class="nc" id="L205">						n.attributeKeys().forEach(key -&gt; {</span>
+							try {
+<span class="nc" id="L207">								nodeAttributes.push(stream, n, key);</span>
+<span class="nc" id="L208">							} catch (XMLStreamException e) {</span>
+<span class="nc" id="L209">								onException.accept(e);</span>
+							}
+<span class="nc" id="L211">						});</span>
+
+<span class="nc" id="L213">						endElement(stream, false);</span>
+					}
+
+<span class="nc bnc" id="L216" title="All 2 branches missed.">					endElement(stream, n.getAttributeCount() == 0);</span>
+<span class="nc" id="L217">				} catch (Exception ex) {</span>
+<span class="nc" id="L218">					onException.accept(ex);</span>
+				}
+<span class="nc" id="L220">			});</span>
+<span class="nc" id="L221">			endElement(stream, false);</span>
+
+<span class="nc" id="L223">			startElement(stream, &quot;edges&quot;);</span>
+<span class="nc" id="L224">			g.edges().forEach(e -&gt; {</span>
+				try {
+<span class="nc" id="L226">					startElement(stream, &quot;edge&quot;);</span>
+
+<span class="nc" id="L228">					stream.writeAttribute(&quot;id&quot;, e.getId());</span>
+<span class="nc" id="L229">					stream.writeAttribute(&quot;source&quot;, e.getSourceNode().getId());</span>
+<span class="nc" id="L230">					stream.writeAttribute(&quot;target&quot;, e.getTargetNode().getId());</span>
+
+<span class="nc bnc" id="L232" title="All 2 branches missed.">					if (e.getAttributeCount() &gt; 0) {</span>
+<span class="nc" id="L233">						startElement(stream, &quot;attvalues&quot;);</span>
+
+<span class="nc" id="L235">						e.attributeKeys().forEach(key -&gt; {</span>
+							try {
+<span class="nc" id="L237">								edgeAttributes.push(stream, e, key);</span>
+<span class="nc" id="L238">							} catch (XMLStreamException e1) {</span>
+<span class="nc" id="L239">								onException.accept(e1);</span>
+							}
+<span class="nc" id="L241">						});</span>
+
+<span class="nc" id="L243">						endElement(stream, false);</span>
+					}
+
+<span class="nc bnc" id="L246" title="All 2 branches missed.">					endElement(stream, e.getAttributeCount() == 0);</span>
+<span class="nc" id="L247">				} catch (Exception ex) {</span>
+<span class="nc" id="L248">					onException.accept(ex);</span>
+				}
+<span class="nc" id="L250">			});</span>
+<span class="nc" id="L251">			endElement(stream, false);</span>
+
+<span class="nc" id="L253">			endElement(stream, false);</span>
+<span class="nc" id="L254">		} catch (XMLStreamException e1) {</span>
+<span class="nc" id="L255">			onException.accept(e1);</span>
+		}
+<span class="nc" id="L257">	}</span>
+
+	protected void exportGraphSpells() {
+<span class="nc" id="L260">		GEXFAttributeMap nodeAttributes = new GEXFAttributeMap(&quot;node&quot;, graphSpells);</span>
+<span class="nc" id="L261">		GEXFAttributeMap edgeAttributes = new GEXFAttributeMap(&quot;edge&quot;, graphSpells);</span>
+
+		try {
+<span class="nc" id="L264">			startElement(stream, &quot;graph&quot;);</span>
+<span class="nc" id="L265">			stream.writeAttribute(&quot;mode&quot;, &quot;dynamic&quot;);</span>
+<span class="nc" id="L266">			stream.writeAttribute(&quot;defaultedgetype&quot;, &quot;undirected&quot;);</span>
+<span class="nc" id="L267">			stream.writeAttribute(&quot;timeformat&quot;, timeFormat.name().toLowerCase());</span>
+
+<span class="nc" id="L269">			nodeAttributes.export(stream);</span>
+<span class="nc" id="L270">			edgeAttributes.export(stream);</span>
+
+<span class="nc" id="L272">			startElement(stream, &quot;nodes&quot;);</span>
+<span class="nc bnc" id="L273" title="All 2 branches missed.">			for (String nodeId : graphSpells.getNodes()) {</span>
+<span class="nc" id="L274">				startElement(stream, &quot;node&quot;);</span>
+<span class="nc" id="L275">				stream.writeAttribute(&quot;id&quot;, nodeId);</span>
+
+<span class="nc" id="L277">				CumulativeAttributes attr = graphSpells.getNodeAttributes(nodeId);</span>
+<span class="nc" id="L278">				Object label = attr.getAny(&quot;label&quot;);</span>
+
+<span class="nc bnc" id="L280" title="All 2 branches missed.">				if (label != null)</span>
+<span class="nc" id="L281">					stream.writeAttribute(&quot;label&quot;, label.toString());</span>
+
+<span class="nc" id="L283">				CumulativeSpells spells = graphSpells.getNodeSpells(nodeId);</span>
+
+<span class="nc bnc" id="L285" title="All 2 branches missed.">				if (!spells.isEternal()) {</span>
+<span class="nc" id="L286">					startElement(stream, &quot;spells&quot;);</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">					for (int i = 0; i &lt; spells.getSpellCount(); i++) {</span>
+<span class="nc" id="L288">						Spell s = spells.getSpell(i);</span>
+
+<span class="nc" id="L290">						startElement(stream, &quot;spell&quot;);</span>
+<span class="nc" id="L291">						putSpellAttributes(s);</span>
+<span class="nc" id="L292">						endElement(stream, true);</span>
+					}
+<span class="nc" id="L294">					endElement(stream, false);</span>
+				}
+
+<span class="nc bnc" id="L297" title="All 2 branches missed.">				if (attr.getAttributesCount() &gt; 0) {</span>
+<span class="nc" id="L298">					startElement(stream, &quot;attvalues&quot;);</span>
+<span class="nc" id="L299">					nodeAttributes.push(stream, nodeId, graphSpells);</span>
+<span class="nc" id="L300">					endElement(stream, false);</span>
+				}
+
+<span class="nc bnc" id="L303" title="All 4 branches missed.">				endElement(stream, spells.isEternal() &amp;&amp; attr.getAttributesCount() == 0);</span>
+			}
+<span class="nc" id="L305">			endElement(stream, false);</span>
+
+<span class="nc" id="L307">			startElement(stream, &quot;edges&quot;);</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">			for (String edgeId : graphSpells.getEdges()) {</span>
+<span class="nc" id="L309">				startElement(stream, &quot;edge&quot;);</span>
+
+<span class="nc" id="L311">				GraphSpells.EdgeData data = graphSpells.getEdgeData(edgeId);</span>
+
+<span class="nc" id="L313">				stream.writeAttribute(&quot;id&quot;, edgeId);</span>
+<span class="nc" id="L314">				stream.writeAttribute(&quot;source&quot;, data.getSource());</span>
+<span class="nc" id="L315">				stream.writeAttribute(&quot;target&quot;, data.getTarget());</span>
+
+<span class="nc" id="L317">				CumulativeAttributes attr = graphSpells.getEdgeAttributes(edgeId);</span>
+
+<span class="nc" id="L319">				CumulativeSpells spells = graphSpells.getEdgeSpells(edgeId);</span>
+
+<span class="nc bnc" id="L321" title="All 2 branches missed.">				if (!spells.isEternal()) {</span>
+<span class="nc" id="L322">					startElement(stream, &quot;spells&quot;);</span>
+<span class="nc bnc" id="L323" title="All 2 branches missed.">					for (int i = 0; i &lt; spells.getSpellCount(); i++) {</span>
+<span class="nc" id="L324">						Spell s = spells.getSpell(i);</span>
+
+<span class="nc" id="L326">						startElement(stream, &quot;spell&quot;);</span>
+<span class="nc" id="L327">						putSpellAttributes(s);</span>
+<span class="nc" id="L328">						endElement(stream, true);</span>
+					}
+<span class="nc" id="L330">					endElement(stream, false);</span>
+				}
+
+<span class="nc bnc" id="L333" title="All 2 branches missed.">				if (attr.getAttributesCount() &gt; 0) {</span>
+<span class="nc" id="L334">					startElement(stream, &quot;attvalues&quot;);</span>
+<span class="nc" id="L335">					edgeAttributes.push(stream, edgeId, graphSpells);</span>
+<span class="nc" id="L336">					endElement(stream, false);</span>
+				}
+
+<span class="nc bnc" id="L339" title="All 4 branches missed.">				endElement(stream, spells.isEternal() &amp;&amp; attr.getAttributesCount() == 0);</span>
+			}
+<span class="nc" id="L341">			endElement(stream, false);</span>
+
+<span class="nc" id="L343">			endElement(stream, false);</span>
+<span class="nc" id="L344">		} catch (XMLStreamException e1) {</span>
+<span class="nc" id="L345">			e1.printStackTrace();</span>
+		}
+<span class="nc" id="L347">	}</span>
+
+	protected void checkGraphSpells() {
+<span class="nc bnc" id="L350" title="All 2 branches missed.">		if (graphSpells == null)</span>
+<span class="nc" id="L351">			graphSpells = new GraphSpells();</span>
+<span class="nc" id="L352">	}</span>
+
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L355">		checkGraphSpells();</span>
+<span class="nc" id="L356">		graphSpells.edgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L357">	}</span>
+
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L361">		checkGraphSpells();</span>
+<span class="nc" id="L362">		graphSpells.edgeAttributeChanged(sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L363">	}</span>
+
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L366">		checkGraphSpells();</span>
+<span class="nc" id="L367">		graphSpells.edgeAttributeRemoved(sourceId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L368">	}</span>
+
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L371">		checkGraphSpells();</span>
+<span class="nc" id="L372">		graphSpells.graphAttributeAdded(sourceId, timeId, attribute, value);</span>
+<span class="nc" id="L373">	}</span>
+
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L377">		checkGraphSpells();</span>
+<span class="nc" id="L378">		graphSpells.graphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L379">	}</span>
+
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L382">		checkGraphSpells();</span>
+<span class="nc" id="L383">		graphSpells.graphAttributeRemoved(sourceId, timeId, attribute);</span>
+<span class="nc" id="L384">	}</span>
+
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L387">		checkGraphSpells();</span>
+<span class="nc" id="L388">		graphSpells.nodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L389">	}</span>
+
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L393">		checkGraphSpells();</span>
+<span class="nc" id="L394">		graphSpells.nodeAttributeChanged(sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L395">	}</span>
+
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L398">		checkGraphSpells();</span>
+<span class="nc" id="L399">		graphSpells.nodeAttributeRemoved(sourceId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L400">	}</span>
+
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L404">		checkGraphSpells();</span>
+<span class="nc" id="L405">		graphSpells.edgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L406">	}</span>
+
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L409">		checkGraphSpells();</span>
+<span class="nc" id="L410">		graphSpells.edgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L411">	}</span>
+
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L414">		checkGraphSpells();</span>
+<span class="nc" id="L415">		graphSpells.graphCleared(sourceId, timeId);</span>
+<span class="nc" id="L416">	}</span>
+
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L419">		checkGraphSpells();</span>
+<span class="nc" id="L420">		graphSpells.nodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L421">	}</span>
+
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L424">		checkGraphSpells();</span>
+<span class="nc" id="L425">		graphSpells.nodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L426">	}</span>
+
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L429">		checkGraphSpells();</span>
+<span class="nc" id="L430">		graphSpells.stepBegins(sourceId, timeId, step);</span>
+<span class="nc" id="L431">	}</span>
+
+	class GEXFAttribute {
+		int index;
+		String key;
+		String type;
+
+<span class="nc" id="L438">		GEXFAttribute(String key, String type) {</span>
+<span class="nc" id="L439">			this.index = currentAttributeIndex++;</span>
+<span class="nc" id="L440">			this.key = key;</span>
+<span class="nc" id="L441">			this.type = type;</span>
+<span class="nc" id="L442">		}</span>
+	}
+
+	class GEXFAttributeMap extends HashMap&lt;String, GEXFAttribute&gt; {
+		private static final long serialVersionUID = 6176508111522815024L;
+		protected String type;
+
+<span class="nc" id="L449">		GEXFAttributeMap(String type, Graph g) {</span>
+<span class="nc" id="L450">			this.type = type;</span>
+
+			Stream&lt;? extends Element&gt; stream;
+
+<span class="nc bnc" id="L454" title="All 2 branches missed.">			if (type.equals(&quot;node&quot;))</span>
+<span class="nc" id="L455">				stream = g.nodes();</span>
+			else
+<span class="nc" id="L457">				stream = g.edges();</span>
+
+<span class="nc" id="L459">			stream.forEach(e -&gt; {</span>
+<span class="nc" id="L460">				e.attributeKeys().forEach(key -&gt; {</span>
+<span class="nc" id="L461">					Object value = e.getAttribute(key);</span>
+<span class="nc" id="L462">					check(key, value);</span>
+<span class="nc" id="L463">				});</span>
+<span class="nc" id="L464">			});</span>
+<span class="nc" id="L465">		}</span>
+
+<span class="nc" id="L467">		GEXFAttributeMap(String type, GraphSpells spells) {</span>
+<span class="nc" id="L468">			this.type = type;</span>
+
+<span class="nc bnc" id="L470" title="All 2 branches missed.">			if (type.equals(&quot;node&quot;)) {</span>
+<span class="nc bnc" id="L471" title="All 2 branches missed.">				for (String nodeId : spells.getNodes()) {</span>
+<span class="nc" id="L472">					CumulativeAttributes attr = spells.getNodeAttributes(nodeId);</span>
+
+<span class="nc bnc" id="L474" title="All 2 branches missed.">					for (String key : attr.getAttributes()) {</span>
+<span class="nc bnc" id="L475" title="All 2 branches missed.">						for (Spell s : attr.getAttributeSpells(key)) {</span>
+<span class="nc" id="L476">							Object value = s.getAttachedData();</span>
+<span class="nc" id="L477">							check(key, value);</span>
+						}
+					}
+				}
+<span class="nc" id="L481">			} else {</span>
+<span class="nc bnc" id="L482" title="All 2 branches missed.">				for (String edgeId : spells.getEdges()) {</span>
+<span class="nc" id="L483">					CumulativeAttributes attr = spells.getEdgeAttributes(edgeId);</span>
+
+<span class="nc bnc" id="L485" title="All 2 branches missed.">					for (String key : attr.getAttributes()) {</span>
+<span class="nc bnc" id="L486" title="All 2 branches missed.">						for (Spell s : attr.getAttributeSpells(key)) {</span>
+<span class="nc" id="L487">							Object value = s.getAttachedData();</span>
+<span class="nc" id="L488">							check(key, value);</span>
+						}
+					}
+				}
+			}
+<span class="nc" id="L493">		}</span>
+
+		void check(String key, Object value) {
+<span class="nc" id="L496">			String id = getID(key, value);</span>
+<span class="nc" id="L497">			String attType = &quot;string&quot;;</span>
+
+<span class="nc bnc" id="L499" title="All 2 branches missed.">			if (containsKey(id))</span>
+<span class="nc" id="L500">				return;</span>
+
+<span class="nc bnc" id="L502" title="All 4 branches missed.">			if (value instanceof Integer || value instanceof Short)</span>
+<span class="nc" id="L503">				attType = &quot;integer&quot;;</span>
+<span class="nc bnc" id="L504" title="All 2 branches missed.">			else if (value instanceof Long)</span>
+<span class="nc" id="L505">				attType = &quot;long&quot;;</span>
+<span class="nc bnc" id="L506" title="All 2 branches missed.">			else if (value instanceof Float)</span>
+<span class="nc" id="L507">				attType = &quot;float&quot;;</span>
+<span class="nc bnc" id="L508" title="All 2 branches missed.">			else if (value instanceof Double)</span>
+<span class="nc" id="L509">				attType = &quot;double&quot;;</span>
+<span class="nc bnc" id="L510" title="All 2 branches missed.">			else if (value instanceof Boolean)</span>
+<span class="nc" id="L511">				attType = &quot;boolean&quot;;</span>
+<span class="nc bnc" id="L512" title="All 4 branches missed.">			else if (value instanceof URL || value instanceof URI)</span>
+<span class="nc" id="L513">				attType = &quot;anyURI&quot;;</span>
+<span class="nc bnc" id="L514" title="All 4 branches missed.">			else if (value.getClass().isArray() || value instanceof Collection)</span>
+<span class="nc" id="L515">				attType = &quot;liststring&quot;;</span>
+
+<span class="nc" id="L517">			put(id, new GEXFAttribute(key, attType));</span>
+<span class="nc" id="L518">		}</span>
+
+		String getID(String key, Object value) {
+<span class="nc" id="L521">			return String.format(&quot;%s@%s&quot;, key, value.getClass().getName());</span>
+		}
+
+		void export(XMLStreamWriter stream) throws XMLStreamException {
+<span class="nc bnc" id="L525" title="All 2 branches missed.">			if (size() == 0)</span>
+<span class="nc" id="L526">				return;</span>
+
+<span class="nc" id="L528">			startElement(stream, &quot;attributes&quot;);</span>
+<span class="nc" id="L529">			stream.writeAttribute(&quot;class&quot;, type);</span>
+
+<span class="nc bnc" id="L531" title="All 2 branches missed.">			for (GEXFAttribute a : values()) {</span>
+<span class="nc" id="L532">				startElement(stream, &quot;attribute&quot;);</span>
+<span class="nc" id="L533">				stream.writeAttribute(&quot;id&quot;, Integer.toString(a.index));</span>
+<span class="nc" id="L534">				stream.writeAttribute(&quot;title&quot;, a.key);</span>
+<span class="nc" id="L535">				stream.writeAttribute(&quot;type&quot;, a.type);</span>
+<span class="nc" id="L536">				endElement(stream, true);</span>
+			}
+
+<span class="nc bnc" id="L539" title="All 2 branches missed.">			endElement(stream, size() == 0);</span>
+<span class="nc" id="L540">		}</span>
+
+		void push(XMLStreamWriter stream, Element e, String key) throws XMLStreamException {
+<span class="nc" id="L543">			String id = getID(key, e.getAttribute(key));</span>
+<span class="nc" id="L544">			GEXFAttribute a = get(id);</span>
+
+<span class="nc bnc" id="L546" title="All 2 branches missed.">			if (a == null) {</span>
+				// TODO
+<span class="nc" id="L548">				return;</span>
+			}
+
+<span class="nc" id="L551">			startElement(stream, &quot;attvalue&quot;);</span>
+<span class="nc" id="L552">			stream.writeAttribute(&quot;for&quot;, Integer.toString(a.index));</span>
+<span class="nc" id="L553">			stream.writeAttribute(&quot;value&quot;, e.getAttribute(key).toString());</span>
+<span class="nc" id="L554">			endElement(stream, true);</span>
+<span class="nc" id="L555">		}</span>
+
+		void push(XMLStreamWriter stream, String elementId, GraphSpells spells) throws XMLStreamException {
+			CumulativeAttributes attr;
+
+<span class="nc bnc" id="L560" title="All 2 branches missed.">			if (type.equals(&quot;node&quot;))</span>
+<span class="nc" id="L561">				attr = spells.getNodeAttributes(elementId);</span>
+			else
+<span class="nc" id="L563">				attr = spells.getEdgeAttributes(elementId);</span>
+
+<span class="nc bnc" id="L565" title="All 2 branches missed.">			for (String key : attr.getAttributes()) {</span>
+<span class="nc bnc" id="L566" title="All 2 branches missed.">				for (Spell s : attr.getAttributeSpells(key)) {</span>
+<span class="nc" id="L567">					Object value = s.getAttachedData();</span>
+<span class="nc" id="L568">					String id = getID(key, value);</span>
+<span class="nc" id="L569">					GEXFAttribute a = get(id);</span>
+
+<span class="nc bnc" id="L571" title="All 2 branches missed.">					if (a == null) {</span>
+						// TODO
+<span class="nc" id="L573">						return;</span>
+					}
+
+<span class="nc" id="L576">					startElement(stream, &quot;attvalue&quot;);</span>
+<span class="nc" id="L577">					stream.writeAttribute(&quot;for&quot;, Integer.toString(a.index));</span>
+<span class="nc" id="L578">					stream.writeAttribute(&quot;value&quot;, value.toString());</span>
+<span class="nc" id="L579">					putSpellAttributes(s);</span>
+<span class="nc" id="L580">					endElement(stream, true);</span>
+				}
+			}
+<span class="nc" id="L583">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

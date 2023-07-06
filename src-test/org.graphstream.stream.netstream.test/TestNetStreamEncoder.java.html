@@ -1,0 +1,224 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestNetStreamEncoder.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.netstream.test</a> &gt; <span class="el_source">TestNetStreamEncoder.java</span></div><h1>TestNetStreamEncoder.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2016-02-01
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.netstream.test;
+
+import org.graphstream.stream.binary.ByteEncoder;
+import org.graphstream.stream.netstream.NetStreamConstants;
+import org.graphstream.stream.netstream.NetStreamEncoder;
+
+import static org.graphstream.stream.netstream.NetStreamUtils.*;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+
+/**
+ * @since 22/01/16.
+ */
+<span class="nc" id="L49">public class TestNetStreamEncoder {</span>
+	@Test
+	public void testEventNodeAdded() {
+<span class="nc" id="L52">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L53">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L54">		final String nodeId = &quot;node-test&quot;;</span>
+<span class="nc" id="L55">		final long timeId = 123;</span>
+
+<span class="nc" id="L57">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L60">				byte[] streamBytes = streamId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L61">				byte[] sourceBytes = sourceId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L62">				byte[] nodeBytes = nodeId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+
+<span class="nc" id="L64">				int expectedSize = 4 + getVarintSize(streamBytes.length) + streamBytes.length</span>
+<span class="nc" id="L65">						+ getVarintSize(sourceBytes.length) + sourceBytes.length + 1 + getVarintSize(123)</span>
+<span class="nc" id="L66">						+ getVarintSize(nodeBytes.length) + nodeBytes.length;</span>
+
+<span class="nc" id="L68">				Assert.assertEquals(expectedSize, buffer.limit());</span>
+<span class="nc" id="L69">				Assert.assertEquals(expectedSize, buffer.getInt());</span>
+
+<span class="nc" id="L71">				Assert.assertEquals(streamId, decodeString(buffer));</span>
+<span class="nc" id="L72">				Assert.assertEquals(NetStreamConstants.EVENT_ADD_NODE, buffer.get());</span>
+<span class="nc" id="L73">				Assert.assertEquals(sourceId, decodeString(buffer));</span>
+<span class="nc" id="L74">				Assert.assertEquals(timeId, decodeUnsignedVarint(buffer));</span>
+<span class="nc" id="L75">				Assert.assertEquals(nodeId, decodeString(buffer));</span>
+
+<span class="nc" id="L77">				Assert.assertEquals(0, buffer.remaining());</span>
+<span class="nc" id="L78">			}</span>
+		});
+
+<span class="nc" id="L81">		enc.nodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L82">	}</span>
+
+	@Test
+	public void testEventNodeRemoved() {
+<span class="nc" id="L86">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L87">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L88">		final String nodeId = &quot;node-test&quot;;</span>
+<span class="nc" id="L89">		final long timeId = 123;</span>
+
+<span class="nc" id="L91">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L94">				byte[] streamBytes = streamId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L95">				byte[] sourceBytes = sourceId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L96">				byte[] nodeBytes = nodeId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+
+<span class="nc" id="L98">				int expectedSize = 4 + getVarintSize(streamBytes.length) + streamBytes.length</span>
+<span class="nc" id="L99">						+ getVarintSize(sourceBytes.length) + sourceBytes.length + 1 + getVarintSize(123)</span>
+<span class="nc" id="L100">						+ getVarintSize(nodeBytes.length) + nodeBytes.length;</span>
+
+<span class="nc" id="L102">				Assert.assertEquals(expectedSize, buffer.limit());</span>
+<span class="nc" id="L103">				Assert.assertEquals(expectedSize, buffer.getInt());</span>
+
+<span class="nc" id="L105">				Assert.assertEquals(streamId, decodeString(buffer));</span>
+<span class="nc" id="L106">				Assert.assertEquals(NetStreamConstants.EVENT_DEL_NODE, buffer.get());</span>
+<span class="nc" id="L107">				Assert.assertEquals(sourceId, decodeString(buffer));</span>
+<span class="nc" id="L108">				Assert.assertEquals(timeId, decodeUnsignedVarint(buffer));</span>
+<span class="nc" id="L109">				Assert.assertEquals(nodeId, decodeString(buffer));</span>
+
+<span class="nc" id="L111">				Assert.assertEquals(0, buffer.remaining());</span>
+<span class="nc" id="L112">			}</span>
+		});
+
+<span class="nc" id="L115">		enc.nodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L116">	}</span>
+
+	@Test
+	public void testEventEdgeAdded() {
+<span class="nc" id="L120">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L121">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L122">		final String edgeId = &quot;edge-test&quot;;</span>
+<span class="nc" id="L123">		final String nodeA = &quot;node-a&quot;;</span>
+<span class="nc" id="L124">		final String nodeB = &quot;node-b&quot;;</span>
+<span class="nc" id="L125">		final long timeId = 123;</span>
+
+<span class="nc" id="L127">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L130">				byte[] streamBytes = streamId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L131">				byte[] sourceBytes = sourceId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L132">				byte[] edgeBytes = edgeId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L133">				byte[] nodeABytes = nodeA.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L134">				byte[] nodeBBytes = nodeB.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+
+<span class="nc" id="L136">				int expectedSize = 4 + getVarintSize(streamBytes.length) + streamBytes.length</span>
+<span class="nc" id="L137">						+ getVarintSize(sourceBytes.length) + sourceBytes.length + 1 + getVarintSize(123)</span>
+<span class="nc" id="L138">						+ getVarintSize(edgeBytes.length) + edgeBytes.length + getVarintSize(nodeABytes.length)</span>
+<span class="nc" id="L139">						+ nodeABytes.length + getVarintSize(nodeBBytes.length) + nodeBBytes.length + 1;</span>
+
+<span class="nc" id="L141">				Assert.assertEquals(expectedSize, buffer.limit());</span>
+<span class="nc" id="L142">				Assert.assertEquals(expectedSize, buffer.getInt());</span>
+
+<span class="nc" id="L144">				Assert.assertEquals(streamId, decodeString(buffer));</span>
+<span class="nc" id="L145">				Assert.assertEquals(NetStreamConstants.EVENT_ADD_EDGE, buffer.get());</span>
+<span class="nc" id="L146">				Assert.assertEquals(sourceId, decodeString(buffer));</span>
+<span class="nc" id="L147">				Assert.assertEquals(timeId, decodeUnsignedVarint(buffer));</span>
+<span class="nc" id="L148">				Assert.assertEquals(edgeId, decodeString(buffer));</span>
+<span class="nc" id="L149">				Assert.assertEquals(nodeA, decodeString(buffer));</span>
+<span class="nc" id="L150">				Assert.assertEquals(nodeB, decodeString(buffer));</span>
+<span class="nc" id="L151">				Assert.assertEquals(1, buffer.get());</span>
+
+<span class="nc" id="L153">				Assert.assertEquals(0, buffer.remaining());</span>
+<span class="nc" id="L154">			}</span>
+		});
+
+<span class="nc" id="L157">		enc.edgeAdded(sourceId, timeId, edgeId, nodeA, nodeB, true);</span>
+<span class="nc" id="L158">	}</span>
+
+	@Test
+	public void testEventEdgeRemoved() {
+<span class="nc" id="L162">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L163">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L164">		final String edgeId = &quot;edge-test&quot;;</span>
+<span class="nc" id="L165">		final long timeId = 123;</span>
+
+<span class="nc" id="L167">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L170">				byte[] streamBytes = streamId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L171">				byte[] sourceBytes = sourceId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L172">				byte[] edgeBytes = edgeId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+
+<span class="nc" id="L174">				int expectedSize = 4 + getVarintSize(streamBytes.length) + streamBytes.length</span>
+<span class="nc" id="L175">						+ getVarintSize(sourceBytes.length) + sourceBytes.length + 1 + getVarintSize(123)</span>
+<span class="nc" id="L176">						+ getVarintSize(edgeBytes.length) + edgeBytes.length;</span>
+
+<span class="nc" id="L178">				Assert.assertEquals(expectedSize, buffer.limit());</span>
+<span class="nc" id="L179">				Assert.assertEquals(expectedSize, buffer.getInt());</span>
+
+<span class="nc" id="L181">				Assert.assertEquals(streamId, decodeString(buffer));</span>
+<span class="nc" id="L182">				Assert.assertEquals(NetStreamConstants.EVENT_DEL_EDGE, buffer.get());</span>
+<span class="nc" id="L183">				Assert.assertEquals(sourceId, decodeString(buffer));</span>
+<span class="nc" id="L184">				Assert.assertEquals(timeId, decodeUnsignedVarint(buffer));</span>
+<span class="nc" id="L185">				Assert.assertEquals(edgeId, decodeString(buffer));</span>
+
+<span class="nc" id="L187">				Assert.assertEquals(0, buffer.remaining());</span>
+<span class="nc" id="L188">			}</span>
+		});
+
+<span class="nc" id="L191">		enc.edgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L192">	}</span>
+
+	@Test
+	public void testEventGraphCleared() {
+<span class="nc" id="L196">		final String streamId = &quot;stream-test&quot;;</span>
+<span class="nc" id="L197">		final String sourceId = &quot;test&quot;;</span>
+<span class="nc" id="L198">		final long timeId = 123;</span>
+
+<span class="nc" id="L200">		NetStreamEncoder enc = new NetStreamEncoder(&quot;stream-test&quot;, new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L203">				byte[] streamBytes = streamId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L204">				byte[] sourceBytes = sourceId.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+
+<span class="nc" id="L206">				int expectedSize = 4 + getVarintSize(streamBytes.length) + streamBytes.length</span>
+<span class="nc" id="L207">						+ getVarintSize(sourceBytes.length) + sourceBytes.length + 1 + getVarintSize(123);</span>
+
+<span class="nc" id="L209">				Assert.assertEquals(expectedSize, buffer.limit());</span>
+<span class="nc" id="L210">				Assert.assertEquals(expectedSize, buffer.getInt());</span>
+
+<span class="nc" id="L212">				Assert.assertEquals(streamId, decodeString(buffer));</span>
+<span class="nc" id="L213">				Assert.assertEquals(NetStreamConstants.EVENT_CLEARED, buffer.get());</span>
+<span class="nc" id="L214">				Assert.assertEquals(sourceId, decodeString(buffer));</span>
+<span class="nc" id="L215">				Assert.assertEquals(timeId, decodeUnsignedVarint(buffer));</span>
+
+<span class="nc" id="L217">				Assert.assertEquals(0, buffer.remaining());</span>
+<span class="nc" id="L218">			}</span>
+		});
+
+<span class="nc" id="L221">		enc.graphCleared(sourceId, timeId);</span>
+<span class="nc" id="L222">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

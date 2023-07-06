@@ -1,0 +1,548 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestGraphicGraph.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.test</a> &gt; <span class="el_source">TestGraphicGraph.java</span></div><h1>TestGraphicGraph.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.test;
+
+import org.graphstream.ui.graphicGraph.stylesheet.Color;
+import java.util.HashSet;
+
+import org.graphstream.graph.*;
+import org.graphstream.graph.implementations.*;
+import org.graphstream.ui.graphicGraph.*;
+import org.graphstream.ui.graphicGraph.stylesheet.*;
+import org.graphstream.ui.spriteManager.*;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
+
+/**
+ * Test the graphic graph some parts of the style sheet, the graphic elements
+ * (including the graphic sprite) and the sprite manager and sprite classes.
+ */
+<span class="nc" id="L52">public class TestGraphicGraph {</span>
+	// Attribute
+
+	/**
+	 * a graph that can server as input to send events to the graphic graph.
+	 */
+	protected Graph inGraph;
+
+	/**
+	 * The graphic graph to test.
+	 */
+	protected GraphicGraph outGraph;
+
+	// Tests
+
+	@Test
+	public void basicTest() {
+		// Test the class alone.
+
+<span class="nc" id="L71">		outGraph = new GraphicGraph(&quot;GraphicGraph&quot;);</span>
+
+		// The usual triangle test.
+
+<span class="nc" id="L75">		outGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L76">		outGraph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L77">		outGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L78">		outGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, false);</span>
+<span class="nc" id="L79">		outGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, true);</span>
+<span class="nc" id="L80">		outGraph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;, false);</span>
+
+<span class="nc" id="L82">		assertEquals(3, outGraph.getNodeCount());</span>
+<span class="nc" id="L83">		assertEquals(3, outGraph.getEdgeCount());</span>
+<span class="nc" id="L84">		assertEquals(0, outGraph.getSpriteCount());</span>
+
+<span class="nc" id="L86">		assertFalse(outGraph.getEdge(&quot;AB&quot;).isDirected());</span>
+<span class="nc" id="L87">		assertTrue(outGraph.getEdge(&quot;BC&quot;).isDirected());</span>
+<span class="nc" id="L88">		assertFalse(outGraph.getEdge(&quot;CA&quot;).isDirected());</span>
+
+		// Test the case of multi-graphs.
+
+<span class="nc" id="L92">		outGraph.addEdge(&quot;AB2&quot;, &quot;A&quot;, &quot;B&quot;, true);</span>
+
+<span class="nc" id="L94">		assertEquals(4, outGraph.getEdgeCount());</span>
+<span class="nc" id="L95">		assertFalse(outGraph.getEdge(&quot;AB&quot;).isDirected());</span>
+<span class="nc" id="L96">		assertTrue(outGraph.getEdge(&quot;AB2&quot;).isDirected());</span>
+
+<span class="nc" id="L98">		outGraph.addEdge(&quot;CA2&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L99">		outGraph.removeEdge(&quot;CA&quot;);</span>
+
+<span class="nc" id="L101">		assertEquals(4, outGraph.getEdgeCount());</span>
+<span class="nc" id="L102">		assertEquals(null, outGraph.getEdge(&quot;CA&quot;));</span>
+<span class="nc bnc" id="L103" title="All 2 branches missed.">		assertTrue(outGraph.getEdge(&quot;CA2&quot;) != null);</span>
+
+<span class="nc" id="L105">		outGraph.removeNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L107">		assertEquals(2, outGraph.getNodeCount());</span>
+<span class="nc" id="L108">		assertEquals(2, outGraph.getEdgeCount());</span>
+<span class="nc" id="L109">		assertEquals(null, outGraph.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L110">		assertEquals(null, outGraph.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L111">		assertEquals(null, outGraph.getEdge(&quot;CA&quot;));</span>
+
+<span class="nc" id="L113">		outGraph.removeNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L115">		assertEquals(1, outGraph.getNodeCount());</span>
+<span class="nc" id="L116">		assertEquals(0, outGraph.getEdgeCount());</span>
+<span class="nc" id="L117">		assertEquals(null, outGraph.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L118">		assertEquals(null, outGraph.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L119">		assertEquals(null, outGraph.getEdge(&quot;AB2&quot;));</span>
+
+		// And finally...
+
+<span class="nc" id="L123">		outGraph.clear();</span>
+
+<span class="nc" id="L125">		assertEquals(0, outGraph.getNodeCount());</span>
+<span class="nc" id="L126">		assertEquals(0, outGraph.getEdgeCount());</span>
+<span class="nc" id="L127">		assertEquals(0, outGraph.getSpriteCount());</span>
+<span class="nc" id="L128">	}</span>
+
+<span class="nc" id="L130">	protected static String styleSheet1 = &quot;graph  { fill-color: black; }&quot; + &quot;node   { fill-color: white; }&quot;</span>
+<span class="nc" id="L131">			+ &quot;edge   { fill-color: white; }&quot; + &quot;node#A { fill-color: red;   }&quot; + &quot;node#B { fill-color: blue;  }&quot;;</span>
+
+	@Test
+	public void testStyleSheetLoading() {
+		// Test the style sheet loading capabilities of the graphic graph.
+<span class="nc" id="L136">		outGraph = new GraphicGraph(&quot;GraphicGraph&quot;);</span>
+
+<span class="nc" id="L138">		outGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L139">		outGraph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L140">		outGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L141">		outGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L142">		outGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L143">		outGraph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+		// Look at the default style sheet.
+
+<span class="nc" id="L147">		assertNotNull(outGraph.getStyle());</span>
+<span class="nc" id="L148">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle());</span>
+<span class="nc" id="L149">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;B&quot;)).getStyle());</span>
+<span class="nc" id="L150">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;C&quot;)).getStyle());</span>
+
+<span class="nc" id="L152">		testStyle(outGraph.getStyle(), Color.WHITE);</span>
+<span class="nc" id="L153">		testStyle(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle(), Color.BLACK);</span>
+<span class="nc" id="L154">		testStyle(((GraphicNode) outGraph.getNode(&quot;B&quot;)).getStyle(), Color.BLACK);</span>
+<span class="nc" id="L155">		testStyle(((GraphicNode) outGraph.getNode(&quot;C&quot;)).getStyle(), Color.BLACK);</span>
+
+		// Load a style sheet by URL.
+
+<span class="nc" id="L159">		outGraph.setAttribute(&quot;stylesheet&quot;, styleSheet1);</span>
+
+<span class="nc" id="L161">		assertNotNull(outGraph.getStyle());</span>
+<span class="nc" id="L162">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle());</span>
+<span class="nc" id="L163">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;B&quot;)).getStyle());</span>
+<span class="nc" id="L164">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;C&quot;)).getStyle());</span>
+
+<span class="nc" id="L166">		testStyle(outGraph.getStyle(), Color.BLACK);</span>
+<span class="nc" id="L167">		testStyle(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle(), Color.RED);</span>
+<span class="nc" id="L168">		testStyle(((GraphicNode) outGraph.getNode(&quot;B&quot;)).getStyle(), Color.BLUE);</span>
+<span class="nc" id="L169">		testStyle(((GraphicNode) outGraph.getNode(&quot;C&quot;)).getStyle(), Color.WHITE);</span>
+
+		// Cascade a style sheet by string.
+
+<span class="nc" id="L173">		outGraph.setAttribute(&quot;stylesheet&quot;, &quot;node#A { fill-color: green; }&quot;);</span>
+
+<span class="nc" id="L175">		assertNotNull(outGraph.getStyle());</span>
+<span class="nc" id="L176">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle());</span>
+<span class="nc" id="L177">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;B&quot;)).getStyle());</span>
+<span class="nc" id="L178">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;C&quot;)).getStyle());</span>
+
+<span class="nc" id="L180">		testStyle(outGraph.getStyle(), Color.BLACK);</span>
+<span class="nc" id="L181">		testStyle(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle(), Color.GREEN);</span>
+<span class="nc" id="L182">		testStyle(((GraphicNode) outGraph.getNode(&quot;B&quot;)).getStyle(), Color.BLUE);</span>
+<span class="nc" id="L183">		testStyle(((GraphicNode) outGraph.getNode(&quot;C&quot;)).getStyle(), Color.WHITE);</span>
+
+		// Cascade individual styles on elements.
+
+<span class="nc" id="L187">		outGraph.getNode(&quot;A&quot;).setAttribute(&quot;ui.style&quot;, &quot;fill-color: blue;&quot;);</span>
+
+<span class="nc" id="L189">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle());</span>
+<span class="nc" id="L190">		testStyle(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle(), Color.BLUE);</span>
+
+		// Clear style.
+
+<span class="nc" id="L194">		outGraph.getStyleSheet().clear();</span>
+
+<span class="nc" id="L196">		assertNotNull(outGraph.getStyle());</span>
+<span class="nc" id="L197">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle());</span>
+<span class="nc" id="L198">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;B&quot;)).getStyle());</span>
+<span class="nc" id="L199">		assertNotNull(((GraphicNode) outGraph.getNode(&quot;C&quot;)).getStyle());</span>
+
+<span class="nc" id="L201">		testStyle(outGraph.getStyle(), Color.WHITE);</span>
+<span class="nc" id="L202">		testStyle(((GraphicNode) outGraph.getNode(&quot;A&quot;)).getStyle(), Color.BLACK);</span>
+<span class="nc" id="L203">		testStyle(((GraphicNode) outGraph.getNode(&quot;B&quot;)).getStyle(), Color.BLACK);</span>
+<span class="nc" id="L204">		testStyle(((GraphicNode) outGraph.getNode(&quot;C&quot;)).getStyle(), Color.BLACK);</span>
+<span class="nc" id="L205">	}</span>
+
+	protected void testStyle(Style style, Color colorBase) {
+<span class="nc bnc" id="L208" title="All 4 branches missed.">		assertTrue(style.getFillColors() != null &amp;&amp; style.getFillColors().size() == 1);</span>
+<span class="nc" id="L209">		Color color = style.getFillColor(0);</span>
+<span class="nc" id="L210">		assertEquals(StyleConstants.FillMode.PLAIN, style.getFillMode());</span>
+<span class="nc" id="L211">		assertEquals(StyleConstants.StrokeMode.NONE, style.getStrokeMode());</span>
+<span class="nc" id="L212">		assertEquals(colorBase, color);</span>
+<span class="nc" id="L213">	}</span>
+
+	@Test
+	public void testAsOutput() {
+		// Test the GraphicGraph as an output for another graph.
+<span class="nc" id="L218">		inGraph = new MultiGraph(&quot;inputGraph&quot;);</span>
+<span class="nc" id="L219">		outGraph = new GraphicGraph(&quot;GraphicGraph&quot;);</span>
+
+		// Simply put the graphic graph as listener of the input graph.
+
+<span class="nc" id="L223">		inGraph.addSink(outGraph);</span>
+
+		// The usual triangle test : add some nodes and edges.
+
+<span class="nc" id="L227">		inGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L228">		inGraph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L229">		inGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L230">		inGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, false);</span>
+<span class="nc" id="L231">		inGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, true);</span>
+<span class="nc" id="L232">		inGraph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;, false);</span>
+
+		// Are they in the output graph ?
+
+<span class="nc" id="L236">		assertEquals(3, outGraph.getNodeCount());</span>
+<span class="nc" id="L237">		assertEquals(3, outGraph.getEdgeCount());</span>
+<span class="nc" id="L238">		assertEquals(0, outGraph.getSpriteCount());</span>
+
+<span class="nc" id="L240">		assertFalse(outGraph.getEdge(&quot;AB&quot;).isDirected());</span>
+<span class="nc" id="L241">		assertTrue(outGraph.getEdge(&quot;BC&quot;).isDirected());</span>
+<span class="nc" id="L242">		assertFalse(outGraph.getEdge(&quot;CA&quot;).isDirected());</span>
+
+		// Now try to remove some nodes and edges in the in graph.
+
+<span class="nc" id="L246">		inGraph.removeNode(&quot;A&quot;); // This also removes edge &quot;AB&quot; and &quot;CA&quot;.</span>
+<span class="nc" id="L247">		inGraph.removeEdge(&quot;BC&quot;);</span>
+
+		// Are they removed from the out graph ?
+
+<span class="nc" id="L251">		assertEquals(2, outGraph.getNodeCount());</span>
+<span class="nc" id="L252">		assertEquals(0, outGraph.getEdgeCount());</span>
+<span class="nc" id="L253">		assertNull(outGraph.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L254">		assertNotNull(outGraph.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L255">		assertNotNull(outGraph.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L256">		assertNull(outGraph.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L257">		assertNull(outGraph.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L258">		assertNull(outGraph.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L259">	}</span>
+
+	@Test
+	public void testAsOutputSprites() {
+<span class="nc" id="L263">		inGraph = new MultiGraph(&quot;inputGraph&quot;);</span>
+<span class="nc" id="L264">		outGraph = new GraphicGraph(&quot;GraphicGraph&quot;);</span>
+
+<span class="nc" id="L266">		inGraph.addSink(outGraph);</span>
+
+<span class="nc" id="L268">		SpriteManager sman = new SpriteManager(inGraph);</span>
+
+<span class="nc" id="L270">		inGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L271">		inGraph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L272">		inGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L273">		inGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, false);</span>
+<span class="nc" id="L274">		inGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, true);</span>
+<span class="nc" id="L275">		inGraph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;, false);</span>
+
+<span class="nc" id="L277">		assertEquals(3, outGraph.getNodeCount());</span>
+<span class="nc" id="L278">		assertEquals(3, outGraph.getEdgeCount());</span>
+<span class="nc" id="L279">		assertEquals(0, outGraph.getSpriteCount());</span>
+
+		// Now test sprites.
+
+<span class="nc" id="L283">		Sprite s1 = sman.addSprite(&quot;S1&quot;);</span>
+<span class="nc" id="L284">		Sprite s2 = sman.addSprite(&quot;S2&quot;);</span>
+
+		// Test the sprite manager.
+
+<span class="nc" id="L288">		HashSet&lt;String&gt; spriteIds = new HashSet&lt;String&gt;();</span>
+
+<span class="nc" id="L290">		assertTrue(sman.hasSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L291">		assertTrue(sman.hasSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L292">		assertEquals(s1, sman.getSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L293">		assertEquals(s2, sman.getSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L294">		assertEquals(2, sman.getSpriteCount());</span>
+
+<span class="nc" id="L296">		spriteIds.add(&quot;S1&quot;);</span>
+<span class="nc" id="L297">		spriteIds.add(&quot;S2&quot;);</span>
+
+<span class="nc bnc" id="L299" title="All 2 branches missed.">		for (Sprite sprite : sman) {</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">			if (spriteIds.contains(sprite.getId()))</span>
+<span class="nc" id="L301">				spriteIds.remove(sprite.getId());</span>
+		}
+
+<span class="nc" id="L304">		assertTrue(spriteIds.isEmpty());</span>
+
+		// Test the out graph for corresponding sprites.
+
+<span class="nc" id="L308">		assertEquals(2, outGraph.getSpriteCount());</span>
+
+<span class="nc" id="L310">		spriteIds.add(&quot;S1&quot;);</span>
+<span class="nc" id="L311">		spriteIds.add(&quot;S2&quot;);</span>
+
+<span class="nc" id="L313">		outGraph.sprites().filter(sprite -&gt; spriteIds.contains(sprite.getId()))</span>
+<span class="nc" id="L314">				.forEach(sprite -&gt; spriteIds.remove(sprite.getId()));</span>
+
+<span class="nc" id="L316">		assertTrue(spriteIds.isEmpty());</span>
+
+		// Now remove a sprite.
+
+<span class="nc" id="L320">		sman.removeSprite(&quot;S2&quot;);</span>
+
+<span class="nc" id="L322">		assertEquals(1, sman.getSpriteCount());</span>
+<span class="nc" id="L323">		assertEquals(1, outGraph.getSpriteCount());</span>
+<span class="nc" id="L324">		assertNotNull(outGraph.getSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L325">		assertNull(outGraph.getSprite(&quot;S2&quot;));</span>
+
+		// Now test adding attributes to a sprite.
+		// Look if they are transfered in the out graph. Only attributes
+		// beginning with
+		// &quot;ui.&quot; are transfered. So we also check that a &quot;foo&quot; attribute does
+		// not pass.
+
+<span class="nc" id="L333">		s1.setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L334">		s1.setAttribute(&quot;ui.foo1&quot;, 1, 2, 3);</span>
+<span class="nc" id="L335">		s1.setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+
+<span class="nc" id="L337">		GraphicSprite gs1 = outGraph.getSprite(&quot;S1&quot;);</span>
+
+<span class="nc" id="L339">		testSprite1(s1);</span>
+<span class="nc" id="L340">		testSprite1(gs1);</span>
+
+<span class="nc" id="L342">		assertTrue(s1.hasLabel(&quot;foo&quot;));</span>
+<span class="nc" id="L343">		assertEquals(&quot;bar&quot;, s1.getLabel(&quot;foo&quot;));</span>
+<span class="nc" id="L344">		assertFalse(gs1.hasLabel(&quot;foo&quot;));</span>
+
+		// Now removing some attributes to a sprite.
+
+<span class="nc" id="L348">		s1.removeAttribute(&quot;ui.foo1&quot;);</span>
+<span class="nc" id="L349">		s1.removeAttribute(&quot;foo&quot;);</span>
+
+<span class="nc" id="L351">		assertFalse(s1.hasAttribute(&quot;ui.foo1&quot;));</span>
+<span class="nc" id="L352">		assertFalse(gs1.hasAttribute(&quot;ui.foo1&quot;));</span>
+<span class="nc" id="L353">		assertFalse(s1.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L354">		assertFalse(gs1.hasAttribute(&quot;foo&quot;)); // Would not pass the GraphicGraph</span>
+												// filter anyway.
+
+		// Position a sprite.
+
+<span class="nc" id="L359">		assertEquals(0, gs1.getX(), 0);</span>
+<span class="nc" id="L360">		assertEquals(0, gs1.getY(), 0);</span>
+<span class="nc" id="L361">		assertEquals(0, gs1.getZ(), 0);</span>
+
+<span class="nc" id="L363">		s1.setPosition(0.5f);</span>
+
+<span class="nc" id="L365">		assertEquals(0.5f, gs1.getX(), 0);</span>
+
+<span class="nc" id="L367">		s1.setPosition(0.5f, 0.5f, 0.5f);</span>
+
+<span class="nc" id="L369">		assertEquals(0.5f, gs1.getX(), 0);</span>
+<span class="nc" id="L370">		assertEquals(0.5f, gs1.getY(), 0);</span>
+<span class="nc" id="L371">		assertEquals(0.5f, gs1.getZ(), 0);</span>
+
+		// Now test removing the sprite manager and creating a new one to see if
+		// it gets sprites back. We first add some new sprites with attribute,
+		// Check all is here in the two graphs, then detach the manager.
+		// All sprites should stay in place since we did not removed them
+		// explicitly (the manager is only a view on sprites of a graph).
+
+<span class="nc" id="L379">		s2 = sman.addSprite(&quot;S2&quot;);</span>
+<span class="nc" id="L380">		Sprite s3 = sman.addSprite(&quot;S3&quot;);</span>
+
+<span class="nc" id="L382">		s2.setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L383">		s3.setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+
+<span class="nc" id="L385">		assertEquals(3, sman.getSpriteCount());</span>
+<span class="nc" id="L386">		assertEquals(3, outGraph.getSpriteCount());</span>
+<span class="nc" id="L387">		assertNotNull(sman.getSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L388">		assertNotNull(sman.getSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L389">		assertNotNull(sman.getSprite(&quot;S3&quot;));</span>
+<span class="nc" id="L390">		assertNotNull(outGraph.getSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L391">		assertNotNull(outGraph.getSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L392">		assertNotNull(outGraph.getSprite(&quot;S3&quot;));</span>
+
+<span class="nc" id="L394">		sman.detach();</span>
+
+<span class="nc" id="L396">		SpriteManager sman2 = new SpriteManager(inGraph);</span>
+
+<span class="nc" id="L398">		assertEquals(3, sman2.getSpriteCount());</span>
+<span class="nc" id="L399">		assertEquals(3, outGraph.getSpriteCount());</span>
+<span class="nc" id="L400">		assertNotNull(sman2.getSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L401">		assertNotNull(sman2.getSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L402">		assertNotNull(sman2.getSprite(&quot;S3&quot;));</span>
+<span class="nc" id="L403">		assertNotNull(outGraph.getSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L404">		assertNotNull(outGraph.getSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L405">		assertNotNull(outGraph.getSprite(&quot;S3&quot;));</span>
+
+		// Now test having two managers at the same time and see if they
+		// synchronise.
+
+<span class="nc" id="L410">		SpriteManager sman3 = new SpriteManager(inGraph);</span>
+
+<span class="nc" id="L412">		assertEquals(3, sman3.getSpriteCount());</span>
+<span class="nc" id="L413">		assertNotNull(sman3.getSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L414">		assertNotNull(sman3.getSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L415">		assertNotNull(sman3.getSprite(&quot;S3&quot;));</span>
+
+		// If we add sprites in the graphic graph, the two sprite managers
+		// should be
+		// synchronised at the same time. We also check the old sprite manager 1
+		// we
+		// detached is not touched.
+		// outGraph.addSink(new org.graphstream.util.VerboseSink(System.out));
+<span class="nc" id="L423">		outGraph.addAttributeSink(inGraph);</span>
+<span class="nc" id="L424">		outGraph.addSprite(&quot;S4&quot;);</span>
+
+<span class="nc" id="L426">		assertNotNull(sman2.getSprite(&quot;S4&quot;));</span>
+<span class="nc" id="L427">		assertNotNull(sman3.getSprite(&quot;S4&quot;));</span>
+<span class="nc" id="L428">		assertNull(sman.getSprite(&quot;S4&quot;));</span>
+
+		// Now test the removal synchronisation.
+
+<span class="nc" id="L432">		outGraph.removeAttributeSink(inGraph); // This is tested in another</span>
+												// test.
+
+<span class="nc" id="L435">		sman2.removeSprite(&quot;S4&quot;);</span>
+
+<span class="nc" id="L437">		assertNull(sman3.getSprite(&quot;S4&quot;));</span>
+<span class="nc" id="L438">	}</span>
+
+	protected void testSprite1(Element e) {
+<span class="nc" id="L441">		Object values[] = { 1, 2, 3 };</span>
+
+<span class="nc" id="L443">		assertTrue(e.hasLabel(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L444">		assertTrue(e.hasAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L445">		assertEquals(&quot;bar&quot;, e.getLabel(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L446">		assertEquals(&quot;bar&quot;, e.getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L447">		assertTrue(e.hasArray(&quot;ui.foo1&quot;));</span>
+<span class="nc" id="L448">		assertTrue(e.hasAttribute(&quot;ui.foo1&quot;));</span>
+<span class="nc" id="L449">		assertArrayEquals(values, e.getArray(&quot;ui.foo1&quot;));</span>
+<span class="nc" id="L450">	}</span>
+
+	@Test
+	public void testAsPipe() {
+		// Now test the graphic graph as a pipe loop.
+		// This allows to synchronise two graphs.
+<span class="nc" id="L456">		inGraph = new MultiGraph(&quot;input graph&quot;);</span>
+<span class="nc" id="L457">		outGraph = new GraphicGraph(&quot;GraphicGraph&quot;);</span>
+
+<span class="nc" id="L459">		inGraph.addSink(outGraph);</span>
+<span class="nc" id="L460">		outGraph.addSink(inGraph); // You can do this !! We are careful to</span>
+									// recursive calls !!!
+
+		// Add a nodes in one graph and check they are in the other.
+
+<span class="nc" id="L465">		inGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L466">		outGraph.addNode(&quot;B&quot;);</span>
+
+<span class="nc" id="L468">		assertNotNull(outGraph.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L469">		assertNotNull(inGraph.getNode(&quot;B&quot;));</span>
+
+		// Do the same for other nodes and edges, the usual triangle graph.
+
+<span class="nc" id="L473">		inGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L474">		outGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L475">		inGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L476">		outGraph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L478">		assertNotNull(outGraph.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L479">		assertNotNull(inGraph.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L480">		assertNotNull(outGraph.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L481">		assertNotNull(inGraph.getEdge(&quot;CA&quot;));</span>
+
+		// Now test the attributes.
+		// For this to work, we have to use attributes prefixed by &quot;ui.&quot; since
+		// only these
+		// will pass toward the graphic graph.
+
+<span class="nc" id="L488">		inGraph.setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L489">		outGraph.setAttribute(&quot;ui.bar&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L490">		inGraph.getNode(&quot;A&quot;).setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L491">		outGraph.getNode(&quot;A&quot;).setAttribute(&quot;ui.bar&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L492">		inGraph.getEdge(&quot;AB&quot;).setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L493">		outGraph.getEdge(&quot;AB&quot;).setAttribute(&quot;ui.bar&quot;, &quot;foo&quot;);</span>
+
+<span class="nc" id="L495">		assertEquals(&quot;bar&quot;, outGraph.getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L496">		assertEquals(&quot;foo&quot;, inGraph.getAttribute(&quot;ui.bar&quot;));</span>
+<span class="nc" id="L497">		assertEquals(&quot;bar&quot;, outGraph.getNode(&quot;A&quot;).getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L498">		assertEquals(&quot;foo&quot;, inGraph.getNode(&quot;A&quot;).getAttribute(&quot;ui.bar&quot;));</span>
+<span class="nc" id="L499">		assertEquals(&quot;bar&quot;, outGraph.getEdge(&quot;AB&quot;).getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L500">		assertEquals(&quot;foo&quot;, inGraph.getEdge(&quot;AB&quot;).getAttribute(&quot;ui.bar&quot;));</span>
+
+		// Now test the sprites as they are quite special attributes.
+
+<span class="nc" id="L504">		SpriteManager sman = new SpriteManager(inGraph);</span>
+
+<span class="nc" id="L506">		Sprite s1 = sman.addSprite(&quot;S1&quot;);</span>
+<span class="nc" id="L507">		GraphicSprite gs1 = outGraph.getSprite(&quot;S1&quot;);</span>
+
+<span class="nc" id="L509">		assertNotNull(gs1);</span>
+
+<span class="nc" id="L511">		s1.setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L512">		gs1.setAttribute(&quot;ui.bar&quot;, &quot;foo&quot;);</span>
+
+<span class="nc" id="L514">		assertEquals(&quot;bar&quot;, gs1.getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L515">		assertEquals(&quot;foo&quot;, s1.getAttribute(&quot;ui.bar&quot;));</span>
+
+<span class="nc" id="L517">		s1.removeAttribute(&quot;ui.foo&quot;);</span>
+<span class="nc" id="L518">		gs1.removeAttribute(&quot;ui.bar&quot;);</span>
+
+<span class="nc" id="L520">		assertNull(gs1.getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L521">		assertNull(s1.getAttribute(&quot;ui.bar&quot;));</span>
+
+		// Test creating sprites in the graphic graph and retrieving them
+		// in the sprite manager.
+
+<span class="nc" id="L526">		GraphicSprite gs2 = outGraph.addSprite(&quot;S2&quot;);</span>
+<span class="nc" id="L527">		Sprite s2 = sman.getSprite(&quot;S2&quot;);</span>
+
+<span class="nc" id="L529">		assertNotNull(s2);</span>
+
+<span class="nc" id="L531">		gs2.setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L532">		s2.setAttribute(&quot;ui.bar&quot;, &quot;foo&quot;);</span>
+
+<span class="nc" id="L534">		assertEquals(&quot;bar&quot;, s2.getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L535">		assertEquals(&quot;foo&quot;, gs2.getAttribute(&quot;ui.bar&quot;));</span>
+
+<span class="nc" id="L537">		gs2.removeAttribute(&quot;ui.foo&quot;);</span>
+<span class="nc" id="L538">		s2.removeAttribute(&quot;ui.bar&quot;);</span>
+
+<span class="nc" id="L540">		assertNull(s2.getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L541">		assertNull(gs2.getAttribute(&quot;ui.bar&quot;));</span>
+
+<span class="nc" id="L543">		outGraph.removeSprite(&quot;S2&quot;);</span>
+
+<span class="nc" id="L545">		assertNull(sman.getSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L546">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,494 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Sprite.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.spriteManager</a> &gt; <span class="el_source">Sprite.java</span></div><h1>Sprite.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-04-17
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.spriteManager;
+
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.graphstream.graph.Element;
+import org.graphstream.ui.graphicGraph.stylesheet.Style;
+import org.graphstream.ui.graphicGraph.stylesheet.Values;
+
+/**
+ * A gentle little sprite.
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * Sprite objects allow to add data representations in a graphic display of a
+ * graph. A sprite is a graphical representation that can double anywhere in the
+ * graph drawing surface, or be &quot;attached&quot; to nodes or edges. When attached to
+ * an edge, a sprite can be positioned easily at any point along the edge, or
+ * perpendicular to it with one or two coordinates. When attached to a node, a
+ * sprite &quot;orbits&quot; around the node at any given radius and angle around it.
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * Sprites can have many shapes. Most of the CSS nodes shapes are available for
+ * sprites, but more are possible. Some shapes follow the form of the element
+ * (node or edge) they are attached to.
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * Sprites can be moved and animated easily along edges, around nodes, or
+ * anywhere on the graph surface. Their shape can change. Some sprites allows to
+ * draw pie charts or statistics, or images.
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * Sprites are not part of a graph so to speak. Furthermore they make sense only
+ * when a graph is displayed with a viewer that supports sprites. Therefore they
+ * are handled by a {@link SpriteManager} which is always associated to a graph
+ * and is in charge of handling the whole set of sprites, creating them,
+ * enumerating them, and destroying them.
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * Implementation note: sprites do not exist ! In fact the sprite class only
+ * handles a set of attributes that are stored in the graph (the one associated
+ * with the sprite manager that created the sprite). These special attributes
+ * are handled for you by the sprite class. This technique allows to pass
+ * sprites informations through the I/O system of GraphStream. Indeed sprites
+ * appearing in a graph can therefore be stored in files and retrieved if the
+ * graph file format supports attributes. If this is a dynamic graph format,
+ * like DGS, the whole sprite history is remembered: when it moved, when it
+ * changed, etc.
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * Second implementation node : often you will need to extend the sprite class.
+ * This is easily possible, but you must remember that you cannot create sprites
+ * yourself, you must use the {@link SpriteManager}. In order to create a sprite
+ * of a special kind, you can either use a {@link SpriteFactory} with the
+ * SpriteManager or the special {@link SpriteManager#addSprite(String, Class)}
+ * method of the SpriteManager. In both cases, the
+ * {@link #init(String, SpriteManager, Values)} method of the sprite will be
+ * called. Override this method to initialise your sprite.
+ * &lt;/p&gt;
+ *
+ * @see SpriteManager
+ * @see SpriteFactory
+ */
+public class Sprite implements Element {
+	// Attribute
+
+	/**
+	 * The sprite unique identifier.
+	 */
+	protected String id;
+
+	/**
+	 * The identifier prefixed by &quot;ui.sprite.&quot;.
+	 */
+	protected String completeId;
+
+	/**
+	 * The boss.
+	 */
+	protected SpriteManager manager;
+
+	/**
+	 * Current sprite position.
+	 */
+	protected Values position;
+
+	/**
+	 * The element this sprite is attached to (or null).
+	 */
+	protected Element attachment;
+
+	// Construction
+
+	/**
+	 * For the use with {@link #init(String, SpriteManager, Values)}.
+	 */
+<span class="nc" id="L135">	protected Sprite() {</span>
+<span class="nc" id="L136">	}</span>
+
+	/**
+	 * New sprite with a given identifier.
+	 * &lt;p&gt;
+	 * You cannot build sprites yourself, they are created by the sprite manager.
+	 */
+	protected Sprite(String id, SpriteManager manager) {
+<span class="nc" id="L144">		this(id, manager, null);</span>
+<span class="nc" id="L145">	}</span>
+
+	/**
+	 * New sprite with a given identifier.
+	 * &lt;p&gt;
+	 * You cannot build sprites yourself, they are created by the sprite manager.
+	 */
+<span class="nc" id="L152">	protected Sprite(String id, SpriteManager manager, Values position) {</span>
+<span class="nc" id="L153">		init(id, manager, position);</span>
+<span class="nc" id="L154">	}</span>
+
+	/**
+	 * New sprite with a given identifier.
+	 * &lt;p&gt;
+	 * You cannot build sprites yourself, they are created by the sprite managern.
+	 * This method is used by the manager when creating instances of sprites that
+	 * inherit this class. If you derive the sprite class you can override this
+	 * method to initialise your sprite. It is always called when creating the
+	 * sprite.
+	 */
+	protected void init(String id, SpriteManager manager, Values position) {
+<span class="nc" id="L166">		this.id = id;</span>
+<span class="nc" id="L167">		this.completeId = String.format(&quot;ui.sprite.%s&quot;, id);</span>
+<span class="nc" id="L168">		this.manager = manager;</span>
+
+<span class="nc bnc" id="L170" title="All 2 branches missed.">		if (!manager.graph.hasAttribute(completeId)) {</span>
+<span class="nc bnc" id="L171" title="All 2 branches missed.">			if (position != null) {</span>
+<span class="nc" id="L172">				manager.graph.setAttribute(completeId, position);</span>
+<span class="nc" id="L173">				this.position = position;</span>
+<span class="nc" id="L174">			} else {</span>
+<span class="nc" id="L175">				this.position = new Values(Style.Units.GU, 0f, 0f, 0f);</span>
+<span class="nc" id="L176">				manager.graph.setAttribute(completeId, this.position);</span>
+			}
+<span class="nc" id="L178">		} else {</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">			if (position != null) {</span>
+<span class="nc" id="L180">				manager.graph.setAttribute(completeId, position);</span>
+<span class="nc" id="L181">				this.position = position;</span>
+<span class="nc" id="L182">			} else {</span>
+<span class="nc" id="L183">				this.position = SpriteManager.getPositionValue(manager.graph.getAttribute(completeId));</span>
+			}
+		}
+<span class="nc" id="L186">	}</span>
+
+	/**
+	 * Called by the manager when the sprite is removed.
+	 */
+	protected void removed() {
+<span class="nc" id="L192">		manager.graph.removeAttribute(completeId);</span>
+
+<span class="nc" id="L194">		String start = String.format(&quot;%s.&quot;, completeId);</span>
+
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		if (attached())</span>
+<span class="nc" id="L197">			detach();</span>
+
+<span class="nc" id="L199">		ArrayList&lt;String&gt; keys = new ArrayList&lt;String&gt;();</span>
+
+<span class="nc" id="L201">		manager.graph.attributeKeys().forEach(key -&gt; {</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">			if (key.startsWith(start))</span>
+<span class="nc" id="L203">				keys.add(key);</span>
+<span class="nc" id="L204">		});</span>
+
+<span class="nc bnc" id="L206" title="All 2 branches missed.">		for (String key : keys)</span>
+<span class="nc" id="L207">			manager.graph.removeAttribute(key);</span>
+<span class="nc" id="L208">	}</span>
+
+	// Access
+
+	/**
+	 * The element the sprite is attached to or null if the sprite is not attached.
+	 *
+	 * @return An element the sprite is attached to or null.
+	 */
+	public Element getAttachment() {
+<span class="nc" id="L218">		return attachment;</span>
+	}
+
+	/**
+	 * True if attached to an edge or node.
+	 *
+	 * @return False if not attached.
+	 */
+	public boolean attached() {
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		return (attachment != null);</span>
+	}
+
+	/**
+	 * X position.
+	 *
+	 * @return The position in abscissa.
+	 */
+	public double getX() {
+<span class="nc bnc" id="L236" title="All 2 branches missed.">		if (position.values.size() &gt; 0)</span>
+<span class="nc" id="L237">			return position.values.get(0);</span>
+
+<span class="nc" id="L239">		return 0;</span>
+	}
+
+	/**
+	 * Y position.
+	 *
+	 * @return The position in ordinate.
+	 */
+	public double getY() {
+<span class="nc bnc" id="L248" title="All 2 branches missed.">		if (position.values.size() &gt; 1)</span>
+<span class="nc" id="L249">			return position.values.get(1);</span>
+
+<span class="nc" id="L251">		return 0;</span>
+	}
+
+	/**
+	 * Z position.
+	 *
+	 * @return The position in depth.
+	 */
+	public double getZ() {
+<span class="nc bnc" id="L260" title="All 2 branches missed.">		if (position.values.size() &gt; 2)</span>
+<span class="nc" id="L261">			return position.values.get(2);</span>
+
+<span class="nc" id="L263">		return 0;</span>
+	}
+
+	public Style.Units getUnits() {
+<span class="nc" id="L267">		return position.units;</span>
+	}
+
+	// Command
+
+	/**
+	 * Attach the sprite to a node with the given identifier. If needed the sprite
+	 * is first detached. If the given node identifier does not exist, the sprite
+	 * stays in detached state.
+	 *
+	 * @param id
+	 *            Identifier of the node to attach to.
+	 */
+	public void attachToNode(String id) {
+<span class="nc bnc" id="L281" title="All 2 branches missed.">		if (attachment != null)</span>
+<span class="nc" id="L282">			detach();</span>
+
+<span class="nc" id="L284">		attachment = manager.graph.getNode(id);</span>
+
+<span class="nc bnc" id="L286" title="All 2 branches missed.">		if (attachment != null)</span>
+<span class="nc" id="L287">			attachment.setAttribute(completeId);</span>
+<span class="nc" id="L288">	}</span>
+
+	/**
+	 * Attach the sprite to an edge with the given identifier. If needed the sprite
+	 * is first detached. If the given edge identifier does not exist, the sprite
+	 * stays in detached state.
+	 *
+	 * @param id
+	 *            Identifier of the edge to attach to.
+	 */
+	public void attachToEdge(String id) {
+<span class="nc bnc" id="L299" title="All 2 branches missed.">		if (attachment != null)</span>
+<span class="nc" id="L300">			detach();</span>
+
+<span class="nc" id="L302">		attachment = manager.graph.getEdge(id);</span>
+
+<span class="nc bnc" id="L304" title="All 2 branches missed.">		if (attachment != null)</span>
+<span class="nc" id="L305">			attachment.setAttribute(completeId);</span>
+<span class="nc" id="L306">	}</span>
+
+	/**
+	 * Detach the sprite from the element it is attached to (if any).
+	 */
+	public void detach() {
+<span class="nc bnc" id="L312" title="All 2 branches missed.">		if (attachment != null) {</span>
+<span class="nc" id="L313">			attachment.removeAttribute(completeId);</span>
+<span class="nc" id="L314">			attachment = null;</span>
+		}
+<span class="nc" id="L316">	}</span>
+
+	public void setPosition(double percent) {
+<span class="nc" id="L319">		setPosition(position.units, percent, 0, 0);</span>
+<span class="nc" id="L320">	}</span>
+
+	public void setPosition(double x, double y, double z) {
+<span class="nc" id="L323">		setPosition(position.units, x, y, z);</span>
+<span class="nc" id="L324">	}</span>
+
+	public void setPosition(Style.Units units, double x, double y, double z) {
+<span class="nc" id="L327">		boolean changed = false;</span>
+
+<span class="nc bnc" id="L329" title="All 2 branches missed.">		if (position.get(0) != x) {</span>
+<span class="nc" id="L330">			changed = true;</span>
+<span class="nc" id="L331">			position.setValue(0, x);</span>
+		}
+<span class="nc bnc" id="L333" title="All 2 branches missed.">		if (position.get(1) != y) {</span>
+<span class="nc" id="L334">			changed = true;</span>
+<span class="nc" id="L335">			position.setValue(1, y);</span>
+		}
+<span class="nc bnc" id="L337" title="All 2 branches missed.">		if (position.get(2) != z) {</span>
+<span class="nc" id="L338">			changed = true;</span>
+<span class="nc" id="L339">			position.setValue(2, z);</span>
+		}
+<span class="nc bnc" id="L341" title="All 2 branches missed.">		if (position.units != units) {</span>
+<span class="nc" id="L342">			changed = true;</span>
+<span class="nc" id="L343">			position.setUnits(units);</span>
+		}
+
+<span class="nc bnc" id="L346" title="All 2 branches missed.">		if (changed)</span>
+<span class="nc" id="L347">			manager.graph.setAttribute(completeId, new Values(position));</span>
+<span class="nc" id="L348">	}</span>
+
+	protected void setPosition(Values values) {
+<span class="nc bnc" id="L351" title="All 2 branches missed.">		if (values != null) {</span>
+<span class="nc" id="L352">			int n = values.values.size();</span>
+
+<span class="nc bnc" id="L354" title="All 2 branches missed.">			if (n &gt; 2) {</span>
+<span class="nc" id="L355">				setPosition(values.units, values.get(0), values.get(1), values.get(2));</span>
+<span class="nc bnc" id="L356" title="All 2 branches missed.">			} else if (n &gt; 0) {</span>
+<span class="nc" id="L357">				setPosition(values.get(0));</span>
+			}
+		}
+<span class="nc" id="L360">	}</span>
+
+	// Access (Element)
+
+	public String getId() {
+<span class="nc" id="L365">		return id;</span>
+	}
+
+	public CharSequence getLabel(String key) {
+<span class="nc" id="L369">		return manager.graph.getLabel(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public Object getAttribute(String key) {
+<span class="nc" id="L373">		return manager.graph.getAttribute(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public &lt;T&gt; T getAttribute(String key, Class&lt;T&gt; clazz) {
+<span class="nc" id="L377">		return manager.graph.getAttribute(String.format(&quot;%s.%s&quot;, completeId, key), clazz);</span>
+	}
+
+	/**
+	 * Quite expensive operation !.
+	 */
+	public int getAttributeCount() {
+<span class="nc" id="L384">		String start = String.format(&quot;%s.&quot;, completeId);</span>
+
+<span class="nc" id="L386">		return (int) manager.graph.attributeKeys().filter(key -&gt; key.startsWith(start)).count();</span>
+	}
+
+	@Override
+	public Stream&lt;String&gt; attributeKeys() {
+<span class="nc" id="L391">		throw new RuntimeException(&quot;not implemented&quot;);</span>
+	}
+
+	public Map&lt;String, Object&gt; getAttributeMap() {
+<span class="nc" id="L395">		throw new RuntimeException(&quot;not implemented&quot;);</span>
+	}
+
+	public Object getFirstAttributeOf(String... keys) {
+<span class="nc" id="L399">		String completeKeys[] = new String[keys.length];</span>
+<span class="nc" id="L400">		int i = 0;</span>
+
+<span class="nc bnc" id="L402" title="All 2 branches missed.">		for (String key : keys) {</span>
+<span class="nc" id="L403">			completeKeys[i] = String.format(&quot;%s.%s&quot;, completeId, key);</span>
+<span class="nc" id="L404">			i++;</span>
+		}
+
+<span class="nc" id="L407">		return manager.graph.getFirstAttributeOf(completeKeys);</span>
+	}
+
+	public &lt;T&gt; T getFirstAttributeOf(Class&lt;T&gt; clazz, String... keys) {
+<span class="nc" id="L411">		String completeKeys[] = new String[keys.length];</span>
+<span class="nc" id="L412">		int i = 0;</span>
+
+<span class="nc bnc" id="L414" title="All 2 branches missed.">		for (String key : keys) {</span>
+<span class="nc" id="L415">			completeKeys[i] = String.format(&quot;%s.%s&quot;, completeId, key);</span>
+<span class="nc" id="L416">			i++;</span>
+		}
+
+<span class="nc" id="L419">		return manager.graph.getFirstAttributeOf(clazz, completeKeys);</span>
+	}
+
+	public Object[] getArray(String key) {
+<span class="nc" id="L423">		return manager.graph.getArray(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public Map&lt;?, ?&gt; getMap(String key) {
+<span class="nc" id="L427">		return manager.graph.getMap(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public double getNumber(String key) {
+<span class="nc" id="L431">		return manager.graph.getNumber(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public List&lt;? extends Number&gt; getVector(String key) {
+<span class="nc" id="L435">		return manager.graph.getVector(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public boolean hasAttribute(String key) {
+<span class="nc" id="L439">		return manager.graph.hasAttribute(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public boolean hasArray(String key) {
+<span class="nc" id="L443">		return manager.graph.hasArray(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public boolean hasAttribute(String key, Class&lt;?&gt; clazz) {
+<span class="nc" id="L447">		return manager.graph.hasAttribute(String.format(&quot;%s.%s&quot;, completeId, key), clazz);</span>
+	}
+
+	public boolean hasMap(String key) {
+<span class="nc" id="L451">		return manager.graph.hasMap(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public boolean hasLabel(String key) {
+<span class="nc" id="L455">		return manager.graph.hasLabel(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public boolean hasNumber(String key) {
+<span class="nc" id="L459">		return manager.graph.hasNumber(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	public boolean hasVector(String key) {
+<span class="nc" id="L463">		return manager.graph.hasVector(String.format(&quot;%s.%s&quot;, completeId, key));</span>
+	}
+
+	// Commands (Element)
+
+	public void setAttribute(String attribute, Object... values) {
+<span class="nc" id="L469">		manager.graph.setAttribute(String.format(&quot;%s.%s&quot;, completeId, attribute), values);</span>
+<span class="nc" id="L470">	}</span>
+
+	public void setAttributes(Map&lt;String, Object&gt; attributes) {
+<span class="nc bnc" id="L473" title="All 2 branches missed.">		for (String key : attributes.keySet())</span>
+<span class="nc" id="L474">			manager.graph.setAttribute(String.format(&quot;%s.%s&quot;, completeId, key), attributes.get(key));</span>
+<span class="nc" id="L475">	}</span>
+
+	public void clearAttributes() {
+<span class="nc" id="L478">		String start = String.format(&quot;%s.&quot;, completeId);</span>
+
+<span class="nc" id="L480">		manager.graph.attributeKeys().filter(key -&gt; key.startsWith(start)).collect(Collectors.toList())</span>
+<span class="nc" id="L481">				.forEach(key -&gt; manager.graph.removeAttribute(key));</span>
+<span class="nc" id="L482">	}</span>
+
+	public void removeAttribute(String attribute) {
+<span class="nc" id="L485">		manager.graph.removeAttribute(String.format(&quot;%s.%s&quot;, completeId, attribute));</span>
+<span class="nc" id="L486">	}</span>
+
+	// XXX -&gt; UGLY FIX
+	// Sprites do not have unique index but is this useful?
+	public int getIndex() {
+<span class="nc" id="L491">		return 0;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

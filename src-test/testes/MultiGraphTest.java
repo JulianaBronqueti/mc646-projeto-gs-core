@@ -25,7 +25,7 @@ import org.graphstream.graph.implementations.*;
 
 @GraphWalker(value = "quick_random(edge_coverage(100))", start = "v_inicio")
 public class MultiGraphTest extends ExecutionContext implements MultiGraphTestInterface {
-	Graph graph = new MultiGraph("graph1", true, false, 5, 10);
+	Graph graph = new MultiGraph("graph1");
 	int nodesIndex = 0, edgesIndex = 0, lastEdgeCount = 0, lastNodeCount = 0, newNodeCount = 0, newEdgeCount = 0;
 	String cameFrom = "";
 	boolean jaExistente = false, naoEncontrado = false, arestaRejeitada = false;
@@ -104,8 +104,10 @@ public class MultiGraphTest extends ExecutionContext implements MultiGraphTestIn
 			lastEdgeCount = graph.getEdgeCount();
 			newEdgeCount = graph.getEdgeCount();
 			Edge removed_edge = (Edge) graph.getEdge(usedPairs.get(0));
+			
 			System.out.println(removed_edge);
 			graph.removeEdge(usedPairs.get(0));
+			
 			usedPairs.remove(0);
 			edgesIndex = edgesIndex - 1;
 			cameFrom = "e_removeAresta";
@@ -196,6 +198,8 @@ public class MultiGraphTest extends ExecutionContext implements MultiGraphTestIn
 		Graph graph2 = new MultiGraph("graph2", true, false, 5, 10);
 		Node A = graph2.addNode("A");
 		Node B = graph2.addNode("B");
+		graph2.addEdge("E", A, B);
+		System.out.println(graph2.getEdge(0));
 
 		try {
 			graph.addEdge("brokeEdge", A, B);

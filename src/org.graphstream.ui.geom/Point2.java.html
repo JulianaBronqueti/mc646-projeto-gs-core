@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Point2.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.geom</a> &gt; <span class="el_source">Point2.java</span></div><h1>Point2.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-12-22
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.geom;
+
+/**
+ * 2D point.
+ * 
+ * A Point2 is a 2D location in an affine space described by three values along
+ * the X, and Y axes. This differs from the Vector3 and Vector4 classes in that
+ * it is only 2D and has no vector arithmetic bound to it (to points cannot be
+ * added, this would have no mathematical meaning).
+ * 
+ * @author Antoine Dutot
+ * @since 20001121 creation
+ * @version 0.1
+ */
+public class Point2 implements java.io.Serializable {
+	// Attributes
+
+	private static final long serialVersionUID = 965985679540486895L;
+
+	/**
+	 * X axis value.
+	 */
+	public double x;
+
+	/**
+	 * Y axis value.
+	 */
+	public double y;
+
+	// Attributes -- Shared
+
+	/**
+	 * Specific point at (0,0).
+	 */
+<span class="nc" id="L69">	public static final Point2 NULL_POINT2 = new Point2(0, 0);</span>
+
+	// Constructors
+
+	/**
+	 * New 2D point at (0,0).
+	 */
+<span class="nc" id="L76">	public Point2() {</span>
+<span class="nc" id="L77">	}</span>
+
+	/**
+	 * New 2D point at (x,y).
+	 */
+<span class="nc" id="L82">	public Point2(double x, double y) {</span>
+<span class="nc" id="L83">		set(x, y);</span>
+<span class="nc" id="L84">	}</span>
+
+	/**
+	 * New copy of other.
+	 */
+<span class="nc" id="L89">	public Point2(Point2 other) {</span>
+<span class="nc" id="L90">		copy(other);</span>
+<span class="nc" id="L91">	}</span>
+
+	/**
+	 * New 2D point at (x,y).
+	 */
+	public void make(double x, double y) {
+<span class="nc" id="L97">		set(x, y);</span>
+<span class="nc" id="L98">	}</span>
+
+	// Accessors
+
+	/**
+	 * Are all components to zero?.
+	 */
+	public boolean isZero() {
+<span class="nc bnc" id="L106" title="All 4 branches missed.">		return (x == 0 &amp;&amp; y == 0);</span>
+	}
+
+	// /**
+	// * Is other equal to this ?
+	// */
+	// public boolean
+	// equals( const Point2 &lt; double &gt; &amp; other ) const
+	// {
+	// return( x == other.x
+	// and y == other.y
+	// and z == other.z );
+	// }
+
+	/**
+	 * Create a new point linear interpolation of this and &lt;code&gt;other&lt;/code&gt;. The
+	 * new point is located between this and &lt;code&gt;other&lt;/code&gt; if
+	 * &lt;code&gt;factor&lt;/code&gt; is between 0 and 1 (0 yields this point, 1 yields the
+	 * &lt;code&gt;other&lt;/code&gt; point).
+	 */
+	public Point2 interpolate(Point2 other, double factor) {
+<span class="nc" id="L127">		Point2 p = new Point2(x + ((other.x - x) * factor), y + ((other.y - y) * factor));</span>
+
+<span class="nc" id="L129">		return p;</span>
+	}
+
+	/**
+	 * Distance between this and &lt;code&gt;other&lt;/code&gt;.
+	 */
+	public double distance(Point2 other) {
+<span class="nc" id="L136">		double xx = other.x - x;</span>
+<span class="nc" id="L137">		double yy = other.y - y;</span>
+<span class="nc" id="L138">		return Math.abs(Math.sqrt((xx * xx) + (yy * yy)));</span>
+	}
+
+	// Commands
+
+	/**
+	 * Make this a copy of other.
+	 */
+	public void copy(Point2 other) {
+<span class="nc" id="L147">		x = other.x;</span>
+<span class="nc" id="L148">		y = other.y;</span>
+<span class="nc" id="L149">	}</span>
+
+	/**
+	 * Like #moveTo().
+	 */
+	public void set(double x, double y) {
+<span class="nc" id="L155">		this.x = x;</span>
+<span class="nc" id="L156">		this.y = y;</span>
+<span class="nc" id="L157">	}</span>
+
+	// Commands -- moving
+
+	/**
+	 * Move to absolute position (x,y).
+	 */
+	public void moveTo(double x, double y) {
+<span class="nc" id="L165">		this.x = x;</span>
+<span class="nc" id="L166">		this.y = y;</span>
+<span class="nc" id="L167">	}</span>
+
+	/**
+	 * Move of given vector (dx,dy).
+	 */
+	public void move(double dx, double dy) {
+<span class="nc" id="L173">		this.x += dx;</span>
+<span class="nc" id="L174">		this.y += dy;</span>
+<span class="nc" id="L175">	}</span>
+
+	/**
+	 * Move of given point &lt;code&gt;p&lt;/code&gt;.
+	 */
+	public void move(Point2 p) {
+<span class="nc" id="L181">		this.x += p.x;</span>
+<span class="nc" id="L182">		this.y += p.y;</span>
+<span class="nc" id="L183">	}</span>
+
+	/**
+	 * Move horizontally of dx.
+	 */
+	public void moveX(double dx) {
+<span class="nc" id="L189">		x += dx;</span>
+<span class="nc" id="L190">	}</span>
+
+	/**
+	 * Move vertically of dy.
+	 */
+	public void moveY(double dy) {
+<span class="nc" id="L196">		y += dy;</span>
+<span class="nc" id="L197">	}</span>
+
+	/**
+	 * Scale of factor (sx,sy).
+	 */
+	public void scale(double sx, double sy) {
+<span class="nc" id="L203">		x *= sx;</span>
+<span class="nc" id="L204">		y *= sy;</span>
+<span class="nc" id="L205">	}</span>
+
+	/**
+	 * Scale by factor s.
+	 */
+	public void scale(Point2 s) {
+<span class="nc" id="L211">		x *= s.x;</span>
+<span class="nc" id="L212">		y *= s.y;</span>
+<span class="nc" id="L213">	}</span>
+
+	/**
+	 * Change only abscissa at absolute coordinate x.
+	 */
+	public void setX(double x) {
+<span class="nc" id="L219">		this.x = x;</span>
+<span class="nc" id="L220">	}</span>
+
+	/**
+	 * Change only ordinate at absolute coordinate y.
+	 */
+	public void setY(double y) {
+<span class="nc" id="L226">		this.y = y;</span>
+<span class="nc" id="L227">	}</span>
+
+	/**
+	 * Exchange the values of this and other.
+	 */
+	public void swap(Point2 other) {
+		double t;
+
+<span class="nc bnc" id="L235" title="All 2 branches missed.">		if (other != this) {</span>
+<span class="nc" id="L236">			t = this.x;</span>
+<span class="nc" id="L237">			this.x = other.x;</span>
+<span class="nc" id="L238">			other.x = t;</span>
+
+<span class="nc" id="L240">			t = this.y;</span>
+<span class="nc" id="L241">			this.y = other.y;</span>
+<span class="nc" id="L242">			other.y = t;</span>
+		}
+<span class="nc" id="L244">	}</span>
+
+	// Commands -- misc.
+
+	@Override
+	public String toString() {
+		StringBuffer buf;
+
+<span class="nc" id="L252">		buf = new StringBuffer(&quot;Point2[&quot;);</span>
+
+<span class="nc" id="L254">		buf.append(x);</span>
+<span class="nc" id="L255">		buf.append('|');</span>
+<span class="nc" id="L256">		buf.append(y);</span>
+<span class="nc" id="L257">		buf.append(&quot;]&quot;);</span>
+
+<span class="nc" id="L259">		return buf.toString();</span>
+	}
+
+	@Override
+	public boolean equals(Object o) {
+<span class="nc bnc" id="L264" title="All 2 branches missed.">		if (this == o) {</span>
+<span class="nc" id="L265">			return true;</span>
+		}
+<span class="nc bnc" id="L267" title="All 4 branches missed.">		if (o == null || getClass() != o.getClass()) {</span>
+<span class="nc" id="L268">			return false;</span>
+		}
+
+<span class="nc" id="L271">		Point2 point2 = (Point2) o;</span>
+
+<span class="nc bnc" id="L273" title="All 2 branches missed.">		if (Double.compare(point2.x, x) != 0) {</span>
+<span class="nc" id="L274">			return false;</span>
+		}
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		if (Double.compare(point2.y, y) != 0) {</span>
+<span class="nc" id="L277">			return false;</span>
+		}
+
+<span class="nc" id="L280">		return true;</span>
+	}
+
+	@Override
+	public int hashCode() {
+		int result;
+		long temp;
+<span class="nc" id="L287">		temp = Double.doubleToLongBits(x);</span>
+<span class="nc" id="L288">		result = (int) (temp ^ (temp &gt;&gt;&gt; 32));</span>
+<span class="nc" id="L289">		temp = Double.doubleToLongBits(y);</span>
+<span class="nc" id="L290">		result = 31 * result + (int) (temp ^ (temp &gt;&gt;&gt; 32));</span>
+<span class="nc" id="L291">		return result;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

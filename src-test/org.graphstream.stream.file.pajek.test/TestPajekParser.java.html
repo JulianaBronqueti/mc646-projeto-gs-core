@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestPajekParser.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.pajek.test</a> &gt; <span class="el_source">TestPajekParser.java</span></div><h1>TestPajekParser.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-23
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.pajek.test;
+
+import java.io.IOException;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.stream.file.FileSourcePajek;
+import org.graphstream.ui.view.Viewer;
+import org.junit.Ignore;
+
+@Ignore
+<span class="nc" id="L47">public class TestPajekParser {</span>
+	static class TestEntry {
+		String ressourceName;
+		boolean autoLayout;
+		boolean addLabels;
+		boolean veryLarge;
+
+<span class="nc" id="L54">		TestEntry(String name, boolean layout, boolean addLabels, boolean veryLarge) {</span>
+<span class="nc" id="L55">			this.ressourceName = name;</span>
+<span class="nc" id="L56">			this.autoLayout = layout;</span>
+<span class="nc" id="L57">			this.addLabels = addLabels;</span>
+<span class="nc" id="L58">			this.veryLarge = veryLarge;</span>
+<span class="nc" id="L59">		}</span>
+	}
+
+<span class="nc" id="L62">	static TestEntry[] entries = { new TestEntry(&quot;1.NET&quot;, false, false, false),</span>
+<span class="nc" id="L63">			new TestEntry(&quot;1CRN.NET&quot;, false, false, false), new TestEntry(&quot;AHO1.NET&quot;, false, false, false),</span>
+<span class="nc" id="L64">			new TestEntry(&quot;AHO2.NET&quot;, true, false, false), new TestEntry(&quot;AHO3.NET&quot;, true, false, false),</span>
+<span class="nc" id="L65">			new TestEntry(&quot;AHO4.NET&quot;, true, false, false), new TestEntry(&quot;B.NET&quot;, false, false, false),</span>
+<span class="nc" id="L66">			new TestEntry(&quot;C.NET&quot;, false, false, false), new TestEntry(&quot;CC.NET&quot;, false, false, false),</span>
+<span class="nc" id="L67">			new TestEntry(&quot;CENPROD.NET&quot;, false, false, false), new TestEntry(&quot;CIRC.NET&quot;, false, false, false),</span>
+<span class="nc" id="L68">			new TestEntry(&quot;CITE.NET&quot;, true, false, false), new TestEntry(&quot;CP.NET&quot;, false, false, false),</span>
+<span class="nc" id="L69">			new TestEntry(&quot;CPM1.NET&quot;, false, false, false), new TestEntry(&quot;CPM2.NET&quot;, false, false, false),</span>
+<span class="nc" id="L70">			new TestEntry(&quot;CPM3.NET&quot;, true, false, false), new TestEntry(&quot;CVRML.NET&quot;, false, false, false),</span>
+<span class="nc" id="L71">			new TestEntry(&quot;CX.NET&quot;, false, false, false), new TestEntry(&quot;D.NET&quot;, false, false, false),</span>
+<span class="nc" id="L72">			new TestEntry(&quot;DNA.NET&quot;, false, false, false), new TestEntry(&quot;DREV1.NET&quot;, false, false, false),</span>
+<span class="nc" id="L73">			new TestEntry(&quot;DREVO.NET&quot;, false, false, false), new TestEntry(&quot;ETHANOL.NET&quot;, false, false, false),</span>
+<span class="nc" id="L74">			new TestEntry(&quot;FILE1.NET&quot;, true, false, false), new TestEntry(&quot;FLOW.NET&quot;, false, false, false),</span>
+<span class="nc" id="L75">			new TestEntry(&quot;FLOW3.NET&quot;, false, false, false), new TestEntry(&quot;FLOW4.NET&quot;, false, false, false),</span>
+<span class="nc" id="L76">			new TestEntry(&quot;FRAG1.NET&quot;, false, false, false), new TestEntry(&quot;FRAG1Y.NET&quot;, false, false, false),</span>
+<span class="nc" id="L77">			new TestEntry(&quot;FRAG2.NET&quot;, false, false, false), new TestEntry(&quot;FRAG3.NET&quot;, false, false, false),</span>
+<span class="nc" id="L78">			new TestEntry(&quot;FRAG4.NET&quot;, false, false, false), new TestEntry(&quot;FRAG5.NET&quot;, false, false, false),</span>
+<span class="nc" id="L79">			new TestEntry(&quot;GCD.NET&quot;, false, false, false), new TestEntry(&quot;GR3_44.NET&quot;, false, false, false),</span>
+<span class="nc" id="L80">			new TestEntry(&quot;GR3_53.NET&quot;, false, false, false), new TestEntry(&quot;GR3_60.NET&quot;, false, false, false),</span>
+<span class="nc" id="L81">			new TestEntry(&quot;GR3_81.NET&quot;, false, false, false), new TestEntry(&quot;GR344.NET&quot;, false, false, false),</span>
+<span class="nc" id="L82">			new TestEntry(&quot;H20.NET&quot;, false, false, false), new TestEntry(&quot;HEXANE.NET&quot;, false, false, false),</span>
+<span class="nc" id="L83">			new TestEntry(&quot;KOCKA.NET&quot;, true, false, false), new TestEntry(&quot;KOCKA1.NET&quot;, false, false, false),</span>
+<span class="nc" id="L84">			new TestEntry(&quot;KVADRAT.NET&quot;, false, false, false), new TestEntry(&quot;LINKS.NET&quot;, false, false, false),</span>
+<span class="nc" id="L85">			new TestEntry(&quot;LOND1.NET&quot;, false, false, false), new TestEntry(&quot;LONDON.NET&quot;, false, false, false),</span>
+<span class="nc" id="L86">			new TestEntry(&quot;MCCABE1.NET&quot;, false, false, false), new TestEntry(&quot;MCCABE1A.NET&quot;, false, false, false),</span>
+<span class="nc" id="L87">			new TestEntry(&quot;MCCABE2.NET&quot;, false, false, false), new TestEntry(&quot;MCCABE2A.NET&quot;, false, false, false),</span>
+<span class="nc" id="L88">			new TestEntry(&quot;MREZA.NET&quot;, false, false, false), new TestEntry(&quot;MREZA1.NET&quot;, false, false, false),</span>
+<span class="nc" id="L89">			new TestEntry(&quot;MREZA2.NET&quot;, false, false, false), new TestEntry(&quot;MREZA3.NET&quot;, false, false, false),</span>
+<span class="nc" id="L90">			new TestEntry(&quot;MREZAS1.NET&quot;, true, false, false), new TestEntry(&quot;MREZASHR.NET&quot;, false, false, false),</span>
+<span class="nc" id="L91">			new TestEntry(&quot;NEG.NET&quot;, false, false, false), new TestEntry(&quot;NEIG4.NET&quot;, false, false, false),</span>
+<span class="nc" id="L92">			new TestEntry(&quot;NOOY.NET&quot;, false, false, false), new TestEntry(&quot;OLDFILE.NET&quot;, false, false, false),</span>
+<span class="nc" id="L93">			new TestEntry(&quot;PATH4.NET&quot;, false, false, false), new TestEntry(&quot;PETER.NET&quot;, false, false, false),</span>
+<span class="nc" id="L94">			new TestEntry(&quot;PETRI1.NET&quot;, false, false, false), new TestEntry(&quot;PETRI2.NET&quot;, false, false, false),</span>
+<span class="nc" id="L95">			new TestEntry(&quot;PETRI3.NET&quot;, false, false, false), new TestEntry(&quot;PETRI4.NET&quot;, false, false, false),</span>
+<span class="nc" id="L96">			new TestEntry(&quot;PETRI5.NET&quot;, false, false, false), new TestEntry(&quot;PETRI5X.NET&quot;, false, false, false),</span>
+<span class="nc" id="L97">			new TestEntry(&quot;PETRI5Y.NET&quot;, false, false, false), new TestEntry(&quot;PETRI51.NET&quot;, false, false, false),</span>
+<span class="nc" id="L98">			new TestEntry(&quot;PETRI51X.NET&quot;, false, false, false), new TestEntry(&quot;PETRI51Y.NET&quot;, false, false, false),</span>
+<span class="nc" id="L99">			new TestEntry(&quot;PETRI52.NET&quot;, false, false, false), new TestEntry(&quot;PETRI52X.NET&quot;, false, false, false),</span>
+<span class="nc" id="L100">			new TestEntry(&quot;PETRI52Y.NET&quot;, false, false, false), new TestEntry(&quot;PETRI53.NET&quot;, false, false, false),</span>
+<span class="nc" id="L101">			new TestEntry(&quot;PITT.NET&quot;, false, false, false), new TestEntry(&quot;PRIME.NET&quot;, false, false, false),</span>
+<span class="nc" id="L102">			new TestEntry(&quot;PRIME1.NET&quot;, false, false, false), new TestEntry(&quot;PROT.NET&quot;, false, false, false),</span>
+<span class="nc" id="L103">			new TestEntry(&quot;PROTI.NET&quot;, true, false, false), new TestEntry(&quot;SAMPLE6.NET&quot;, false, false, false),</span>
+<span class="nc" id="L104">			new TestEntry(&quot;SAMPLE9.NET&quot;, false, false, false), new TestEntry(&quot;SAMPLE10.NET&quot;, false, false, false),</span>
+<span class="nc" id="L105">			new TestEntry(&quot;SHORT.NET&quot;, false, false, false), new TestEntry(&quot;SHR.NET&quot;, false, false, false),</span>
+<span class="nc" id="L106">			new TestEntry(&quot;SHRINK.NET&quot;, false, false, false), new TestEntry(&quot;SHRINK4.NET&quot;, false, false, false),</span>
+<span class="nc" id="L107">			new TestEntry(&quot;SHRINK2.NET&quot;, false, false, false), new TestEntry(&quot;SLOVEN.NET&quot;, false, false, false),</span>
+<span class="nc" id="L108">			new TestEntry(&quot;STROPIC.NET&quot;, false, false, false), new TestEntry(&quot;T.NET&quot;, false, false, false),</span>
+<span class="nc" id="L109">			new TestEntry(&quot;TEST1.NET&quot;, false, false, false), new TestEntry(&quot;TINA.NET&quot;, false, false, false),</span>
+<span class="nc" id="L110">			new TestEntry(&quot;TINAMATR.NET&quot;, false, false, false), new TestEntry(&quot;TRANS.NET&quot;, true, false, false),</span>
+<span class="nc" id="L111">			new TestEntry(&quot;WIRTH.NET&quot;, false, false, false), new TestEntry(&quot;WRITE.NET&quot;, false, false, false) };</span>
+
+	public static void main(String args[]) throws IOException {
+<span class="nc" id="L114">		System.setProperty(&quot;org.graphstream.ui&quot;, &quot;org.graphstream.ui.swingViewer.util.SwingDisplay&quot;);</span>
+<span class="nc" id="L115">		TestPajekParser test = new TestPajekParser();</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">		for (int i = 0; i &lt; entries.length; i++)</span>
+<span class="nc" id="L118">			test.test(entries[i]);</span>
+<span class="nc" id="L119">	}</span>
+
+	public void test(TestEntry entry) throws IOException {
+<span class="nc" id="L122">		System.out.printf(&quot;&gt; \&quot;%s\&quot;\n&quot;, entry.ressourceName);</span>
+
+<span class="nc" id="L124">		Graph graph = new MultiGraph(&quot;foo&quot;);</span>
+<span class="nc" id="L125">		FileSourcePajek in = new FileSourcePajek();</span>
+
+<span class="nc" id="L127">		graph.setAttribute(&quot;ui.quality&quot;);</span>
+<span class="nc bnc" id="L128" title="All 2 branches missed.">		if (!entry.veryLarge)</span>
+<span class="nc" id="L129">			graph.setAttribute(&quot;ui.antialias&quot;);</span>
+<span class="nc bnc" id="L130" title="All 2 branches missed.">		if (entry.addLabels)</span>
+<span class="nc" id="L131">			graph.setAttribute(&quot;ui.stylesheet&quot;, String.format(</span>
+<span class="nc" id="L132">					&quot;node { text-alignment: center; size: %dpx; fill-color: grey; %s } edge { fill-color: #333; }&quot;,</span>
+<span class="nc bnc" id="L133" title="All 4 branches missed.">					entry.veryLarge ? 6 : 16, entry.veryLarge ? &quot;&quot; : &quot;stroke-mode: plain; stroke-color: #333;&quot;));</span>
+		else
+<span class="nc" id="L135">			graph.setAttribute(&quot;ui.stylesheet&quot;, String.format(</span>
+<span class="nc" id="L136">					&quot;node { text-alignment: at-right; size: %dpx; fill-color: grey; %s text-background-mode: plain; text-offset: 2px, 0px; text-padding: 2px; text-background-color: #FFFFFFAA; } edge { fill-color: #333; }&quot;,</span>
+<span class="nc bnc" id="L137" title="All 4 branches missed.">					entry.veryLarge ? 6 : 16, entry.veryLarge ? &quot;&quot; : &quot;stroke-mode: plain; stroke-color: #333;&quot;));</span>
+
+<span class="nc" id="L139">		Viewer v = graph.display(entry.autoLayout);</span>
+<span class="nc" id="L140">		v.setCloseFramePolicy(Viewer.CloseFramePolicy.CLOSE_VIEWER);</span>
+
+<span class="nc" id="L142">		in.addSink(graph);</span>
+<span class="nc" id="L143">		in.readAll(TestPajekParser.class.getResourceAsStream(entry.ressourceName));</span>
+
+<span class="nc bnc" id="L145" title="All 2 branches missed.">		if (entry.addLabels) {</span>
+<span class="nc bnc" id="L146" title="All 2 branches missed.">			for (Node node : graph) {</span>
+<span class="nc" id="L147">				node.setAttribute(&quot;ui.label&quot;, node.getId());</span>
+			}
+		}
+
+		try {
+<span class="nc" id="L152">			Thread.sleep(1000);</span>
+<span class="nc" id="L153">		} catch (Exception e) {</span>
+		}
+
+<span class="nc" id="L156">		v.close();</span>
+<span class="nc" id="L157">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

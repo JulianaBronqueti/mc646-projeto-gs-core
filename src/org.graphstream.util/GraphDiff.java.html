@@ -1,0 +1,1003 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GraphDiff.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util</a> &gt; <span class="el_source">GraphDiff.java</span></div><h1>GraphDiff.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-06-06
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.util;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.LinkedList;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.ElementNotFoundException;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.file.FileSinkDGS;
+import org.graphstream.stream.file.FileSourceDGS;
+
+public class GraphDiff {
+<span class="nc" id="L54">	protected static enum ElementType {</span>
+<span class="nc" id="L55">		NODE, EDGE, GRAPH</span>
+	}
+
+	private Bridge bridge;
+	private final LinkedList&lt;Event&gt; events;
+
+	/**
+	 * Create a new empty diff.
+	 */
+<span class="nc" id="L64">	public GraphDiff() {</span>
+<span class="nc" id="L65">		this.events = new LinkedList&lt;Event&gt;();</span>
+<span class="nc" id="L66">		this.bridge = null;</span>
+<span class="nc" id="L67">	}</span>
+
+	/**
+	 * Create a diff between two graphs.
+	 * 
+	 * @param g1
+	 * @param g2
+	 */
+	public GraphDiff(Graph g1, Graph g2) {
+<span class="nc" id="L76">		this();</span>
+
+<span class="nc bnc" id="L78" title="All 6 branches missed.">		if (g2.getNodeCount() == 0 &amp;&amp; g2.getEdgeCount() == 0 &amp;&amp; g2.getAttributeCount() == 0</span>
+<span class="nc bnc" id="L79" title="All 4 branches missed.">				&amp;&amp; (g1.getNodeCount() &gt; 0 || g1.getEdgeCount() &gt; 0)) {</span>
+<span class="nc" id="L80">			events.add(new GraphCleared(g1));</span>
+<span class="nc" id="L81">		} else {</span>
+<span class="nc" id="L82">			attributeDiff(ElementType.GRAPH, g1, g2);</span>
+
+<span class="nc bnc" id="L84" title="All 2 branches missed.">			for (int idx = 0; idx &lt; g1.getEdgeCount(); idx++) {</span>
+<span class="nc" id="L85">				Edge e1 = g1.getEdge(idx);</span>
+<span class="nc" id="L86">				Edge e2 = g2.getEdge(e1.getId());</span>
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">				if (e2 == null) {</span>
+<span class="nc" id="L89">					attributeDiff(ElementType.EDGE, e1, e2);</span>
+<span class="nc" id="L90">					events.add(new EdgeRemoved(e1.getId(), e1.getSourceNode().getId(), e1.getTargetNode().getId(),</span>
+<span class="nc" id="L91">							e1.isDirected()));</span>
+				}
+			}
+
+<span class="nc bnc" id="L95" title="All 2 branches missed.">			for (int idx = 0; idx &lt; g1.getNodeCount(); idx++) {</span>
+<span class="nc" id="L96">				Node n1 = g1.getNode(idx);</span>
+<span class="nc" id="L97">				Node n2 = g2.getNode(n1.getId());</span>
+
+<span class="nc bnc" id="L99" title="All 2 branches missed.">				if (n2 == null) {</span>
+<span class="nc" id="L100">					attributeDiff(ElementType.NODE, n1, n2);</span>
+<span class="nc" id="L101">					events.add(new NodeRemoved(n1.getId()));</span>
+				}
+			}
+
+<span class="nc bnc" id="L105" title="All 2 branches missed.">			for (int idx = 0; idx &lt; g2.getNodeCount(); idx++) {</span>
+<span class="nc" id="L106">				Node n2 = g2.getNode(idx);</span>
+<span class="nc" id="L107">				Node n1 = g1.getNode(n2.getId());</span>
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">				if (n1 == null)</span>
+<span class="nc" id="L110">					events.add(new NodeAdded(n2.getId()));</span>
+
+<span class="nc" id="L112">				attributeDiff(ElementType.NODE, n1, n2);</span>
+			}
+
+<span class="nc bnc" id="L115" title="All 2 branches missed.">			for (int idx = 0; idx &lt; g2.getEdgeCount(); idx++) {</span>
+<span class="nc" id="L116">				Edge e2 = g2.getEdge(idx);</span>
+<span class="nc" id="L117">				Edge e1 = g1.getEdge(e2.getId());</span>
+
+<span class="nc bnc" id="L119" title="All 2 branches missed.">				if (e1 == null)</span>
+<span class="nc" id="L120">					events.add(new EdgeAdded(e2.getId(), e2.getSourceNode().getId(), e2.getTargetNode().getId(),</span>
+<span class="nc" id="L121">							e2.isDirected()));</span>
+
+<span class="nc" id="L123">				attributeDiff(ElementType.EDGE, e1, e2);</span>
+			}
+		}
+<span class="nc" id="L126">	}</span>
+
+	/**
+	 * Start to record changes. If a record is already started, then it will be
+	 * ended.
+	 * 
+	 * @param g
+	 *            the graph to start listening for changes.
+	 */
+	public void start(Graph g) {
+<span class="nc bnc" id="L136" title="All 2 branches missed.">		if (bridge != null)</span>
+<span class="nc" id="L137">			end();</span>
+
+<span class="nc" id="L139">		bridge = new Bridge(g);</span>
+<span class="nc" id="L140">	}</span>
+
+	/**
+	 * Stop to record changes. If there is no record, calling this method has no
+	 * effect.
+	 */
+	public void end() {
+<span class="nc bnc" id="L147" title="All 2 branches missed.">		if (bridge != null) {</span>
+<span class="nc" id="L148">			bridge.end();</span>
+<span class="nc" id="L149">			bridge = null;</span>
+		}
+<span class="nc" id="L151">	}</span>
+
+	/**
+	 * Clear all recorded changes.
+	 */
+	public void reset() {
+<span class="nc" id="L157">		events.clear();</span>
+<span class="nc" id="L158">	}</span>
+
+	/**
+	 * Considering this object is a diff between g1 and g2, calling this method will
+	 * applied changes on g1 such that g1 will look like g2.
+	 * 
+	 * @param g1
+	 */
+	public void apply(Sink g1) {
+<span class="nc" id="L167">		String sourceId = String.format(&quot;GraphDiff@%x&quot;, System.nanoTime());</span>
+<span class="nc" id="L168">		apply(sourceId, g1);</span>
+<span class="nc" id="L169">	}</span>
+
+	public void apply(String sourceId, Sink g1) {
+<span class="nc bnc" id="L172" title="All 2 branches missed.">		for (int i = 0; i &lt; events.size(); i++)</span>
+<span class="nc" id="L173">			events.get(i).apply(sourceId, i, g1);</span>
+<span class="nc" id="L174">	}</span>
+
+	/**
+	 * Considering this object is a diff between g1 and g2, calling this method will
+	 * applied changes on g2 such that g2 will look like g1.
+	 * 
+	 * @param g2
+	 */
+	public void reverse(Sink g2) {
+<span class="nc" id="L183">		String sourceId = String.format(&quot;GraphDiff@%x&quot;, System.nanoTime());</span>
+<span class="nc" id="L184">		reverse(sourceId, g2);</span>
+<span class="nc" id="L185">	}</span>
+
+	public void reverse(String sourceId, Sink g2) {
+<span class="nc bnc" id="L188" title="All 2 branches missed.">		for (int i = events.size() - 1; i &gt;= 0; i--)</span>
+<span class="nc" id="L189">			events.get(i).reverse(sourceId, events.size() + 1 - i, g2);</span>
+<span class="nc" id="L190">	}</span>
+
+	private void attributeDiff(ElementType type, Element e1, Element e2) {
+<span class="nc bnc" id="L193" title="All 4 branches missed.">		if (e1 == null &amp;&amp; e2 == null)</span>
+<span class="nc" id="L194">			return;</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">		else if (e1 == null) {</span>
+<span class="nc" id="L196">			e2.attributeKeys()</span>
+<span class="nc" id="L197">					.forEach(key -&gt; events.add(new AttributeAdded(type, e2.getId(), key, e2.getAttribute(key))));</span>
+<span class="nc bnc" id="L198" title="All 2 branches missed.">		} else if (e2 == null) {</span>
+<span class="nc" id="L199">			e1.attributeKeys()</span>
+<span class="nc" id="L200">					.forEach(key -&gt; events.add(new AttributeRemoved(type, e1.getId(), key, e1.getAttribute(key))));</span>
+<span class="nc" id="L201">		} else {</span>
+<span class="nc" id="L202">			e2.attributeKeys().forEach(key -&gt; {</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">				if (e1.hasAttribute(key)) {</span>
+<span class="nc" id="L204">					Object o1 = e1.getAttribute(key);</span>
+<span class="nc" id="L205">					Object o2 = e2.getAttribute(key);</span>
+
+<span class="nc bnc" id="L207" title="All 6 branches missed.">					if (!(o1 == null ? o2 == null : o1.equals(o2)))</span>
+<span class="nc" id="L208">						events.add(new AttributeChanged(type, e1.getId(), key, o2, o1));</span>
+<span class="nc" id="L209">				} else</span>
+<span class="nc" id="L210">					events.add(new AttributeAdded(type, e1.getId(), key, e2.getAttribute(key)));</span>
+<span class="nc" id="L211">			});</span>
+
+<span class="nc" id="L213">			e1.attributeKeys().forEach(key -&gt; {</span>
+<span class="nc bnc" id="L214" title="All 2 branches missed.">				if (!e2.hasAttribute(key))</span>
+<span class="nc" id="L215">					events.add(new AttributeRemoved(type, e1.getId(), key, e1.getAttribute(key)));</span>
+<span class="nc" id="L216">			});</span>
+		}
+<span class="nc" id="L218">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Object#toString()
+	 */
+	@Override
+	public String toString() {
+<span class="nc" id="L227">		StringBuilder buffer = new StringBuilder();</span>
+
+<span class="nc bnc" id="L229" title="All 2 branches missed.">		for (int i = 0; i &lt; events.size(); i++)</span>
+<span class="nc" id="L230">			buffer.append(events.get(i).toString()).append(&quot;\n&quot;);</span>
+
+<span class="nc" id="L232">		return buffer.toString();</span>
+	}
+
+<span class="nc" id="L235">	protected abstract class Event {</span>
+		/**
+		 * Apply this event on a given graph.
+		 * 
+		 * @param g
+		 *            the graph on which the action should be applied
+		 */
+		abstract void apply(String sourceId, long timeId, Sink g);
+
+		/**
+		 * Apply the dual event on a given graph.
+		 * 
+		 * @param g
+		 *            the graph on which the dual action should be applied.
+		 */
+		abstract void reverse(String sourceId, long timeId, Sink g);
+	}
+
+	protected class NodeAdded extends Event {
+		String nodeId;
+
+<span class="nc" id="L256">		public NodeAdded(String nodeId) {</span>
+<span class="nc" id="L257">			this.nodeId = nodeId;</span>
+<span class="nc" id="L258">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#apply(org.graphstream.graph. Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L266">			g.nodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L267">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#reverse(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L276">			g.nodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L277">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+<span class="nc" id="L286">			return String.format(&quot;an \&quot;%s\&quot;&quot;, nodeId);</span>
+		}
+	}
+
+	protected class NodeRemoved extends NodeAdded {
+<span class="nc" id="L291">		public NodeRemoved(String nodeId) {</span>
+<span class="nc" id="L292">			super(nodeId);</span>
+<span class="nc" id="L293">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.NodeAdded#apply(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L302">			super.reverse(sourceId, timeId, g);</span>
+<span class="nc" id="L303">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.NodeAdded#reverse(org.graphstream.
+		 * graph.Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L312">			super.apply(sourceId, timeId, g);</span>
+<span class="nc" id="L313">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.NodeAdded#toString()
+		 */
+		@Override
+		public String toString() {
+<span class="nc" id="L322">			return String.format(&quot;dn \&quot;%s\&quot;&quot;, nodeId);</span>
+		}
+	}
+
+	protected abstract class ElementEvent extends Event {
+		ElementType type;
+		String elementId;
+
+<span class="nc" id="L330">		protected ElementEvent(ElementType type, String elementId) {</span>
+<span class="nc" id="L331">			this.type = type;</span>
+<span class="nc" id="L332">			this.elementId = elementId;</span>
+<span class="nc" id="L333">		}</span>
+
+		protected Element getElement(Graph g) {
+			Element e;
+
+<span class="nc bnc" id="L338" title="All 4 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L340">				e = g.getNode(elementId);</span>
+<span class="nc" id="L341">				break;</span>
+			case EDGE:
+<span class="nc" id="L343">				e = g.getEdge(elementId);</span>
+<span class="nc" id="L344">				break;</span>
+			case GRAPH:
+<span class="nc" id="L346">				e = g;</span>
+<span class="nc" id="L347">				break;</span>
+			default:
+<span class="nc" id="L349">				e = null;</span>
+			}
+
+<span class="nc bnc" id="L352" title="All 2 branches missed.">			if (e == null)</span>
+<span class="nc" id="L353">				throw new ElementNotFoundException();</span>
+
+<span class="nc" id="L355">			return e;</span>
+		}
+
+		protected String toStringHeader() {
+			String header;
+
+<span class="nc bnc" id="L361" title="All 4 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L363">				header = &quot;cn&quot;;</span>
+<span class="nc" id="L364">				break;</span>
+			case EDGE:
+<span class="nc" id="L366">				header = &quot;ce&quot;;</span>
+<span class="nc" id="L367">				break;</span>
+			case GRAPH:
+<span class="nc" id="L369">				header = &quot;cg&quot;;</span>
+<span class="nc" id="L370">				break;</span>
+			default:
+<span class="nc" id="L372">				header = &quot;??&quot;;</span>
+				break;
+			}
+
+<span class="nc" id="L376">			return String.format(&quot;%s \&quot;%s\&quot;&quot;, header, elementId);</span>
+		}
+
+		protected String toStringValue(Object o) {
+<span class="nc bnc" id="L380" title="All 2 branches missed.">			if (o == null)</span>
+<span class="nc" id="L381">				return &quot;null&quot;;</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">			else if (o instanceof String)</span>
+<span class="nc" id="L383">				return &quot;\&quot;&quot; + o.toString() + &quot;\&quot;&quot;;</span>
+<span class="nc bnc" id="L384" title="All 2 branches missed.">			else if (o instanceof Number)</span>
+<span class="nc" id="L385">				return o.toString();</span>
+			else
+<span class="nc" id="L387">				return o.toString();</span>
+		}
+	}
+
+	protected class AttributeAdded extends ElementEvent {
+		String attrId;
+		Object value;
+
+<span class="nc" id="L395">		public AttributeAdded(ElementType type, String elementId, String attrId, Object value) {</span>
+<span class="nc" id="L396">			super(type, elementId);</span>
+
+<span class="nc" id="L398">			this.attrId = attrId;</span>
+<span class="nc" id="L399">			this.value = value;</span>
+
+<span class="nc bnc" id="L401" title="All 6 branches missed.">			if (value != null &amp;&amp; value.getClass().isArray() &amp;&amp; Array.getLength(value) &gt; 0) {</span>
+<span class="nc" id="L402">				Object o = Array.newInstance(Array.get(value, 0).getClass(), Array.getLength(value));</span>
+
+<span class="nc bnc" id="L404" title="All 2 branches missed.">				for (int i = 0; i &lt; Array.getLength(value); i++)</span>
+<span class="nc" id="L405">					Array.set(o, i, Array.get(value, i));</span>
+
+<span class="nc" id="L407">				this.value = o;</span>
+			}
+<span class="nc" id="L409">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#apply(org.graphstream.graph. Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc bnc" id="L417" title="All 4 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L419">				g.nodeAttributeAdded(sourceId, timeId, elementId, attrId, value);</span>
+<span class="nc" id="L420">				break;</span>
+			case EDGE:
+<span class="nc" id="L422">				g.edgeAttributeAdded(sourceId, timeId, elementId, attrId, value);</span>
+<span class="nc" id="L423">				break;</span>
+			case GRAPH:
+<span class="nc" id="L425">				g.graphAttributeAdded(sourceId, timeId, attrId, value);</span>
+				break;
+			}
+<span class="nc" id="L428">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#reverse(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+<span class="nc bnc" id="L437" title="All 4 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L439">				g.nodeAttributeRemoved(sourceId, timeId, elementId, attrId);</span>
+<span class="nc" id="L440">				break;</span>
+			case EDGE:
+<span class="nc" id="L442">				g.edgeAttributeRemoved(sourceId, timeId, elementId, attrId);</span>
+<span class="nc" id="L443">				break;</span>
+			case GRAPH:
+<span class="nc" id="L445">				g.graphAttributeRemoved(sourceId, timeId, attrId);</span>
+				break;
+			}
+<span class="nc" id="L448">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+<span class="nc" id="L457">			return String.format(&quot;%s +\&quot;%s\&quot;:%s&quot;, toStringHeader(), attrId, toStringValue(value));</span>
+		}
+	}
+
+	protected class AttributeChanged extends ElementEvent {
+		String attrId;
+		Object newValue;
+		Object oldValue;
+
+<span class="nc" id="L466">		public AttributeChanged(ElementType type, String elementId, String attrId, Object newValue, Object oldValue) {</span>
+<span class="nc" id="L467">			super(type, elementId);</span>
+
+<span class="nc" id="L469">			this.attrId = attrId;</span>
+<span class="nc" id="L470">			this.newValue = newValue;</span>
+<span class="nc" id="L471">			this.oldValue = oldValue;</span>
+
+<span class="nc bnc" id="L473" title="All 6 branches missed.">			if (newValue != null &amp;&amp; newValue.getClass().isArray() &amp;&amp; Array.getLength(newValue) &gt; 0) {</span>
+<span class="nc" id="L474">				Object o = Array.newInstance(Array.get(newValue, 0).getClass(), Array.getLength(newValue));</span>
+
+<span class="nc bnc" id="L476" title="All 2 branches missed.">				for (int i = 0; i &lt; Array.getLength(newValue); i++)</span>
+<span class="nc" id="L477">					Array.set(o, i, Array.get(newValue, i));</span>
+
+<span class="nc" id="L479">				this.newValue = o;</span>
+			}
+
+<span class="nc bnc" id="L482" title="All 6 branches missed.">			if (oldValue != null &amp;&amp; oldValue.getClass().isArray() &amp;&amp; Array.getLength(oldValue) &gt; 0) {</span>
+<span class="nc" id="L483">				Object o = Array.newInstance(Array.get(oldValue, 0).getClass(), Array.getLength(oldValue));</span>
+
+<span class="nc bnc" id="L485" title="All 2 branches missed.">				for (int i = 0; i &lt; Array.getLength(oldValue); i++)</span>
+<span class="nc" id="L486">					Array.set(o, i, Array.get(oldValue, i));</span>
+
+<span class="nc" id="L488">				this.oldValue = o;</span>
+			}
+<span class="nc" id="L490">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#apply(org.graphstream.graph. Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc bnc" id="L498" title="All 4 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L500">				g.nodeAttributeChanged(sourceId, timeId, elementId, attrId, oldValue, newValue);</span>
+<span class="nc" id="L501">				break;</span>
+			case EDGE:
+<span class="nc" id="L503">				g.edgeAttributeChanged(sourceId, timeId, elementId, attrId, oldValue, newValue);</span>
+<span class="nc" id="L504">				break;</span>
+			case GRAPH:
+<span class="nc" id="L506">				g.graphAttributeChanged(sourceId, timeId, attrId, oldValue, newValue);</span>
+				break;
+			}
+<span class="nc" id="L509">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#reverse(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+<span class="nc bnc" id="L518" title="All 4 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L520">				g.nodeAttributeChanged(sourceId, timeId, elementId, attrId, newValue, oldValue);</span>
+<span class="nc" id="L521">				break;</span>
+			case EDGE:
+<span class="nc" id="L523">				g.edgeAttributeChanged(sourceId, timeId, elementId, attrId, newValue, oldValue);</span>
+<span class="nc" id="L524">				break;</span>
+			case GRAPH:
+<span class="nc" id="L526">				g.graphAttributeChanged(sourceId, timeId, attrId, newValue, oldValue);</span>
+				break;
+			}
+<span class="nc" id="L529">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+<span class="nc" id="L538">			return String.format(&quot;%s \&quot;%s\&quot;:%s&quot;, toStringHeader(), attrId, toStringValue(newValue));</span>
+		}
+	}
+
+	protected class AttributeRemoved extends ElementEvent {
+		String attrId;
+		Object oldValue;
+
+<span class="nc" id="L546">		public AttributeRemoved(ElementType type, String elementId, String attrId, Object oldValue) {</span>
+<span class="nc" id="L547">			super(type, elementId);</span>
+
+<span class="nc" id="L549">			this.attrId = attrId;</span>
+<span class="nc" id="L550">			this.oldValue = oldValue;</span>
+<span class="nc" id="L551">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#apply(org.graphstream.graph. Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc bnc" id="L559" title="All 4 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L561">				g.nodeAttributeRemoved(sourceId, timeId, elementId, attrId);</span>
+<span class="nc" id="L562">				break;</span>
+			case EDGE:
+<span class="nc" id="L564">				g.edgeAttributeRemoved(sourceId, timeId, elementId, attrId);</span>
+<span class="nc" id="L565">				break;</span>
+			case GRAPH:
+<span class="nc" id="L567">				g.graphAttributeRemoved(sourceId, timeId, attrId);</span>
+				break;
+			}
+<span class="nc" id="L570">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#reverse(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+<span class="nc bnc" id="L579" title="All 4 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L581">				g.nodeAttributeAdded(sourceId, timeId, elementId, attrId, oldValue);</span>
+<span class="nc" id="L582">				break;</span>
+			case EDGE:
+<span class="nc" id="L584">				g.edgeAttributeAdded(sourceId, timeId, elementId, attrId, oldValue);</span>
+<span class="nc" id="L585">				break;</span>
+			case GRAPH:
+<span class="nc" id="L587">				g.graphAttributeAdded(sourceId, timeId, attrId, oldValue);</span>
+				break;
+			}
+<span class="nc" id="L590">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+<span class="nc" id="L599">			return String.format(&quot;%s -\&quot;%s\&quot;:%s&quot;, toStringHeader(), attrId, toStringValue(oldValue));</span>
+		}
+	}
+
+	protected class EdgeAdded extends Event {
+		String edgeId;
+		String source, target;
+		boolean directed;
+
+<span class="nc" id="L608">		public EdgeAdded(String edgeId, String source, String target, boolean directed) {</span>
+<span class="nc" id="L609">			this.edgeId = edgeId;</span>
+<span class="nc" id="L610">			this.source = source;</span>
+<span class="nc" id="L611">			this.target = target;</span>
+<span class="nc" id="L612">			this.directed = directed;</span>
+<span class="nc" id="L613">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#apply(org.graphstream.graph. Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L621">			g.edgeAdded(sourceId, timeId, edgeId, source, target, directed);</span>
+<span class="nc" id="L622">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#reverse(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L631">			g.edgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L632">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+<span class="nc bnc" id="L641" title="All 2 branches missed.">			return String.format(&quot;ae \&quot;%s\&quot; \&quot;%s\&quot; %s \&quot;%s\&quot;&quot;, edgeId, source, directed ? &quot;&gt;&quot; : &quot;--&quot;, target);</span>
+		}
+	}
+
+	protected class EdgeRemoved extends EdgeAdded {
+<span class="nc" id="L646">		public EdgeRemoved(String edgeId, String source, String target, boolean directed) {</span>
+<span class="nc" id="L647">			super(edgeId, source, target, directed);</span>
+<span class="nc" id="L648">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.EdgeAdded#apply(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L657">			super.reverse(sourceId, timeId, g);</span>
+<span class="nc" id="L658">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.EdgeAdded#reverse(org.graphstream.
+		 * graph.Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L667">			super.apply(sourceId, timeId, g);</span>
+<span class="nc" id="L668">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.EdgeAdded#toString()
+		 */
+		@Override
+		public String toString() {
+<span class="nc" id="L677">			return String.format(&quot;de \&quot;%s\&quot;&quot;, edgeId);</span>
+		}
+	}
+
+	protected class StepBegins extends Event {
+		double newStep, oldStep;
+
+<span class="nc" id="L684">		public StepBegins(double oldStep, double newStep) {</span>
+<span class="nc" id="L685">			this.newStep = newStep;</span>
+<span class="nc" id="L686">			this.oldStep = oldStep;</span>
+<span class="nc" id="L687">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#apply(org.graphstream.graph. Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L695">			g.stepBegins(sourceId, timeId, newStep);</span>
+<span class="nc" id="L696">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#reverse(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L705">			g.stepBegins(sourceId, timeId, oldStep);</span>
+<span class="nc" id="L706">		}</span>
+
+		@Override
+		public String toString() {
+<span class="nc" id="L710">			return String.format(&quot;st %f&quot;, newStep);</span>
+		}
+	}
+
+	protected class GraphCleared extends Event {
+		byte[] data;
+
+<span class="nc" id="L717">		public GraphCleared(Graph g) {</span>
+<span class="nc" id="L718">			this.data = null;</span>
+
+			try {
+<span class="nc" id="L721">				FileSinkDGS sink = new FileSinkDGS();</span>
+<span class="nc" id="L722">				ByteArrayOutputStream bytes = new ByteArrayOutputStream();</span>
+<span class="nc" id="L723">				GZIPOutputStream out = new GZIPOutputStream(bytes);</span>
+
+<span class="nc" id="L725">				sink.writeAll(g, out);</span>
+<span class="nc" id="L726">				out.flush();</span>
+<span class="nc" id="L727">				out.close();</span>
+
+<span class="nc" id="L729">				this.data = bytes.toByteArray();</span>
+<span class="nc" id="L730">			} catch (IOException e) {</span>
+<span class="nc" id="L731">				e.printStackTrace();</span>
+			}
+<span class="nc" id="L733">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#apply(org.graphstream.graph. Graph)
+		 */
+		public void apply(String sourceId, long timeId, Sink g) {
+<span class="nc" id="L741">			g.graphCleared(sourceId, timeId);</span>
+<span class="nc" id="L742">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.util.GraphDiff.Event#reverse(org.graphstream.graph
+		 * .Graph)
+		 */
+		public void reverse(String sourceId, long timeId, Sink g) {
+			try {
+<span class="nc" id="L752">				ByteArrayInputStream bytes = new ByteArrayInputStream(this.data);</span>
+<span class="nc" id="L753">				GZIPInputStream in = new GZIPInputStream(bytes);</span>
+<span class="nc" id="L754">				FileSourceDGS dgs = new FileSourceDGS();</span>
+
+<span class="nc" id="L756">				dgs.addSink(g);</span>
+<span class="nc" id="L757">				dgs.readAll(in);</span>
+<span class="nc" id="L758">				dgs.removeSink(g);</span>
+
+<span class="nc" id="L760">				in.close();</span>
+<span class="nc" id="L761">			} catch (IOException e) {</span>
+<span class="nc" id="L762">				e.printStackTrace();</span>
+			}
+<span class="nc" id="L764">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.lang.Object#toString()
+		 */
+		@Override
+		public String toString() {
+<span class="nc" id="L773">			return &quot;cl&quot;;</span>
+		}
+	}
+
+	private class Bridge implements Sink {
+		Graph g;
+
+<span class="nc" id="L780">		Bridge(Graph g) {</span>
+
+<span class="nc" id="L782">			this.g = g;</span>
+<span class="nc" id="L783">			g.addSink(this);</span>
+<span class="nc" id="L784">		}</span>
+
+		void end() {
+<span class="nc" id="L787">			g.removeSink(this);</span>
+<span class="nc" id="L788">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#graphAttributeAdded(java.lang
+		 * .String, long, java.lang.String, java.lang.Object)
+		 */
+		public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+			Event e;
+<span class="nc" id="L798">			e = new AttributeAdded(ElementType.GRAPH, null, attribute, value);</span>
+<span class="nc" id="L799">			events.add(e);</span>
+<span class="nc" id="L800">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#graphAttributeChanged(java.lang
+		 * .String, long, java.lang.String, java.lang.Object, java.lang.Object)
+		 */
+		public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+				Object newValue) {
+			Event e;
+<span class="nc" id="L811">			e = new AttributeChanged(ElementType.GRAPH, null, attribute, newValue, g.getAttribute(attribute));</span>
+<span class="nc" id="L812">			events.add(e);</span>
+<span class="nc" id="L813">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#graphAttributeRemoved(java.lang
+		 * .String, long, java.lang.String)
+		 */
+		public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+			Event e;
+<span class="nc" id="L823">			e = new AttributeRemoved(ElementType.GRAPH, null, attribute, g.getAttribute(attribute));</span>
+<span class="nc" id="L824">			events.add(e);</span>
+<span class="nc" id="L825">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#nodeAttributeAdded(java.lang
+		 * .String, long, java.lang.String, java.lang.String, java.lang.Object)
+		 */
+		public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+			Event e;
+<span class="nc" id="L835">			e = new AttributeAdded(ElementType.NODE, nodeId, attribute, value);</span>
+<span class="nc" id="L836">			events.add(e);</span>
+<span class="nc" id="L837">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#nodeAttributeChanged(java.lang
+		 * .String, long, java.lang.String, java.lang.String, java.lang.Object,
+		 * java.lang.Object)
+		 */
+		public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+				Object newValue) {
+			Event e;
+<span class="nc" id="L849">			e = new AttributeChanged(ElementType.NODE, nodeId, attribute, newValue,</span>
+<span class="nc" id="L850">					g.getNode(nodeId).getAttribute(attribute));</span>
+<span class="nc" id="L851">			events.add(e);</span>
+<span class="nc" id="L852">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#nodeAttributeRemoved(java.lang
+		 * .String, long, java.lang.String, java.lang.String)
+		 */
+		public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+			Event e;
+<span class="nc" id="L862">			e = new AttributeRemoved(ElementType.NODE, nodeId, attribute, g.getNode(nodeId).getAttribute(attribute));</span>
+<span class="nc" id="L863">			events.add(e);</span>
+<span class="nc" id="L864">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#edgeAttributeAdded(java.lang
+		 * .String, long, java.lang.String, java.lang.String, java.lang.Object)
+		 */
+		public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+			Event e;
+<span class="nc" id="L874">			e = new AttributeAdded(ElementType.EDGE, edgeId, attribute, value);</span>
+<span class="nc" id="L875">			events.add(e);</span>
+<span class="nc" id="L876">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#edgeAttributeChanged(java.lang
+		 * .String, long, java.lang.String, java.lang.String, java.lang.Object,
+		 * java.lang.Object)
+		 */
+		public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+				Object newValue) {
+			Event e;
+<span class="nc" id="L888">			e = new AttributeChanged(ElementType.EDGE, edgeId, attribute, newValue,</span>
+<span class="nc" id="L889">					g.getEdge(edgeId).getAttribute(attribute));</span>
+<span class="nc" id="L890">			events.add(e);</span>
+<span class="nc" id="L891">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.AttributeSink#edgeAttributeRemoved(java.lang
+		 * .String, long, java.lang.String, java.lang.String)
+		 */
+		public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+			Event e;
+<span class="nc" id="L901">			e = new AttributeRemoved(ElementType.EDGE, edgeId, attribute, g.getEdge(edgeId).getAttribute(attribute));</span>
+<span class="nc" id="L902">			events.add(e);</span>
+<span class="nc" id="L903">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#nodeAdded(java.lang.String, long,
+		 * java.lang.String)
+		 */
+		public void nodeAdded(String sourceId, long timeId, String nodeId) {
+			Event e;
+<span class="nc" id="L913">			e = new NodeAdded(nodeId);</span>
+<span class="nc" id="L914">			events.add(e);</span>
+<span class="nc" id="L915">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#nodeRemoved(java.lang.String, long,
+		 * java.lang.String)
+		 */
+		public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L924">			Node n = g.getNode(nodeId);</span>
+
+<span class="nc" id="L926">			n.attributeKeys().forEach(key -&gt; nodeAttributeRemoved(sourceId, timeId, nodeId, key));</span>
+
+			Event e;
+<span class="nc" id="L929">			e = new NodeRemoved(nodeId);</span>
+<span class="nc" id="L930">			events.add(e);</span>
+<span class="nc" id="L931">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#edgeAdded(java.lang.String, long,
+		 * java.lang.String, java.lang.String, java.lang.String, boolean)
+		 */
+		public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+				boolean directed) {
+			Event e;
+<span class="nc" id="L942">			e = new EdgeAdded(edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L943">			events.add(e);</span>
+<span class="nc" id="L944">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#edgeRemoved(java.lang.String, long,
+		 * java.lang.String)
+		 */
+		public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L953">			Edge edge = g.getEdge(edgeId);</span>
+
+<span class="nc" id="L955">			edge.attributeKeys().forEach(key -&gt; edgeAttributeRemoved(sourceId, timeId, edgeId, key));</span>
+
+			Event e;
+<span class="nc" id="L958">			e = new EdgeRemoved(edgeId, edge.getSourceNode().getId(), edge.getTargetNode().getId(), edge.isDirected());</span>
+<span class="nc" id="L959">			events.add(e);</span>
+<span class="nc" id="L960">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#graphCleared(java.lang.String, long)
+		 */
+		public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L968">			Event e = new GraphCleared(g);</span>
+<span class="nc" id="L969">			events.add(e);</span>
+<span class="nc" id="L970">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see org.graphstream.stream.ElementSink#stepBegins(java.lang.String, long,
+		 * double)
+		 */
+		public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L979">			Event e = new StepBegins(g.getStep(), step);</span>
+<span class="nc" id="L980">			events.add(e);</span>
+<span class="nc" id="L981">		}</span>
+	}
+
+	public static void main(String... args) throws Exception {
+<span class="nc" id="L985">		Graph g1 = new AdjacencyListGraph(&quot;g1&quot;);</span>
+<span class="nc" id="L986">		Graph g2 = new AdjacencyListGraph(&quot;g2&quot;);</span>
+
+<span class="nc" id="L988">		Node a1 = g1.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L989">		a1.setAttribute(&quot;attr1&quot;, &quot;test&quot;);</span>
+<span class="nc" id="L990">		a1.setAttribute(&quot;attr2&quot;, 10.0);</span>
+<span class="nc" id="L991">		a1.setAttribute(&quot;attr3&quot;, 12);</span>
+
+<span class="nc" id="L993">		Node a2 = g2.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L994">		a2.setAttribute(&quot;attr1&quot;, &quot;test1&quot;);</span>
+<span class="nc" id="L995">		a2.setAttribute(&quot;attr2&quot;, 10.0);</span>
+<span class="nc" id="L996">		g2.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L997">		g2.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L999">		GraphDiff diff = new GraphDiff(g2, g1);</span>
+<span class="nc" id="L1000">		System.out.println(diff);</span>
+<span class="nc" id="L1001">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

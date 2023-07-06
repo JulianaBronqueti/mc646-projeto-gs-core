@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>NetStreamEncoder.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.netstream</a> &gt; <span class="el_source">NetStreamEncoder.java</span></div><h1>NetStreamEncoder.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2016-02-01
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.netstream;
+
+import org.graphstream.stream.binary.ByteEncoder;
+
+import static org.graphstream.stream.netstream.NetStreamUtils.*;
+
+import java.nio.ByteBuffer;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.logging.Logger;
+
+/**
+ * @since 22/01/16.
+ */
+public class NetStreamEncoder implements ByteEncoder {
+<span class="nc" id="L47">	private static final Logger LOGGER = Logger.getLogger(NetStreamEncoder.class.getName());</span>
+
+	protected final List&lt;Transport&gt; transportList;
+	protected String sourceId;
+	protected ByteBuffer sourceIdBuff;
+	protected ByteBuffer streamBuffer;
+
+	public NetStreamEncoder(Transport... transports) {
+<span class="nc" id="L55">		this(&quot;default&quot;, transports);</span>
+<span class="nc" id="L56">	}</span>
+
+<span class="nc" id="L58">	public NetStreamEncoder(String stream, Transport... transports) {</span>
+<span class="nc" id="L59">		streamBuffer = encodeString(stream);</span>
+<span class="nc" id="L60">		transportList = new LinkedList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L62" title="All 2 branches missed.">		if (transports != null) {</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">			for (Transport transport : transports)</span>
+<span class="nc" id="L64">				transportList.add(transport);</span>
+		}
+<span class="nc" id="L66">	}</span>
+
+	@Override
+	public void addTransport(Transport transport) {
+<span class="nc" id="L70">		transportList.add(transport);</span>
+<span class="nc" id="L71">	}</span>
+
+	@Override
+	public void removeTransport(Transport transport) {
+<span class="nc" id="L75">		transportList.remove(transport);</span>
+<span class="nc" id="L76">	}</span>
+
+	protected ByteBuffer getEncodedValue(Object in, int valueType) {
+<span class="nc" id="L79">		ByteBuffer value = encodeValue(in, valueType);</span>
+
+<span class="nc bnc" id="L81" title="All 2 branches missed.">		if (value == null) {</span>
+<span class="nc" id="L82">			LOGGER.warning(String.format(&quot;unknown value type %d\n&quot;, valueType));</span>
+		}
+
+<span class="nc" id="L85">		return value;</span>
+	}
+
+	protected void doSend(ByteBuffer event) {
+<span class="nc bnc" id="L89" title="All 2 branches missed.">		for (Transport transport : transportList) {</span>
+<span class="nc" id="L90">			event.rewind();</span>
+<span class="nc" id="L91">			transport.send(event);</span>
+		}
+<span class="nc" id="L93">	}</span>
+
+	protected ByteBuffer getAndPrepareBuffer(String sourceId, long timeId, int eventType, int messageSize) {
+<span class="nc bnc" id="L96" title="All 2 branches missed.">		if (!sourceId.equals(this.sourceId)) {</span>
+<span class="nc" id="L97">			this.sourceId = sourceId;</span>
+<span class="nc" id="L98">			sourceIdBuff = encodeString(sourceId);</span>
+		}
+
+<span class="nc" id="L101">		streamBuffer.rewind();</span>
+<span class="nc" id="L102">		sourceIdBuff.rewind();</span>
+
+<span class="nc" id="L104">		int size = 4 + +streamBuffer.capacity() // stream</span>
+<span class="nc" id="L105">				+ 1 // CMD</span>
+<span class="nc" id="L106">				+ sourceIdBuff.capacity() // source id</span>
+<span class="nc" id="L107">				+ getVarintSize(timeId) // timeId</span>
+<span class="nc" id="L108">				+ messageSize;</span>
+
+<span class="nc" id="L110">		ByteBuffer bb = ByteBuffer.allocate(size);</span>
+<span class="nc" id="L111">		bb.putInt(size).put(streamBuffer).put((byte) eventType).put(sourceIdBuff).put(encodeUnsignedVarint(timeId));</span>
+
+<span class="nc" id="L113">		return bb;</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.AttributeSink#graphAttributeAdded(java.lang.String ,
+	 * long, java.lang.String, java.lang.Object)
+	 */
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L124">		ByteBuffer attrBuff = encodeString(attribute);</span>
+<span class="nc" id="L125">		int valueType = getType(value);</span>
+<span class="nc" id="L126">		ByteBuffer valueBuff = getEncodedValue(value, valueType);</span>
+
+<span class="nc" id="L128">		int innerSize = attrBuff.capacity() // attribute id</span>
+<span class="nc" id="L129">				+ 1 // attr type</span>
+<span class="nc" id="L130">				+ valueBuff.capacity();</span>
+
+<span class="nc" id="L132">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_ADD_GRAPH_ATTR, innerSize);</span>
+
+<span class="nc" id="L134">		buff.put(attrBuff).put((byte) valueType).put(valueBuff);</span>
+
+<span class="nc" id="L136">		doSend(buff);</span>
+<span class="nc" id="L137">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.AttributeSink#graphAttributeChanged(java.lang.
+	 * String, long, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L147">		ByteBuffer attrBuff = encodeString(attribute);</span>
+<span class="nc" id="L148">		int oldValueType = getType(oldValue);</span>
+<span class="nc" id="L149">		int newValueType = getType(newValue);</span>
+
+<span class="nc" id="L151">		ByteBuffer oldValueBuff = getEncodedValue(oldValue, oldValueType);</span>
+<span class="nc" id="L152">		ByteBuffer newValueBuff = getEncodedValue(newValue, newValueType);</span>
+
+<span class="nc" id="L154">		int innerSize = attrBuff.capacity() + // attribute id</span>
+<span class="nc" id="L155">				1 + // attr type</span>
+<span class="nc" id="L156">				oldValueBuff.capacity() + // attr value</span>
+<span class="nc" id="L157">				1 + // attr type</span>
+<span class="nc" id="L158">				newValueBuff.capacity(); // attr value</span>
+
+<span class="nc" id="L160">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_CHG_GRAPH_ATTR, innerSize);</span>
+
+<span class="nc" id="L162">		buff.put(attrBuff).put((byte) oldValueType).put(oldValueBuff).put((byte) newValueType).put(newValueBuff);</span>
+
+<span class="nc" id="L164">		doSend(buff);</span>
+
+<span class="nc" id="L166">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.AttributeSink#graphAttributeRemoved(java.lang.
+	 * String, long, java.lang.String)
+	 */
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L175">		ByteBuffer attrBuff = encodeString(attribute);</span>
+
+<span class="nc" id="L177">		int innerSize = attrBuff.capacity();</span>
+
+<span class="nc" id="L179">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_DEL_GRAPH_ATTR, innerSize);</span>
+<span class="nc" id="L180">		buff.put(attrBuff);</span>
+
+<span class="nc" id="L182">		doSend(buff);</span>
+
+<span class="nc" id="L184">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeAdded(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L194">		ByteBuffer nodeBuff = encodeString(nodeId);</span>
+<span class="nc" id="L195">		ByteBuffer attrBuff = encodeString(attribute);</span>
+<span class="nc" id="L196">		int valueType = getType(value);</span>
+<span class="nc" id="L197">		ByteBuffer valueBuff = getEncodedValue(value, valueType);</span>
+
+<span class="nc" id="L199">		int innerSize = nodeBuff.capacity() + // nodeId</span>
+<span class="nc" id="L200">				attrBuff.capacity() + // attribute</span>
+<span class="nc" id="L201">				1 + // value type</span>
+<span class="nc" id="L202">				valueBuff.capacity();</span>
+
+<span class="nc" id="L204">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_ADD_NODE_ATTR, innerSize);</span>
+
+<span class="nc" id="L206">		buff.put(nodeBuff).put(attrBuff).put((byte) valueType).put(valueBuff);</span>
+
+<span class="nc" id="L208">		doSend(buff);</span>
+<span class="nc" id="L209">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeChanged(java.lang.String ,
+	 * long, java.lang.String, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L220">		ByteBuffer nodeBuff = encodeString(nodeId);</span>
+<span class="nc" id="L221">		ByteBuffer attrBuff = encodeString(attribute);</span>
+
+<span class="nc" id="L223">		int oldValueType = getType(oldValue);</span>
+<span class="nc" id="L224">		int newValueType = getType(newValue);</span>
+
+<span class="nc" id="L226">		ByteBuffer oldValueBuff = getEncodedValue(oldValue, oldValueType);</span>
+<span class="nc" id="L227">		ByteBuffer newValueBuff = getEncodedValue(newValue, newValueType);</span>
+
+<span class="nc" id="L229">		int innerSize = nodeBuff.capacity() + // nodeId</span>
+<span class="nc" id="L230">				attrBuff.capacity() + // attribute</span>
+<span class="nc" id="L231">				1 + // value type</span>
+<span class="nc" id="L232">				oldValueBuff.capacity() + // value</span>
+<span class="nc" id="L233">				1 + // value type</span>
+<span class="nc" id="L234">				newValueBuff.capacity();</span>
+
+<span class="nc" id="L236">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_CHG_NODE_ATTR, innerSize);</span>
+
+<span class="nc" id="L238">		buff.put(nodeBuff).put(attrBuff).put((byte) oldValueType).put(oldValueBuff).put((byte) newValueType)</span>
+<span class="nc" id="L239">				.put(newValueBuff);</span>
+
+<span class="nc" id="L241">		doSend(buff);</span>
+<span class="nc" id="L242">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeRemoved(java.lang.String ,
+	 * long, java.lang.String, java.lang.String)
+	 */
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L252">		ByteBuffer nodeBuff = encodeString(nodeId);</span>
+<span class="nc" id="L253">		ByteBuffer attrBuff = encodeString(attribute);</span>
+
+<span class="nc" id="L255">		int innerSize = nodeBuff.capacity() + // nodeId</span>
+<span class="nc" id="L256">				attrBuff.capacity(); // attribute</span>
+
+<span class="nc" id="L258">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_DEL_NODE_ATTR, innerSize);</span>
+
+<span class="nc" id="L260">		buff.put(nodeBuff).put(attrBuff);</span>
+
+<span class="nc" id="L262">		doSend(buff);</span>
+<span class="nc" id="L263">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeAdded(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L273">		ByteBuffer edgeBuff = encodeString(edgeId);</span>
+<span class="nc" id="L274">		ByteBuffer attrBuff = encodeString(attribute);</span>
+
+<span class="nc" id="L276">		int valueType = getType(value);</span>
+
+<span class="nc" id="L278">		ByteBuffer valueBuff = getEncodedValue(value, valueType);</span>
+
+<span class="nc" id="L280">		int innerSize = edgeBuff.capacity() + // nodeId</span>
+<span class="nc" id="L281">				attrBuff.capacity() + // attribute</span>
+<span class="nc" id="L282">				1 + // value type</span>
+<span class="nc" id="L283">				valueBuff.capacity(); // value</span>
+
+<span class="nc" id="L285">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_ADD_EDGE_ATTR, innerSize);</span>
+
+<span class="nc" id="L287">		buff.put(edgeBuff).put(attrBuff).put((byte) valueType) // value type</span>
+<span class="nc" id="L288">				.put(valueBuff);</span>
+
+<span class="nc" id="L290">		doSend(buff);</span>
+<span class="nc" id="L291">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeChanged(java.lang.String ,
+	 * long, java.lang.String, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L302">		ByteBuffer edgeBuff = encodeString(edgeId);</span>
+<span class="nc" id="L303">		ByteBuffer attrBuff = encodeString(attribute);</span>
+<span class="nc" id="L304">		int oldValueType = getType(oldValue);</span>
+<span class="nc" id="L305">		int newValueType = getType(newValue);</span>
+
+<span class="nc" id="L307">		ByteBuffer oldValueBuff = getEncodedValue(oldValue, oldValueType);</span>
+<span class="nc" id="L308">		ByteBuffer newValueBuff = getEncodedValue(newValue, newValueType);</span>
+
+<span class="nc" id="L310">		int innerSize = edgeBuff.capacity() + // nodeId</span>
+<span class="nc" id="L311">				attrBuff.capacity() + // attribute</span>
+<span class="nc" id="L312">				1 + // value type</span>
+<span class="nc" id="L313">				oldValueBuff.capacity() + // value</span>
+<span class="nc" id="L314">				1 + // value type</span>
+<span class="nc" id="L315">				newValueBuff.capacity(); // value</span>
+
+<span class="nc" id="L317">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_CHG_EDGE_ATTR, innerSize);</span>
+
+<span class="nc" id="L319">		buff.put(edgeBuff).put(attrBuff).put((byte) oldValueType).put(oldValueBuff).put((byte) newValueType)</span>
+<span class="nc" id="L320">				.put(newValueBuff);</span>
+
+<span class="nc" id="L322">		doSend(buff);</span>
+<span class="nc" id="L323">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeRemoved(java.lang.String ,
+	 * long, java.lang.String, java.lang.String)
+	 */
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L333">		ByteBuffer edgeBuff = encodeString(edgeId);</span>
+<span class="nc" id="L334">		ByteBuffer attrBuff = encodeString(attribute);</span>
+
+<span class="nc" id="L336">		int innerSize = edgeBuff.capacity() + // nodeId</span>
+<span class="nc" id="L337">				attrBuff.capacity(); // attribute</span>
+
+<span class="nc" id="L339">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_DEL_EDGE_ATTR, innerSize);</span>
+
+<span class="nc" id="L341">		buff.put(edgeBuff).put(attrBuff);</span>
+
+<span class="nc" id="L343">		doSend(buff);</span>
+<span class="nc" id="L344">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.ElementSink#nodeAdded(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L353">		ByteBuffer nodeBuff = encodeString(nodeId);</span>
+
+<span class="nc" id="L355">		int innerSize = nodeBuff.capacity();</span>
+
+<span class="nc" id="L357">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_ADD_NODE, innerSize);</span>
+<span class="nc" id="L358">		buff.put(nodeBuff);</span>
+
+<span class="nc" id="L360">		doSend(buff);</span>
+<span class="nc" id="L361">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.ElementSink#nodeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L370">		ByteBuffer nodeBuff = encodeString(nodeId);</span>
+
+<span class="nc" id="L372">		int innerSize = nodeBuff.capacity();</span>
+
+<span class="nc" id="L374">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_DEL_NODE, innerSize);</span>
+<span class="nc" id="L375">		buff.put(nodeBuff);</span>
+
+<span class="nc" id="L377">		doSend(buff);</span>
+<span class="nc" id="L378">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.ElementSink#edgeAdded(java.lang.String, long,
+	 * java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L388">		ByteBuffer edgeBuff = encodeString(edgeId);</span>
+<span class="nc" id="L389">		ByteBuffer fromNodeBuff = encodeString(fromNodeId);</span>
+<span class="nc" id="L390">		ByteBuffer toNodeBuff = encodeString(toNodeId);</span>
+
+<span class="nc" id="L392">		int innerSize = edgeBuff.capacity() + // edge</span>
+<span class="nc" id="L393">				fromNodeBuff.capacity() + // from nodeId</span>
+<span class="nc" id="L394">				toNodeBuff.capacity() + // to nodeId</span>
+<span class="nc" id="L395">				1; // direction</span>
+
+<span class="nc" id="L397">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_ADD_EDGE, innerSize);</span>
+
+<span class="nc bnc" id="L399" title="All 2 branches missed.">		buff.put(edgeBuff).put(fromNodeBuff).put(toNodeBuff).put((byte) (!directed ? 0 : 1));</span>
+
+<span class="nc" id="L401">		doSend(buff);</span>
+<span class="nc" id="L402">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.ElementSink#edgeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L411">		ByteBuffer edgeBuff = encodeString(edgeId);</span>
+
+<span class="nc" id="L413">		int innerSize = edgeBuff.capacity();</span>
+
+<span class="nc" id="L415">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_DEL_EDGE, innerSize);</span>
+<span class="nc" id="L416">		buff.put(edgeBuff);</span>
+
+<span class="nc" id="L418">		doSend(buff);</span>
+<span class="nc" id="L419">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.ElementSink#graphCleared(java.lang.String, long)
+	 */
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L427">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_CLEARED, 0);</span>
+<span class="nc" id="L428">		doSend(buff);</span>
+<span class="nc" id="L429">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.ElementSink#stepBegins(java.lang.String, long,
+	 * double)
+	 */
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L438">		ByteBuffer buff = getAndPrepareBuffer(sourceId, timeId, NetStreamConstants.EVENT_STEP, 8);</span>
+<span class="nc" id="L439">		buff.putDouble(step);</span>
+
+<span class="nc" id="L441">		doSend(buff);</span>
+<span class="nc" id="L442">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

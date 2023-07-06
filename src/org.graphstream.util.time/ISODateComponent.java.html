@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ISODateComponent.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util.time</a> &gt; <span class="el_source">ISODateComponent.java</span></div><h1>ISODateComponent.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-10-04
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.util.time;
+
+import java.text.DateFormatSymbols;
+import java.util.Calendar;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
+/**
+ * Defines components of {@link ISODateIO}.
+ * 
+ */
+public abstract class ISODateComponent {
+
+	/**
+	 * Directives shortcut of the component. This property can not be changed.
+	 */
+	protected final String directive;
+	/**
+	 * Replacement of the directive. Could be a regular expression. The value catch
+	 * will be sent to the component with &lt;i&gt;set(catched_value,Calendar)&lt;/i&gt;. This
+	 * property can not be changed.
+	 */
+	protected final String replace;
+
+	/**
+	 * Build a new component composed of a directive name (&quot;%.&quot;) and a replacement
+	 * value.
+	 * 
+	 * @param directive
+	 *            directive name, should start with a leading '%'.
+	 * @param replace
+	 *            replace the directive with the value given here.
+	 */
+<span class="nc" id="L66">	public ISODateComponent(String directive, String replace) {</span>
+<span class="nc" id="L67">		this.directive = directive;</span>
+<span class="nc" id="L68">		this.replace = replace;</span>
+<span class="nc" id="L69">	}</span>
+
+	/**
+	 * Access to the directive name of the component.
+	 * 
+	 * @return directive of the component.
+	 */
+	public String getDirective() {
+<span class="nc" id="L77">		return directive;</span>
+	}
+
+	/**
+	 * Return true if this component is an alias. An alias can contain other
+	 * directive name and its replacement should be parse again.
+	 * 
+	 * @return true if component is an alias.
+	 */
+	public boolean isAlias() {
+<span class="nc" id="L87">		return false;</span>
+	}
+
+	/**
+	 * Get the replacement value of this component.
+	 * 
+	 * @return replacement value
+	 */
+	public String getReplacement() {
+<span class="nc" id="L96">		return replace;</span>
+	}
+
+	/**
+	 * Handle the value catched with the replacement value.
+	 * 
+	 * @param value
+	 *            value matching the replacement string
+	 * @param calendar
+	 *            calendar we are working on
+	 */
+	public abstract void set(String value, Calendar calendar);
+
+	/**
+	 * Get a string representation of this component for a given calendar.
+	 * 
+	 * @param calendar
+	 *            the calendar
+	 * @return string representation of this component.
+	 */
+	public abstract String get(Calendar calendar);
+
+	/**
+	 * Defines an alias component. Such component does nothing else that replace
+	 * them directive by another string.
+	 */
+	public static class AliasComponent extends ISODateComponent {
+
+		public AliasComponent(String shortcut, String replace) {
+<span class="nc" id="L125">			super(shortcut, replace);</span>
+<span class="nc" id="L126">		}</span>
+
+		public boolean isAlias() {
+<span class="nc" id="L129">			return true;</span>
+		}
+
+		public void set(String value, Calendar calendar) {
+			// Nothing to do
+<span class="nc" id="L134">		}</span>
+
+		public String get(Calendar calendar) {
+<span class="nc" id="L137">			return &quot;&quot;;</span>
+		}
+	}
+
+	/**
+	 * Defines a text component. Such component does nothing else that append text
+	 * to the resulting regular expression.
+	 */
+	public static class TextComponent extends ISODateComponent {
+		String unquoted;
+
+		public TextComponent(String value) {
+<span class="nc" id="L149">			super(null, Pattern.quote(value));</span>
+<span class="nc" id="L150">			unquoted = value;</span>
+<span class="nc" id="L151">		}</span>
+
+		public void set(String value, Calendar calendar) {
+			// Nothing to do
+<span class="nc" id="L155">		}</span>
+
+		public String get(Calendar calendar) {
+<span class="nc" id="L158">			return unquoted;</span>
+		}
+	}
+
+	/**
+	 * Defines a component associated with a field of a calendar. When a value is
+	 * handled, component will try to set the associated field of the calendar.
+	 */
+	public static class FieldComponent extends ISODateComponent {
+		protected final int field;
+		protected final int offset;
+		protected final String format;
+
+		public FieldComponent(String shortcut, String replace, int field, String format) {
+<span class="nc" id="L172">			this(shortcut, replace, field, 0, format);</span>
+<span class="nc" id="L173">		}</span>
+
+		public FieldComponent(String shortcut, String replace, int field, int offset, String format) {
+<span class="nc" id="L176">			super(shortcut, replace);</span>
+<span class="nc" id="L177">			this.field = field;</span>
+<span class="nc" id="L178">			this.offset = offset;</span>
+<span class="nc" id="L179">			this.format = format;</span>
+<span class="nc" id="L180">		}</span>
+
+		public void set(String value, Calendar calendar) {
+<span class="nc bnc" id="L183" title="All 4 branches missed.">			while (value.charAt(0) == '0' &amp;&amp; value.length() &gt; 1)</span>
+<span class="nc" id="L184">				value = value.substring(1);</span>
+<span class="nc" id="L185">			int val = Integer.parseInt(value);</span>
+<span class="nc" id="L186">			calendar.set(field, val + offset);</span>
+<span class="nc" id="L187">		}</span>
+
+		public String get(Calendar calendar) {
+<span class="nc" id="L190">			return String.format(format, calendar.get(field));</span>
+		}
+	}
+
+	/**
+	 * Base for locale-dependent component.
+	 */
+	protected static abstract class LocaleDependentComponent extends ISODateComponent {
+		protected Locale locale;
+		protected DateFormatSymbols symbols;
+
+		public LocaleDependentComponent(String shortcut, String replace) {
+<span class="nc" id="L202">			this(shortcut, replace, Locale.getDefault());</span>
+<span class="nc" id="L203">		}</span>
+
+		public LocaleDependentComponent(String shortcut, String replace, Locale locale) {
+<span class="nc" id="L206">			super(shortcut, replace);</span>
+<span class="nc" id="L207">			this.locale = locale;</span>
+<span class="nc" id="L208">			this.symbols = DateFormatSymbols.getInstance(locale);</span>
+<span class="nc" id="L209">		}</span>
+	}
+
+	/**
+	 * Component handling AM/PM.
+	 */
+	public static class AMPMComponent extends LocaleDependentComponent {
+		public AMPMComponent() {
+<span class="nc" id="L217">			super(&quot;%p&quot;, &quot;AM|PM|am|pm&quot;);</span>
+<span class="nc" id="L218">		}</span>
+
+		public void set(String value, Calendar calendar) {
+<span class="nc bnc" id="L221" title="All 2 branches missed.">			if (value.equalsIgnoreCase(symbols.getAmPmStrings()[Calendar.AM]))</span>
+<span class="nc" id="L222">				calendar.set(Calendar.AM_PM, Calendar.AM);</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">			else if (value.equalsIgnoreCase(symbols.getAmPmStrings()[Calendar.PM]))</span>
+<span class="nc" id="L224">				calendar.set(Calendar.AM_PM, Calendar.PM);</span>
+<span class="nc" id="L225">		}</span>
+
+		public String get(Calendar calendar) {
+<span class="nc" id="L228">			return symbols.getAmPmStrings()[calendar.get(Calendar.AM_PM)];</span>
+		}
+	}
+
+	/**
+	 * Component handling utc offset (+/- 0000).
+	 */
+	public static class UTCOffsetComponent extends ISODateComponent {
+		public UTCOffsetComponent() {
+<span class="nc" id="L237">			super(&quot;%z&quot;, &quot;(?:[-+]\\d{4}|Z)&quot;);</span>
+<span class="nc" id="L238">		}</span>
+
+		public void set(String value, Calendar calendar) {
+<span class="nc bnc" id="L241" title="All 2 branches missed.">			if (value.equals(&quot;Z&quot;)) {</span>
+<span class="nc" id="L242">				calendar.getTimeZone().setRawOffset(0);</span>
+<span class="nc" id="L243">			} else {</span>
+<span class="nc" id="L244">				String hs = value.substring(1, 3);</span>
+<span class="nc" id="L245">				String ms = value.substring(3, 5);</span>
+<span class="nc bnc" id="L246" title="All 2 branches missed.">				if (hs.charAt(0) == '0')</span>
+<span class="nc" id="L247">					hs = hs.substring(1);</span>
+<span class="nc bnc" id="L248" title="All 2 branches missed.">				if (ms.charAt(0) == '0')</span>
+<span class="nc" id="L249">					ms = ms.substring(1);</span>
+
+<span class="nc bnc" id="L251" title="All 2 branches missed.">				int i = value.charAt(0) == '+' ? 1 : -1;</span>
+<span class="nc" id="L252">				int h = Integer.parseInt(hs);</span>
+<span class="nc" id="L253">				int m = Integer.parseInt(ms);</span>
+
+<span class="nc" id="L255">				calendar.getTimeZone().setRawOffset(i * (h * 60 + m) * 60000);</span>
+			}
+<span class="nc" id="L257">		}</span>
+
+		public String get(Calendar calendar) {
+<span class="nc" id="L260">			int offset = calendar.getTimeZone().getRawOffset();</span>
+<span class="nc" id="L261">			String sign = &quot;+&quot;;</span>
+
+<span class="nc bnc" id="L263" title="All 2 branches missed.">			if (offset &lt; 0) {</span>
+<span class="nc" id="L264">				sign = &quot;-&quot;;</span>
+<span class="nc" id="L265">				offset = -offset;</span>
+			}
+
+<span class="nc" id="L268">			offset /= 60000;</span>
+
+<span class="nc" id="L270">			int h = offset / 60;</span>
+<span class="nc" id="L271">			int m = offset % 60;</span>
+
+<span class="nc" id="L273">			return String.format(&quot;%s%02d%02d&quot;, sign, h, m);</span>
+		}
+	}
+
+	/**
+	 * Component handling a number of milliseconds since the epoch (january, 1st
+	 * 1970).
+	 */
+	public static class EpochComponent extends ISODateComponent {
+		public EpochComponent() {
+<span class="nc" id="L283">			super(&quot;%K&quot;, &quot;\\d+&quot;);</span>
+<span class="nc" id="L284">		}</span>
+
+		public void set(String value, Calendar calendar) {
+<span class="nc" id="L287">			long e = Long.parseLong(value);</span>
+<span class="nc" id="L288">			calendar.setTimeInMillis(e);</span>
+<span class="nc" id="L289">		}</span>
+
+		public String get(Calendar calendar) {
+<span class="nc" id="L292">			return String.format(&quot;%d&quot;, calendar.getTimeInMillis());</span>
+		}
+	}
+
+	/**
+	 * Defines a not implemented component. Such components throw an Error if used.
+	 */
+	public static class NotImplementedComponent extends ISODateComponent {
+		public NotImplementedComponent(String shortcut, String replace) {
+<span class="nc" id="L301">			super(shortcut, replace);</span>
+<span class="nc" id="L302">		}</span>
+
+		public void set(String value, Calendar cal) {
+<span class="nc" id="L305">			throw new Error(&quot;not implemented component&quot;);</span>
+		}
+
+		public String get(Calendar calendar) {
+<span class="nc" id="L309">			throw new Error(&quot;not implemented component&quot;);</span>
+		}
+	}
+
+<span class="nc" id="L313">	public static final ISODateComponent ABBREVIATED_WEEKDAY_NAME = new NotImplementedComponent(&quot;%a&quot;, &quot;\\w+[.]&quot;);</span>
+<span class="nc" id="L314">	public static final ISODateComponent FULL_WEEKDAY_NAME = new NotImplementedComponent(&quot;%A&quot;, &quot;\\w+&quot;);</span>
+<span class="nc" id="L315">	public static final ISODateComponent ABBREVIATED_MONTH_NAME = new NotImplementedComponent(&quot;%b&quot;, &quot;\\w+[.]&quot;);</span>
+<span class="nc" id="L316">	public static final ISODateComponent FULL_MONTH_NAME = new NotImplementedComponent(&quot;%B&quot;, &quot;\\w+&quot;);</span>
+<span class="nc" id="L317">	public static final ISODateComponent LOCALE_DATE_AND_TIME = new NotImplementedComponent(&quot;%c&quot;, null);</span>
+<span class="nc" id="L318">	public static final ISODateComponent CENTURY = new NotImplementedComponent(&quot;%C&quot;, &quot;\\d\\d&quot;);</span>
+<span class="nc" id="L319">	public static final ISODateComponent DAY_OF_MONTH_2_DIGITS = new FieldComponent(&quot;%d&quot;, &quot;[012]\\d|3[01]&quot;,</span>
+<span class="nc" id="L320">			Calendar.DAY_OF_MONTH, &quot;%02d&quot;);</span>
+<span class="nc" id="L321">	public static final ISODateComponent DATE = new AliasComponent(&quot;%D&quot;, &quot;%m/%d/%y&quot;);</span>
+<span class="nc" id="L322">	public static final ISODateComponent DAY_OF_MONTH = new FieldComponent(&quot;%e&quot;, &quot;\\d|[12]\\d|3[01]&quot;,</span>
+<span class="nc" id="L323">			Calendar.DAY_OF_MONTH, &quot;%2d&quot;);</span>
+<span class="nc" id="L324">	public static final ISODateComponent DATE_ISO8601 = new AliasComponent(&quot;%F&quot;, &quot;%Y-%m-%d&quot;);</span>
+<span class="nc" id="L325">	public static final ISODateComponent WEEK_BASED_YEAR_2_DIGITS = new FieldComponent(&quot;%g&quot;, &quot;\\d\\d&quot;, Calendar.YEAR,</span>
+<span class="nc" id="L326">			&quot;%02d&quot;);</span>
+<span class="nc" id="L327">	public static final ISODateComponent WEEK_BASED_YEAR_4_DIGITS = new FieldComponent(&quot;%G&quot;, &quot;\\d{4}&quot;, Calendar.YEAR,</span>
+<span class="nc" id="L328">			&quot;%04d&quot;);</span>
+<span class="nc" id="L329">	public static final ISODateComponent ABBREVIATED_MONTH_NAME_ALIAS = new AliasComponent(&quot;%h&quot;, &quot;%b&quot;);</span>
+<span class="nc" id="L330">	public static final ISODateComponent HOUR_OF_DAY = new FieldComponent(&quot;%H&quot;, &quot;[01]\\d|2[0123]&quot;, Calendar.HOUR_OF_DAY,</span>
+<span class="nc" id="L331">			&quot;%02d&quot;);</span>
+<span class="nc" id="L332">	public static final ISODateComponent HOUR = new FieldComponent(&quot;%I&quot;, &quot;0\\d|1[012]&quot;, Calendar.HOUR, &quot;%02d&quot;);</span>
+<span class="nc" id="L333">	public static final ISODateComponent DAY_OF_YEAR = new FieldComponent(&quot;%j&quot;, &quot;[012]\\d\\d|3[0-5]\\d|36[0-6]&quot;,</span>
+<span class="nc" id="L334">			Calendar.DAY_OF_YEAR, &quot;%03d&quot;);</span>
+<span class="nc" id="L335">	public static final ISODateComponent MILLISECOND = new FieldComponent(&quot;%k&quot;, &quot;\\d{3}&quot;, Calendar.MILLISECOND, &quot;%03d&quot;);</span>
+<span class="nc" id="L336">	public static final ISODateComponent EPOCH = new EpochComponent();</span>
+<span class="nc" id="L337">	public static final ISODateComponent MONTH = new FieldComponent(&quot;%m&quot;, &quot;0[1-9]|1[012]&quot;, Calendar.MONTH, -1, &quot;%02d&quot;);</span>
+<span class="nc" id="L338">	public static final ISODateComponent MINUTE = new FieldComponent(&quot;%M&quot;, &quot;[0-5]\\d&quot;, Calendar.MINUTE, &quot;%02d&quot;);</span>
+<span class="nc" id="L339">	public static final ISODateComponent NEW_LINE = new AliasComponent(&quot;%n&quot;, &quot;\n&quot;);</span>
+<span class="nc" id="L340">	public static final ISODateComponent AM_PM = new AMPMComponent();</span>
+<span class="nc" id="L341">	public static final ISODateComponent LOCALE_CLOCK_TIME_12_HOUR = new NotImplementedComponent(&quot;%r&quot;, &quot;&quot;);</span>
+<span class="nc" id="L342">	public static final ISODateComponent HOUR_AND_MINUTE = new AliasComponent(&quot;%R&quot;, &quot;%H:%M&quot;);</span>
+<span class="nc" id="L343">	public static final ISODateComponent SECOND = new FieldComponent(&quot;%S&quot;, &quot;[0-5]\\d|60&quot;, Calendar.SECOND, &quot;%02d&quot;);</span>
+<span class="nc" id="L344">	public static final ISODateComponent TABULATION = new AliasComponent(&quot;%t&quot;, &quot;\t&quot;);</span>
+<span class="nc" id="L345">	public static final ISODateComponent TIME_ISO8601 = new AliasComponent(&quot;%T&quot;, &quot;%H:%M:%S&quot;);</span>
+<span class="nc" id="L346">	public static final ISODateComponent DAY_OF_WEEK_1_7 = new FieldComponent(&quot;%u&quot;, &quot;[1-7]&quot;, Calendar.DAY_OF_WEEK, -1,</span>
+<span class="nc" id="L347">			&quot;%1d&quot;);</span>
+<span class="nc" id="L348">	public static final ISODateComponent WEEK_OF_YEAR_FROM_SUNDAY = new FieldComponent(&quot;%U&quot;, &quot;[0-4]\\d|5[0123]&quot;,</span>
+<span class="nc" id="L349">			Calendar.WEEK_OF_YEAR, 1, &quot;%2d&quot;);</span>
+<span class="nc" id="L350">	public static final ISODateComponent WEEK_NUMBER_ISO8601 = new NotImplementedComponent(&quot;%V&quot;,</span>
+<span class="nc" id="L351">			&quot;0[1-9]|[2-4]\\d|5[0123]&quot;);</span>
+<span class="nc" id="L352">	public static final ISODateComponent DAY_OF_WEEK_0_6 = new FieldComponent(&quot;%w&quot;, &quot;[0-6]&quot;, Calendar.DAY_OF_WEEK,</span>
+<span class="nc" id="L353">			&quot;%01d&quot;);</span>
+<span class="nc" id="L354">	public static final ISODateComponent WEEK_OF_YEAR_FROM_MONDAY = new FieldComponent(&quot;%W&quot;, &quot;[0-4]\\d|5[0123]&quot;,</span>
+<span class="nc" id="L355">			Calendar.WEEK_OF_YEAR, &quot;%02d&quot;);</span>
+<span class="nc" id="L356">	public static final ISODateComponent LOCALE_DATE_REPRESENTATION = new NotImplementedComponent(&quot;%x&quot;, &quot;&quot;);</span>
+<span class="nc" id="L357">	public static final ISODateComponent LOCALE_TIME_REPRESENTATION = new NotImplementedComponent(&quot;%X&quot;, &quot;&quot;);</span>
+<span class="nc" id="L358">	public static final ISODateComponent YEAR_2_DIGITS = new FieldComponent(&quot;%y&quot;, &quot;\\d\\d&quot;, Calendar.YEAR, &quot;%02d&quot;);</span>
+<span class="nc" id="L359">	public static final ISODateComponent YEAR_4_DIGITS = new FieldComponent(&quot;%Y&quot;, &quot;\\d{4}&quot;, Calendar.YEAR, &quot;%04d&quot;);</span>
+<span class="nc" id="L360">	public static final ISODateComponent UTC_OFFSET = new UTCOffsetComponent();</span>
+<span class="nc" id="L361">	public static final ISODateComponent LOCALE_TIME_ZONE_NAME = new NotImplementedComponent(&quot;%Z&quot;, &quot;\\w*&quot;);</span>
+<span class="nc" id="L362">	public static final ISODateComponent PERCENT = new AliasComponent(&quot;%%&quot;, &quot;%&quot;);</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

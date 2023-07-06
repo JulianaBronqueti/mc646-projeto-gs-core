@@ -1,0 +1,327 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AnnotatedSink.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream</a> &gt; <span class="el_source">AnnotatedSink.java</span></div><h1>AnnotatedSink.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-12-15
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream;
+
+import org.graphstream.stream.SourceBase.ElementType;
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.EnumMap;
+import java.util.HashMap;
+
+/**
+ * A sink easily allowing a bind between attribute modifications and method
+ * calls.
+ * 
+ * &lt;pre&gt;
+ * public class MyObject extends AnnotatedSink {
+ * 	String a1;
+ * 	double a2;
+ * 
+ * 	&amp;#064;Bind(&amp;quot;myobject.set.a1&amp;quot;)
+ * 	public void setA1(String eventId, Object value) {
+ * 		a1 = (String) value;
+ * 	}
+ * 
+ * 	&amp;#064;Bind(&amp;quot;myobject.set.a2&amp;quot;)
+ * 	public void setA2(String eventId, Object value) {
+ * 		a2 = (Double) value;
+ * 	}
+ * 
+ * 	public static void main(String ... args) {
+ * 			Graph g = ...;
+ * 			MyObject obj = new MyObject();
+ * 
+ * 			g.addSink(obj);
+ * 			
+ * 			g.setAttribute(&quot;myobject.set.a1&quot;, &quot;MyObject A1&quot;);
+ * 			g.setAttribute(&quot;myobject.set.a2&quot;, 100.0);
+ * 		}
+ * }
+ * &lt;/pre&gt;
+ */
+public abstract class AnnotatedSink implements Sink {
+	/**
+	 * Annotation used to bind an event to a method. This bind is composed of a name
+	 * (the attribute key) and an element type. For example, the annotation
+	 * 
+	 * &lt;pre&gt;
+	 * &amp;#64;Bind(value = &amp;quot;test&amp;quot;, type = ElementType.NODE)
+	 * &lt;/pre&gt;
+	 * 
+	 * will be triggered the annotated method when receiving 'nodeAttributeXXX()'
+	 * methods.
+	 */
+	@Documented
+	@Retention(RetentionPolicy.RUNTIME)
+	@Target(java.lang.annotation.ElementType.METHOD)
+	public static @interface Bind {
+		/**
+		 * Name of the attribute key that triggered the annotated method.
+		 * 
+		 * @return an attribute key
+		 */
+		String value();
+
+		/**
+		 * Type of element that triggered the annotated method. Default is GRAPH.
+		 * 
+		 * @return type of element in GRAPH, NODE or EDGE
+		 */
+		ElementType type() default ElementType.GRAPH;
+	}
+
+	private final EnumMap&lt;ElementType, MethodMap&gt; methods;
+
+<span class="nc" id="L109">	protected AnnotatedSink() {</span>
+<span class="nc" id="L110">		methods = new EnumMap&lt;ElementType, MethodMap&gt;(ElementType.class);</span>
+<span class="nc" id="L111">		methods.put(ElementType.GRAPH, new MethodMap());</span>
+<span class="nc" id="L112">		methods.put(ElementType.EDGE, new MethodMap());</span>
+<span class="nc" id="L113">		methods.put(ElementType.NODE, new MethodMap());</span>
+
+<span class="nc" id="L115">		Method[] ms = getClass().getMethods();</span>
+
+<span class="nc bnc" id="L117" title="All 2 branches missed.">		if (ms != null) {</span>
+<span class="nc bnc" id="L118" title="All 2 branches missed.">			for (int i = 0; i &lt; ms.length; i++) {</span>
+<span class="nc" id="L119">				Method m = ms[i];</span>
+<span class="nc" id="L120">				Bind b = m.getAnnotation(Bind.class);</span>
+
+<span class="nc bnc" id="L122" title="All 2 branches missed.">				if (b != null)</span>
+<span class="nc" id="L123">					methods.get(b.type()).put(b.value(), m);</span>
+			}
+		}
+<span class="nc" id="L126">	}</span>
+
+	private void invoke(Method m, Object... args) {
+		try {
+<span class="nc" id="L130">			m.invoke(this, args);</span>
+<span class="nc" id="L131">		} catch (IllegalArgumentException e) {</span>
+<span class="nc" id="L132">			e.printStackTrace();</span>
+<span class="nc" id="L133">		} catch (IllegalAccessException e) {</span>
+<span class="nc" id="L134">			e.printStackTrace();</span>
+<span class="nc" id="L135">		} catch (InvocationTargetException e) {</span>
+<span class="nc" id="L136">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L138">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeAdded(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L148">		Method m = methods.get(ElementType.EDGE).get(attribute);</span>
+
+<span class="nc bnc" id="L150" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L151">			invoke(m, edgeId, attribute, value);</span>
+<span class="nc" id="L152">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeChanged(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L163">		Method m = methods.get(ElementType.EDGE).get(attribute);</span>
+
+<span class="nc bnc" id="L165" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L166">			invoke(m, edgeId, attribute, newValue);</span>
+<span class="nc" id="L167">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeRemoved(java.lang.String,
+	 * long, java.lang.String, java.lang.String)
+	 */
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L177">		Method m = methods.get(ElementType.EDGE).get(attribute);</span>
+
+<span class="nc bnc" id="L179" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L180">			invoke(m, edgeId, attribute, null);</span>
+<span class="nc" id="L181">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#graphAttributeAdded(java.lang.String,
+	 * long, java.lang.String, java.lang.Object)
+	 */
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L191">		Method m = methods.get(ElementType.GRAPH).get(attribute);</span>
+
+<span class="nc bnc" id="L193" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L194">			invoke(m, attribute, value);</span>
+<span class="nc" id="L195">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#graphAttributeChanged(java.lang.String,
+	 * long, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L206">		Method m = methods.get(ElementType.GRAPH).get(attribute);</span>
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L209">			invoke(m, attribute, newValue);</span>
+<span class="nc" id="L210">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#graphAttributeRemoved(java.lang.String,
+	 * long, java.lang.String)
+	 */
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L220">		Method m = methods.get(ElementType.GRAPH).get(attribute);</span>
+
+<span class="nc bnc" id="L222" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L223">			invoke(m, attribute, null);</span>
+<span class="nc" id="L224">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeAdded(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L234">		Method m = methods.get(ElementType.NODE).get(attribute);</span>
+
+<span class="nc bnc" id="L236" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L237">			invoke(m, nodeId, attribute, value);</span>
+<span class="nc" id="L238">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeChanged(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L249">		Method m = methods.get(ElementType.NODE).get(attribute);</span>
+
+<span class="nc bnc" id="L251" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L252">			invoke(m, nodeId, attribute, newValue);</span>
+<span class="nc" id="L253">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeRemoved(java.lang.String,
+	 * long, java.lang.String, java.lang.String)
+	 */
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L263">		Method m = methods.get(ElementType.NODE).get(attribute);</span>
+
+<span class="nc bnc" id="L265" title="All 2 branches missed.">		if (m != null)</span>
+<span class="nc" id="L266">			invoke(m, nodeId, attribute, null);</span>
+<span class="nc" id="L267">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#edgeAdded(java.lang.String, long,
+	 * java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L277">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#edgeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L286">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#graphCleared(java.lang.String, long)
+	 */
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L294">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#nodeAdded(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L303">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#nodeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L312">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#stepBegins(java.lang.String, long,
+	 * double)
+	 */
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L321">	}</span>
+
+	private static class MethodMap extends HashMap&lt;String, Method&gt; {
+		private static final long serialVersionUID = 1664854698109523697L;
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

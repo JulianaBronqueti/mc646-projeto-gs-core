@@ -1,0 +1,1447 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>StyleGroupSet.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph</a> &gt; <span class="el_source">StyleGroupSet.java</span></div><h1>StyleGroupSet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-07-05
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.ui.graphicGraph.stylesheet.Rule;
+import org.graphstream.ui.graphicGraph.stylesheet.Selector;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.ShadowMode;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleSheetListener;
+
+/**
+ * A set of style groups.
+ * 
+ * &lt;p&gt;
+ * This class is in charge or storing all the style groups and to update them.
+ * Each time an element is added or removed the groups are updated. Each time
+ * the style sheet changes the groups are updated.
+ * &lt;/p&gt;
+ * 
+ * @author Antoine Dutot
+ */
+public class StyleGroupSet implements StyleSheetListener {
+	// Attribute
+
+	/**
+	 * The style sheet.
+	 */
+	protected StyleSheet stylesheet;
+
+	/**
+	 * All the groups indexed by their unique identifier.
+	 */
+<span class="nc" id="L78">	protected final Map&lt;String, StyleGroup&gt; groups = new TreeMap&lt;String, StyleGroup&gt;();</span>
+
+	/**
+	 * Allows to retrieve the group containing a node knowing the node id.
+	 */
+<span class="nc" id="L83">	protected final Map&lt;String, String&gt; byNodeIdGroups = new TreeMap&lt;String, String&gt;();</span>
+
+	/**
+	 * Allows to retrieve the group containing an edge knowing the node id.
+	 */
+<span class="nc" id="L88">	protected final Map&lt;String, String&gt; byEdgeIdGroups = new TreeMap&lt;String, String&gt;();</span>
+
+	/**
+	 * Allows to retrieve the group containing a sprite knowing the node id.
+	 */
+<span class="nc" id="L93">	protected final Map&lt;String, String&gt; bySpriteIdGroups = new TreeMap&lt;String, String&gt;();</span>
+
+	/**
+	 * Allows to retrieve the group containing a graph knowing the node id.
+	 */
+<span class="nc" id="L98">	protected final Map&lt;String, String&gt; byGraphIdGroups = new TreeMap&lt;String, String&gt;();</span>
+
+	/**
+	 * Virtual set of nodes. This set provides fake methods to make it appear as a
+	 * set of nodes whereas it only maps on the node style groups.
+	 */
+<span class="nc" id="L104">	protected NodeSet nodeSet = new NodeSet();</span>
+
+	/**
+	 * Virtual set of edges. This set provides fake methods to make it appear as a
+	 * set of edges whereas it only maps on the edge style groups.
+	 */
+<span class="nc" id="L110">	protected EdgeSet edgeSet = new EdgeSet();</span>
+
+	/**
+	 * Virtual set of sprites. This set provides fake methods to make it appear as a
+	 * set of sprites whereas it only maps on the sprite style groups.
+	 */
+<span class="nc" id="L116">	protected SpriteSet spriteSet = new SpriteSet();</span>
+
+	/**
+	 * Virtual set of graphs. This set provides fake methods to make it appear as a
+	 * set of graphs whereas it only maps on the graph style groups.
+	 */
+<span class="nc" id="L122">	protected GraphSet graphSet = new GraphSet();</span>
+
+	/**
+	 * The set of events actually occurring.
+	 */
+<span class="nc" id="L127">	protected EventSet eventSet = new EventSet();</span>
+
+	/**
+	 * The groups sorted by their Z index.
+	 */
+<span class="nc" id="L132">	protected ZIndex zIndex = new ZIndex();</span>
+
+	/**
+	 * Set of groups that cast shadow.
+	 */
+<span class="nc" id="L137">	protected ShadowSet shadow = new ShadowSet();</span>
+
+	/**
+	 * Remove groups if they become empty?.
+	 */
+<span class="nc" id="L142">	protected boolean removeEmptyGroups = true;</span>
+
+	/**
+	 * Set of listeners.
+	 */
+<span class="nc" id="L147">	protected ArrayList&lt;StyleGroupListener&gt; listeners = new ArrayList&lt;&gt;();</span>
+
+	// Construction
+
+	/**
+	 * New empty style group set, using the given style sheet to create style
+	 * groups. The group set installs itself as a listener of the style sheet. So in
+	 * order to completely stop using such a group, you must call
+	 * {@link #release()}.
+	 * 
+	 * @param stylesheet
+	 *            The style sheet to use to create groups.
+	 */
+<span class="nc" id="L160">	public StyleGroupSet(StyleSheet stylesheet) {</span>
+<span class="nc" id="L161">		this.stylesheet = stylesheet;</span>
+
+<span class="nc" id="L163">		stylesheet.addListener(this);</span>
+<span class="nc" id="L164">	}</span>
+
+	// Access
+
+	/**
+	 * Number of groups.
+	 * 
+	 * @return The number of groups.
+	 */
+	public int getGroupCount() {
+<span class="nc" id="L174">		return groups.size();</span>
+	}
+
+	/**
+	 * Return a group by its unique identifier. The way group identifier are
+	 * constructed reflects their contents.
+	 * 
+	 * @param groupId
+	 *            The group identifier.
+	 * @return The corresponding group or null if not found.
+	 */
+	public StyleGroup getGroup(String groupId) {
+<span class="nc" id="L186">		return groups.get(groupId);</span>
+	}
+
+	/**
+	 * Iterator on the set of groups in no particular order.
+	 * 
+	 * @return An iterator on the group set.
+	 */
+	public Iterator&lt;? extends StyleGroup&gt; getGroupIterator() {
+<span class="nc" id="L195">		return groups.values().iterator();</span>
+	}
+
+	/**
+	 * Iterable set of groups elements, in no particular order.
+	 * 
+	 * @return An iterable on the set of groups.
+	 */
+	public Iterable&lt;? extends StyleGroup&gt; groups() {
+<span class="nc" id="L204">		return groups.values();</span>
+	}
+
+	/**
+	 * Iterator on the Z index.
+	 * 
+	 * @return The z index iterator.
+	 */
+	public Iterator&lt;HashSet&lt;StyleGroup&gt;&gt; getZIterator() {
+<span class="nc" id="L213">		return zIndex.getIterator();</span>
+	}
+
+	/**
+	 * Iterable set of &quot;subsets of groups&quot; sorted by Z level. Each subset of groups
+	 * is at the same Z level.
+	 * 
+	 * @return The z levels.
+	 */
+	public Iterable&lt;HashSet&lt;StyleGroup&gt;&gt; zIndex() {
+<span class="nc" id="L223">		return zIndex;</span>
+	}
+
+	/**
+	 * Iterator on the style groups that cast a shadow.
+	 * 
+	 * @return The shadow groups iterator.
+	 */
+	public Iterator&lt;StyleGroup&gt; getShadowIterator() {
+<span class="nc" id="L232">		return shadow.getIterator();</span>
+	}
+
+	/**
+	 * Iterable set of groups that cast shadow.
+	 * 
+	 * @return All the groups that cast a shadow.
+	 */
+	public Iterable&lt;StyleGroup&gt; shadows() {
+<span class="nc" id="L241">		return shadow;</span>
+	}
+
+	/**
+	 * True if the set contains and styles the node whose identifier is given.
+	 * 
+	 * @param id
+	 *            The node identifier.
+	 * @return True if the node is in this set.
+	 */
+	public boolean containsNode(String id) {
+<span class="nc" id="L252">		return byNodeIdGroups.containsKey(id);</span>
+	}
+
+	/**
+	 * True if the set contains and styles the edge whose identifier is given.
+	 * 
+	 * @param id
+	 *            The edge identifier.
+	 * @return True if the edge is in this set.
+	 */
+	public boolean containsEdge(String id) {
+<span class="nc" id="L263">		return byEdgeIdGroups.containsKey(id);</span>
+	}
+
+	/**
+	 * True if the set contains and styles the sprite whose identifier is given.
+	 * 
+	 * @param id
+	 *            The sprite identifier.
+	 * @return True if the sprite is in this set.
+	 */
+	public boolean containsSprite(String id) {
+<span class="nc" id="L274">		return bySpriteIdGroups.containsKey(id);</span>
+	}
+
+	/**
+	 * True if the set contains and styles the graph whose identifier is given.
+	 * 
+	 * @param id
+	 *            The graph identifier.
+	 * @return True if the graph is in this set.
+	 */
+	public boolean containsGraph(String id) {
+<span class="nc" id="L285">		return byGraphIdGroups.containsKey(id);</span>
+	}
+
+	/**
+	 * Get an element.
+	 * 
+	 * @param id
+	 *            The element id.
+	 * @param elt2grp
+	 *            The kind of element.
+	 * @return The element or null if not found.
+	 */
+	protected Element getElement(String id, Map&lt;String, String&gt; elt2grp) {
+<span class="nc" id="L298">		String gid = elt2grp.get(id);</span>
+
+<span class="nc bnc" id="L300" title="All 2 branches missed.">		if (gid != null) {</span>
+<span class="nc" id="L301">			StyleGroup group = groups.get(gid);</span>
+<span class="nc" id="L302">			return group.getElement(id);</span>
+		}
+
+<span class="nc" id="L305">		return null;</span>
+	}
+
+	/**
+	 * Get a node element knowing its identifier.
+	 * 
+	 * @param id
+	 *            The node identifier.
+	 * @return The node if it is in this set, else null.
+	 */
+	public Node getNode(String id) {
+<span class="nc" id="L316">		return (Node) getElement(id, byNodeIdGroups);</span>
+	}
+
+	/**
+	 * Get an edge element knowing its identifier.
+	 * 
+	 * @param id
+	 *            The edge identifier.
+	 * @return The edge if it is in this set, else null.
+	 */
+	public Edge getEdge(String id) {
+<span class="nc" id="L327">		return (Edge) getElement(id, byEdgeIdGroups);</span>
+	}
+
+	/**
+	 * Get a sprite element knowing its identifier.
+	 * 
+	 * @param id
+	 *            The sprite identifier.
+	 * @return The sprite if it is in this set, else null.
+	 */
+	public GraphicSprite getSprite(String id) {
+<span class="nc" id="L338">		return (GraphicSprite) getElement(id, bySpriteIdGroups);</span>
+	}
+
+	/**
+	 * Get a graph element knowing its identifier.
+	 * 
+	 * @param id
+	 *            The graph identifier.
+	 * @return The graph if it is in this set, else null.
+	 */
+	public Graph getGraph(String id) {
+<span class="nc" id="L349">		return (Graph) getElement(id, byGraphIdGroups);</span>
+	}
+
+	/**
+	 * The number of nodes referenced.
+	 * 
+	 * @return The node count.
+	 */
+	public int getNodeCount() {
+<span class="nc" id="L358">		return byNodeIdGroups.size();</span>
+	}
+
+	/**
+	 * The number of edges referenced.
+	 * 
+	 * @return The edge count.
+	 */
+	public int getEdgeCount() {
+<span class="nc" id="L367">		return byEdgeIdGroups.size();</span>
+	}
+
+	/**
+	 * The number of sprites referenced.
+	 * 
+	 * @return The sprite count.
+	 */
+	public int getSpriteCount() {
+<span class="nc" id="L376">		return bySpriteIdGroups.size();</span>
+	}
+
+	/**
+	 * Iterator on the set of nodes.
+	 * 
+	 * @return An iterator on all node elements contained in style groups.
+	 */
+	public Iterator&lt;? extends Node&gt; getNodeIterator() {
+<span class="nc" id="L385">		return new ElementIterator&lt;Node&gt;(byNodeIdGroups);</span>
+	}
+
+	/**
+	 * Iterator on the set of graphs.
+	 * 
+	 * @return An iterator on all graph elements contained in style groups.
+	 */
+	public Iterator&lt;? extends Graph&gt; getGraphIterator() {
+<span class="nc" id="L394">		return new ElementIterator&lt;Graph&gt;(byGraphIdGroups);</span>
+	}
+
+	public Stream&lt;Node&gt; nodes() {
+<span class="nc" id="L398">		return byNodeIdGroups.entrySet().stream().map(entry -&gt; {</span>
+<span class="nc" id="L399">			return (Node) groups.get(entry.getValue()).getElement(entry.getKey());</span>
+		});
+	}
+
+	public Stream&lt;Edge&gt; edges() {
+<span class="nc" id="L404">		return byEdgeIdGroups.entrySet().stream().map(entry -&gt; {</span>
+<span class="nc" id="L405">			return (Edge) groups.get(entry.getValue()).getElement(entry.getKey());</span>
+		});
+	}
+
+	public Stream&lt;GraphicSprite&gt; sprites() {
+<span class="nc" id="L410">		return bySpriteIdGroups.entrySet().stream().map(entry -&gt; {</span>
+<span class="nc" id="L411">			return (GraphicSprite) groups.get(entry.getValue()).getElement(entry.getKey());</span>
+		});
+	}
+
+	/**
+	 * Iterable set of graphs.
+	 * 
+	 * @return The set of all graphs.
+	 */
+	public Iterable&lt;? extends Graph&gt; graphs() {
+<span class="nc" id="L421">		return graphSet;</span>
+	}
+
+	/**
+	 * Iterator on the set of edges.
+	 * 
+	 * @return An iterator on all edge elements contained in style groups.
+	 */
+	public Iterator&lt;? extends Edge&gt; getEdgeIterator() {
+<span class="nc" id="L430">		return new ElementIterator&lt;Edge&gt;(byEdgeIdGroups);</span>
+	}
+
+	/**
+	 * Iterator on the set of sprite.
+	 * 
+	 * @return An iterator on all sprite elements contained in style groups.
+	 */
+	public Iterator&lt;? extends GraphicSprite&gt; getSpriteIterator() {
+<span class="nc" id="L439">		return new ElementIterator&lt;GraphicSprite&gt;(bySpriteIdGroups);</span>
+	}
+
+	/**
+	 * Retrieve the group identifier of an element knowing the element identifier.
+	 * 
+	 * @param element
+	 *            The element to search for.
+	 * @return Identifier of the group containing the element.
+	 */
+	public String getElementGroup(Element element) {
+<span class="nc bnc" id="L450" title="All 2 branches missed.">		if (element instanceof Node) {</span>
+<span class="nc" id="L451">			return byNodeIdGroups.get(element.getId());</span>
+<span class="nc bnc" id="L452" title="All 2 branches missed.">		} else if (element instanceof Edge) {</span>
+<span class="nc" id="L453">			return byEdgeIdGroups.get(element.getId());</span>
+<span class="nc bnc" id="L454" title="All 2 branches missed.">		} else if (element instanceof GraphicSprite) {</span>
+<span class="nc" id="L455">			return bySpriteIdGroups.get(element.getId());</span>
+<span class="nc bnc" id="L456" title="All 2 branches missed.">		} else if (element instanceof Graph) {</span>
+<span class="nc" id="L457">			return byGraphIdGroups.get(element.getId());</span>
+		} else {
+<span class="nc" id="L459">			throw new RuntimeException(&quot;What ?&quot;);</span>
+		}
+	}
+
+	/**
+	 * Get the style of an element.
+	 * 
+	 * @param element
+	 *            The element to search for.
+	 * @return The style group of the element (which is also a style).
+	 */
+	public StyleGroup getStyleForElement(Element element) {
+<span class="nc" id="L471">		String gid = getElementGroup(element);</span>
+
+<span class="nc" id="L473">		return groups.get(gid);</span>
+	}
+
+	/**
+	 * Get the style of a given node.
+	 * 
+	 * @param node
+	 *            The node to search for.
+	 * @return The node style.
+	 */
+	public StyleGroup getStyleFor(Node node) {
+<span class="nc" id="L484">		String gid = byNodeIdGroups.get(node.getId());</span>
+<span class="nc" id="L485">		return groups.get(gid);</span>
+	}
+
+	/**
+	 * Get the style of a given edge.
+	 * 
+	 * @param edge
+	 *            The edge to search for.
+	 * @return The edge style.
+	 */
+	public StyleGroup getStyleFor(Edge edge) {
+<span class="nc" id="L496">		String gid = byEdgeIdGroups.get(edge.getId());</span>
+<span class="nc" id="L497">		return groups.get(gid);</span>
+	}
+
+	/**
+	 * Get the style of a given sprite.
+	 * 
+	 * @param sprite
+	 *            The node to search for.
+	 * @return The sprite style.
+	 */
+	public StyleGroup getStyleFor(GraphicSprite sprite) {
+<span class="nc" id="L508">		String gid = bySpriteIdGroups.get(sprite.getId());</span>
+<span class="nc" id="L509">		return groups.get(gid);</span>
+	}
+
+	/**
+	 * Get the style of a given graph.
+	 * 
+	 * @param graph
+	 *            The node to search for.
+	 * @return The graph style.
+	 */
+	public StyleGroup getStyleFor(Graph graph) {
+<span class="nc" id="L520">		String gid = byGraphIdGroups.get(graph.getId());</span>
+<span class="nc" id="L521">		return groups.get(gid);</span>
+	}
+
+	/**
+	 * True if groups are removed when becoming empty. This setting allows to keep
+	 * empty group when the set of elements is quite dynamic. This allows to avoid
+	 * recreting groups when an element appears and disappears regularly.
+	 * 
+	 * @return True if the groups are removed when empty.
+	 */
+	public boolean areEmptyGroupRemoved() {
+<span class="nc" id="L532">		return removeEmptyGroups;</span>
+	}
+
+	/**
+	 * The Z index object.
+	 * 
+	 * @return The Z index.
+	 */
+	public ZIndex getZIndex() {
+<span class="nc" id="L541">		return zIndex;</span>
+	}
+
+	/**
+	 * The set of style groups that cast a shadow.
+	 * 
+	 * @return The set of shadowed style groups.
+	 */
+	public ShadowSet getShadowSet() {
+<span class="nc" id="L550">		return shadow;</span>
+	}
+
+	// Command
+
+	/**
+	 * Release any dependency to the style sheet.
+	 */
+	public void release() {
+<span class="nc" id="L559">		stylesheet.removeListener(this);</span>
+<span class="nc" id="L560">	}</span>
+
+	/**
+	 * Empties this style group set. The style sheet is listener is not removed, use
+	 * {@link #release()} to do that.
+	 */
+	public void clear() {
+<span class="nc" id="L567">		byEdgeIdGroups.clear();</span>
+<span class="nc" id="L568">		byNodeIdGroups.clear();</span>
+<span class="nc" id="L569">		bySpriteIdGroups.clear();</span>
+<span class="nc" id="L570">		byGraphIdGroups.clear();</span>
+<span class="nc" id="L571">		groups.clear();</span>
+<span class="nc" id="L572">		zIndex.clear();</span>
+<span class="nc" id="L573">		shadow.clear();</span>
+<span class="nc" id="L574">	}</span>
+
+	/**
+	 * Remove or keep groups that becomes empty, if true the groups are removed. If
+	 * this setting was set to false, and is now true, the group set is purged of
+	 * the empty groups.
+	 * 
+	 * @param on
+	 *            If true the groups will be removed.
+	 */
+	public void setRemoveEmptyGroups(boolean on) {
+<span class="nc bnc" id="L585" title="All 4 branches missed.">		if (removeEmptyGroups == false &amp;&amp; on == true) {</span>
+<span class="nc" id="L586">			Iterator&lt;? extends StyleGroup&gt; i = groups.values().iterator();</span>
+
+<span class="nc bnc" id="L588" title="All 2 branches missed.">			while (i.hasNext()) {</span>
+<span class="nc" id="L589">				StyleGroup g = i.next();</span>
+
+<span class="nc bnc" id="L591" title="All 2 branches missed.">				if (g.isEmpty())</span>
+<span class="nc" id="L592">					i.remove();</span>
+			}
+		}
+
+<span class="nc" id="L596">		removeEmptyGroups = on;</span>
+<span class="nc" id="L597">	}</span>
+
+	protected StyleGroup addGroup(String id, ArrayList&lt;Rule&gt; rules, Element firstElement) {
+<span class="nc" id="L600">		StyleGroup group = new StyleGroup(id, rules, firstElement, eventSet);</span>
+
+<span class="nc" id="L602">		groups.put(id, group);</span>
+<span class="nc" id="L603">		zIndex.groupAdded(group);</span>
+<span class="nc" id="L604">		shadow.groupAdded(group);</span>
+
+<span class="nc" id="L606">		return group;</span>
+	}
+
+	protected void removeGroup(StyleGroup group) {
+<span class="nc" id="L610">		zIndex.groupRemoved(group);</span>
+<span class="nc" id="L611">		shadow.groupRemoved(group);</span>
+<span class="nc" id="L612">		groups.remove(group.getId());</span>
+<span class="nc" id="L613">		group.release();</span>
+<span class="nc" id="L614">	}</span>
+
+	/**
+	 * Add an element and bind it to its style group. The group is created if
+	 * needed.
+	 * 
+	 * @param element
+	 *            The element to add.
+	 * @return The style group where the element was added.
+	 */
+	public StyleGroup addElement(Element element) {
+<span class="nc" id="L625">		StyleGroup group = addElement_(element);</span>
+
+<span class="nc bnc" id="L627" title="All 2 branches missed.">		for (StyleGroupListener listener : listeners)</span>
+<span class="nc" id="L628">			listener.elementStyleChanged(element, null, group);</span>
+
+<span class="nc" id="L630">		return group;</span>
+	}
+
+	protected StyleGroup addElement_(Element element) {
+<span class="nc" id="L634">		ArrayList&lt;Rule&gt; rules = stylesheet.getRulesFor(element);</span>
+<span class="nc" id="L635">		String gid = stylesheet.getStyleGroupIdFor(element, rules);</span>
+<span class="nc" id="L636">		StyleGroup group = groups.get(gid);</span>
+
+<span class="nc bnc" id="L638" title="All 2 branches missed.">		if (group == null)</span>
+<span class="nc" id="L639">			group = addGroup(gid, rules, element);</span>
+		else
+<span class="nc" id="L641">			group.addElement(element);</span>
+
+<span class="nc" id="L643">		addElementToReverseSearch(element, gid);</span>
+
+<span class="nc" id="L645">		return group;</span>
+	}
+
+	/**
+	 * Remove an element from the group set. If the group becomes empty after the
+	 * element removal, depending on the setting of {@link #areEmptyGroupRemoved()},
+	 * the group is deleted or kept. Keeping groups allows to handle faster elements
+	 * that constantly appear and disappear.
+	 * 
+	 * @param element
+	 *            The element to remove.
+	 */
+	public void removeElement(Element element) {
+<span class="nc" id="L658">		String gid = getElementGroup(element);</span>
+<span class="nc bnc" id="L659" title="All 2 branches missed.">		if (null == gid) {</span>
+<span class="nc" id="L660">			return;</span>
+		}
+<span class="nc" id="L662">		StyleGroup group = groups.get(gid);</span>
+
+<span class="nc bnc" id="L664" title="All 2 branches missed.">		if (group != null) {</span>
+<span class="nc" id="L665">			group.removeElement(element);</span>
+<span class="nc" id="L666">			removeElementFromReverseSearch(element);</span>
+
+<span class="nc bnc" id="L668" title="All 4 branches missed.">			if (removeEmptyGroups &amp;&amp; group.isEmpty())</span>
+<span class="nc" id="L669">				removeGroup(group);</span>
+		}
+<span class="nc" id="L671">	}</span>
+
+	/**
+	 * Check if an element need to change from a style group to another.
+	 * 
+	 * &lt;p&gt;
+	 * When an element can have potentially changed style due to some of its
+	 * attributes (ui.class for example), instead of removing it then reading it,
+	 * use this method to move the element from its current style group to a
+	 * potentially different style group.
+	 * &lt;/p&gt;
+	 * 
+	 * &lt;p&gt;
+	 * Explanation of this method : checking the style of an element may be done by
+	 * removing it ({@link #removeElement(Element)}) and then re-adding it (
+	 * {@link #addElement(Element)}). This must be done by the element since it
+	 * knows when to check this. However you cannot only remove and add, since the
+	 * style group inside which the element is can have events occurring on it, and
+	 * these events must be passed from its old style to its new style. This method
+	 * does all this information passing.
+	 * &lt;/p&gt;
+	 * 
+	 * @param element
+	 *            The element to move.
+	 */
+	public void checkElementStyleGroup(Element element) {
+<span class="nc" id="L697">		StyleGroup oldGroup = getGroup(getElementGroup(element));</span>
+
+		// Get the old element &quot;dynamic&quot; status.
+
+<span class="nc" id="L701">		boolean isDyn = false;</span>
+
+		// Get the old event set for the given element.
+
+<span class="nc" id="L705">		StyleGroup.ElementEvents events = null;</span>
+
+<span class="nc bnc" id="L707" title="All 2 branches missed.">		if (oldGroup != null) {</span>
+<span class="nc" id="L708">			isDyn = oldGroup.isElementDynamic(element);</span>
+<span class="nc" id="L709">			events = oldGroup.getEventsFor(element);</span>
+		}
+
+		// Remove the element from its old style and add it to insert it in the
+		// correct style.
+
+<span class="nc" id="L715">		removeElement(element);</span>
+<span class="nc" id="L716">		addElement_(element);</span>
+
+		// Eventually push the events on the new style group.
+
+<span class="nc" id="L720">		StyleGroup newGroup = getGroup(getElementGroup(element));</span>
+
+<span class="nc bnc" id="L722" title="All 4 branches missed.">		if (newGroup != null &amp;&amp; events != null) {</span>
+<span class="nc bnc" id="L723" title="All 2 branches missed.">			for (String event : events.events)</span>
+<span class="nc" id="L724">				pushEventFor(element, event);</span>
+		}
+
+<span class="nc bnc" id="L727" title="All 2 branches missed.">		for (StyleGroupListener listener : listeners)</span>
+<span class="nc" id="L728">			listener.elementStyleChanged(element, oldGroup, newGroup);</span>
+
+		// Eventually set the element as dynamic, if it was.
+
+<span class="nc bnc" id="L732" title="All 4 branches missed.">		if (newGroup != null &amp;&amp; isDyn)</span>
+<span class="nc" id="L733">			newGroup.pushElementAsDynamic(element);</span>
+<span class="nc" id="L734">	}</span>
+
+	protected void addElementToReverseSearch(Element element, String groupId) {
+<span class="nc bnc" id="L737" title="All 2 branches missed.">		if (element instanceof Node) {</span>
+<span class="nc" id="L738">			byNodeIdGroups.put(element.getId(), groupId);</span>
+<span class="nc bnc" id="L739" title="All 2 branches missed.">		} else if (element instanceof Edge) {</span>
+<span class="nc" id="L740">			byEdgeIdGroups.put(element.getId(), groupId);</span>
+<span class="nc bnc" id="L741" title="All 2 branches missed.">		} else if (element instanceof GraphicSprite) {</span>
+<span class="nc" id="L742">			bySpriteIdGroups.put(element.getId(), groupId);</span>
+<span class="nc bnc" id="L743" title="All 2 branches missed.">		} else if (element instanceof Graph) {</span>
+<span class="nc" id="L744">			byGraphIdGroups.put(element.getId(), groupId);</span>
+<span class="nc" id="L745">		} else {</span>
+<span class="nc" id="L746">			throw new RuntimeException(&quot;What ?&quot;);</span>
+		}
+<span class="nc" id="L748">	}</span>
+
+	protected void removeElementFromReverseSearch(Element element) {
+<span class="nc bnc" id="L751" title="All 2 branches missed.">		if (element instanceof Node) {</span>
+<span class="nc" id="L752">			byNodeIdGroups.remove(element.getId());</span>
+<span class="nc bnc" id="L753" title="All 2 branches missed.">		} else if (element instanceof Edge) {</span>
+<span class="nc" id="L754">			byEdgeIdGroups.remove(element.getId());</span>
+<span class="nc bnc" id="L755" title="All 2 branches missed.">		} else if (element instanceof GraphicSprite) {</span>
+<span class="nc" id="L756">			bySpriteIdGroups.remove(element.getId());</span>
+<span class="nc bnc" id="L757" title="All 2 branches missed.">		} else if (element instanceof Graph) {</span>
+<span class="nc" id="L758">			byGraphIdGroups.remove(element.getId());</span>
+<span class="nc" id="L759">		} else {</span>
+<span class="nc" id="L760">			throw new RuntimeException(&quot;What ?&quot;);</span>
+		}
+<span class="nc" id="L762">	}</span>
+
+	/**
+	 * Push a global event on the event stack. Events trigger the replacement of a
+	 * style by an alternative style (or meta-class) when possible. If an event is
+	 * on the event stack, each time a style has an alternative corresponding to the
+	 * event, the alternative is used instead of the style.
+	 * 
+	 * @param event
+	 *            The event to push.
+	 */
+	public void pushEvent(String event) {
+<span class="nc" id="L774">		eventSet.pushEvent(event);</span>
+<span class="nc" id="L775">	}</span>
+
+	/**
+	 * Push an event specifically for a given element. This is normally done
+	 * automatically by the graphic element.
+	 * 
+	 * @param element
+	 *            The element considered.
+	 * @param event
+	 *            The event to push.
+	 */
+	public void pushEventFor(Element element, String event) {
+<span class="nc" id="L787">		StyleGroup group = getGroup(getElementGroup(element));</span>
+
+<span class="nc bnc" id="L789" title="All 2 branches missed.">		if (group != null)</span>
+<span class="nc" id="L790">			group.pushEventFor(element, event);</span>
+<span class="nc" id="L791">	}</span>
+
+	/**
+	 * Pop a global event from the event set.
+	 * 
+	 * @param event
+	 *            The event to remove.
+	 */
+	public void popEvent(String event) {
+<span class="nc" id="L800">		eventSet.popEvent(event);</span>
+<span class="nc" id="L801">	}</span>
+
+	/**
+	 * Pop an event specifically for a given element. This is normally done
+	 * automatically by the graphic element.
+	 * 
+	 * @param element
+	 *            The element considered.
+	 * @param event
+	 *            The event to pop.
+	 */
+	public void popEventFor(Element element, String event) {
+<span class="nc" id="L813">		StyleGroup group = getGroup(getElementGroup(element));</span>
+
+<span class="nc bnc" id="L815" title="All 2 branches missed.">		if (group != null)</span>
+<span class="nc" id="L816">			group.popEventFor(element, event);</span>
+<span class="nc" id="L817">	}</span>
+
+	/**
+	 * Specify the given element has dynamic style attribute values. This is
+	 * normally done automatically by the graphic element.
+	 * 
+	 * @param element
+	 *            The element to add to the dynamic subset.
+	 */
+	public void pushElementAsDynamic(Element element) {
+<span class="nc" id="L827">		StyleGroup group = getGroup(getElementGroup(element));</span>
+
+<span class="nc bnc" id="L829" title="All 2 branches missed.">		if (group != null)</span>
+<span class="nc" id="L830">			group.pushElementAsDynamic(element);</span>
+<span class="nc" id="L831">	}</span>
+
+	/**
+	 * Remove the given element from the subset of elements having dynamic style
+	 * attribute values. This is normally done automatically by the graphic element.
+	 * 
+	 * @param element
+	 *            The element to remove from the dynamic subset.
+	 */
+	public void popElementAsDynamic(Element element) {
+<span class="nc" id="L841">		StyleGroup group = getGroup(getElementGroup(element));</span>
+
+<span class="nc bnc" id="L843" title="All 2 branches missed.">		if (group != null)</span>
+<span class="nc" id="L844">			group.popElementAsDynamic(element);</span>
+<span class="nc" id="L845">	}</span>
+
+	/**
+	 * Add a listener for element style changes.
+	 * 
+	 * @param listener
+	 *            The listener to add.
+	 */
+	public void addListener(StyleGroupListener listener) {
+<span class="nc" id="L854">		listeners.add(listener);</span>
+<span class="nc" id="L855">	}</span>
+
+	/**
+	 * Remove a style change listener.
+	 * 
+	 * @param listener
+	 *            The listener to remove.
+	 */
+	public void removeListener(StyleGroupListener listener) {
+<span class="nc" id="L864">		int index = listeners.lastIndexOf(listener);</span>
+
+<span class="nc bnc" id="L866" title="All 2 branches missed.">		if (index &gt;= 0) {</span>
+<span class="nc" id="L867">			listeners.remove(index);</span>
+		}
+<span class="nc" id="L869">	}</span>
+
+	// Listener -- What to do when a change occurs in the style sheet.
+
+	public void styleAdded(Rule oldRule, Rule newRule) {
+		// When a style change, we need to update groups.
+		// Several cases :
+		// 1. The style already exists
+		// * Nothing to do in fact. All the elements are still in place.
+		// No style rule (selectors) changed, and therefore we do not have
+		// to change the groups since they are built using the selectors.
+		// 2. The style is new
+		// * we need to check all the groups concerning this kind of element (we
+		// can
+		// restrict our search to these groups, since other will not be
+		// impacted),
+		// and check all elements of these groups.
+
+<span class="nc bnc" id="L887" title="All 2 branches missed.">		if (oldRule == null)</span>
+<span class="nc" id="L888">			checkForNewStyle(newRule); // no need to check Z and shadow, done</span>
+										// when adding/changing group.
+		else
+<span class="nc" id="L891">			checkZIndexAndShadow(oldRule, newRule);</span>
+<span class="nc" id="L892">	}</span>
+
+	public void styleSheetCleared() {
+<span class="nc" id="L895">		ArrayList&lt;Element&gt; elements = new ArrayList&lt;Element&gt;();</span>
+
+<span class="nc bnc" id="L897" title="All 2 branches missed.">		for (Element element : graphs())</span>
+<span class="nc" id="L898">			elements.add(element);</span>
+
+<span class="nc" id="L900">		nodes().forEach(elements::add);</span>
+<span class="nc" id="L901">		edges().forEach(elements::add);</span>
+<span class="nc" id="L902">		sprites().forEach(elements::add);</span>
+
+<span class="nc" id="L904">		clear();</span>
+
+<span class="nc" id="L906">		elements.forEach(this::removeElement);</span>
+<span class="nc" id="L907">		elements.forEach(this::addElement);</span>
+<span class="nc" id="L908">	}</span>
+
+	/**
+	 * Check each group that may have changed, for example to rebuild the Z index
+	 * and the shadow set.
+	 * 
+	 * @param oldRule
+	 *            The old rule that changed.
+	 * @param newRule
+	 *            The new rule that participated in the change.
+	 */
+	protected void checkZIndexAndShadow(Rule oldRule, Rule newRule) {
+<span class="nc bnc" id="L920" title="All 2 branches missed.">		if (oldRule != null) {</span>
+<span class="nc bnc" id="L921" title="All 4 branches missed.">			if (oldRule.selector.getId() != null || oldRule.selector.getClazz() != null) {</span>
+				// We may accelerate things a bit when a class or id style is
+				// modified,
+				// since only the groups listed in the style are concerned (we
+				// are at the
+				// bottom of the inheritance tree).
+<span class="nc bnc" id="L927" title="All 2 branches missed.">				if (oldRule.getGroups() != null)</span>
+<span class="nc bnc" id="L928" title="All 2 branches missed.">					for (String s : oldRule.getGroups()) {</span>
+<span class="nc" id="L929">						StyleGroup group = groups.get(s);</span>
+<span class="nc bnc" id="L930" title="All 2 branches missed.">						if (group != null) {</span>
+<span class="nc" id="L931">							zIndex.groupChanged(group);</span>
+<span class="nc" id="L932">							shadow.groupChanged(group);</span>
+						}
+					}
+<span class="nc" id="L935">			} else {</span>
+				// For kind styles &quot;NODE&quot;, &quot;EDGE&quot;, &quot;GRAPH&quot;, &quot;SPRITE&quot;, we must
+				// reset
+				// the whole Z and shadows for the kind, since several styles
+				// may
+				// have changed.
+
+<span class="nc" id="L942">				Selector.Type type = oldRule.selector.type;</span>
+
+<span class="nc bnc" id="L944" title="All 2 branches missed.">				for (StyleGroup group : groups.values()) {</span>
+<span class="nc bnc" id="L945" title="All 2 branches missed.">					if (group.getType() == type) {</span>
+<span class="nc" id="L946">						zIndex.groupChanged(group);</span>
+<span class="nc" id="L947">						shadow.groupChanged(group);</span>
+					}
+				}
+			}
+		}
+<span class="nc" id="L952">	}</span>
+
+	/**
+	 * We try to avoid at most to affect anew styles to elements and to recreate
+	 * groups, which is time consuming.
+	 * 
+	 * Two cases :
+	 * &lt;ol&gt;
+	 * &lt;li&gt;The style is an specific (id) style. In this case a new group may be
+	 * added.
+	 * &lt;ul&gt;
+	 * &lt;li&gt;check an element matches the style and in this case create the group by
+	 * adding the element.&lt;/li&gt;
+	 * &lt;li&gt;else do nothing.&lt;/li&gt;
+	 * &lt;/ul&gt;
+	 * &lt;/li&gt;
+	 * &lt;li&gt;The style is a kind or class style.
+	 * &lt;ul&gt;
+	 * &lt;li&gt;check all the groups in the kind of the style (graph, node, edge, sprite)
+	 * and only in this kind (since other will never be affected).&lt;/li&gt;
+	 * &lt;li&gt;remove all groups of this kind.&lt;/li&gt;
+	 * &lt;li&gt;add all elements of this kind anew to recreate the group.&lt;/li&gt;
+	 * &lt;/ul&gt;
+	 * &lt;/li&gt;
+	 * &lt;/ol&gt;
+	 */
+	protected void checkForNewStyle(Rule newRule) {
+<span class="nc bnc" id="L979" title="All 5 branches missed.">		switch (newRule.selector.type) {</span>
+		case GRAPH:
+<span class="nc bnc" id="L981" title="All 2 branches missed.">			if (newRule.selector.getId() != null)</span>
+<span class="nc" id="L982">				checkForNewIdStyle(newRule, byGraphIdGroups);</span>
+			else
+<span class="nc" id="L984">				checkForNewStyle(newRule, byGraphIdGroups);</span>
+<span class="nc" id="L985">			break;</span>
+		case NODE:
+<span class="nc bnc" id="L987" title="All 2 branches missed.">			if (newRule.selector.getId() != null)</span>
+<span class="nc" id="L988">				checkForNewIdStyle(newRule, byNodeIdGroups);</span>
+			else
+<span class="nc" id="L990">				checkForNewStyle(newRule, byNodeIdGroups);</span>
+<span class="nc" id="L991">			break;</span>
+		case EDGE:
+<span class="nc bnc" id="L993" title="All 2 branches missed.">			if (newRule.selector.getId() != null)</span>
+<span class="nc" id="L994">				checkForNewIdStyle(newRule, byEdgeIdGroups);</span>
+			else
+<span class="nc" id="L996">				checkForNewStyle(newRule, byEdgeIdGroups);</span>
+<span class="nc" id="L997">			break;</span>
+		case SPRITE:
+<span class="nc bnc" id="L999" title="All 2 branches missed.">			if (newRule.selector.getId() != null)</span>
+<span class="nc" id="L1000">				checkForNewIdStyle(newRule, bySpriteIdGroups);</span>
+			else
+<span class="nc" id="L1002">				checkForNewStyle(newRule, bySpriteIdGroups);</span>
+<span class="nc" id="L1003">			break;</span>
+		case ANY:
+		default:
+<span class="nc" id="L1006">			throw new RuntimeException(&quot;What ?&quot;);</span>
+		}
+<span class="nc" id="L1008">	}</span>
+
+	/**
+	 * Check for a new specific style (applies only to one element).
+	 * 
+	 * @param newRule
+	 *            The new style rule.
+	 * @param elt2grp
+	 *            The name space.
+	 */
+	protected void checkForNewIdStyle(Rule newRule, Map&lt;String, String&gt; elt2grp) {
+		// There is only one element that matches the identifier.
+
+<span class="nc" id="L1021">		Element element = getElement(newRule.selector.getId(), elt2grp);</span>
+
+<span class="nc bnc" id="L1023" title="All 2 branches missed.">		if (element != null) {</span>
+<span class="nc" id="L1024">			checkElementStyleGroup(element);</span>
+			// removeElement( element ); // Remove the element from its old
+			// group. Potentially delete a group.
+			// addElement( element ); // Add the element to its new own group
+			// (since this is an ID style).
+		}
+<span class="nc" id="L1030">	}</span>
+
+	/**
+	 * Check for a new kind or class style in a given name space (node, edge,
+	 * sprite, graph).
+	 * 
+	 * @param newRule
+	 *            The new style rule.
+	 * @param elt2grp
+	 *            The name space.
+	 */
+	protected void checkForNewStyle(Rule newRule, Map&lt;String, String&gt; elt2grp) {
+<span class="nc" id="L1042">		elt2grp.keySet().stream().map(eltId -&gt; getElement(eltId, elt2grp)).collect(Collectors.toList())</span>
+<span class="nc" id="L1043">				.forEach(this::checkElementStyleGroup);</span>
+<span class="nc" id="L1044">	}</span>
+
+	// Utility
+
+	@Override
+	public String toString() {
+<span class="nc" id="L1050">		StringBuilder builder = new StringBuilder();</span>
+
+<span class="nc" id="L1052">		builder.append(String.format(&quot;Style groups (%d) :%n&quot;, groups.size()));</span>
+
+<span class="nc bnc" id="L1054" title="All 2 branches missed.">		for (StyleGroup group : groups.values()) {</span>
+<span class="nc" id="L1055">			builder.append(group.toString(1));</span>
+<span class="nc" id="L1056">			builder.append(String.format(&quot;%n&quot;));</span>
+		}
+
+<span class="nc" id="L1059">		return builder.toString();</span>
+	}
+
+	// Inner classes
+
+	/**
+	 * Set of events (meta-classes) actually active.
+	 * 
+	 * &lt;p&gt;
+	 * The event set contains the set of events actually occurring. This is used to
+	 * select alternate styles. The events actually occurring are in precedence
+	 * order. The last one is the most important.
+	 * &lt;/p&gt;
+	 * 
+	 * @author Antoine Dutot
+	 */
+<span class="nc" id="L1075">	public class EventSet {</span>
+<span class="nc" id="L1076">		public ArrayList&lt;String&gt; eventSet = new ArrayList&lt;String&gt;();</span>
+
+<span class="nc" id="L1078">		public String events[] = new String[0];</span>
+
+		/**
+		 * Add an event to the set.
+		 * 
+		 * @param event
+		 *            The event to add.
+		 */
+		public void pushEvent(String event) {
+<span class="nc" id="L1087">			eventSet.add(event);</span>
+<span class="nc" id="L1088">			events = eventSet.toArray(events);</span>
+<span class="nc" id="L1089">		}</span>
+
+		/**
+		 * Remove an event from the set.
+		 * 
+		 * @param event
+		 *            The event to remove.
+		 */
+		public void popEvent(String event) {
+<span class="nc" id="L1098">			int index = eventSet.lastIndexOf(event);</span>
+
+<span class="nc bnc" id="L1100" title="All 2 branches missed.">			if (index &gt;= 0)</span>
+<span class="nc" id="L1101">				eventSet.remove(index);</span>
+
+<span class="nc" id="L1103">			events = eventSet.toArray(events);</span>
+<span class="nc" id="L1104">		}</span>
+
+		/**
+		 * The set of events in order, the most important at the end.
+		 * 
+		 * @return The event set.
+		 */
+		public String[] getEvents() {
+<span class="nc" id="L1112">			return events;</span>
+		}
+	}
+
+	/**
+	 * All the style groups sorted by their Z index.
+	 * 
+	 * &lt;p&gt;
+	 * This structure is maintained by each time a group is added or removed, or
+	 * when the style of a group changed.
+	 * &lt;/p&gt;
+	 * 
+	 * @author Antoine Dutot
+	 */
+	public class ZIndex implements Iterable&lt;HashSet&lt;StyleGroup&gt;&gt; {
+		/**
+		 * Ordered set of groups.
+		 */
+<span class="nc" id="L1130">		public ArrayList&lt;HashSet&lt;StyleGroup&gt;&gt; zIndex = new ArrayList&lt;HashSet&lt;StyleGroup&gt;&gt;();</span>
+
+		/**
+		 * Knowing a group, tell if its Z index.
+		 */
+<span class="nc" id="L1135">		public HashMap&lt;String, Integer&gt; reverseZIndex = new HashMap&lt;String, Integer&gt;();</span>
+
+		/**
+		 * New empty Z index.
+		 */
+<span class="nc" id="L1140">		public ZIndex() {</span>
+<span class="nc" id="L1141">			initZIndex();</span>
+<span class="nc" id="L1142">		}</span>
+
+		protected void initZIndex() {
+<span class="nc" id="L1145">			zIndex.ensureCapacity(256);</span>
+
+<span class="nc bnc" id="L1147" title="All 2 branches missed.">			for (int i = 0; i &lt; 256; i++)</span>
+<span class="nc" id="L1148">				zIndex.add(null);</span>
+<span class="nc" id="L1149">		}</span>
+
+		/**
+		 * Iterator on the set of Z index cells. Each item is a set of style groups that
+		 * pertain to the same Z index.
+		 * 
+		 * @return Iterator on the Z index.
+		 */
+		protected Iterator&lt;HashSet&lt;StyleGroup&gt;&gt; getIterator() {
+<span class="nc" id="L1158">			return new ZIndexIterator();</span>
+		}
+
+		public Iterator&lt;HashSet&lt;StyleGroup&gt;&gt; iterator() {
+<span class="nc" id="L1162">			return getIterator();</span>
+		}
+
+		/**
+		 * A new group appeared, put it in the z index.
+		 * 
+		 * @param group
+		 *            The group to add.
+		 */
+		protected void groupAdded(StyleGroup group) {
+<span class="nc" id="L1172">			int z = convertZ(group.getZIndex());</span>
+
+<span class="nc bnc" id="L1174" title="All 2 branches missed.">			if (zIndex.get(z) == null)</span>
+<span class="nc" id="L1175">				zIndex.set(z, new HashSet&lt;StyleGroup&gt;());</span>
+
+<span class="nc" id="L1177">			zIndex.get(z).add(group);</span>
+<span class="nc" id="L1178">			reverseZIndex.put(group.getId(), z);</span>
+<span class="nc" id="L1179">		}</span>
+
+		/**
+		 * A group eventually changed, check its location.
+		 * 
+		 * @param group
+		 *            The group to check.
+		 */
+		protected void groupChanged(StyleGroup group) {
+<span class="nc" id="L1188">			int oldZ = reverseZIndex.get(group.getId());</span>
+<span class="nc" id="L1189">			int newZ = convertZ(group.getZIndex());</span>
+
+<span class="nc bnc" id="L1191" title="All 2 branches missed.">			if (oldZ != newZ) {</span>
+<span class="nc" id="L1192">				HashSet&lt;StyleGroup&gt; map = zIndex.get(oldZ);</span>
+
+<span class="nc bnc" id="L1194" title="All 2 branches missed.">				if (map != null) {</span>
+<span class="nc" id="L1195">					map.remove(group);</span>
+<span class="nc" id="L1196">					reverseZIndex.remove(group.getId());</span>
+
+<span class="nc bnc" id="L1198" title="All 2 branches missed.">					if (map.isEmpty())</span>
+<span class="nc" id="L1199">						zIndex.set(oldZ, null);</span>
+				}
+
+<span class="nc" id="L1202">				groupAdded(group);</span>
+			}
+<span class="nc" id="L1204">		}</span>
+
+		/**
+		 * A group was removed, remove it from the Z index.
+		 * 
+		 * @param group
+		 *            The group to remove.
+		 */
+		protected void groupRemoved(StyleGroup group) {
+<span class="nc" id="L1213">			int z = convertZ(group.getZIndex());</span>
+
+<span class="nc" id="L1215">			HashSet&lt;StyleGroup&gt; map = zIndex.get(z);</span>
+
+<span class="nc bnc" id="L1217" title="All 2 branches missed.">			if (map != null) {</span>
+<span class="nc" id="L1218">				map.remove(group);</span>
+<span class="nc" id="L1219">				reverseZIndex.remove(group.getId());</span>
+
+<span class="nc bnc" id="L1221" title="All 2 branches missed.">				if (map.isEmpty())</span>
+<span class="nc" id="L1222">					zIndex.set(z, null);</span>
+<span class="nc" id="L1223">			} else {</span>
+<span class="nc" id="L1224">				throw new RuntimeException(&quot;Inconsistency in Z-index&quot;);</span>
+			}
+<span class="nc" id="L1226">		}</span>
+
+		public void clear() {
+<span class="nc" id="L1229">			zIndex.clear();</span>
+<span class="nc" id="L1230">			reverseZIndex.clear();</span>
+<span class="nc" id="L1231">			initZIndex();</span>
+<span class="nc" id="L1232">		}</span>
+
+		/**
+		 * Convert a [-127,127] value into a [0,255] value and check bounds.
+		 * 
+		 * @param z
+		 *            The Z value to convert.
+		 * @return The Z value converted and bounded to [0,255].
+		 */
+		protected int convertZ(int z) {
+<span class="nc" id="L1242">			z += 127;</span>
+
+<span class="nc bnc" id="L1244" title="All 2 branches missed.">			if (z &lt; 0)</span>
+<span class="nc" id="L1245">				z = 0;</span>
+<span class="nc bnc" id="L1246" title="All 2 branches missed.">			else if (z &gt; 255)</span>
+<span class="nc" id="L1247">				z = 255;</span>
+
+<span class="nc" id="L1249">			return z;</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L1254">			StringBuilder sb = new StringBuilder();</span>
+
+<span class="nc" id="L1256">			sb.append(String.format(&quot;Z index :%n&quot;));</span>
+
+<span class="nc bnc" id="L1258" title="All 2 branches missed.">			for (int i = 0; i &lt; 256; i++) {</span>
+<span class="nc bnc" id="L1259" title="All 2 branches missed.">				if (zIndex.get(i) != null) {</span>
+<span class="nc" id="L1260">					sb.append(String.format(&quot;    * %d -&gt; &quot;, i - 127));</span>
+
+<span class="nc" id="L1262">					HashSet&lt;StyleGroup&gt; map = zIndex.get(i);</span>
+
+<span class="nc bnc" id="L1264" title="All 2 branches missed.">					for (StyleGroup g : map)</span>
+<span class="nc" id="L1265">						sb.append(String.format(&quot;%s &quot;, g.getId()));</span>
+
+<span class="nc" id="L1267">					sb.append(String.format(&quot;%n&quot;));</span>
+				}
+			}
+
+<span class="nc" id="L1271">			return sb.toString();</span>
+		}
+
+		public class ZIndexIterator implements Iterator&lt;HashSet&lt;StyleGroup&gt;&gt; {
+<span class="nc" id="L1275">			public int index = 0;</span>
+
+<span class="nc" id="L1277">			public ZIndexIterator() {</span>
+<span class="nc" id="L1278">				zapUntilACell();</span>
+<span class="nc" id="L1279">			}</span>
+
+			protected void zapUntilACell() {
+<span class="nc bnc" id="L1282" title="All 4 branches missed.">				while (index &lt; 256 &amp;&amp; zIndex.get(index) == null)</span>
+<span class="nc" id="L1283">					index++;</span>
+<span class="nc" id="L1284">			}</span>
+
+			public boolean hasNext() {
+<span class="nc bnc" id="L1287" title="All 2 branches missed.">				return (index &lt; 256);</span>
+			}
+
+			public HashSet&lt;StyleGroup&gt; next() {
+<span class="nc bnc" id="L1291" title="All 2 branches missed.">				if (hasNext()) {</span>
+<span class="nc" id="L1292">					HashSet&lt;StyleGroup&gt; cell = zIndex.get(index);</span>
+<span class="nc" id="L1293">					index++;</span>
+<span class="nc" id="L1294">					zapUntilACell();</span>
+<span class="nc" id="L1295">					return cell;</span>
+				}
+
+<span class="nc" id="L1298">				return null;</span>
+			}
+
+			public void remove() {
+<span class="nc" id="L1302">				throw new RuntimeException(&quot;This iterator does not support removal.&quot;);</span>
+			}
+		}
+	}
+
+	/**
+	 * Set of groups that cast a shadow.
+	 * 
+	 * @author Antoine Dutot
+	 */
+<span class="nc" id="L1312">	public class ShadowSet implements Iterable&lt;StyleGroup&gt; {</span>
+		/**
+		 * The set of groups casting shadow.
+		 */
+<span class="nc" id="L1316">		protected HashSet&lt;StyleGroup&gt; shadowSet = new HashSet&lt;StyleGroup&gt;();</span>
+
+		/**
+		 * Iterator on the set of groups that cast a shadow.
+		 * 
+		 * @return An iterator on the shadow style group set.
+		 */
+		protected Iterator&lt;StyleGroup&gt; getIterator() {
+<span class="nc" id="L1324">			return shadowSet.iterator();</span>
+		}
+
+		public Iterator&lt;StyleGroup&gt; iterator() {
+<span class="nc" id="L1328">			return getIterator();</span>
+		}
+
+		/**
+		 * A group appeared, check its shadow status.
+		 * 
+		 * @param group
+		 *            The group added.
+		 */
+		protected void groupAdded(StyleGroup group) {
+<span class="nc bnc" id="L1338" title="All 2 branches missed.">			if (group.getShadowMode() != ShadowMode.NONE)</span>
+<span class="nc" id="L1339">				shadowSet.add(group);</span>
+<span class="nc" id="L1340">		}</span>
+
+		/**
+		 * A group eventually changed, check its shadow status.
+		 * 
+		 * @param group
+		 *            The group that changed.
+		 */
+		protected void groupChanged(StyleGroup group) {
+<span class="nc bnc" id="L1349" title="All 2 branches missed.">			if (group.getShadowMode() == ShadowMode.NONE)</span>
+<span class="nc" id="L1350">				shadowSet.remove(group);</span>
+			else
+<span class="nc" id="L1352">				shadowSet.add(group);</span>
+<span class="nc" id="L1353">		}</span>
+
+		/**
+		 * A group was removed, remove it from the shadow if needed.
+		 * 
+		 * @param group
+		 *            The group removed.
+		 */
+		protected void groupRemoved(StyleGroup group) {
+			// Faster than to first test its existence or shadow status :
+
+<span class="nc" id="L1364">			shadowSet.remove(group);</span>
+<span class="nc" id="L1365">		}</span>
+
+		protected void clear() {
+<span class="nc" id="L1368">			shadowSet.clear();</span>
+<span class="nc" id="L1369">		}</span>
+	}
+
+	/**
+	 * Iterator that allows to browse all graph elements of a given kind (nodes,
+	 * edges, sprites, graphs) as if they where in a single set, whereas they are in
+	 * style groups.
+	 * 
+	 * @author Antoine Dutot
+	 * @param &lt;E&gt;
+	 *            The kind of graph element.
+	 */
+	protected class ElementIterator&lt;E extends Element&gt; implements Iterator&lt;E&gt; {
+		protected Map&lt;String, String&gt; elt2grp;
+
+		protected Iterator&lt;String&gt; elts;
+
+<span class="nc" id="L1386">		public ElementIterator(final Map&lt;String, String&gt; elements2groups) {</span>
+<span class="nc" id="L1387">			elt2grp = elements2groups;</span>
+<span class="nc" id="L1388">			elts = elements2groups.keySet().iterator();</span>
+<span class="nc" id="L1389">		}</span>
+
+		public boolean hasNext() {
+<span class="nc" id="L1392">			return elts.hasNext();</span>
+		}
+
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public E next() {
+<span class="nc" id="L1397">			String eid = elts.next();</span>
+<span class="nc" id="L1398">			String gid = elt2grp.get(eid);</span>
+<span class="nc" id="L1399">			StyleGroup grp = groups.get(gid);</span>
+
+<span class="nc" id="L1401">			return (E) grp.getElement(eid);</span>
+		}
+
+		public void remove() {
+<span class="nc" id="L1405">			throw new RuntimeException(&quot;remove not implemented in this iterator&quot;);</span>
+		}
+	}
+
+	/**
+	 * Dummy set of nodes.
+	 */
+<span class="nc" id="L1412">	protected class NodeSet implements Iterable&lt;Node&gt; {</span>
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public Iterator&lt;Node&gt; iterator() {
+<span class="nc" id="L1415">			return (Iterator&lt;Node&gt;) getNodeIterator();</span>
+		}
+	}
+
+	/**
+	 * Dummy set of edges.
+	 */
+<span class="nc" id="L1422">	protected class EdgeSet implements Iterable&lt;Edge&gt; {</span>
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public Iterator&lt;Edge&gt; iterator() {
+<span class="nc" id="L1425">			return (Iterator&lt;Edge&gt;) getEdgeIterator();</span>
+		}
+	}
+
+	/**
+	 * Dummy set of sprites.
+	 */
+<span class="nc" id="L1432">	protected class SpriteSet implements Iterable&lt;GraphicSprite&gt; {</span>
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public Iterator&lt;GraphicSprite&gt; iterator() {
+<span class="nc" id="L1435">			return (Iterator&lt;GraphicSprite&gt;) getSpriteIterator();</span>
+		}
+	}
+
+<span class="nc" id="L1439">	protected class GraphSet implements Iterable&lt;GraphicGraph&gt; {</span>
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public Iterator&lt;GraphicGraph&gt; iterator() {
+<span class="nc" id="L1442">			return (Iterator&lt;GraphicGraph&gt;) getGraphIterator();</span>
+		}
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

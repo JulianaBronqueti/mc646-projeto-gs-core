@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GraphicNode.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph</a> &gt; <span class="el_source">GraphicNode.java</span></div><h1>GraphicNode.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.stream.SourceBase.ElementType;
+import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.graphicGraph.stylesheet.Selector;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.stream.Stream;
+
+import static org.graphstream.ui.graphicGraph.GraphPosLengthUtils.nodePosition;
+
+/**
+ * Graphical node.
+ * 
+ * &lt;p&gt;
+ * A graphic node defines a position (x,y,z), a string label, and a style from
+ * the style sheet.
+ * &lt;/p&gt;
+ * 
+ * @see GraphicGraph
+ */
+public class GraphicNode extends GraphicElement implements Node {
+	/**
+	 * The position of the node. In graph units.
+	 */
+	public double x, y, z;
+
+<span class="nc" id="L69">	public boolean positionned = false;</span>
+
+	/**
+	 * New graphic node.
+	 * 
+	 * @param id
+	 *            The node identifier.
+	 * @param attributes
+	 *            The node attribute set (can be null).
+	 */
+	public GraphicNode(GraphicGraph graph, String id, HashMap&lt;String, Object&gt; attributes) {
+<span class="nc" id="L80">		super(id, graph);</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">		if (attributes != null)</span>
+<span class="nc" id="L83">			setAttributes(attributes);</span>
+<span class="nc" id="L84">	}</span>
+
+	@Override
+	public Selector.Type getSelectorType() {
+<span class="nc" id="L88">		return Selector.Type.NODE;</span>
+	}
+
+	@Override
+	public double getX() {
+<span class="nc" id="L93">		return x;</span>
+	}
+
+	@Override
+	public double getY() {
+<span class="nc" id="L98">		return y;</span>
+	}
+
+	@Override
+	public double getZ() {
+<span class="nc" id="L103">		return z;</span>
+	}
+
+	protected Point3 getPosition() {
+<span class="nc" id="L107">		return new Point3(x, y, z);</span>
+	}
+
+	protected void moveFromEvent(double x, double y, double z) {
+<span class="nc" id="L111">		this.x = x;</span>
+<span class="nc" id="L112">		this.y = y;</span>
+<span class="nc" id="L113">		this.z = z;</span>
+
+<span class="nc bnc" id="L115" title="All 2 branches missed.">		if (!positionned) {</span>
+<span class="nc" id="L116">			positionned = true;</span>
+		}
+
+<span class="nc" id="L119">		mygraph.graphChanged = true;</span>
+<span class="nc" id="L120">		mygraph.boundsChanged = true;</span>
+<span class="nc" id="L121">	}</span>
+
+	@Override
+	public void move(double x, double y, double z) {
+<span class="nc" id="L125">		moveFromEvent(x, y, z);</span>
+
+<span class="nc bnc" id="L127" title="All 2 branches missed.">		if (mygraph.feedbackXYZ)</span>
+<span class="nc" id="L128">			setAttribute(&quot;xyz&quot;, x, y, z);</span>
+<span class="nc" id="L129">	}</span>
+
+	@Override
+	protected void attributeChanged(AttributeChangeEvent event, String attribute, Object oldValue, Object newValue) {
+<span class="nc" id="L133">		super.attributeChanged(event, attribute, oldValue, newValue);</span>
+<span class="nc" id="L134">		char c = attribute.charAt(0);</span>
+
+<span class="nc bnc" id="L136" title="All 8 branches missed.">		if (attribute.length() &gt; 2 &amp;&amp; c == 'u' &amp;&amp; attribute.charAt(1) == 'i' &amp;&amp; attribute.startsWith(&quot;ui.sprite.&quot;)) {</span>
+<span class="nc" id="L137">			mygraph.spriteAttribute(event, this, attribute, newValue);</span>
+<span class="nc bnc" id="L138" title="All 4 branches missed.">		} else if ((event == AttributeChangeEvent.ADD || event == AttributeChangeEvent.CHANGE)) {</span>
+<span class="nc bnc" id="L139" title="All 2 branches missed.">			if (attribute.length() == 1) {</span>
+<span class="nc bnc" id="L140" title="All 4 branches missed.">				switch (c) {</span>
+				case 'x':
+<span class="nc" id="L142">					moveFromEvent(numberAttribute(newValue), y, z);</span>
+<span class="nc" id="L143">					break;</span>
+				case 'y':
+<span class="nc" id="L145">					moveFromEvent(x, numberAttribute(newValue), z);</span>
+<span class="nc" id="L146">					break;</span>
+				case 'z':
+<span class="nc" id="L148">					moveFromEvent(x, y, numberAttribute(newValue));</span>
+<span class="nc" id="L149">					break;</span>
+				default:
+					break;
+				}
+<span class="nc bnc" id="L153" title="All 6 branches missed.">			} else if (c == 'x' &amp;&amp; attribute.length() &gt; 1 &amp;&amp; attribute.charAt(1) == 'y'</span>
+<span class="nc bnc" id="L154" title="All 6 branches missed.">					&amp;&amp; (attribute.length() == 2 || (attribute.length() == 3 &amp;&amp; attribute.charAt(2) == 'z'))) {</span>
+
+<span class="nc" id="L156">				double pos[] = nodePosition(this);</span>
+<span class="nc" id="L157">				moveFromEvent(pos[0], pos[1], pos[2]);</span>
+			}
+		}
+
+<span class="nc" id="L161">		mygraph.listeners.sendAttributeChangedEvent(getId(), ElementType.NODE, attribute, event, oldValue, newValue);</span>
+<span class="nc" id="L162">	}</span>
+
+	/**
+	 * Try to convert the object to a double.
+	 * 
+	 * @param value
+	 *            The object to convert.
+	 * @return The value.
+	 */
+	protected double numberAttribute(Object value) {
+<span class="nc bnc" id="L172" title="All 2 branches missed.">		if (value instanceof Number) {</span>
+<span class="nc" id="L173">			return ((Number) value).doubleValue();</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">		} else if (value instanceof String) {</span>
+			try {
+<span class="nc" id="L176">				return Double.parseDouble((String) value);</span>
+<span class="nc" id="L177">			} catch (NumberFormatException e) {</span>
+			}
+<span class="nc bnc" id="L179" title="All 2 branches missed.">		} else if (value instanceof CharSequence) {</span>
+			try {
+<span class="nc" id="L181">				return Double.parseDouble(((CharSequence) value).toString());</span>
+<span class="nc" id="L182">			} catch (NumberFormatException e) {</span>
+			}
+		}
+
+<span class="nc" id="L186">		return 0;</span>
+	}
+
+	@Override
+	protected void removed() {
+		// NOP
+<span class="nc" id="L192">	}</span>
+
+	// Node interface.
+
+	/**
+	 * Not implemented.
+	 */
+	@Override
+	public Iterator&lt;Node&gt; getBreadthFirstIterator() {
+<span class="nc" id="L201">		throw new RuntimeException(&quot;not implemented !&quot;);</span>
+	}
+
+	/**
+	 * Not implemented.
+	 */
+	@Override
+	public Iterator&lt;Node&gt; getBreadthFirstIterator(boolean directed) {
+<span class="nc" id="L209">		throw new RuntimeException(&quot;not implemented !&quot;);</span>
+	}
+
+	/**
+	 * Not implemented.
+	 */
+	@Override
+	public Iterator&lt;Node&gt; getDepthFirstIterator() {
+<span class="nc" id="L217">		throw new RuntimeException(&quot;not implemented !&quot;);</span>
+	}
+
+	/**
+	 * Not implemented.
+	 */
+	@Override
+	public Iterator&lt;Node&gt; getDepthFirstIterator(boolean directed) {
+<span class="nc" id="L225">		throw new RuntimeException(&quot;not implemented !&quot;);</span>
+	}
+
+	@Override
+	public int getDegree() {
+<span class="nc" id="L230">		List&lt;GraphicEdge&gt; edges = mygraph.connectivity.get(this);</span>
+
+<span class="nc bnc" id="L232" title="All 2 branches missed.">		if (edges != null)</span>
+<span class="nc" id="L233">			return edges.size();</span>
+
+<span class="nc" id="L235">		return 0;</span>
+	}
+
+	@Override
+	public Edge getEdge(int i) {
+<span class="nc" id="L240">		List&lt;GraphicEdge&gt; edges = mygraph.connectivity.get(this);</span>
+
+<span class="nc bnc" id="L242" title="All 6 branches missed.">		if (edges != null &amp;&amp; i &gt;= 0 &amp;&amp; i &lt; edges.size())</span>
+<span class="nc" id="L243">			return edges.get(i);</span>
+
+<span class="nc" id="L245">		return null;</span>
+	}
+
+	@Override
+	public Edge getEdgeBetween(String id) {
+<span class="nc bnc" id="L250" title="All 2 branches missed.">		if (hasEdgeToward(id))</span>
+<span class="nc" id="L251">			return getEdgeToward(id);</span>
+		else
+<span class="nc" id="L253">			return getEdgeFrom(id);</span>
+	}
+
+	@Override
+	public Edge getEdgeFrom(String id) {
+<span class="nc" id="L258">		return null;</span>
+	}
+
+	@Override
+	public Stream&lt;Edge&gt; edges() {
+<span class="nc" id="L263">		return mygraph.connectivity.get(this).stream().map(ge -&gt; (Edge) ge);</span>
+	}
+
+	@Override
+	public Iterator&lt;Edge&gt; iterator() {
+<span class="nc" id="L268">		return edges().iterator();</span>
+	}
+
+	@Override
+	public Edge getEdgeToward(String id) {
+<span class="nc" id="L273">		List&lt;? extends Edge&gt; edges = mygraph.connectivity.get(this);</span>
+
+<span class="nc bnc" id="L275" title="All 2 branches missed.">		for (Edge edge : edges) {</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">			if (edge.getOpposite(this).getId().equals(id))</span>
+<span class="nc" id="L277">				return edge;</span>
+		}
+
+<span class="nc" id="L280">		return null;</span>
+	}
+
+	@Override
+	public Graph getGraph() {
+<span class="nc" id="L285">		return mygraph;</span>
+	}
+
+	public String getGraphName() {
+<span class="nc" id="L289">		throw new RuntimeException(&quot;impossible with GraphicGraph&quot;);</span>
+	}
+
+	public String getHost() {
+<span class="nc" id="L293">		throw new RuntimeException(&quot;impossible with GraphicGraph&quot;);</span>
+	}
+
+	@Override
+	public int getInDegree() {
+<span class="nc" id="L298">		return getDegree();</span>
+	}
+
+	@Override
+	public int getOutDegree() {
+<span class="nc" id="L303">		return getDegree();</span>
+	}
+
+	@Override
+	public boolean hasEdgeBetween(String id) {
+<span class="nc bnc" id="L308" title="All 4 branches missed.">		return (hasEdgeToward(id) || hasEdgeFrom(id));</span>
+	}
+
+	@Override
+	public boolean hasEdgeFrom(String id) {
+<span class="nc" id="L313">		return false;</span>
+	}
+
+	@Override
+	public boolean hasEdgeToward(String id) {
+<span class="nc" id="L318">		return false;</span>
+	}
+
+	public boolean isDistributed() {
+<span class="nc" id="L322">		return false;</span>
+	}
+
+	public void setGraph(Graph graph) {
+<span class="nc" id="L326">		throw new RuntimeException(&quot;impossible with GraphicGraph&quot;);</span>
+	}
+
+	public void setGraphName(String newHost) {
+<span class="nc" id="L330">		throw new RuntimeException(&quot;impossible with GraphicGraph&quot;);</span>
+	}
+
+	public void setHost(String newHost) {
+<span class="nc" id="L334">		throw new RuntimeException(&quot;impossible with GraphicGraph&quot;);</span>
+	}
+
+	// XXX stubs for the new methods
+
+	@Override
+	public Edge getEdgeBetween(Node Node) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L342">		return null;</span>
+	}
+
+	@Override
+	public Edge getEdgeBetween(int index) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L348">		return null;</span>
+	}
+
+	@Override
+	public Edge getEdgeFrom(Node Node) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L354">		return null;</span>
+	}
+
+	@Override
+	public Edge getEdgeFrom(int index) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L360">		return null;</span>
+	}
+
+	@Override
+	public Edge getEdgeToward(Node Node) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L366">		return null;</span>
+	}
+
+	@Override
+	public Edge getEdgeToward(int index) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L372">		return null;</span>
+	}
+
+	@Override
+	public Edge getEnteringEdge(int i) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L378">		return null;</span>
+	}
+
+	@Override
+	public Edge getLeavingEdge(int i) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L384">		return null;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Timeline.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream</a> &gt; <span class="el_source">Timeline.java</span></div><h1>Timeline.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2012-05-21
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream;
+
+import java.util.Iterator;
+import java.util.LinkedList;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.graph.implementations.Graphs;
+import org.graphstream.util.GraphDiff;
+import org.graphstream.util.VerboseSink;
+
+public class Timeline implements Source, Replayable, Iterable&lt;Graph&gt; {
+
+	public static final String TIME_PREFIX = &quot;time&quot;;
+
+	private class StepDiff {
+		double step;
+		GraphDiff diff;
+
+<span class="nc" id="L51">		StepDiff(double step, GraphDiff diff) {</span>
+<span class="nc" id="L52">			this.step = step;</span>
+<span class="nc" id="L53">			this.diff = diff;</span>
+<span class="nc" id="L54">		}</span>
+	}
+
+	LinkedList&lt;StepDiff&gt; diffs;
+
+	protected boolean changed;
+	protected Graph initialGraph, currentGraph;
+	protected GraphDiff currentDiff;
+	protected Connector connector;
+	protected PipeBase pipe;
+	protected int seeker;
+
+<span class="nc" id="L66">	public Timeline() {</span>
+<span class="nc" id="L67">		this.diffs = new LinkedList&lt;StepDiff&gt;();</span>
+<span class="nc" id="L68">		this.changed = false;</span>
+<span class="nc" id="L69">		this.connector = new Connector();</span>
+<span class="nc" id="L70">		this.currentDiff = null;</span>
+<span class="nc" id="L71">		this.pipe = new PipeBase();</span>
+<span class="nc" id="L72">	}</span>
+
+	public void reset() {
+
+<span class="nc" id="L76">	}</span>
+
+	public void play(double from, double to) {
+<span class="nc" id="L79">		play(from, to, pipe);</span>
+<span class="nc" id="L80">	}</span>
+
+	public void play(double from, double to, Sink sink) {
+<span class="nc bnc" id="L83" title="All 2 branches missed.">		if (diffs.size() == 0)</span>
+<span class="nc" id="L84">			return;</span>
+
+<span class="nc bnc" id="L86" title="All 2 branches missed.">		if (from &gt; to) {</span>
+<span class="nc" id="L87">			int i = diffs.size() - 1, j;</span>
+
+<span class="nc bnc" id="L89" title="All 4 branches missed.">			while (i &gt; 0 &amp;&amp; diffs.get(i).step &gt; from)</span>
+<span class="nc" id="L90">				i--;</span>
+
+<span class="nc" id="L92">			j = i;</span>
+
+<span class="nc bnc" id="L94" title="All 4 branches missed.">			while (j &gt; 0 &amp;&amp; diffs.get(j).step &gt;= to)</span>
+<span class="nc" id="L95">				j--;</span>
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">			for (int k = i; k &gt;= j; k--)</span>
+<span class="nc" id="L98">				diffs.get(k).diff.reverse(sink);</span>
+<span class="nc" id="L99">		} else {</span>
+<span class="nc" id="L100">			int i = 0, j;</span>
+
+<span class="nc bnc" id="L102" title="All 4 branches missed.">			while (i &lt; diffs.size() - 1 &amp;&amp; diffs.get(i).step &lt; from)</span>
+<span class="nc" id="L103">				i++;</span>
+
+<span class="nc" id="L105">			j = i;</span>
+
+<span class="nc bnc" id="L107" title="All 4 branches missed.">			while (j &lt; diffs.size() - 1 &amp;&amp; diffs.get(j).step &lt;= to)</span>
+<span class="nc" id="L108">				j++;</span>
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">			for (int k = i; k &lt;= j; k++)</span>
+<span class="nc" id="L111">				diffs.get(k).diff.apply(sink);</span>
+		}
+<span class="nc" id="L113">	}</span>
+
+	public void play() {
+<span class="nc" id="L116">		play(initialGraph.getStep(), currentGraph.getStep());</span>
+<span class="nc" id="L117">	}</span>
+
+	public void play(Sink sink) {
+<span class="nc" id="L120">		play(initialGraph.getStep(), currentGraph.getStep(), sink);</span>
+<span class="nc" id="L121">	}</span>
+
+	public void playback() {
+<span class="nc" id="L124">		play(currentGraph.getStep(), initialGraph.getStep());</span>
+<span class="nc" id="L125">	}</span>
+
+	public void playback(Sink sink) {
+<span class="nc" id="L128">		play(currentGraph.getStep(), initialGraph.getStep(), sink);</span>
+<span class="nc" id="L129">	}</span>
+
+	public void seek(int i) {
+<span class="nc" id="L132">		seeker = i;</span>
+<span class="nc" id="L133">	}</span>
+
+	public void seekStart() {
+<span class="nc" id="L136">		seeker = 0;</span>
+<span class="nc" id="L137">	}</span>
+
+	public void seekEnd() {
+<span class="nc" id="L140">		seeker = diffs.size();</span>
+<span class="nc" id="L141">	}</span>
+
+	public boolean hasNext() {
+<span class="nc bnc" id="L144" title="All 2 branches missed.">		return seeker &lt; diffs.size();</span>
+	}
+
+	public void next() {
+<span class="nc bnc" id="L148" title="All 2 branches missed.">		if (seeker &gt;= diffs.size())</span>
+<span class="nc" id="L149">			return;</span>
+
+<span class="nc" id="L151">		diffs.get(seeker++).diff.apply(pipe);</span>
+<span class="nc" id="L152">	}</span>
+
+	public boolean hasPrevious() {
+<span class="nc bnc" id="L155" title="All 2 branches missed.">		return seeker &gt; 0;</span>
+	}
+
+	public void previous() {
+<span class="nc bnc" id="L159" title="All 2 branches missed.">		if (seeker &lt;= 0)</span>
+<span class="nc" id="L160">			return;</span>
+
+<span class="nc" id="L162">		diffs.get(--seeker).diff.reverse(pipe);</span>
+<span class="nc" id="L163">	}</span>
+
+	/**
+	 * @param source
+	 */
+	public void begin(Source source) {
+<span class="nc" id="L169">		initialGraph = new AdjacencyListGraph(&quot;initial&quot;);</span>
+<span class="nc" id="L170">		currentGraph = new AdjacencyListGraph(&quot;initial&quot;);</span>
+<span class="nc" id="L171">		begin();</span>
+<span class="nc" id="L172">	}</span>
+
+	/**
+	 * @param source
+	 */
+	public void begin(Graph source) {
+<span class="nc" id="L178">		initialGraph = Graphs.clone(source);</span>
+<span class="nc" id="L179">		currentGraph = source;</span>
+<span class="nc" id="L180">		begin();</span>
+<span class="nc" id="L181">	}</span>
+
+	protected void begin() {
+<span class="nc" id="L184">		currentGraph.addSink(connector);</span>
+<span class="nc" id="L185">		pushDiff();</span>
+<span class="nc" id="L186">	}</span>
+
+	/**
+	 *
+	 */
+	public void end() {
+<span class="nc bnc" id="L192" title="All 2 branches missed.">		if (currentDiff != null) {</span>
+<span class="nc" id="L193">			currentDiff.end();</span>
+<span class="nc" id="L194">			diffs.add(new StepDiff(currentGraph.getStep(), currentDiff));</span>
+		}
+
+<span class="nc" id="L197">		currentGraph.removeSink(connector);</span>
+<span class="nc" id="L198">		currentGraph = Graphs.clone(currentGraph);</span>
+<span class="nc" id="L199">	}</span>
+
+	protected void pushDiff() {
+<span class="nc bnc" id="L202" title="All 2 branches missed.">		if (currentDiff != null) {</span>
+<span class="nc" id="L203">			currentDiff.end();</span>
+<span class="nc" id="L204">			diffs.add(new StepDiff(currentGraph.getStep(), currentDiff));</span>
+		}
+
+<span class="nc" id="L207">		currentDiff = new GraphDiff();</span>
+<span class="nc" id="L208">		currentDiff.start(currentGraph);</span>
+<span class="nc" id="L209">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see java.lang.Iterable#iterator()
+	 */
+	public Iterator&lt;Graph&gt; iterator() {
+<span class="nc" id="L217">		return new TimelineIterator();</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Replayable#getReplayController()
+	 */
+	public Controller getReplayController() {
+<span class="nc" id="L226">		return new TimelineReplayController();</span>
+	}
+
+<span class="nc" id="L229">	protected class Connector extends SinkAdapter {</span>
+		@Override
+		public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L232">			Timeline.this.pushDiff();</span>
+<span class="nc" id="L233">		}</span>
+	}
+
+<span class="nc" id="L236">	protected class TimelineReplayController extends PipeBase implements Controller {</span>
+		public void replay() {
+<span class="nc" id="L238">			play(this);</span>
+<span class="nc" id="L239">		}</span>
+
+		public void replay(String sourceId) {
+<span class="nc" id="L242">			String tmp = this.sourceId;</span>
+<span class="nc" id="L243">			this.sourceId = sourceId;</span>
+<span class="nc" id="L244">			play(this);</span>
+<span class="nc" id="L245">			this.sourceId = tmp;</span>
+<span class="nc" id="L246">		}</span>
+	}
+
+	protected class TimelineIterator implements Iterator&lt;Graph&gt; {
+		Graph current;
+		int idx;
+
+<span class="nc" id="L253">		public TimelineIterator() {</span>
+<span class="nc" id="L254">			current = Graphs.clone(initialGraph);</span>
+<span class="nc" id="L255">			idx = 0;</span>
+<span class="nc" id="L256">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.util.Iterator#hasNext()
+		 */
+		public boolean hasNext() {
+<span class="nc bnc" id="L264" title="All 2 branches missed.">			return idx &lt; diffs.size();</span>
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.util.Iterator#next()
+		 */
+		public Graph next() {
+<span class="nc bnc" id="L273" title="All 2 branches missed.">			if (idx &gt;= diffs.size())</span>
+<span class="nc" id="L274">				return null;</span>
+
+<span class="nc" id="L276">			diffs.get(idx++).diff.apply(current);</span>
+<span class="nc" id="L277">			return Graphs.clone(current);</span>
+		}
+
+		/*
+		 * (non-Javadoc)
+		 * 
+		 * @see java.util.Iterator#remove()
+		 */
+		public void remove() {
+<span class="nc" id="L286">		}</span>
+
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#addSink(org.graphstream.stream.Sink)
+	 */
+	public void addSink(Sink sink) {
+<span class="nc" id="L296">		pipe.addSink(sink);</span>
+<span class="nc" id="L297">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#removeSink(org.graphstream.stream.Sink)
+	 */
+	public void removeSink(Sink sink) {
+<span class="nc" id="L305">		pipe.removeSink(sink);</span>
+<span class="nc" id="L306">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#addAttributeSink(org.graphstream.stream
+	 * .AttributeSink)
+	 */
+	public void addAttributeSink(AttributeSink sink) {
+<span class="nc" id="L315">		pipe.addAttributeSink(sink);</span>
+<span class="nc" id="L316">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#removeAttributeSink(org.graphstream.stream
+	 * .AttributeSink)
+	 */
+	public void removeAttributeSink(AttributeSink sink) {
+<span class="nc" id="L325">		pipe.removeAttributeSink(sink);</span>
+<span class="nc" id="L326">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#addElementSink(org.graphstream.stream.
+	 * ElementSink)
+	 */
+	public void addElementSink(ElementSink sink) {
+<span class="nc" id="L335">		pipe.addElementSink(sink);</span>
+<span class="nc" id="L336">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#removeElementSink(org.graphstream.stream
+	 * .ElementSink)
+	 */
+	public void removeElementSink(ElementSink sink) {
+<span class="nc" id="L345">		pipe.removeElementSink(sink);</span>
+<span class="nc" id="L346">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#clearElementSinks()
+	 */
+	public void clearElementSinks() {
+<span class="nc" id="L354">		pipe.clearElementSinks();</span>
+<span class="nc" id="L355">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#clearAttributeSinks()
+	 */
+	public void clearAttributeSinks() {
+<span class="nc" id="L363">		pipe.clearAttributeSinks();</span>
+<span class="nc" id="L364">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.Source#clearSinks()
+	 */
+	public void clearSinks() {
+<span class="nc" id="L372">		pipe.clearSinks();</span>
+<span class="nc" id="L373">	}</span>
+
+	public static void main(String... strings) throws Exception {
+<span class="nc" id="L376">		Graph g = new AdjacencyListGraph(&quot;g&quot;);</span>
+<span class="nc" id="L377">		Timeline timeline = new Timeline();</span>
+<span class="nc" id="L378">		timeline.addSink(new VerboseSink());</span>
+
+<span class="nc" id="L380">		timeline.begin(g);</span>
+
+<span class="nc" id="L382">		g.stepBegins(0.0);</span>
+<span class="nc" id="L383">		g.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L384">		g.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L385">		g.stepBegins(1.0);</span>
+<span class="nc" id="L386">		g.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L388">		timeline.end();</span>
+
+<span class="nc" id="L390">		System.out.printf(&quot;############\n&quot;);</span>
+<span class="nc" id="L391">		System.out.printf(&quot;# Play :\n&quot;);</span>
+<span class="nc" id="L392">		timeline.play();</span>
+<span class="nc" id="L393">		System.out.printf(&quot;############\n&quot;);</span>
+<span class="nc" id="L394">		System.out.printf(&quot;# Playback :\n&quot;);</span>
+<span class="nc" id="L395">		timeline.playback();</span>
+<span class="nc" id="L396">		System.out.printf(&quot;############\n&quot;);</span>
+<span class="nc" id="L397">		System.out.printf(&quot;# Sequence :\n&quot;);</span>
+<span class="nc" id="L398">		int i = 0;</span>
+<span class="nc bnc" id="L399" title="All 2 branches missed.">		for (Graph it : timeline) {</span>
+<span class="nc" id="L400">			System.out.printf(&quot; Graph#%d %s\n&quot;, i, toString(it));</span>
+		}
+<span class="nc" id="L402">		System.out.printf(&quot;############\n&quot;);</span>
+<span class="nc" id="L403">	}</span>
+
+	private static String toString(Graph g) {
+<span class="nc" id="L406">		StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L407">		buffer.append(&quot;id=\&quot;&quot;).append(g.getId()).append(&quot;\&quot; node={&quot;);</span>
+
+<span class="nc" id="L409">		g.nodes().forEach(n -&gt; buffer.append(&quot;\&quot;&quot;).append(n.getId()).append(&quot;\&quot;, &quot;));</span>
+
+<span class="nc" id="L411">		buffer.append(&quot;}, edges={&quot;);</span>
+
+<span class="nc" id="L413">		g.edges().forEach(e -&gt; {</span>
+<span class="nc" id="L414">			buffer.append(&quot;\&quot;&quot;).append(e.getId()).append(&quot;\&quot;:\&quot;&quot;).append(e.getSourceNode().getId()).append(&quot;\&quot;--\&quot;&quot;)</span>
+<span class="nc" id="L415">					.append(e.getTargetNode().getId()).append(&quot;\&quot;, &quot;);</span>
+<span class="nc" id="L416">		});</span>
+
+<span class="nc" id="L418">		buffer.append(&quot;}&quot;);</span>
+
+<span class="nc" id="L420">		return buffer.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

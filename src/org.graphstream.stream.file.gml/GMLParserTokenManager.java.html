@@ -1,0 +1,606 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GMLParserTokenManager.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.gml</a> &gt; <span class="el_source">GMLParserTokenManager.java</span></div><h1>GMLParserTokenManager.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-04
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.gml;
+
+import org.graphstream.util.parser.SimpleCharStream;
+import org.graphstream.util.parser.Token;
+import org.graphstream.util.parser.TokenMgrError;
+
+/** Token Manager. */
+public class GMLParserTokenManager implements GMLParserConstants {
+
+	/** Debug output. */
+<span class="nc" id="L43">	public java.io.PrintStream debugStream = System.out;</span>
+
+	/** Set debug output. */
+	public void setDebugStream(java.io.PrintStream ds) {
+<span class="nc" id="L47">		debugStream = ds;</span>
+<span class="nc" id="L48">	}</span>
+
+	private final int jjStopStringLiteralDfa_0(int pos, long active0) {
+<span class="nc bnc" id="L51" title="All 7 branches missed.">		switch (pos) {</span>
+		case 0:
+<span class="nc bnc" id="L53" title="All 2 branches missed.">			if ((active0 &amp; 0x3000L) != 0L) {</span>
+<span class="nc" id="L54">				jjmatchedKind = 14;</span>
+<span class="nc" id="L55">				return 11;</span>
+			}
+<span class="nc" id="L57">			return -1;</span>
+		case 1:
+<span class="nc bnc" id="L59" title="All 2 branches missed.">			if ((active0 &amp; 0x3000L) != 0L) {</span>
+<span class="nc" id="L60">				jjmatchedKind = 14;</span>
+<span class="nc" id="L61">				jjmatchedPos = 1;</span>
+<span class="nc" id="L62">				return 11;</span>
+			}
+<span class="nc" id="L64">			return -1;</span>
+		case 2:
+<span class="nc bnc" id="L66" title="All 2 branches missed.">			if ((active0 &amp; 0x3000L) != 0L) {</span>
+<span class="nc" id="L67">				jjmatchedKind = 14;</span>
+<span class="nc" id="L68">				jjmatchedPos = 2;</span>
+<span class="nc" id="L69">				return 11;</span>
+			}
+<span class="nc" id="L71">			return -1;</span>
+		case 3:
+<span class="nc bnc" id="L73" title="All 2 branches missed.">			if ((active0 &amp; 0x3000L) != 0L) {</span>
+<span class="nc" id="L74">				jjmatchedKind = 14;</span>
+<span class="nc" id="L75">				jjmatchedPos = 3;</span>
+<span class="nc" id="L76">				return 11;</span>
+			}
+<span class="nc" id="L78">			return -1;</span>
+		case 4:
+<span class="nc bnc" id="L80" title="All 2 branches missed.">			if ((active0 &amp; 0x1000L) != 0L)</span>
+<span class="nc" id="L81">				return 11;</span>
+<span class="nc bnc" id="L82" title="All 2 branches missed.">			if ((active0 &amp; 0x2000L) != 0L) {</span>
+<span class="nc" id="L83">				jjmatchedKind = 14;</span>
+<span class="nc" id="L84">				jjmatchedPos = 4;</span>
+<span class="nc" id="L85">				return 11;</span>
+			}
+<span class="nc" id="L87">			return -1;</span>
+		case 5:
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			if ((active0 &amp; 0x2000L) != 0L) {</span>
+<span class="nc" id="L90">				jjmatchedKind = 14;</span>
+<span class="nc" id="L91">				jjmatchedPos = 5;</span>
+<span class="nc" id="L92">				return 11;</span>
+			}
+<span class="nc" id="L94">			return -1;</span>
+		default:
+<span class="nc" id="L96">			return -1;</span>
+		}
+	}
+
+	private final int jjStartNfa_0(int pos, long active0) {
+<span class="nc" id="L101">		return jjMoveNfa_0(jjStopStringLiteralDfa_0(pos, active0), pos + 1);</span>
+	}
+
+	private int jjStopAtPos(int pos, int kind) {
+<span class="nc" id="L105">		jjmatchedKind = kind;</span>
+<span class="nc" id="L106">		jjmatchedPos = pos;</span>
+<span class="nc" id="L107">		return pos + 1;</span>
+	}
+
+	private int jjMoveStringLiteralDfa0_0() {
+<span class="nc bnc" id="L111" title="All 5 branches missed.">		switch (curChar) {</span>
+		case 91:
+<span class="nc" id="L113">			return jjStopAtPos(0, 8);</span>
+		case 93:
+<span class="nc" id="L115">			return jjStopAtPos(0, 9);</span>
+		case 68:
+		case 100:
+<span class="nc" id="L118">			return jjMoveStringLiteralDfa1_0(0x2000L);</span>
+		case 71:
+		case 103:
+<span class="nc" id="L121">			return jjMoveStringLiteralDfa1_0(0x1000L);</span>
+		default:
+<span class="nc" id="L123">			return jjMoveNfa_0(0, 0);</span>
+		}
+	}
+
+	private int jjMoveStringLiteralDfa1_0(long active0) {
+		try {
+<span class="nc" id="L129">			curChar = input_stream.readChar();</span>
+<span class="nc" id="L130">		} catch (java.io.IOException e) {</span>
+<span class="nc" id="L131">			jjStopStringLiteralDfa_0(0, active0);</span>
+<span class="nc" id="L132">			return 1;</span>
+		}
+<span class="nc bnc" id="L134" title="All 3 branches missed.">		switch (curChar) {</span>
+		case 73:
+		case 105:
+<span class="nc" id="L137">			return jjMoveStringLiteralDfa2_0(active0, 0x2000L);</span>
+		case 82:
+		case 114:
+<span class="nc" id="L140">			return jjMoveStringLiteralDfa2_0(active0, 0x1000L);</span>
+		default:
+			break;
+		}
+<span class="nc" id="L144">		return jjStartNfa_0(0, active0);</span>
+	}
+
+	private int jjMoveStringLiteralDfa2_0(long old0, long active0) {
+<span class="nc bnc" id="L148" title="All 2 branches missed.">		if (((active0 &amp;= old0)) == 0L)</span>
+<span class="nc" id="L149">			return jjStartNfa_0(0, old0);</span>
+		try {
+<span class="nc" id="L151">			curChar = input_stream.readChar();</span>
+<span class="nc" id="L152">		} catch (java.io.IOException e) {</span>
+<span class="nc" id="L153">			jjStopStringLiteralDfa_0(1, active0);</span>
+<span class="nc" id="L154">			return 2;</span>
+		}
+<span class="nc bnc" id="L156" title="All 3 branches missed.">		switch (curChar) {</span>
+		case 65:
+		case 97:
+<span class="nc" id="L159">			return jjMoveStringLiteralDfa3_0(active0, 0x1000L);</span>
+		case 71:
+		case 103:
+<span class="nc" id="L162">			return jjMoveStringLiteralDfa3_0(active0, 0x2000L);</span>
+		default:
+			break;
+		}
+<span class="nc" id="L166">		return jjStartNfa_0(1, active0);</span>
+	}
+
+	private int jjMoveStringLiteralDfa3_0(long old0, long active0) {
+<span class="nc bnc" id="L170" title="All 2 branches missed.">		if (((active0 &amp;= old0)) == 0L)</span>
+<span class="nc" id="L171">			return jjStartNfa_0(1, old0);</span>
+		try {
+<span class="nc" id="L173">			curChar = input_stream.readChar();</span>
+<span class="nc" id="L174">		} catch (java.io.IOException e) {</span>
+<span class="nc" id="L175">			jjStopStringLiteralDfa_0(2, active0);</span>
+<span class="nc" id="L176">			return 3;</span>
+		}
+<span class="nc bnc" id="L178" title="All 3 branches missed.">		switch (curChar) {</span>
+		case 80:
+		case 112:
+<span class="nc" id="L181">			return jjMoveStringLiteralDfa4_0(active0, 0x1000L);</span>
+		case 82:
+		case 114:
+<span class="nc" id="L184">			return jjMoveStringLiteralDfa4_0(active0, 0x2000L);</span>
+		default:
+			break;
+		}
+<span class="nc" id="L188">		return jjStartNfa_0(2, active0);</span>
+	}
+
+	private int jjMoveStringLiteralDfa4_0(long old0, long active0) {
+<span class="nc bnc" id="L192" title="All 2 branches missed.">		if (((active0 &amp;= old0)) == 0L)</span>
+<span class="nc" id="L193">			return jjStartNfa_0(2, old0);</span>
+		try {
+<span class="nc" id="L195">			curChar = input_stream.readChar();</span>
+<span class="nc" id="L196">		} catch (java.io.IOException e) {</span>
+<span class="nc" id="L197">			jjStopStringLiteralDfa_0(3, active0);</span>
+<span class="nc" id="L198">			return 4;</span>
+		}
+<span class="nc bnc" id="L200" title="All 3 branches missed.">		switch (curChar) {</span>
+		case 65:
+		case 97:
+<span class="nc" id="L203">			return jjMoveStringLiteralDfa5_0(active0, 0x2000L);</span>
+		case 72:
+		case 104:
+<span class="nc bnc" id="L206" title="All 2 branches missed.">			if ((active0 &amp; 0x1000L) != 0L)</span>
+<span class="nc" id="L207">				return jjStartNfaWithStates_0(4, 12, 11);</span>
+			break;
+		default:
+			break;
+		}
+<span class="nc" id="L212">		return jjStartNfa_0(3, active0);</span>
+	}
+
+	private int jjMoveStringLiteralDfa5_0(long old0, long active0) {
+<span class="nc bnc" id="L216" title="All 2 branches missed.">		if (((active0 &amp;= old0)) == 0L)</span>
+<span class="nc" id="L217">			return jjStartNfa_0(3, old0);</span>
+		try {
+<span class="nc" id="L219">			curChar = input_stream.readChar();</span>
+<span class="nc" id="L220">		} catch (java.io.IOException e) {</span>
+<span class="nc" id="L221">			jjStopStringLiteralDfa_0(4, active0);</span>
+<span class="nc" id="L222">			return 5;</span>
+		}
+<span class="nc bnc" id="L224" title="All 2 branches missed.">		switch (curChar) {</span>
+		case 80:
+		case 112:
+<span class="nc" id="L227">			return jjMoveStringLiteralDfa6_0(active0, 0x2000L);</span>
+		default:
+			break;
+		}
+<span class="nc" id="L231">		return jjStartNfa_0(4, active0);</span>
+	}
+
+	private int jjMoveStringLiteralDfa6_0(long old0, long active0) {
+<span class="nc bnc" id="L235" title="All 2 branches missed.">		if (((active0 &amp;= old0)) == 0L)</span>
+<span class="nc" id="L236">			return jjStartNfa_0(4, old0);</span>
+		try {
+<span class="nc" id="L238">			curChar = input_stream.readChar();</span>
+<span class="nc" id="L239">		} catch (java.io.IOException e) {</span>
+<span class="nc" id="L240">			jjStopStringLiteralDfa_0(5, active0);</span>
+<span class="nc" id="L241">			return 6;</span>
+		}
+<span class="nc bnc" id="L243" title="All 2 branches missed.">		switch (curChar) {</span>
+		case 72:
+		case 104:
+<span class="nc bnc" id="L246" title="All 2 branches missed.">			if ((active0 &amp; 0x2000L) != 0L)</span>
+<span class="nc" id="L247">				return jjStartNfaWithStates_0(6, 13, 11);</span>
+			break;
+		default:
+			break;
+		}
+<span class="nc" id="L252">		return jjStartNfa_0(5, active0);</span>
+	}
+
+	private int jjStartNfaWithStates_0(int pos, int kind, int state) {
+<span class="nc" id="L256">		jjmatchedKind = kind;</span>
+<span class="nc" id="L257">		jjmatchedPos = pos;</span>
+		try {
+<span class="nc" id="L259">			curChar = input_stream.readChar();</span>
+<span class="nc" id="L260">		} catch (java.io.IOException e) {</span>
+<span class="nc" id="L261">			return pos + 1;</span>
+		}
+<span class="nc" id="L263">		return jjMoveNfa_0(state, pos + 1);</span>
+	}
+
+<span class="nc" id="L266">	static final long[] jjbitVec0 = { 0x0L, 0x0L, 0xffffffffffffffffL, 0xffffffffffffffffL };</span>
+
+	private int jjMoveNfa_0(int startState, int curPos) {
+<span class="nc" id="L269">		int startsAt = 0;</span>
+<span class="nc" id="L270">		jjnewStateCnt = 15;</span>
+<span class="nc" id="L271">		int i = 1;</span>
+<span class="nc" id="L272">		jjstateSet[0] = startState;</span>
+<span class="nc" id="L273">		int kind = 0x7fffffff;</span>
+		for (;;) {
+<span class="nc bnc" id="L275" title="All 2 branches missed.">			if (++jjround == 0x7fffffff)</span>
+<span class="nc" id="L276">				ReInitRounds();</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">			if (curChar &lt; 64) {</span>
+<span class="nc" id="L278">				long l = 1L &lt;&lt; curChar;</span>
+				do {
+<span class="nc bnc" id="L280" title="All 16 branches missed.">					switch (jjstateSet[--i]) {</span>
+					case 0:
+<span class="nc bnc" id="L282" title="All 2 branches missed.">						if ((0x3ff000000000000L &amp; l) != 0L) {</span>
+<span class="nc bnc" id="L283" title="All 2 branches missed.">							if (kind &gt; 10)</span>
+<span class="nc" id="L284">								kind = 10;</span>
+<span class="nc" id="L285">							jjCheckNAddTwoStates(1, 2);</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">						} else if ((0x280000000000L &amp; l) != 0L) {</span>
+<span class="nc bnc" id="L287" title="All 2 branches missed.">							if (kind &gt; 14)</span>
+<span class="nc" id="L288">								kind = 14;</span>
+<span class="nc" id="L289">							jjCheckNAdd(11);</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">						} else if (curChar == 35)</span>
+<span class="nc" id="L291">							jjCheckNAddTwoStates(13, 14);</span>
+<span class="nc bnc" id="L292" title="All 2 branches missed.">						else if (curChar == 39)</span>
+<span class="nc" id="L293">							jjCheckNAddTwoStates(8, 9);</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">						else if (curChar == 34)</span>
+<span class="nc" id="L295">							jjCheckNAddTwoStates(5, 6);</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">						if ((0x280000000000L &amp; l) != 0L)</span>
+<span class="nc" id="L297">							jjCheckNAdd(1);</span>
+<span class="nc" id="L298">						break;</span>
+					case 1:
+<span class="nc bnc" id="L300" title="All 2 branches missed.">						if ((0x3ff000000000000L &amp; l) == 0L)</span>
+<span class="nc" id="L301">							break;</span>
+<span class="nc bnc" id="L302" title="All 2 branches missed.">						if (kind &gt; 10)</span>
+<span class="nc" id="L303">							kind = 10;</span>
+<span class="nc" id="L304">						jjCheckNAddTwoStates(1, 2);</span>
+<span class="nc" id="L305">						break;</span>
+					case 2:
+<span class="nc bnc" id="L307" title="All 2 branches missed.">						if (curChar == 46)</span>
+<span class="nc" id="L308">							jjCheckNAdd(3);</span>
+<span class="nc" id="L309">						break;</span>
+					case 3:
+<span class="nc bnc" id="L311" title="All 2 branches missed.">						if ((0x3ff000000000000L &amp; l) == 0L)</span>
+<span class="nc" id="L312">							break;</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">						if (kind &gt; 10)</span>
+<span class="nc" id="L314">							kind = 10;</span>
+<span class="nc" id="L315">						jjCheckNAdd(3);</span>
+<span class="nc" id="L316">						break;</span>
+					case 4:
+<span class="nc bnc" id="L318" title="All 2 branches missed.">						if (curChar == 34)</span>
+<span class="nc" id="L319">							jjCheckNAddTwoStates(5, 6);</span>
+<span class="nc" id="L320">						break;</span>
+					case 5:
+<span class="nc bnc" id="L322" title="All 2 branches missed.">						if ((0xfffffffbffffffffL &amp; l) != 0L)</span>
+<span class="nc" id="L323">							jjCheckNAddTwoStates(5, 6);</span>
+<span class="nc" id="L324">						break;</span>
+					case 6:
+<span class="nc bnc" id="L326" title="All 4 branches missed.">						if (curChar == 34 &amp;&amp; kind &gt; 11)</span>
+<span class="nc" id="L327">							kind = 11;</span>
+<span class="nc" id="L328">						break;</span>
+					case 7:
+<span class="nc bnc" id="L330" title="All 2 branches missed.">						if (curChar == 39)</span>
+<span class="nc" id="L331">							jjCheckNAddTwoStates(8, 9);</span>
+<span class="nc" id="L332">						break;</span>
+					case 8:
+<span class="nc bnc" id="L334" title="All 2 branches missed.">						if ((0xffffff7fffffffffL &amp; l) != 0L)</span>
+<span class="nc" id="L335">							jjCheckNAddTwoStates(8, 9);</span>
+<span class="nc" id="L336">						break;</span>
+					case 9:
+<span class="nc bnc" id="L338" title="All 4 branches missed.">						if (curChar == 39 &amp;&amp; kind &gt; 11)</span>
+<span class="nc" id="L339">							kind = 11;</span>
+<span class="nc" id="L340">						break;</span>
+					case 10:
+<span class="nc bnc" id="L342" title="All 2 branches missed.">						if ((0x280000000000L &amp; l) == 0L)</span>
+<span class="nc" id="L343">							break;</span>
+<span class="nc bnc" id="L344" title="All 2 branches missed.">						if (kind &gt; 14)</span>
+<span class="nc" id="L345">							kind = 14;</span>
+<span class="nc" id="L346">						jjCheckNAdd(11);</span>
+<span class="nc" id="L347">						break;</span>
+					case 11:
+<span class="nc bnc" id="L349" title="All 2 branches missed.">						if ((0x3ff600000000000L &amp; l) == 0L)</span>
+<span class="nc" id="L350">							break;</span>
+<span class="nc bnc" id="L351" title="All 2 branches missed.">						if (kind &gt; 14)</span>
+<span class="nc" id="L352">							kind = 14;</span>
+<span class="nc" id="L353">						jjCheckNAdd(11);</span>
+<span class="nc" id="L354">						break;</span>
+					case 12:
+<span class="nc bnc" id="L356" title="All 2 branches missed.">						if (curChar == 35)</span>
+<span class="nc" id="L357">							jjCheckNAddTwoStates(13, 14);</span>
+<span class="nc" id="L358">						break;</span>
+					case 13:
+<span class="nc bnc" id="L360" title="All 2 branches missed.">						if ((0xffffffffffffdbffL &amp; l) != 0L)</span>
+<span class="nc" id="L361">							jjCheckNAddTwoStates(13, 14);</span>
+<span class="nc" id="L362">						break;</span>
+					case 14:
+<span class="nc bnc" id="L364" title="All 4 branches missed.">						if ((0x2400L &amp; l) != 0L &amp;&amp; kind &gt; 15)</span>
+<span class="nc" id="L365">							kind = 15;</span>
+<span class="nc" id="L366">						break;</span>
+					default:
+						break;
+					}
+<span class="nc bnc" id="L370" title="All 2 branches missed.">				} while (i != startsAt);</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">			} else if (curChar &lt; 128) {</span>
+<span class="nc" id="L372">				long l = 1L &lt;&lt; (curChar &amp; 077);</span>
+				do {
+<span class="nc bnc" id="L374" title="All 6 branches missed.">					switch (jjstateSet[--i]) {</span>
+					case 0:
+<span class="nc bnc" id="L376" title="All 2 branches missed.">						if ((0x7fffffe07fffffeL &amp; l) == 0L)</span>
+<span class="nc" id="L377">							break;</span>
+<span class="nc bnc" id="L378" title="All 2 branches missed.">						if (kind &gt; 14)</span>
+<span class="nc" id="L379">							kind = 14;</span>
+<span class="nc" id="L380">						jjCheckNAdd(11);</span>
+<span class="nc" id="L381">						break;</span>
+					case 5:
+<span class="nc" id="L383">						jjAddStates(0, 1);</span>
+<span class="nc" id="L384">						break;</span>
+					case 8:
+<span class="nc" id="L386">						jjAddStates(2, 3);</span>
+<span class="nc" id="L387">						break;</span>
+					case 11:
+<span class="nc bnc" id="L389" title="All 2 branches missed.">						if ((0x7fffffe87fffffeL &amp; l) == 0L)</span>
+<span class="nc" id="L390">							break;</span>
+<span class="nc bnc" id="L391" title="All 2 branches missed.">						if (kind &gt; 14)</span>
+<span class="nc" id="L392">							kind = 14;</span>
+<span class="nc" id="L393">						jjCheckNAdd(11);</span>
+<span class="nc" id="L394">						break;</span>
+					case 13:
+<span class="nc" id="L396">						jjAddStates(4, 5);</span>
+<span class="nc" id="L397">						break;</span>
+					default:
+						break;
+					}
+<span class="nc bnc" id="L401" title="All 2 branches missed.">				} while (i != startsAt);</span>
+<span class="nc" id="L402">			} else {</span>
+<span class="nc" id="L403">				int i2 = (curChar &amp; 0xff) &gt;&gt; 6;</span>
+<span class="nc" id="L404">				long l2 = 1L &lt;&lt; (curChar &amp; 077);</span>
+				do {
+<span class="nc bnc" id="L406" title="All 4 branches missed.">					switch (jjstateSet[--i]) {</span>
+					case 5:
+<span class="nc bnc" id="L408" title="All 2 branches missed.">						if ((jjbitVec0[i2] &amp; l2) != 0L)</span>
+<span class="nc" id="L409">							jjAddStates(0, 1);</span>
+<span class="nc" id="L410">						break;</span>
+					case 8:
+<span class="nc bnc" id="L412" title="All 2 branches missed.">						if ((jjbitVec0[i2] &amp; l2) != 0L)</span>
+<span class="nc" id="L413">							jjAddStates(2, 3);</span>
+<span class="nc" id="L414">						break;</span>
+					case 13:
+<span class="nc bnc" id="L416" title="All 2 branches missed.">						if ((jjbitVec0[i2] &amp; l2) != 0L)</span>
+<span class="nc" id="L417">							jjAddStates(4, 5);</span>
+<span class="nc" id="L418">						break;</span>
+					default:
+						break;
+					}
+<span class="nc bnc" id="L422" title="All 2 branches missed.">				} while (i != startsAt);</span>
+			}
+<span class="nc bnc" id="L424" title="All 2 branches missed.">			if (kind != 0x7fffffff) {</span>
+<span class="nc" id="L425">				jjmatchedKind = kind;</span>
+<span class="nc" id="L426">				jjmatchedPos = curPos;</span>
+<span class="nc" id="L427">				kind = 0x7fffffff;</span>
+			}
+<span class="nc" id="L429">			++curPos;</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">			if ((i = jjnewStateCnt) == (startsAt = 15 - (jjnewStateCnt = startsAt)))</span>
+<span class="nc" id="L431">				return curPos;</span>
+			try {
+<span class="nc" id="L433">				curChar = input_stream.readChar();</span>
+<span class="nc" id="L434">			} catch (java.io.IOException e) {</span>
+<span class="nc" id="L435">				return curPos;</span>
+			}
+		}
+	}
+
+<span class="nc" id="L440">	static final int[] jjnextStates = { 5, 6, 8, 9, 13, 14, };</span>
+
+	/** Token literal values. */
+<span class="nc" id="L443">	public static final String[] jjstrLiteralImages = { &quot;&quot;, null, null, null, null, null, null, null, &quot;\133&quot;, &quot;\135&quot;,</span>
+			null, null, null, null, null, null, };
+
+	/** Lexer state names. */
+<span class="nc" id="L447">	public static final String[] lexStateNames = { &quot;DEFAULT&quot;, };</span>
+<span class="nc" id="L448">	static final long[] jjtoToken = { 0xff01L, };</span>
+<span class="nc" id="L449">	static final long[] jjtoSkip = { 0x1eL, };</span>
+	protected SimpleCharStream input_stream;
+<span class="nc" id="L451">	private final int[] jjrounds = new int[15];</span>
+<span class="nc" id="L452">	private final int[] jjstateSet = new int[30];</span>
+	protected char curChar;
+
+	/** Constructor. */
+<span class="nc" id="L456">	public GMLParserTokenManager(SimpleCharStream stream) {</span>
+		if (SimpleCharStream.staticFlag)
+			throw new Error(&quot;ERROR: Cannot use a static CharStream class with a non-static lexical analyzer.&quot;);
+<span class="nc" id="L459">		input_stream = stream;</span>
+<span class="nc" id="L460">	}</span>
+
+	/** Constructor. */
+	public GMLParserTokenManager(SimpleCharStream stream, int lexState) {
+<span class="nc" id="L464">		this(stream);</span>
+<span class="nc" id="L465">		SwitchTo(lexState);</span>
+<span class="nc" id="L466">	}</span>
+
+	/** Reinitialise parser. */
+	public void ReInit(SimpleCharStream stream) {
+<span class="nc" id="L470">		jjmatchedPos = jjnewStateCnt = 0;</span>
+<span class="nc" id="L471">		curLexState = defaultLexState;</span>
+<span class="nc" id="L472">		input_stream = stream;</span>
+<span class="nc" id="L473">		ReInitRounds();</span>
+<span class="nc" id="L474">	}</span>
+
+	private void ReInitRounds() {
+		int i;
+<span class="nc" id="L478">		jjround = 0x80000001;</span>
+<span class="nc bnc" id="L479" title="All 2 branches missed.">		for (i = 15; i-- &gt; 0;)</span>
+<span class="nc" id="L480">			jjrounds[i] = 0x80000000;</span>
+<span class="nc" id="L481">	}</span>
+
+	/** Reinitialise parser. */
+	public void ReInit(SimpleCharStream stream, int lexState) {
+<span class="nc" id="L485">		ReInit(stream);</span>
+<span class="nc" id="L486">		SwitchTo(lexState);</span>
+<span class="nc" id="L487">	}</span>
+
+	/** Switch to specified lex state. */
+	public void SwitchTo(int lexState) {
+<span class="nc bnc" id="L491" title="All 4 branches missed.">		if (lexState &gt;= 1 || lexState &lt; 0)</span>
+<span class="nc" id="L492">			throw new TokenMgrError(&quot;Error: Ignoring invalid lexical state : &quot; + lexState + &quot;. State unchanged.&quot;,</span>
+<span class="nc" id="L493">					TokenMgrError.INVALID_LEXICAL_STATE);</span>
+		else
+<span class="nc" id="L495">			curLexState = lexState;</span>
+<span class="nc" id="L496">	}</span>
+
+	protected Token jjFillToken() {
+		final Token t;
+		final String curTokenImage;
+		final int beginLine;
+		final int endLine;
+		final int beginColumn;
+		final int endColumn;
+<span class="nc" id="L505">		String im = jjstrLiteralImages[jjmatchedKind];</span>
+<span class="nc bnc" id="L506" title="All 2 branches missed.">		curTokenImage = (im == null) ? input_stream.GetImage() : im;</span>
+<span class="nc" id="L507">		beginLine = input_stream.getBeginLine();</span>
+<span class="nc" id="L508">		beginColumn = input_stream.getBeginColumn();</span>
+<span class="nc" id="L509">		endLine = input_stream.getEndLine();</span>
+<span class="nc" id="L510">		endColumn = input_stream.getEndColumn();</span>
+<span class="nc" id="L511">		t = Token.newToken(jjmatchedKind, curTokenImage);</span>
+
+<span class="nc" id="L513">		t.beginLine = beginLine;</span>
+<span class="nc" id="L514">		t.endLine = endLine;</span>
+<span class="nc" id="L515">		t.beginColumn = beginColumn;</span>
+<span class="nc" id="L516">		t.endColumn = endColumn;</span>
+
+<span class="nc" id="L518">		return t;</span>
+	}
+
+<span class="nc" id="L521">	int curLexState = 0;</span>
+<span class="nc" id="L522">	int defaultLexState = 0;</span>
+	int jjnewStateCnt;
+	int jjround;
+	int jjmatchedPos;
+	int jjmatchedKind;
+
+	/** Get the next Token. */
+	public Token getNextToken() {
+		Token matchedToken;
+<span class="nc" id="L531">		int curPos = 0;</span>
+
+		EOFLoop: for (;;) {
+			try {
+<span class="nc" id="L535">				curChar = input_stream.BeginToken();</span>
+<span class="nc" id="L536">			} catch (java.io.IOException e) {</span>
+<span class="nc" id="L537">				jjmatchedKind = 0;</span>
+<span class="nc" id="L538">				matchedToken = jjFillToken();</span>
+<span class="nc" id="L539">				return matchedToken;</span>
+			}
+
+			try {
+<span class="nc" id="L543">				input_stream.backup(0);</span>
+<span class="nc bnc" id="L544" title="All 4 branches missed.">				while (curChar &lt;= 32 &amp;&amp; (0x100002600L &amp; (1L &lt;&lt; curChar)) != 0L)</span>
+<span class="nc" id="L545">					curChar = input_stream.BeginToken();</span>
+<span class="nc" id="L546">			} catch (java.io.IOException e1) {</span>
+<span class="nc" id="L547">				continue EOFLoop;</span>
+			}
+<span class="nc" id="L549">			jjmatchedKind = 0x7fffffff;</span>
+<span class="nc" id="L550">			jjmatchedPos = 0;</span>
+<span class="nc" id="L551">			curPos = jjMoveStringLiteralDfa0_0();</span>
+<span class="nc bnc" id="L552" title="All 2 branches missed.">			if (jjmatchedKind != 0x7fffffff) {</span>
+<span class="nc bnc" id="L553" title="All 2 branches missed.">				if (jjmatchedPos + 1 &lt; curPos)</span>
+<span class="nc" id="L554">					input_stream.backup(curPos - jjmatchedPos - 1);</span>
+<span class="nc bnc" id="L555" title="All 2 branches missed.">				if ((jjtoToken[jjmatchedKind &gt;&gt; 6] &amp; (1L &lt;&lt; (jjmatchedKind &amp; 077))) != 0L) {</span>
+<span class="nc" id="L556">					matchedToken = jjFillToken();</span>
+<span class="nc" id="L557">					return matchedToken;</span>
+				} else {
+					continue EOFLoop;
+				}
+			}
+<span class="nc" id="L562">			int error_line = input_stream.getEndLine();</span>
+<span class="nc" id="L563">			int error_column = input_stream.getEndColumn();</span>
+<span class="nc" id="L564">			String error_after = null;</span>
+<span class="nc" id="L565">			boolean EOFSeen = false;</span>
+			try {
+<span class="nc" id="L567">				input_stream.readChar();</span>
+<span class="nc" id="L568">				input_stream.backup(1);</span>
+<span class="nc" id="L569">			} catch (java.io.IOException e1) {</span>
+<span class="nc" id="L570">				EOFSeen = true;</span>
+<span class="nc bnc" id="L571" title="All 2 branches missed.">				error_after = curPos &lt;= 1 ? &quot;&quot; : input_stream.GetImage();</span>
+<span class="nc bnc" id="L572" title="All 4 branches missed.">				if (curChar == '\n' || curChar == '\r') {</span>
+<span class="nc" id="L573">					error_line++;</span>
+<span class="nc" id="L574">					error_column = 0;</span>
+<span class="nc" id="L575">				} else</span>
+<span class="nc" id="L576">					error_column++;</span>
+			}
+<span class="nc bnc" id="L578" title="All 2 branches missed.">			if (!EOFSeen) {</span>
+<span class="nc" id="L579">				input_stream.backup(1);</span>
+<span class="nc bnc" id="L580" title="All 2 branches missed.">				error_after = curPos &lt;= 1 ? &quot;&quot; : input_stream.GetImage();</span>
+			}
+<span class="nc" id="L582">			throw new TokenMgrError(EOFSeen, curLexState, error_line, error_column, error_after, curChar,</span>
+<span class="nc" id="L583">					TokenMgrError.LEXICAL_ERROR);</span>
+		}
+	}
+
+	private void jjCheckNAdd(int state) {
+<span class="nc bnc" id="L588" title="All 2 branches missed.">		if (jjrounds[state] != jjround) {</span>
+<span class="nc" id="L589">			jjstateSet[jjnewStateCnt++] = state;</span>
+<span class="nc" id="L590">			jjrounds[state] = jjround;</span>
+		}
+<span class="nc" id="L592">	}</span>
+
+	private void jjAddStates(int start, int end) {
+		do {
+<span class="nc" id="L596">			jjstateSet[jjnewStateCnt++] = jjnextStates[start];</span>
+<span class="nc bnc" id="L597" title="All 2 branches missed.">		} while (start++ != end);</span>
+<span class="nc" id="L598">	}</span>
+
+	private void jjCheckNAddTwoStates(int state1, int state2) {
+<span class="nc" id="L601">		jjCheckNAdd(state1);</span>
+<span class="nc" id="L602">		jjCheckNAdd(state2);</span>
+<span class="nc" id="L603">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

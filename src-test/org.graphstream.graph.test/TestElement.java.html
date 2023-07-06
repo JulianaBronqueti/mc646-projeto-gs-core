@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestElement.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.test</a> &gt; <span class="el_source">TestElement.java</span></div><h1>TestElement.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.test;
+
+import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.MultiGraph;
+import org.junit.Test;
+
+<span class="nc" id="L48">public class TestElement {</span>
+	@Test
+	public void testElementSimpleAttributes() {
+<span class="nc" id="L51">		Graph graph = new MultiGraph(&quot;g1&quot;);</span>
+
+<span class="nc" id="L53">		Node A = graph.addNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L55">		assertEquals(&quot;A&quot;, A.getId());</span>
+<span class="nc" id="L56">		assertEquals(0, A.getAttributeCount());</span>
+
+		// Simple attributes.
+
+<span class="nc" id="L60">		A.setAttribute(&quot;foo&quot;);</span>
+
+<span class="nc" id="L62">		assertEquals(1, A.getAttributeCount());</span>
+<span class="nc" id="L63">		assertTrue(A.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L64">		assertTrue(A.hasAttribute(&quot;foo&quot;, Boolean.class));</span>
+<span class="nc" id="L65">		assertFalse(A.hasLabel(&quot;foo&quot;));</span>
+<span class="nc" id="L66">		assertFalse(A.hasNumber(&quot;foo&quot;));</span>
+<span class="nc" id="L67">		assertFalse(A.hasVector(&quot;foo&quot;));</span>
+<span class="nc" id="L68">		assertFalse(A.hasArray(&quot;foo&quot;));</span>
+<span class="nc" id="L69">		assertFalse(A.hasMap(&quot;foo&quot;));</span>
+<span class="nc" id="L70">		assertNotNull(A.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L71">		assertEquals(true, A.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L72">		assertEquals(Boolean.TRUE, A.getAttribute(&quot;foo&quot;));</span>
+
+		// Change.
+
+<span class="nc" id="L76">		A.setAttribute(&quot;foo&quot;, false);</span>
+
+<span class="nc" id="L78">		assertEquals(1, A.getAttributeCount());</span>
+<span class="nc" id="L79">		assertTrue(A.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L80">		assertTrue(A.hasAttribute(&quot;foo&quot;, Boolean.class));</span>
+<span class="nc" id="L81">		assertFalse(A.hasLabel(&quot;foo&quot;));</span>
+<span class="nc" id="L82">		assertFalse(A.hasNumber(&quot;foo&quot;));</span>
+<span class="nc" id="L83">		assertFalse(A.hasVector(&quot;foo&quot;));</span>
+<span class="nc" id="L84">		assertFalse(A.hasArray(&quot;foo&quot;));</span>
+<span class="nc" id="L85">		assertFalse(A.hasMap(&quot;foo&quot;));</span>
+<span class="nc" id="L86">		assertNotNull(A.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L87">		assertEquals(false, A.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L88">		assertEquals(Boolean.FALSE, A.getAttribute(&quot;foo&quot;));</span>
+
+		// Removal.
+
+<span class="nc" id="L92">		A.removeAttribute(&quot;foo&quot;);</span>
+<span class="nc" id="L93">		assertEquals(0, A.getAttributeCount());</span>
+<span class="nc" id="L94">		assertFalse(A.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L95">		assertNull(A.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L96">	}</span>
+
+	@Test
+	public void testElementValueAttributes() {
+<span class="nc" id="L100">		Graph graph = new MultiGraph(&quot;g1&quot;);</span>
+
+<span class="nc" id="L102">		Node A = graph.addNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L104">		assertEquals(&quot;A&quot;, A.getId());</span>
+<span class="nc" id="L105">		assertEquals(0, A.getAttributeCount());</span>
+
+		// Label attributes.
+
+<span class="nc" id="L109">		A.setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+
+<span class="nc" id="L111">		assertEquals(1, A.getAttributeCount());</span>
+<span class="nc" id="L112">		assertTrue(A.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L113">		assertTrue(A.hasAttribute(&quot;foo&quot;, String.class));</span>
+<span class="nc" id="L114">		assertTrue(A.hasLabel(&quot;foo&quot;));</span>
+<span class="nc" id="L115">		assertFalse(A.hasNumber(&quot;foo&quot;));</span>
+<span class="nc" id="L116">		assertFalse(A.hasVector(&quot;foo&quot;));</span>
+<span class="nc" id="L117">		assertFalse(A.hasArray(&quot;foo&quot;));</span>
+<span class="nc" id="L118">		assertFalse(A.hasMap(&quot;foo&quot;));</span>
+<span class="nc" id="L119">		assertNotNull(A.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L120">		assertEquals(&quot;bar&quot;, A.getAttribute(&quot;foo&quot;));</span>
+
+		// Number attributes.
+
+<span class="nc" id="L124">		A.setAttribute(&quot;pi&quot;, 3.1415);</span>
+
+<span class="nc" id="L126">		assertEquals(2, A.getAttributeCount());</span>
+<span class="nc" id="L127">		assertTrue(A.hasAttribute(&quot;pi&quot;));</span>
+<span class="nc" id="L128">		assertTrue(A.hasAttribute(&quot;pi&quot;, Number.class));</span>
+<span class="nc" id="L129">		assertFalse(A.hasLabel(&quot;pi&quot;));</span>
+<span class="nc" id="L130">		assertTrue(A.hasNumber(&quot;pi&quot;));</span>
+<span class="nc" id="L131">		assertFalse(A.hasVector(&quot;pi&quot;));</span>
+<span class="nc" id="L132">		assertFalse(A.hasArray(&quot;pi&quot;));</span>
+<span class="nc" id="L133">		assertFalse(A.hasMap(&quot;pi&quot;));</span>
+<span class="nc" id="L134">		assertNotNull(A.getAttribute(&quot;pi&quot;));</span>
+<span class="nc" id="L135">		assertEquals(3.1415, A.getNumber(&quot;pi&quot;), 0);</span>
+<span class="nc" id="L136">		assertEquals(3.1415, A.getAttribute(&quot;pi&quot;));</span>
+
+<span class="nc" id="L138">		A.setAttribute(&quot;pi&quot;, &quot;3.1415&quot;);</span>
+
+<span class="nc" id="L140">		assertEquals(3.1415, A.getNumber(&quot;pi&quot;), 0);</span>
+
+		// Vector of numbers.
+
+<span class="nc" id="L144">		ArrayList&lt;Number&gt; numbers = new ArrayList&lt;&gt;();</span>
+
+<span class="nc" id="L146">		numbers.add(3);</span>
+<span class="nc" id="L147">		numbers.add(1.4);</span>
+<span class="nc" id="L148">		numbers.add(1.5f);</span>
+
+<span class="nc" id="L150">		A.setAttribute(&quot;v&quot;, numbers);</span>
+
+<span class="nc" id="L152">		assertEquals(3, A.getAttributeCount());</span>
+<span class="nc" id="L153">		assertTrue(A.hasAttribute(&quot;v&quot;));</span>
+<span class="nc" id="L154">		assertTrue(A.hasAttribute(&quot;v&quot;, ArrayList.class));</span>
+<span class="nc" id="L155">		assertFalse(A.hasLabel(&quot;v&quot;));</span>
+<span class="nc" id="L156">		assertFalse(A.hasNumber(&quot;v&quot;));</span>
+<span class="nc" id="L157">		assertTrue(A.hasVector(&quot;v&quot;));</span>
+<span class="nc" id="L158">		assertFalse(A.hasArray(&quot;v&quot;));</span>
+<span class="nc" id="L159">		assertFalse(A.hasMap(&quot;v&quot;));</span>
+<span class="nc" id="L160">		assertNotNull(A.getAttribute(&quot;v&quot;));</span>
+<span class="nc" id="L161">		assertEquals(numbers, A.getAttribute(&quot;v&quot;));</span>
+<span class="nc" id="L162">		assertEquals(numbers, A.getVector(&quot;v&quot;));</span>
+
+		// Hashes 1.
+
+<span class="nc" id="L166">		HashMap&lt;String, String&gt; map = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L168">		map.put(&quot;A&quot;, &quot;a&quot;);</span>
+<span class="nc" id="L169">		map.put(&quot;B&quot;, &quot;b&quot;);</span>
+<span class="nc" id="L170">		map.put(&quot;C&quot;, &quot;c&quot;);</span>
+
+<span class="nc" id="L172">		A.setAttribute(&quot;map&quot;, map);</span>
+
+<span class="nc" id="L174">		assertEquals(4, A.getAttributeCount());</span>
+<span class="nc" id="L175">		assertTrue(A.hasAttribute(&quot;map&quot;));</span>
+<span class="nc" id="L176">		assertTrue(A.hasAttribute(&quot;map&quot;, HashMap.class));</span>
+<span class="nc" id="L177">		assertFalse(A.hasLabel(&quot;map&quot;));</span>
+<span class="nc" id="L178">		assertFalse(A.hasNumber(&quot;map&quot;));</span>
+<span class="nc" id="L179">		assertFalse(A.hasVector(&quot;map&quot;));</span>
+<span class="nc" id="L180">		assertFalse(A.hasArray(&quot;map&quot;));</span>
+<span class="nc" id="L181">		assertTrue(A.hasMap(&quot;map&quot;));</span>
+<span class="nc" id="L182">		assertNotNull(A.getAttribute(&quot;map&quot;));</span>
+<span class="nc" id="L183">		assertEquals(map, A.getAttribute(&quot;map&quot;));</span>
+<span class="nc" id="L184">		assertEquals(map, A.getMap(&quot;map&quot;));</span>
+
+		// Hashes 2.
+
+<span class="nc" id="L188">		HashMap&lt;String, String&gt; attr = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L190">		attr.put(&quot;A&quot;, &quot;a&quot;);</span>
+<span class="nc" id="L191">		attr.put(&quot;B&quot;, &quot;b&quot;);</span>
+<span class="nc" id="L192">		attr.put(&quot;C&quot;, &quot;c&quot;);</span>
+
+<span class="nc" id="L194">		A.setAttribute(&quot;ca&quot;, attr);</span>
+
+<span class="nc" id="L196">		assertEquals(5, A.getAttributeCount());</span>
+<span class="nc" id="L197">		assertTrue(A.hasAttribute(&quot;ca&quot;));</span>
+<span class="nc" id="L198">		assertTrue(A.hasAttribute(&quot;ca&quot;, HashMap.class));</span>
+<span class="nc" id="L199">		assertFalse(A.hasLabel(&quot;ca&quot;));</span>
+<span class="nc" id="L200">		assertFalse(A.hasNumber(&quot;ca&quot;));</span>
+<span class="nc" id="L201">		assertFalse(A.hasVector(&quot;ca&quot;));</span>
+<span class="nc" id="L202">		assertFalse(A.hasArray(&quot;ca&quot;));</span>
+<span class="nc" id="L203">		assertTrue(A.hasMap(&quot;ca&quot;));</span>
+<span class="nc" id="L204">		assertNotNull(A.getAttribute(&quot;ca&quot;));</span>
+<span class="nc" id="L205">		assertEquals(attr, A.getAttribute(&quot;ca&quot;));</span>
+<span class="nc" id="L206">		assertEquals(attr, A.getMap(&quot;ca&quot;));</span>
+
+		// Clear
+
+<span class="nc" id="L210">		A.clearAttributes();</span>
+
+<span class="nc" id="L212">		assertEquals(0, A.getAttributeCount());</span>
+<span class="nc" id="L213">	}</span>
+
+	@Test
+	public void testElementMultiAttributes() {
+<span class="nc" id="L217">		Graph graph = new MultiGraph(&quot;g1&quot;);</span>
+
+<span class="nc" id="L219">		Node A = graph.addNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L221">		assertEquals(&quot;A&quot;, A.getId());</span>
+<span class="nc" id="L222">		assertEquals(0, A.getAttributeCount());</span>
+
+		// Arrays
+
+<span class="nc" id="L226">		A.setAttribute(&quot;array&quot;, 0, 1.1, 1.3f, &quot;foo&quot;);</span>
+
+<span class="nc" id="L228">		Object expected[] = { 0, 1.1, 1.3f, &quot;foo&quot; };</span>
+
+<span class="nc" id="L230">		assertEquals(1, A.getAttributeCount());</span>
+<span class="nc" id="L231">		assertTrue(A.hasAttribute(&quot;array&quot;));</span>
+<span class="nc" id="L232">		assertTrue(A.hasAttribute(&quot;array&quot;, Object[].class));</span>
+<span class="nc" id="L233">		assertFalse(A.hasLabel(&quot;array&quot;));</span>
+<span class="nc" id="L234">		assertFalse(A.hasNumber(&quot;array&quot;));</span>
+<span class="nc" id="L235">		assertFalse(A.hasVector(&quot;array&quot;));</span>
+<span class="nc" id="L236">		assertTrue(A.hasArray(&quot;array&quot;));</span>
+<span class="nc" id="L237">		assertFalse(A.hasMap(&quot;array&quot;));</span>
+<span class="nc" id="L238">		assertArrayEquals(expected, (Object[]) A.getAttribute(&quot;array&quot;));</span>
+<span class="nc" id="L239">		assertArrayEquals(expected, A.getArray(&quot;array&quot;));</span>
+<span class="nc" id="L240">		assertNotNull(A.getAttribute(&quot;array&quot;));</span>
+<span class="nc" id="L241">	}</span>
+
+	@Test
+	public void testElementUtilityMethods() {
+<span class="nc" id="L245">		Graph graph = new MultiGraph(&quot;g1&quot;);</span>
+
+<span class="nc" id="L247">		Node A = graph.addNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L249">		assertEquals(&quot;A&quot;, A.getId());</span>
+<span class="nc" id="L250">		assertEquals(0, A.getAttributeCount());</span>
+
+		// First attribute of.
+
+<span class="nc" id="L254">		A.setAttribute(&quot;C&quot;, &quot;c&quot;);</span>
+<span class="nc" id="L255">		A.setAttribute(&quot;I&quot;, &quot;i&quot;);</span>
+<span class="nc" id="L256">		A.setAttribute(&quot;Z&quot;, &quot;z&quot;);</span>
+
+<span class="nc" id="L258">		String s = A.getFirstAttributeOf(String.class, &quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;I&quot;, &quot;Z&quot;);</span>
+
+<span class="nc" id="L260">		assertNotNull(s);</span>
+<span class="nc" id="L261">		assertEquals(&quot;c&quot;, s);</span>
+
+		// First attribute of 2.
+
+<span class="nc" id="L265">		A.setAttribute(&quot;J&quot;, 1);</span>
+<span class="nc" id="L266">		A.setAttribute(&quot;X&quot;, 2);</span>
+
+<span class="nc" id="L268">		Number n = A.getFirstAttributeOf(Number.class, &quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;I&quot;, &quot;J&quot;, &quot;X&quot;, &quot;Z&quot;);</span>
+
+<span class="nc" id="L270">		assertNotNull(n);</span>
+<span class="nc" id="L271">		assertEquals(1, n);</span>
+<span class="nc" id="L272">	}</span>
+
+	@Test
+	public void testElementIterables() {
+<span class="nc" id="L276">		Graph graph = new MultiGraph(&quot;g1&quot;);</span>
+
+<span class="nc" id="L278">		Node A = graph.addNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L280">		assertEquals(&quot;A&quot;, A.getId());</span>
+<span class="nc" id="L281">		assertEquals(0, A.getAttributeCount());</span>
+
+		// First attribute of.
+
+<span class="nc" id="L285">		A.setAttribute(&quot;A&quot;, &quot;a&quot;);</span>
+<span class="nc" id="L286">		A.setAttribute(&quot;B&quot;, &quot;b&quot;);</span>
+<span class="nc" id="L287">		A.setAttribute(&quot;C&quot;, &quot;c&quot;);</span>
+
+<span class="nc" id="L289">		assertEquals(3, A.getAttributeCount());</span>
+
+<span class="nc" id="L291">		Set&lt;String&gt; keys = A.attributeKeys().collect(Collectors.toSet());</span>
+
+<span class="nc" id="L293">		assertEquals(3, keys.size());</span>
+<span class="nc" id="L294">		assertTrue(keys.contains(&quot;A&quot;));</span>
+<span class="nc" id="L295">		assertTrue(keys.contains(&quot;B&quot;));</span>
+<span class="nc" id="L296">		assertTrue(keys.contains(&quot;C&quot;));</span>
+<span class="nc" id="L297">	}</span>
+
+	@Test
+	public void testNullAttributes() {
+<span class="nc" id="L301">		Graph graph = new MultiGraph(&quot;g1&quot;);</span>
+
+<span class="nc" id="L303">		graph.setAttribute(&quot;foo&quot;);</span>
+<span class="nc" id="L304">		graph.setAttribute(&quot;bar&quot;, (Object) null); // Yes an attribute with a</span>
+													// null value, You can !
+
+<span class="nc" id="L307">		assertTrue(graph.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L308">		assertTrue(graph.hasAttribute(&quot;bar&quot;));</span>
+
+<span class="nc" id="L310">		graph.removeAttribute(&quot;foo&quot;);</span>
+<span class="nc" id="L311">		graph.removeAttribute(&quot;bar&quot;);</span>
+
+<span class="nc" id="L313">		assertFalse(graph.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L314">		assertFalse(graph.hasAttribute(&quot;bar&quot;));</span>
+<span class="nc" id="L315">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

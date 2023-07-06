@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GraphicSprite.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph</a> &gt; <span class="el_source">GraphicSprite.java</span></div><h1>GraphicSprite.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph;
+
+import org.graphstream.stream.SourceBase.ElementType;
+import org.graphstream.ui.graphicGraph.stylesheet.Selector;
+import org.graphstream.ui.graphicGraph.stylesheet.Style;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
+import org.graphstream.ui.graphicGraph.stylesheet.Values;
+
+/**
+ * A small gentle sprite.
+ */
+public class GraphicSprite extends GraphicElement {
+	// Attributes
+
+	/**
+	 * The node this sprite is attached to.
+	 */
+	protected GraphicNode node;
+
+	/**
+	 * The edge this sprite is attached to.
+	 */
+	protected GraphicEdge edge;
+
+	/**
+	 * Sprite position.
+	 */
+<span class="nc" id="L62">	public Values position = new Values(StyleConstants.Units.GU, 0, 0, 0);</span>
+
+	// Constructors
+
+	/**
+	 * New sprite.
+	 * 
+	 * @param id
+	 *            The sprite unique identifier.
+	 * @param graph
+	 *            The graph containing this sprite.
+	 */
+	public GraphicSprite(String id, GraphicGraph graph) {
+<span class="nc" id="L75">		super(id, graph);</span>
+
+		// Get the position of a random node.
+
+<span class="nc bnc" id="L79" title="All 2 branches missed.">		if (graph.getNodeCount() &gt; 0) {</span>
+<span class="nc" id="L80">			GraphicNode node = (GraphicNode) graph.nodes().findFirst().get();</span>
+
+<span class="nc" id="L82">			position.setValue(0, node.x);</span>
+<span class="nc" id="L83">			position.setValue(1, node.y);</span>
+<span class="nc" id="L84">			position.setValue(2, node.z);</span>
+		}
+
+<span class="nc" id="L87">		String myPrefix = String.format(&quot;ui.sprite.%s&quot;, id);</span>
+
+<span class="nc bnc" id="L89" title="All 2 branches missed.">		if (mygraph.getAttribute(myPrefix) == null)</span>
+<span class="nc" id="L90">			mygraph.setAttribute(myPrefix, position);</span>
+<span class="nc" id="L91">	}</span>
+
+	// Access
+
+	/**
+	 * The node this sprite is attached to or null if not attached to an edge.
+	 * 
+	 * @return A graphic node.
+	 */
+	public GraphicNode getNodeAttachment() {
+<span class="nc" id="L101">		return node;</span>
+	}
+
+	/**
+	 * The edge this sprite is attached to or null if not attached to an edge.
+	 * 
+	 * @return A graphic edge.
+	 */
+	public GraphicEdge getEdgeAttachment() {
+<span class="nc" id="L110">		return edge;</span>
+	}
+
+	/**
+	 * Return the graphic object this sprite is attached to or null if not attached.
+	 * 
+	 * @return A graphic object or null if no attachment.
+	 */
+	public GraphicElement getAttachment() {
+<span class="nc" id="L119">		GraphicNode n = getNodeAttachment();</span>
+
+<span class="nc bnc" id="L121" title="All 2 branches missed.">		if (n != null)</span>
+<span class="nc" id="L122">			return n;</span>
+
+<span class="nc" id="L124">		return getEdgeAttachment();</span>
+	}
+
+	/**
+	 * True if the sprite is attached to a node or edge.
+	 */
+	public boolean isAttached() {
+<span class="nc bnc" id="L131" title="All 4 branches missed.">		return (edge != null || node != null);</span>
+	}
+
+	/**
+	 * True if the sprite is attached to a node.
+	 */
+	public boolean isAttachedToNode() {
+<span class="nc bnc" id="L138" title="All 2 branches missed.">		return node != null;</span>
+	}
+
+	/**
+	 * True if the node is attached to an edge.
+	 */
+	public boolean isAttachedToEdge() {
+<span class="nc bnc" id="L145" title="All 2 branches missed.">		return edge != null;</span>
+	}
+
+	@Override
+	public Selector.Type getSelectorType() {
+<span class="nc" id="L150">		return Selector.Type.SPRITE;</span>
+	}
+
+	@Override
+	public double getX() {
+<span class="nc" id="L155">		return position.get(0);</span>
+	}
+
+	@Override
+	public double getY() {
+<span class="nc" id="L160">		return position.get(1);</span>
+	}
+
+	@Override
+	public double getZ() {
+<span class="nc" id="L165">		return position.get(2);</span>
+	}
+
+	public Style.Units getUnits() {
+<span class="nc" id="L169">		return position.getUnits();</span>
+	}
+
+	// Commands
+
+	@Override
+	public void move(double x, double y, double z) {
+
+<span class="nc bnc" id="L177" title="All 2 branches missed.">		if (isAttachedToNode()) {</span>
+<span class="nc" id="L178">			GraphicNode n = getNodeAttachment();</span>
+<span class="nc" id="L179">			x -= n.x;</span>
+<span class="nc" id="L180">			y -= n.y;</span>
+<span class="nc" id="L181">			z -= n.z;</span>
+<span class="nc" id="L182">			setPosition(x, y, z, Style.Units.GU);</span>
+
+<span class="nc bnc" id="L184" title="All 2 branches missed.">		} else if (isAttachedToEdge()) {</span>
+<span class="nc" id="L185">			GraphicEdge e = getEdgeAttachment();</span>
+<span class="nc" id="L186">			double len = e.to.x - e.from.x;</span>
+<span class="nc" id="L187">			double diff = x - e.from.x;</span>
+<span class="nc" id="L188">			x = diff / len;</span>
+<span class="nc" id="L189">			setPosition(x);</span>
+
+<span class="nc" id="L191">		} else {</span>
+<span class="nc" id="L192">			setPosition(x, y, z, Style.Units.GU);</span>
+
+		}
+<span class="nc" id="L195">	}</span>
+
+	/**
+	 * Attach this sprite to the given node.
+	 * 
+	 * @param node
+	 *            A graphic node.
+	 */
+	public void attachToNode(GraphicNode node) {
+<span class="nc" id="L204">		this.edge = null;</span>
+<span class="nc" id="L205">		this.node = node;</span>
+
+<span class="nc" id="L207">		String prefix = String.format(&quot;ui.sprite.%s&quot;, getId());</span>
+
+<span class="nc bnc" id="L209" title="All 2 branches missed.">		if (this.node.getAttribute(prefix) == null)</span>
+<span class="nc" id="L210">			this.node.setAttribute(prefix);</span>
+
+<span class="nc" id="L212">		mygraph.graphChanged = true;</span>
+<span class="nc" id="L213">	}</span>
+
+	/**
+	 * Attach this sprite to the given edge.
+	 * 
+	 * @param edge
+	 *            A graphic edge.
+	 */
+	public void attachToEdge(GraphicEdge edge) {
+<span class="nc" id="L222">		this.node = null;</span>
+<span class="nc" id="L223">		this.edge = edge;</span>
+
+<span class="nc" id="L225">		String prefix = String.format(&quot;ui.sprite.%s&quot;, getId());</span>
+
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		if (this.edge.getAttribute(prefix) == null)</span>
+<span class="nc" id="L228">			this.edge.setAttribute(prefix);</span>
+
+<span class="nc" id="L230">		mygraph.graphChanged = true;</span>
+<span class="nc" id="L231">	}</span>
+
+	/**
+	 * Detach this sprite from the edge or node it was attached to.
+	 */
+	public void detach() {
+<span class="nc" id="L237">		String prefix = String.format(&quot;ui.sprite.%s&quot;, getId());</span>
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">		if (this.node != null)</span>
+<span class="nc" id="L240">			this.node.removeAttribute(prefix);</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">		else if (this.edge != null)</span>
+<span class="nc" id="L242">			this.edge.removeAttribute(prefix);</span>
+
+<span class="nc" id="L244">		this.edge = null;</span>
+<span class="nc" id="L245">		this.node = null;</span>
+<span class="nc" id="L246">		mygraph.graphChanged = true;</span>
+<span class="nc" id="L247">	}</span>
+
+	/**
+	 * Reposition this sprite.
+	 * 
+	 * @param value
+	 *            The coordinate.
+	 */
+	public void setPosition(double value) {
+<span class="nc" id="L256">		setPosition(value, 0, 0, getUnits());</span>
+<span class="nc" id="L257">	}</span>
+
+	/**
+	 * Reposition this sprite.
+	 * 
+	 * @param x
+	 *            First coordinate.
+	 * @param y
+	 *            Second coordinate.
+	 * @param z
+	 *            Third coordinate.
+	 * @param units
+	 *            The units to use for lengths and radii, null means &quot;unchanged&quot;.
+	 */
+	public void setPosition(double x, double y, double z, Style.Units units) {
+		/*
+		 * if( node != null ) { y = checkAngle( y ); z = checkAngle( z ); } else
+<span class="nc bnc" id="L274" title="All 2 branches missed.">		 */if (edge != null) {</span>
+<span class="nc bnc" id="L275" title="All 2 branches missed.">			if (x &lt; 0)</span>
+<span class="nc" id="L276">				x = 0;</span>
+<span class="nc bnc" id="L277" title="All 2 branches missed.">			else if (x &gt; 1)</span>
+<span class="nc" id="L278">				x = 1;</span>
+		}
+
+<span class="nc" id="L281">		boolean changed = false;</span>
+
+<span class="nc bnc" id="L283" title="All 2 branches missed.">		if (getX() != x) {</span>
+<span class="nc" id="L284">			changed = true;</span>
+<span class="nc" id="L285">			position.setValue(0, x);</span>
+		}
+<span class="nc bnc" id="L287" title="All 2 branches missed.">		if (getY() != y) {</span>
+<span class="nc" id="L288">			changed = true;</span>
+<span class="nc" id="L289">			position.setValue(1, y);</span>
+		}
+<span class="nc bnc" id="L291" title="All 2 branches missed.">		if (getZ() != z) {</span>
+<span class="nc" id="L292">			changed = true;</span>
+<span class="nc" id="L293">			position.setValue(2, z);</span>
+		}
+<span class="nc bnc" id="L295" title="All 2 branches missed.">		if (getUnits() != units) {</span>
+<span class="nc" id="L296">			changed = true;</span>
+<span class="nc" id="L297">			position.setUnits(units);</span>
+		}
+
+<span class="nc bnc" id="L300" title="All 2 branches missed.">		if (changed) {</span>
+<span class="nc" id="L301">			mygraph.graphChanged = true;</span>
+<span class="nc" id="L302">			mygraph.boundsChanged = true;</span>
+
+<span class="nc" id="L304">			String prefix = String.format(&quot;ui.sprite.%s&quot;, getId());</span>
+
+<span class="nc" id="L306">			mygraph.setAttribute(prefix, position);</span>
+		}
+<span class="nc" id="L308">	}</span>
+
+	public void setPosition(Values values) {
+<span class="nc" id="L311">		double x = 0;</span>
+<span class="nc" id="L312">		double y = 0;</span>
+<span class="nc" id="L313">		double z = 0;</span>
+
+<span class="nc bnc" id="L315" title="All 2 branches missed.">		if (values.getValueCount() &gt; 0)</span>
+<span class="nc" id="L316">			x = values.get(0);</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">		if (values.getValueCount() &gt; 1)</span>
+<span class="nc" id="L318">			y = values.get(1);</span>
+<span class="nc bnc" id="L319" title="All 2 branches missed.">		if (values.getValueCount() &gt; 2)</span>
+<span class="nc" id="L320">			z = values.get(2);</span>
+
+<span class="nc bnc" id="L322" title="All 6 branches missed.">		if (x == 1 &amp;&amp; y == 1 &amp;&amp; z == 1)</span>
+<span class="nc" id="L323">			throw new RuntimeException(&quot;WTF !!!&quot;);</span>
+<span class="nc" id="L324">		setPosition(x, y, z, values.units);</span>
+<span class="nc" id="L325">	}</span>
+
+	protected double checkAngle(double angle) {
+<span class="nc bnc" id="L328" title="All 2 branches missed.">		if (angle &gt; Math.PI * 2)</span>
+<span class="nc" id="L329">			angle = angle % (Math.PI * 2);</span>
+<span class="nc bnc" id="L330" title="All 2 branches missed.">		else if (angle &lt; 0)</span>
+<span class="nc" id="L331">			angle = (Math.PI * 2) - (angle % (Math.PI * 2));</span>
+
+<span class="nc" id="L333">		return angle;</span>
+	}
+
+	@Override
+	protected void attributeChanged(AttributeChangeEvent event, String attribute, Object oldValue, Object newValue) {
+<span class="nc" id="L338">		super.attributeChanged(event, attribute, oldValue, newValue);</span>
+
+		// if( attribute.equals( &quot;ui.clicked&quot; ) ) // Filter the clicks to avoid
+		// loops XXX BAD !!! XXX
+		// return;
+
+<span class="nc" id="L344">		String completeAttr = String.format(&quot;ui.sprite.%s.%s&quot;, getId(), attribute);</span>
+
+<span class="nc" id="L346">		mygraph.listeners.sendAttributeChangedEvent(mygraph.getId(), ElementType.GRAPH, completeAttr, event, oldValue,</span>
+<span class="nc" id="L347">				newValue);</span>
+<span class="nc" id="L348">	}</span>
+
+	@Override
+	protected void removed() {
+<span class="nc" id="L352">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

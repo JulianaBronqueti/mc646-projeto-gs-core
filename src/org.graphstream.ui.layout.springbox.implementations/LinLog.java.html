@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LinLog.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.layout.springbox.implementations</a> &gt; <span class="el_source">LinLog.java</span></div><h1>LinLog.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2012-06-19
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.layout.springbox.implementations;
+
+import java.util.Random;
+
+import org.graphstream.ui.layout.springbox.BarnesHutLayout;
+import org.graphstream.ui.layout.springbox.NodeParticle;
+
+public class LinLog extends BarnesHutLayout {
+<span class="nc" id="L41">	protected double k = 1;</span>
+
+	/**
+	 * Default general attraction factor.
+	 */
+<span class="nc" id="L46">	protected double aFactor = 1f;</span>
+
+	/**
+	 * Default general repulsion factor.
+	 */
+<span class="nc" id="L51">	protected double rFactor = 1f;</span>
+
+<span class="nc" id="L53">	protected boolean edgeBased = true;</span>
+
+<span class="nc" id="L55">	protected double maxR = 0.5;</span>
+
+<span class="nc" id="L57">	protected double a = 0;</span>
+
+<span class="nc" id="L59">	protected double r = -1.2;</span>
+
+	// protected
+
+	/**
+	 * New &quot;LinLog&quot; 2D Barnes-Hut simulation.
+	 */
+	public LinLog() {
+<span class="nc" id="L67">		this(false);</span>
+<span class="nc" id="L68">	}</span>
+
+	/**
+	 * New &quot;LinLog&quot; Barnes-Hut simulation.
+	 * 
+	 * @param is3D
+	 *            If true the simulation dimensions count is 3 else 2.
+	 */
+	public LinLog(boolean is3D) {
+<span class="nc" id="L77">		this(is3D, new Random(System.currentTimeMillis()));</span>
+<span class="nc" id="L78">	}</span>
+
+	/**
+	 * New &quot;LinLog&quot; Barnes-Hut simulation.
+	 * 
+	 * @param is3D
+	 *            If true the simulation dimensions count is 3 else 2.
+	 * @param randomNumberGenerator
+	 *            The random number generator to use.
+	 */
+	public LinLog(boolean is3D, Random randomNumberGenerator) {
+<span class="nc" id="L89">		super(is3D, randomNumberGenerator);</span>
+<span class="nc" id="L90">		setQuality(1);</span>
+<span class="nc" id="L91">		force = 3;</span>
+<span class="nc" id="L92">	}</span>
+
+	public void configure(double a, double r, boolean edgeBased, double force) {
+<span class="nc" id="L95">		this.a = a;</span>
+<span class="nc" id="L96">		this.r = r;</span>
+<span class="nc" id="L97">		this.edgeBased = edgeBased;</span>
+<span class="nc" id="L98">		this.force = force;</span>
+<span class="nc" id="L99">	}</span>
+
+	@Override
+	public String getLayoutAlgorithmName() {
+<span class="nc" id="L103">		return &quot;LinLog&quot;;</span>
+	}
+
+	@Override
+	public void setQuality(double qualityLevel) {
+<span class="nc" id="L108">		super.setQuality(qualityLevel);</span>
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">		if (quality &gt;= 1) {</span>
+<span class="nc" id="L111">			viewZone = -1;</span>
+<span class="nc" id="L112">		} else {</span>
+<span class="nc" id="L113">			viewZone = k;</span>
+		}
+<span class="nc" id="L115">	}</span>
+
+	@Override
+	public void compute() {
+<span class="nc bnc" id="L119" title="All 2 branches missed.">		if (viewZone &gt; 0)</span>
+<span class="nc" id="L120">			viewZone = area / 1.5;</span>
+<span class="nc" id="L121">		super.compute();</span>
+<span class="nc" id="L122">	}</span>
+
+	@Override
+	protected void chooseNodePosition(NodeParticle n0, NodeParticle n1) {
+		// double delta = k * 0.1;
+		// if (n0.getEdges().size() == 1 &amp;&amp; n1.getEdges().size() &gt; 1) {
+		// org.miv.pherd.geom.Point3 pos = n1.getPosition();
+		// n0.moveTo(pos.x + delta, pos.y + delta, pos.z + delta);
+		// } else if (n1.getEdges().size() == 1 &amp;&amp; n0.getEdges().size() &gt; 1) {
+		// org.miv.pherd.geom.Point3 pos = n0.getPosition();
+		// n1.moveTo(pos.x + delta, pos.y + delta, pos.z + delta);
+		// }
+<span class="nc" id="L134">	}</span>
+
+	@Override
+	public NodeParticle newNodeParticle(String id) {
+<span class="nc" id="L138">		return new LinLogNodeParticle(this, id);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

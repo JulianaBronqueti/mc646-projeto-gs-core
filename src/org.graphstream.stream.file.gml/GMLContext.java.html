@@ -1,0 +1,674 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GMLContext.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.gml</a> &gt; <span class="el_source">GMLContext.java</span></div><h1>GMLContext.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-22
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Ivan Novikov &lt;novikov@pragmatix-corp.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.gml;
+
+import java.io.IOException;
+import java.util.HashMap;
+
+import org.graphstream.graph.implementations.AbstractElement.AttributeChangeEvent;
+import org.graphstream.stream.SourceBase.ElementType;
+import org.graphstream.stream.file.FileSourceGML;
+
+public class GMLContext {
+	FileSourceGML gml;
+	// GMLParser parser;
+	String sourceId;
+	boolean directed;
+<span class="nc" id="L48">	protected KeyValues nextStep = null;</span>
+<span class="nc" id="L49">	boolean inGraph = false;</span>
+
+<span class="nc" id="L51">	GMLContext(FileSourceGML gml) {</span>
+<span class="nc" id="L52">		this.gml = gml;</span>
+<span class="nc" id="L53">		this.sourceId = String.format(&quot;&lt;GML stream %d&gt;&quot;, System.currentTimeMillis());</span>
+<span class="nc" id="L54">	}</span>
+
+	void handleKeyValues(KeyValues kv) throws IOException {
+<span class="nc bnc" id="L57" title="All 2 branches missed.">		if (nextStep != null) {</span>
+<span class="nc" id="L58">			insertKeyValues(nextStep);</span>
+<span class="nc" id="L59">			nextStep = null;</span>
+		}
+
+		try {
+<span class="nc bnc" id="L63" title="All 2 branches missed.">			if (kv != null) {</span>
+<span class="nc" id="L64">				insertKeyValues(kv);</span>
+			}
+<span class="nc" id="L66">		} catch (IOException e) {</span>
+<span class="nc" id="L67">			throw new IOException(e);</span>
+		}
+<span class="nc" id="L69">	}</span>
+
+	void setNextStep(KeyValues kv) {
+<span class="nc" id="L72">		nextStep = kv;</span>
+<span class="nc" id="L73">	}</span>
+
+	public void setDirected(boolean on) {
+<span class="nc" id="L76">		directed = on;</span>
+<span class="nc" id="L77">	}</span>
+
+	void setIsInGraph(boolean on) {
+<span class="nc" id="L80">		inGraph = on;</span>
+<span class="nc" id="L81">	}</span>
+
+	public void addNodeOrEdge(String element, KeyValues kv) {
+<span class="nc" id="L84">		System.err.printf(&quot;adding %s %n&quot;, element);</span>
+<span class="nc" id="L85">	}</span>
+
+	protected void insertKeyValues(KeyValues kv) throws IOException {
+<span class="nc bnc" id="L88" title="All 2 branches missed.">		if (kv.key != null) {</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			if (inGraph) {</span>
+<span class="nc bnc" id="L90" title="All 4 branches missed.">				if (kv.key.equals(&quot;node&quot;) || kv.key.equals(&quot;add-node&quot;)) {</span>
+<span class="nc" id="L91">					handleAddNode(kv);</span>
+<span class="nc bnc" id="L92" title="All 4 branches missed.">				} else if (kv.key.equals(&quot;edge&quot;) || kv.key.equals(&quot;add-edge&quot;)) {</span>
+<span class="nc" id="L93">					handleAddEdge(kv);</span>
+<span class="nc bnc" id="L94" title="All 4 branches missed.">				} else if (kv.key.equals(&quot;del-node&quot;) || kv.key.equals(&quot;-node&quot;)) {</span>
+<span class="nc" id="L95">					handleDelNode(kv);</span>
+<span class="nc bnc" id="L96" title="All 4 branches missed.">				} else if (kv.key.equals(&quot;del-edge&quot;) || kv.key.equals(&quot;-edge&quot;)) {</span>
+<span class="nc" id="L97">					handleDelEdge(kv);</span>
+<span class="nc bnc" id="L98" title="All 4 branches missed.">				} else if (kv.key.equals(&quot;change-node&quot;) || kv.key.equals(&quot;+node&quot;)) {</span>
+<span class="nc" id="L99">					handleChangeNode(kv);</span>
+<span class="nc bnc" id="L100" title="All 4 branches missed.">				} else if (kv.key.equals(&quot;change-edge&quot;) || kv.key.equals(&quot;+edge&quot;)) {</span>
+<span class="nc" id="L101">					handleChangeEdge(kv);</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">				} else if (kv.key.equals(&quot;step&quot;)) {</span>
+<span class="nc" id="L103">					handleStep(kv);</span>
+<span class="nc bnc" id="L104" title="All 2 branches missed.">				} else if (kv.key.equals(&quot;directed&quot;)) {</span>
+<span class="nc" id="L105">					setDirected(getBoolean(kv.get(&quot;directed&quot;)));</span>
+<span class="nc" id="L106">				} else {</span>
+<span class="nc bnc" id="L107" title="All 2 branches missed.">					if (kv.key.startsWith(&quot;-&quot;)) {</span>
+<span class="nc" id="L108">						gml.sendAttributeChangedEvent(sourceId, sourceId, ElementType.GRAPH, kv.key.substring(1),</span>
+<span class="nc" id="L109">								AttributeChangeEvent.REMOVE, null, null);</span>
+<span class="nc" id="L110">					} else {</span>
+<span class="nc" id="L111">						gml.sendAttributeChangedEvent(sourceId, sourceId, ElementType.GRAPH, kv.key,</span>
+<span class="nc" id="L112">								AttributeChangeEvent.ADD, null, compositeAttribute(kv));</span>
+					}
+				}
+<span class="nc" id="L115">			} else {</span>
+				// XXX Should we consider these events pertain to the graph ?
+				// XXX
+
+<span class="nc bnc" id="L119" title="All 2 branches missed.">				if (kv.key.startsWith(&quot;-&quot;)) {</span>
+<span class="nc" id="L120">					gml.sendAttributeChangedEvent(sourceId, sourceId, ElementType.GRAPH, kv.key.substring(1),</span>
+<span class="nc" id="L121">							AttributeChangeEvent.REMOVE, null, null);</span>
+<span class="nc" id="L122">				} else {</span>
+<span class="nc" id="L123">					gml.sendAttributeChangedEvent(sourceId, sourceId, ElementType.GRAPH, kv.key,</span>
+<span class="nc" id="L124">							AttributeChangeEvent.ADD, null, compositeAttribute(kv));</span>
+				}
+			}
+		}
+<span class="nc" id="L128">	}</span>
+
+	protected Object compositeAttribute(KeyValues kv) {
+<span class="nc bnc" id="L131" title="All 2 branches missed.">		if (kv.size() &lt; 2) {</span>
+<span class="nc" id="L132">			return kv.get(kv.key);</span>
+		} else {
+<span class="nc" id="L134">			return kv;</span>
+		}
+	}
+
+	protected void handleAddNode(KeyValues kv) throws IOException {
+<span class="nc" id="L139">		Object thing = kv.get(&quot;node&quot;);</span>
+<span class="nc bnc" id="L140" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L141">			thing = kv.get(&quot;add-node&quot;);</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L143">			kv.error(&quot;expecting a node or add-node token here&quot;);</span>
+
+<span class="nc bnc" id="L145" title="All 2 branches missed.">		if (thing instanceof String) {</span>
+<span class="nc" id="L146">			String id = (String) thing;</span>
+<span class="nc" id="L147">			gml.sendNodeAdded(sourceId, id);</span>
+<span class="nc bnc" id="L148" title="All 2 branches missed.">		} else if (thing instanceof KeyValues) {</span>
+<span class="nc" id="L149">			KeyValues node = (KeyValues) thing;</span>
+<span class="nc" id="L150">			String id = node.reqStringOrNumber(&quot;id&quot;);</span>
+
+<span class="nc" id="L152">			gml.sendNodeAdded(sourceId, id);</span>
+<span class="nc" id="L153">			handleNodeAttributes(id, node);</span>
+<span class="nc" id="L154">		} else {</span>
+<span class="nc" id="L155">			kv.error(&quot;unknown token type&quot;);</span>
+		}
+<span class="nc" id="L157">	}</span>
+
+<span class="nc" id="L159">	protected long edgeid = 0;</span>
+
+	protected void handleAddEdge(KeyValues kv) throws IOException {
+<span class="nc" id="L162">		Object thing = kv.get(&quot;edge&quot;);</span>
+<span class="nc bnc" id="L163" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L164">			thing = kv.get(&quot;add-edge&quot;);</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L166">			kv.error(&quot;expecting a edge or add-edge token here&quot;);</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">		if (!(thing instanceof KeyValues))</span>
+<span class="nc" id="L168">			kv.error(&quot;expecting a set of values for the new edge&quot;);</span>
+
+<span class="nc" id="L170">		KeyValues edge = (KeyValues) thing;</span>
+<span class="nc" id="L171">		String id = edge.optString(&quot;id&quot;);</span>
+
+<span class="nc" id="L173">		String src = edge.reqStringOrNumber(&quot;source&quot;);</span>
+<span class="nc" id="L174">		String trg = edge.reqStringOrNumber(&quot;target&quot;);</span>
+
+<span class="nc bnc" id="L176" title="All 2 branches missed.">		if (id == null)</span>
+<span class="nc" id="L177">			id = String.format(&quot;%s_%s_%d&quot;, src, trg, edgeid++);</span>
+
+<span class="nc" id="L179">		String dir = edge.optString(&quot;directed&quot;);</span>
+
+<span class="nc" id="L181">		boolean directed = this.directed;</span>
+
+<span class="nc bnc" id="L183" title="All 2 branches missed.">		if (dir != null) {</span>
+<span class="nc" id="L184">			directed = getBoolean(dir);</span>
+		}
+
+<span class="nc" id="L187">		gml.sendEdgeAdded(sourceId, id, src, trg, directed);</span>
+
+<span class="nc" id="L189">		handleEdgeAttributes(id, edge);</span>
+<span class="nc" id="L190">	}</span>
+
+	protected void handleDelNode(KeyValues kv) throws IOException {
+<span class="nc" id="L193">		Object thing = kv.get(&quot;del-node&quot;);</span>
+<span class="nc bnc" id="L194" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L195">			thing = kv.get(&quot;-node&quot;);</span>
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L197">			kv.error(&quot;expecting a del-node or -node token here&quot;);</span>
+
+<span class="nc bnc" id="L199" title="All 2 branches missed.">		if (thing instanceof String) {</span>
+<span class="nc" id="L200">			String id = (String) thing;</span>
+<span class="nc" id="L201">			gml.sendNodeRemoved(sourceId, id);</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">		} else if (thing instanceof KeyValues) {</span>
+<span class="nc" id="L203">			KeyValues node = (KeyValues) thing;</span>
+<span class="nc" id="L204">			String id = node.reqString(&quot;id&quot;);</span>
+<span class="nc" id="L205">			gml.sendNodeRemoved(sourceId, id);</span>
+<span class="nc" id="L206">		} else {</span>
+<span class="nc" id="L207">			kv.error(&quot;unknown token type&quot;);</span>
+		}
+<span class="nc" id="L209">	}</span>
+
+	protected void handleDelEdge(KeyValues kv) throws IOException {
+<span class="nc" id="L212">		Object thing = kv.get(&quot;del-edge&quot;);</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L214">			thing = kv.get(&quot;-edge&quot;);</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L216">			kv.error(&quot;expecting a del-edge or -edge token here&quot;);</span>
+
+<span class="nc bnc" id="L218" title="All 2 branches missed.">		if (thing instanceof String) {</span>
+<span class="nc" id="L219">			String id = (String) thing;</span>
+<span class="nc" id="L220">			gml.sendEdgeRemoved(sourceId, id);</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">		} else if (thing instanceof KeyValues) {</span>
+<span class="nc" id="L222">			KeyValues edge = (KeyValues) thing;</span>
+<span class="nc" id="L223">			String id = edge.reqString(&quot;id&quot;);</span>
+<span class="nc" id="L224">			gml.sendEdgeRemoved(sourceId, id);</span>
+<span class="nc" id="L225">		} else {</span>
+<span class="nc" id="L226">			kv.error(&quot;unknown token type&quot;);</span>
+		}
+<span class="nc" id="L228">	}</span>
+
+	protected void handleChangeNode(KeyValues kv) throws IOException {
+<span class="nc" id="L231">		Object thing = kv.get(&quot;change-node&quot;);</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L233">			thing = kv.get(&quot;+node&quot;);</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L235">			kv.error(&quot;expecting a change-node or +node token here&quot;);</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">		if (!(thing instanceof KeyValues))</span>
+<span class="nc" id="L237">			kv.error(&quot;expecting a set of values&quot;);</span>
+
+<span class="nc" id="L239">		KeyValues node = (KeyValues) thing;</span>
+<span class="nc" id="L240">		String id = node.reqString(&quot;id&quot;);</span>
+
+<span class="nc" id="L242">		handleNodeAttributes(id, node);</span>
+<span class="nc" id="L243">	}</span>
+
+	protected void handleChangeEdge(KeyValues kv) throws IOException {
+<span class="nc" id="L246">		Object thing = kv.get(&quot;change-edge&quot;);</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L248">			thing = kv.get(&quot;+edge&quot;);</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">		if (thing == null)</span>
+<span class="nc" id="L250">			kv.error(&quot;expecting a change-edge or +edge token here&quot;);</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">		if (!(thing instanceof KeyValues))</span>
+<span class="nc" id="L252">			kv.error(&quot;expecting a set of values&quot;);</span>
+
+<span class="nc" id="L254">		KeyValues edge = (KeyValues) thing;</span>
+<span class="nc" id="L255">		String id = edge.reqString(&quot;id&quot;);</span>
+
+<span class="nc" id="L257">		handleEdgeAttributes(id, edge);</span>
+<span class="nc" id="L258">	}</span>
+
+	protected void handleNodeAttributes(String id, KeyValues node) {
+<span class="nc bnc" id="L261" title="All 2 branches missed.">		for (String key : node.keySet()) {</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">			if (key.startsWith(&quot;-&quot;)) {</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">				if (key.equals(&quot;-label&quot;))</span>
+<span class="nc" id="L264">					key = &quot;-ui.label&quot;;</span>
+
+<span class="nc" id="L266">				gml.sendAttributeChangedEvent(sourceId, id, ElementType.NODE, key.substring(1),</span>
+<span class="nc" id="L267">						AttributeChangeEvent.REMOVE, null, null);</span>
+<span class="nc" id="L268">			} else {</span>
+<span class="nc bnc" id="L269" title="All 4 branches missed.">				if (key.equals(&quot;graphics&quot;) &amp;&amp; node.get(&quot;graphics&quot;) instanceof KeyValues) {</span>
+<span class="nc" id="L270">					Graphics graphics = optNodeStyle((KeyValues) node.get(&quot;graphics&quot;));</span>
+
+<span class="nc bnc" id="L272" title="All 2 branches missed.">					if (graphics != null) {</span>
+<span class="nc bnc" id="L273" title="All 2 branches missed.">						if (graphics.position != null) {</span>
+<span class="nc" id="L274">							gml.sendAttributeChangedEvent(sourceId, id, ElementType.NODE, &quot;xyz&quot;,</span>
+<span class="nc" id="L275">									AttributeChangeEvent.ADD, null, graphics.getPosition());</span>
+						}
+<span class="nc bnc" id="L277" title="All 2 branches missed.">						if (graphics.style != null) {</span>
+<span class="nc" id="L278">							gml.sendAttributeChangedEvent(sourceId, id, ElementType.NODE, &quot;ui.style&quot;,</span>
+<span class="nc" id="L279">									AttributeChangeEvent.ADD, null, graphics.style);</span>
+						}
+					}
+<span class="nc" id="L282">				} else {</span>
+<span class="nc" id="L283">					String k = key;</span>
+
+<span class="nc bnc" id="L285" title="All 2 branches missed.">					if (key.equals(&quot;label&quot;))</span>
+<span class="nc" id="L286">						k = &quot;ui.label&quot;;</span>
+
+<span class="nc" id="L288">					gml.sendAttributeChangedEvent(sourceId, id, ElementType.NODE, k, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L289">							node.get(key));</span>
+				}
+			}
+		}
+<span class="nc" id="L293">	}</span>
+
+	protected void handleEdgeAttributes(String id, KeyValues edge) {
+<span class="nc bnc" id="L296" title="All 2 branches missed.">		for (String key : edge.keySet()) {</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">			if (key.startsWith(&quot;-&quot;)) {</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">				if (key.equals(&quot;-label&quot;))</span>
+<span class="nc" id="L299">					key = &quot;-ui.label&quot;;</span>
+
+<span class="nc" id="L301">				gml.sendAttributeChangedEvent(sourceId, id, ElementType.EDGE, key.substring(1),</span>
+<span class="nc" id="L302">						AttributeChangeEvent.REMOVE, null, null);</span>
+<span class="nc" id="L303">			} else {</span>
+<span class="nc bnc" id="L304" title="All 4 branches missed.">				if (key.equals(&quot;graphics&quot;) &amp;&amp; edge.get(&quot;graphics&quot;) instanceof KeyValues) {</span>
+<span class="nc" id="L305">					Graphics graphics = optEdgeStyle((KeyValues) edge.get(&quot;graphics&quot;));</span>
+
+<span class="nc bnc" id="L307" title="All 2 branches missed.">					if (graphics != null) {</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">						if (graphics.style != null) {</span>
+<span class="nc" id="L309">							gml.sendAttributeChangedEvent(sourceId, id, ElementType.EDGE, &quot;ui.style&quot;,</span>
+<span class="nc" id="L310">									AttributeChangeEvent.ADD, null, graphics.style);</span>
+						}
+					}
+<span class="nc" id="L313">				} else {</span>
+<span class="nc" id="L314">					String k = key;</span>
+
+<span class="nc bnc" id="L316" title="All 2 branches missed.">					if (key.equals(&quot;label&quot;))</span>
+<span class="nc" id="L317">						k = &quot;ui.label&quot;;</span>
+
+<span class="nc" id="L319">					gml.sendAttributeChangedEvent(sourceId, id, ElementType.EDGE, k, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L320">							edge.get(key));</span>
+				}
+			}
+		}
+<span class="nc" id="L324">	}</span>
+
+	protected void handleStep(KeyValues kv) throws IOException {
+<span class="nc" id="L327">		gml.sendStepBegins(sourceId, kv.reqNumber(&quot;step&quot;));</span>
+<span class="nc" id="L328">	}</span>
+
+	protected Graphics optNodeStyle(KeyValues kv) {
+<span class="nc" id="L331">		Graphics graphics = null;</span>
+
+<span class="nc bnc" id="L333" title="All 2 branches missed.">		if (kv != null) {</span>
+<span class="nc" id="L334">			StringBuffer style = new StringBuffer();</span>
+<span class="nc" id="L335">			Object w = null, h = null, d = null;</span>
+<span class="nc" id="L336">			graphics = new Graphics();</span>
+
+<span class="nc bnc" id="L338" title="All 2 branches missed.">			if (kv.get(&quot;x&quot;) != null) {</span>
+<span class="nc" id="L339">				graphics.setX(asDouble(kv.get(&quot;x&quot;)));</span>
+			}
+<span class="nc bnc" id="L341" title="All 2 branches missed.">			if (kv.get(&quot;y&quot;) != null) {</span>
+<span class="nc" id="L342">				graphics.setY(asDouble(kv.get(&quot;y&quot;)));</span>
+			}
+<span class="nc bnc" id="L344" title="All 2 branches missed.">			if (kv.get(&quot;z&quot;) != null) {</span>
+<span class="nc" id="L345">				graphics.setZ(asDouble(kv.get(&quot;z&quot;)));</span>
+			}
+<span class="nc bnc" id="L347" title="All 2 branches missed.">			if (kv.get(&quot;w&quot;) != null) {</span>
+<span class="nc" id="L348">				w = kv.get(&quot;w&quot;);</span>
+			}
+<span class="nc bnc" id="L350" title="All 2 branches missed.">			if (kv.get(&quot;h&quot;) != null) {</span>
+<span class="nc" id="L351">				h = kv.get(&quot;h&quot;);</span>
+			}
+<span class="nc bnc" id="L353" title="All 2 branches missed.">			if (kv.get(&quot;d&quot;) != null) {</span>
+<span class="nc" id="L354">				d = kv.get(&quot;d&quot;);</span>
+			}
+<span class="nc bnc" id="L356" title="All 6 branches missed.">			if (w != null || h != null || d != null) {</span>
+<span class="nc bnc" id="L357" title="All 2 branches missed.">				int ww = w != null ? (int) asDouble(w) : 0;</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">				int hh = h != null ? (int) asDouble(h) : 0;</span>
+<span class="nc bnc" id="L359" title="All 2 branches missed.">				int dd = d != null ? (int) asDouble(d) : 0;</span>
+<span class="nc" id="L360">				style.append(String.format(&quot;size: %dpx, %dpx, %dpx; &quot;, ww, hh, dd));</span>
+			}
+<span class="nc bnc" id="L362" title="All 2 branches missed.">			if (kv.get(&quot;type&quot;) != null) {</span>
+<span class="nc" id="L363">				style.append(String.format(&quot;shape: %s; &quot;, asNodeShape((String) kv.get(&quot;type&quot;))));</span>
+			}
+
+<span class="nc" id="L366">			commonGraphicsAttributes(kv, style);</span>
+<span class="nc" id="L367">			graphics.style = style.toString();</span>
+		}
+
+<span class="nc" id="L370">		return graphics;</span>
+	}
+
+	protected Graphics optEdgeStyle(KeyValues kv) {
+<span class="nc" id="L374">		Graphics graphics = null;</span>
+
+<span class="nc bnc" id="L376" title="All 2 branches missed.">		if (kv != null) {</span>
+<span class="nc" id="L377">			StringBuffer style = new StringBuffer();</span>
+<span class="nc" id="L378">			Object w = null;</span>
+<span class="nc" id="L379">			graphics = new Graphics();</span>
+
+<span class="nc bnc" id="L381" title="All 2 branches missed.">			if (kv.get(&quot;width&quot;) != null) {</span>
+<span class="nc" id="L382">				w = kv.get(&quot;width&quot;);</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">			} else if (kv.get(&quot;w&quot;) != null) {</span>
+<span class="nc" id="L384">				w = kv.get(&quot;w&quot;);</span>
+			}
+<span class="nc bnc" id="L386" title="All 2 branches missed.">			if (w != null) {</span>
+<span class="nc" id="L387">				style.append(String.format(&quot;size: %fpx;&quot;, asDouble(w)));</span>
+			}
+<span class="nc bnc" id="L389" title="All 2 branches missed.">			if (kv.get(&quot;type&quot;) != null) {</span>
+<span class="nc" id="L390">				style.append(String.format(&quot;shape: %s; &quot;, asEdgeShape((String) kv.get(&quot;type&quot;))));</span>
+			}
+
+<span class="nc" id="L393">			commonGraphicsAttributes(kv, style);</span>
+<span class="nc" id="L394">			graphics.style = style.toString();</span>
+		}
+
+<span class="nc" id="L397">		return graphics;</span>
+	}
+
+	protected void commonGraphicsAttributes(KeyValues kv, StringBuffer style) {
+<span class="nc bnc" id="L401" title="All 2 branches missed.">		if (kv.get(&quot;fill&quot;) != null) {</span>
+<span class="nc" id="L402">			style.append(String.format(&quot;fill-color: %s; &quot;, kv.get(&quot;fill&quot;)));</span>
+		}
+<span class="nc bnc" id="L404" title="All 2 branches missed.">		if (kv.get(&quot;outline&quot;) != null) {</span>
+<span class="nc" id="L405">			style.append(String.format(&quot;stroke-color: %s; &quot;, kv.get(&quot;outline&quot;)));</span>
+		}
+<span class="nc bnc" id="L407" title="All 2 branches missed.">		if (kv.get(&quot;outline_width&quot;) != null) {</span>
+<span class="nc" id="L408">			style.append(String.format(&quot;stroke-width: %spx; &quot;, kv.get(&quot;outline_width&quot;)));</span>
+		}
+<span class="nc bnc" id="L410" title="All 4 branches missed.">		if ((kv.get(&quot;outline&quot;) != null) || (kv.get(&quot;outline_width&quot;) != null)) {</span>
+<span class="nc" id="L411">			style.append(&quot;stroke-mode: plain; &quot;);</span>
+		}
+<span class="nc bnc" id="L413" title="All 2 branches missed.">		if (kv.get(&quot;anchor&quot;) != null) {</span>
+<span class="nc" id="L414">			style.append(String.format(&quot;text-alginment: %s; &quot;, asTextAlignment((String) kv.get(&quot;anchor&quot;))));</span>
+		}
+<span class="nc bnc" id="L416" title="All 2 branches missed.">		if (kv.get(&quot;image&quot;) != null) {</span>
+<span class="nc" id="L417">			style.append(String.format(&quot;icon-mode: at-left; icon: %s; &quot;, (String) kv.get(&quot;image&quot;)));</span>
+		}
+<span class="nc bnc" id="L419" title="All 2 branches missed.">		if (kv.get(&quot;arrow&quot;) != null) {</span>
+<span class="nc" id="L420">			style.append(String.format(&quot;arrow-shape: %s; &quot;, asArrowShape((String) kv.get(&quot;arrow&quot;))));</span>
+		}
+<span class="nc bnc" id="L422" title="All 2 branches missed.">		if (kv.get(&quot;font&quot;) != null) {</span>
+<span class="nc" id="L423">			style.append(String.format(&quot;font: %s; &quot;, (String) kv.get(&quot;font&quot;)));</span>
+		}
+<span class="nc" id="L425">	}</span>
+
+	protected double asDouble(Object value) {
+<span class="nc bnc" id="L428" title="All 2 branches missed.">		if (value instanceof Number) {</span>
+<span class="nc" id="L429">			return ((Number) value).doubleValue();</span>
+<span class="nc bnc" id="L430" title="All 2 branches missed.">		} else if (value instanceof String) {</span>
+			try {
+<span class="nc" id="L432">				return Double.parseDouble((String) value);</span>
+<span class="nc" id="L433">			} catch (NumberFormatException e) {</span>
+<span class="nc" id="L434">				return 0.0;</span>
+			}
+		} else {
+<span class="nc" id="L437">			return 0.0;</span>
+		}
+	}
+
+	protected String asNodeShape(String type) {
+<span class="nc bnc" id="L442" title="All 4 branches missed.">		if (type.equals(&quot;ellipse&quot;) || type.equals(&quot;oval&quot;)) {</span>
+<span class="nc" id="L443">			return &quot;circle&quot;;</span>
+<span class="nc bnc" id="L444" title="All 4 branches missed.">		} else if (type.equals(&quot;rectangle&quot;) || type.equals(&quot;box&quot;)) {</span>
+<span class="nc" id="L445">			return &quot;box&quot;;</span>
+<span class="nc bnc" id="L446" title="All 2 branches missed.">		} else if (type.equals(&quot;rounded-box&quot;)) {</span>
+<span class="nc" id="L447">			return &quot;rounded-box&quot;;</span>
+<span class="nc bnc" id="L448" title="All 2 branches missed.">		} else if (type.equals(&quot;cross&quot;)) {</span>
+<span class="nc" id="L449">			return &quot;cross&quot;;</span>
+<span class="nc bnc" id="L450" title="All 2 branches missed.">		} else if (type.equals(&quot;freeplane&quot;)) {</span>
+<span class="nc" id="L451">			return &quot;freeplane&quot;;</span>
+<span class="nc bnc" id="L452" title="All 4 branches missed.">		} else if (type.equals(&quot;losange&quot;) || type.equals(&quot;diamond&quot;)) {</span>
+<span class="nc" id="L453">			return &quot;diamond&quot;;</span>
+		} else {
+<span class="nc" id="L455">			return &quot;circle&quot;;</span>
+		}
+	}
+
+	protected String asEdgeShape(String type) {
+<span class="nc bnc" id="L460" title="All 2 branches missed.">		if (type.equals(&quot;line&quot;)) {</span>
+<span class="nc" id="L461">			return &quot;line&quot;;</span>
+<span class="nc bnc" id="L462" title="All 2 branches missed.">		} else if (type.equals(&quot;cubic-curve&quot;)) {</span>
+<span class="nc" id="L463">			return &quot;cubic-curve&quot;;</span>
+<span class="nc bnc" id="L464" title="All 2 branches missed.">		} else if (type.equals(&quot;angle&quot;)) {</span>
+<span class="nc" id="L465">			return &quot;angle&quot;;</span>
+<span class="nc bnc" id="L466" title="All 2 branches missed.">		} else if (type.equals(&quot;blob&quot;)) {</span>
+<span class="nc" id="L467">			return &quot;blob&quot;;</span>
+<span class="nc bnc" id="L468" title="All 2 branches missed.">		} else if (type.equals(&quot;freeplane&quot;)) {</span>
+<span class="nc" id="L469">			return &quot;freeplane&quot;;</span>
+		} else {
+<span class="nc" id="L471">			return &quot;line&quot;;</span>
+		}
+	}
+
+	protected String asTextAlignment(String anchor) {
+<span class="nc bnc" id="L476" title="All 2 branches missed.">		if (anchor.equals(&quot;c&quot;)) {</span>
+<span class="nc" id="L477">			return &quot;center&quot;;</span>
+<span class="nc bnc" id="L478" title="All 2 branches missed.">		} else if (anchor.equals(&quot;n&quot;)) {</span>
+<span class="nc" id="L479">			return &quot;above&quot;;</span>
+<span class="nc bnc" id="L480" title="All 2 branches missed.">		} else if (anchor.equals(&quot;ne&quot;)) {</span>
+<span class="nc" id="L481">			return &quot;at-right&quot;;</span>
+<span class="nc bnc" id="L482" title="All 2 branches missed.">		} else if (anchor.equals(&quot;e&quot;)) {</span>
+<span class="nc" id="L483">			return &quot;at-right&quot;;</span>
+<span class="nc bnc" id="L484" title="All 2 branches missed.">		} else if (anchor.equals(&quot;se&quot;)) {</span>
+<span class="nc" id="L485">			return &quot;at-right&quot;;</span>
+<span class="nc bnc" id="L486" title="All 2 branches missed.">		} else if (anchor.equals(&quot;s&quot;)) {</span>
+<span class="nc" id="L487">			return &quot;under&quot;;</span>
+<span class="nc bnc" id="L488" title="All 2 branches missed.">		} else if (anchor.equals(&quot;sw&quot;)) {</span>
+<span class="nc" id="L489">			return &quot;at-left&quot;;</span>
+<span class="nc bnc" id="L490" title="All 2 branches missed.">		} else if (anchor.equals(&quot;w&quot;)) {</span>
+<span class="nc" id="L491">			return &quot;at-left&quot;;</span>
+<span class="nc bnc" id="L492" title="All 2 branches missed.">		} else if (anchor.equals(&quot;nw&quot;)) {</span>
+<span class="nc" id="L493">			return &quot;at-left&quot;;</span>
+		} else {
+<span class="nc" id="L495">			return &quot;center&quot;;</span>
+		}
+	}
+
+	protected String asArrowShape(String arrow) {
+<span class="nc bnc" id="L500" title="All 2 branches missed.">		if (arrow.equals(&quot;none&quot;)) {</span>
+<span class="nc" id="L501">			return &quot;none&quot;;</span>
+<span class="nc bnc" id="L502" title="All 2 branches missed.">		} else if (arrow.equals(&quot;last&quot;)) {</span>
+<span class="nc" id="L503">			return &quot;arrow&quot;;</span>
+		} else {
+<span class="nc" id="L505">			return &quot;none&quot;;</span>
+		}
+	}
+
+	protected boolean getBoolean(Object bool) {
+<span class="nc bnc" id="L510" title="All 2 branches missed.">		if (bool instanceof String) {</span>
+<span class="nc bnc" id="L511" title="All 8 branches missed.">			return (bool.equals(&quot;1&quot;) || bool.equals(&quot;true&quot;) || bool.equals(&quot;yes&quot;) || bool.equals(&quot;y&quot;));</span>
+<span class="nc bnc" id="L512" title="All 2 branches missed.">		} else if (bool instanceof Number) {</span>
+<span class="nc bnc" id="L513" title="All 2 branches missed.">			return (((Number) bool).doubleValue() != 0);</span>
+		}
+<span class="nc" id="L515">		return false;</span>
+	}
+}
+
+<span class="nc" id="L519">class Graphics {</span>
+<span class="nc" id="L520">	public double[] position = null;</span>
+<span class="nc" id="L521">	public String style = null;</span>
+
+	public void setX(double value) {
+<span class="nc bnc" id="L524" title="All 2 branches missed.">		if (position == null)</span>
+<span class="nc" id="L525">			position = new double[3];</span>
+
+<span class="nc" id="L527">		position[0] = value;</span>
+<span class="nc" id="L528">	}</span>
+
+	public void setY(double value) {
+<span class="nc bnc" id="L531" title="All 2 branches missed.">		if (position == null)</span>
+<span class="nc" id="L532">			position = new double[3];</span>
+
+<span class="nc" id="L534">		position[1] = value;</span>
+<span class="nc" id="L535">	}</span>
+
+	public void setZ(double value) {
+<span class="nc bnc" id="L538" title="All 2 branches missed.">		if (position == null)</span>
+<span class="nc" id="L539">			position = new double[3];</span>
+
+<span class="nc" id="L541">		position[2] = value;</span>
+<span class="nc" id="L542">	}</span>
+
+	public Object[] getPosition() {
+<span class="nc" id="L545">		Object p[] = new Object[3];</span>
+<span class="nc" id="L546">		p[0] = (Double) position[0];</span>
+<span class="nc" id="L547">		p[1] = (Double) position[1];</span>
+<span class="nc" id="L548">		p[2] = (Double) position[2];</span>
+<span class="nc" id="L549">		return p;</span>
+	}
+}
+
+<span class="nc" id="L553">class KeyValues extends HashMap&lt;String, Object&gt; {</span>
+	private static final long serialVersionUID = 5920553787913520204L;
+
+	public String key;
+	public int line;
+	public int column;
+
+	public void print() {
+<span class="nc" id="L561">		System.err.printf(&quot;%s:%n&quot;, key);</span>
+<span class="nc bnc" id="L562" title="All 2 branches missed.">		for (String k : keySet()) {</span>
+<span class="nc" id="L563">			System.err.printf(&quot;    %s: %s%n&quot;, k, get(k));</span>
+		}
+<span class="nc" id="L565">	}</span>
+
+	public String optString(String key) throws IOException {
+<span class="nc" id="L568">		Object o = get(key);</span>
+
+<span class="nc bnc" id="L570" title="All 2 branches missed.">		if (o == null)</span>
+<span class="nc" id="L571">			return null;</span>
+
+<span class="nc bnc" id="L573" title="All 2 branches missed.">		if (o instanceof Number)</span>
+<span class="nc" id="L574">			o = o.toString();</span>
+
+<span class="nc bnc" id="L576" title="All 2 branches missed.">		if (!(o instanceof String))</span>
+<span class="nc" id="L577">			throw new IOException(String.format(</span>
+<span class="nc" id="L578">					&quot;%d:%d: expecting a string or number value for tag %s, got a list of values&quot;, line, column, key));</span>
+
+<span class="nc" id="L580">		remove(key);</span>
+<span class="nc" id="L581">		return (String) o;</span>
+	}
+
+	protected String reqString(String key) throws IOException {
+<span class="nc" id="L585">		Object o = get(key);</span>
+
+<span class="nc bnc" id="L587" title="All 2 branches missed.">		if (o == null)</span>
+<span class="nc" id="L588">			throw new IOException(String.format(&quot;%d:%d: expecting a tag %s but none found&quot;, line, column, key));</span>
+
+<span class="nc bnc" id="L590" title="All 2 branches missed.">		if (!(o instanceof String))</span>
+<span class="nc" id="L591">			throw new IOException(String.format(</span>
+<span class="nc" id="L592">					&quot;%d:%d: expecting a string or number value for tag %s, got a list of values&quot;, line, column, key));</span>
+
+<span class="nc" id="L594">		remove(key);</span>
+
+<span class="nc" id="L596">		return (String) o;</span>
+	}
+
+	protected String reqStringOrNumber(String key) throws IOException {
+<span class="nc" id="L600">		Object o = get(key);</span>
+
+<span class="nc bnc" id="L602" title="All 2 branches missed.">		if (o == null)</span>
+<span class="nc" id="L603">			throw new IOException(String.format(&quot;%d:%d: expecting a tag %s but none found&quot;, line, column, key));</span>
+
+<span class="nc bnc" id="L605" title="All 4 branches missed.">		if (!(o instanceof String) &amp;&amp; !(o instanceof Number))</span>
+<span class="nc" id="L606">			throw new IOException(String.format(</span>
+<span class="nc" id="L607">					&quot;%d:%d: expecting a string or number value for tag %s, got a list of values&quot;, line, column, key));</span>
+
+<span class="nc" id="L609">		remove(key);</span>
+
+<span class="nc bnc" id="L611" title="All 2 branches missed.">		if (o instanceof Number) {</span>
+<span class="nc" id="L612">			o = o.toString();</span>
+		}
+
+<span class="nc" id="L615">		return (String) o;</span>
+	}
+
+	protected double reqNumber(String key) throws IOException {
+<span class="nc" id="L619">		Object o = get(key);</span>
+<span class="nc" id="L620">		double v = 0.0;</span>
+
+<span class="nc bnc" id="L622" title="All 2 branches missed.">		if (o == null)</span>
+<span class="nc" id="L623">			throw new IOException(String.format(&quot;%d:%d: expecting a tag %s but none found&quot;, line, column, key));</span>
+
+<span class="nc bnc" id="L625" title="All 2 branches missed.">		if (!(o instanceof String))</span>
+<span class="nc" id="L626">			throw new IOException(String.format(</span>
+<span class="nc" id="L627">					&quot;%d:%d expecting a string or number value for tag %s, got a list of values&quot;, line, column, key));</span>
+
+		try {
+<span class="nc" id="L630">			remove(key);</span>
+<span class="nc" id="L631">			v = Double.parseDouble((String) o);</span>
+<span class="nc" id="L632">		} catch (NumberFormatException e) {</span>
+<span class="nc" id="L633">			throw new IOException(</span>
+<span class="nc" id="L634">					String.format(&quot;%d:%d: expecting a number value for tag %s, got a string&quot;, line, column, key));</span>
+		}
+
+<span class="nc" id="L637">		return v;</span>
+	}
+
+	protected KeyValues optKeyValues(String key) throws IOException {
+<span class="nc" id="L641">		Object o = get(key);</span>
+
+<span class="nc bnc" id="L643" title="All 2 branches missed.">		if (o == null)</span>
+<span class="nc" id="L644">			return null;</span>
+
+<span class="nc bnc" id="L646" title="All 2 branches missed.">		if (!(o instanceof KeyValues))</span>
+<span class="nc" id="L647">			throw new IOException(String.format(&quot;%d:%d: expecting a list of values for tag %s, got a string or number&quot;,</span>
+<span class="nc" id="L648">					line, column, key));</span>
+
+<span class="nc" id="L650">		remove(key);</span>
+
+<span class="nc" id="L652">		return (KeyValues) o;</span>
+	}
+
+	protected KeyValues reqKeyValues(String key) throws IOException {
+<span class="nc" id="L656">		Object o = get(key);</span>
+
+<span class="nc bnc" id="L658" title="All 2 branches missed.">		if (o == null)</span>
+<span class="nc" id="L659">			throw new IOException(String.format(&quot;%d:%d: expecting a tag %s but none found&quot;, line, column, key));</span>
+
+<span class="nc bnc" id="L661" title="All 2 branches missed.">		if (!(o instanceof KeyValues))</span>
+<span class="nc" id="L662">			throw new IOException(String.format(&quot;%d:%d: expecting a list of values for tag %s, got a string or number&quot;,</span>
+<span class="nc" id="L663">					line, column, key));</span>
+
+<span class="nc" id="L665">		remove(key);</span>
+
+<span class="nc" id="L667">		return (KeyValues) o;</span>
+	}
+
+	protected void error(String message) throws IOException {
+<span class="nc" id="L671">		throw new IOException(String.format(&quot;%d:%d: %s&quot;, line, column, message));</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

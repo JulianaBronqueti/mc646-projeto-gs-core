@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSourceXML.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSourceXML.java</span></div><h1>FileSourceXML.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-09-21
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.Stack;
+import java.util.logging.Logger;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.StartElement;
+import javax.xml.stream.events.XMLEvent;
+
+import org.graphstream.stream.SourceBase;
+
+/**
+ * Base for XML-based file format. It uses an xml events stream (
+ * {@link javax.xml.stream}). One who want to define a new xml-based fiel source
+ * has to define actions after the document start and before the document end.
+ * The {@link #nextEvents()}, called between start and end, has to be defined
+ * too.
+ *
+ * @author Guilhelm Savin
+ */
+public abstract class FileSourceXML extends SourceBase implements FileSource, XMLStreamConstants {
+<span class="nc" id="L66">	private static final Logger LOGGER = Logger.getLogger(FileSourceXML.class.getName());</span>
+
+	/**
+	 * XML events stream. Should not be used directly but with
+	 * {@link #getNextEvent()}.
+	 */
+	protected XMLEventReader reader;
+	/*
+	 * Used to allow 'pushback' of events.
+	 */
+	private Stack&lt;XMLEvent&gt; events;
+
+<span class="nc" id="L78">	protected boolean strictMode = true;</span>
+
+<span class="nc" id="L80">	protected FileSourceXML() {</span>
+<span class="nc" id="L81">		events = new Stack&lt;&gt;();</span>
+<span class="nc" id="L82">	}</span>
+
+	/**
+	 * If strict mode is enabled, will produce errors while encountering unexpected
+	 * attributes or elements. This is enabled by default.
+	 *
+	 * @return true if strict mode is enabled
+	 */
+	public boolean isStrictMode() {
+<span class="nc" id="L91">		return strictMode;</span>
+	}
+
+	public void setStrictMode(boolean strictMode) {
+<span class="nc" id="L95">		this.strictMode = strictMode;</span>
+<span class="nc" id="L96">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#readAll(java.lang.String)
+	 */
+	public void readAll(String fileName) throws IOException {
+<span class="nc" id="L104">		readAll(new FileReader(fileName));</span>
+<span class="nc" id="L105">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#readAll(java.net.URL)
+	 */
+	public void readAll(URL url) throws IOException {
+<span class="nc" id="L113">		readAll(url.openStream());</span>
+<span class="nc" id="L114">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#readAll(java.io.InputStream)
+	 */
+	public void readAll(InputStream stream) throws IOException {
+<span class="nc" id="L122">		readAll(new InputStreamReader(stream));</span>
+<span class="nc" id="L123">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#readAll(java.io.Reader)
+	 */
+	public void readAll(Reader reader) throws IOException {
+<span class="nc" id="L131">		begin(reader);</span>
+<span class="nc bnc" id="L132" title="All 2 branches missed.">		while (nextEvents())</span>
+			;
+<span class="nc" id="L134">		end();</span>
+<span class="nc" id="L135">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#begin(java.lang.String)
+	 */
+	public void begin(String fileName) throws IOException {
+<span class="nc" id="L143">		begin(new FileReader(fileName));</span>
+<span class="nc" id="L144">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#begin(java.net.URL)
+	 */
+	public void begin(URL url) throws IOException {
+<span class="nc" id="L152">		begin(url.openStream());</span>
+<span class="nc" id="L153">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#begin(java.io.InputStream)
+	 */
+	public void begin(InputStream stream) throws IOException {
+<span class="nc" id="L161">		begin(new InputStreamReader(stream));</span>
+<span class="nc" id="L162">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#begin(java.io.Reader)
+	 */
+	public void begin(Reader reader) throws IOException {
+<span class="nc" id="L170">		openStream(reader);</span>
+<span class="nc" id="L171">	}</span>
+
+	/**
+	 * Called after the event
+	 * {@link javax.xml.stream.events.XMLEvent#START_DOCUMENT} has been received.
+	 *
+	 * @throws IOException
+	 * @throws XMLStreamException
+	 */
+	protected abstract void afterStartDocument() throws IOException, XMLStreamException;
+
+	/**
+	 * Called before trying to receive the events
+	 * {@link javax.xml.stream.events.XMLEvent#END_DOCUMENT}.
+	 *
+	 * @throws IOException
+	 * @throws XMLStreamException
+	 */
+	protected abstract void beforeEndDocument() throws IOException, XMLStreamException;
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#nextEvents()
+	 */
+	public abstract boolean nextEvents() throws IOException;
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#nextStep()
+	 */
+	public boolean nextStep() throws IOException {
+<span class="nc" id="L204">		return nextEvents();</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#end()
+	 */
+	public void end() throws IOException {
+<span class="nc" id="L213">		closeStream();</span>
+<span class="nc" id="L214">	}</span>
+
+	/**
+	 * Get a new event from the stream. This method has to be used to allow the
+	 * {@link #pushback(XMLEvent)} method to work.
+	 *
+	 * @return the next event in the stream
+	 * @throws IOException
+	 * @throws XMLStreamException
+	 */
+	protected XMLEvent getNextEvent() throws IOException, XMLStreamException {
+<span class="nc" id="L225">		skipWhiteSpaces();</span>
+
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		if (events.size() &gt; 0)</span>
+<span class="nc" id="L228">			return events.pop();</span>
+
+<span class="nc" id="L230">		return reader.nextEvent();</span>
+	}
+
+	/**
+	 * Pushback an event in the stream.
+	 *
+	 * @param e
+	 *            the event
+	 */
+	protected void pushback(XMLEvent e) {
+<span class="nc" id="L240">		events.push(e);</span>
+<span class="nc" id="L241">	}</span>
+
+	/**
+	 * Generate a new parse exception.
+	 *
+	 * @param e
+	 *            event producing an error
+	 * @param critical
+	 *            if true, will always produce an exception, else if strict mode is
+	 *            disable, will only produce a warning
+	 * @param msg
+	 *            message to put in the exception
+	 * @param args
+	 *            arguments of the message
+	 */
+	protected void newParseError(XMLEvent e, boolean critical, String msg, Object... args) throws XMLStreamException {
+<span class="nc bnc" id="L257" title="All 4 branches missed.">		if (!critical &amp;&amp; !strictMode) {</span>
+<span class="nc" id="L258">			LOGGER.warning(String.format(msg, args));</span>
+<span class="nc" id="L259">		} else {</span>
+<span class="nc" id="L260">			throw new XMLStreamException(String.format(msg, args), e.getLocation());</span>
+		}
+<span class="nc" id="L262">	}</span>
+
+	/**
+	 * Check is an event has an expected type and name.
+	 *
+	 * @param e
+	 *            event to check
+	 * @param type
+	 *            expected type
+	 * @param name
+	 *            expected name
+	 * @return true is type and name are valid
+	 */
+	protected boolean isEvent(XMLEvent e, int type, String name) {
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		boolean valid = e.getEventType() == type;</span>
+
+<span class="nc bnc" id="L278" title="All 2 branches missed.">		if (valid) {</span>
+<span class="nc bnc" id="L279" title="All 4 branches missed.">			switch (type) {</span>
+			case START_ELEMENT:
+<span class="nc" id="L281">				valid = e.asStartElement().getName().getLocalPart().equals(name);</span>
+<span class="nc" id="L282">				break;</span>
+			case END_ELEMENT:
+<span class="nc" id="L284">				valid = e.asEndElement().getName().getLocalPart().equals(name);</span>
+<span class="nc" id="L285">				break;</span>
+			case ATTRIBUTE:
+<span class="nc" id="L287">				valid = ((Attribute) e).getName().getLocalPart().equals(name);</span>
+				break;
+			case CHARACTERS:
+			case NAMESPACE:
+			case PROCESSING_INSTRUCTION:
+			case COMMENT:
+			case START_DOCUMENT:
+			case END_DOCUMENT:
+			case DTD:
+			}
+		}
+
+<span class="nc" id="L299">		return valid;</span>
+	}
+
+	/**
+	 * Check is the event has valid type and name. If not, a new exception is
+	 * thrown.
+	 *
+	 * @param e
+	 *            event to check
+	 * @param type
+	 *            expected type
+	 * @param name
+	 *            expected name
+	 * @throws XMLStreamException
+	 *             if event has invalid type or name
+	 */
+	protected void checkValid(XMLEvent e, int type, String name) throws XMLStreamException {
+<span class="nc" id="L316">		boolean valid = isEvent(e, type, name);</span>
+
+<span class="nc bnc" id="L318" title="All 2 branches missed.">		if (!valid)</span>
+<span class="nc" id="L319">			newParseError(e, true, &quot;expecting %s, got %s&quot;, gotWhat(type, name), gotWhat(e));</span>
+<span class="nc" id="L320">	}</span>
+
+	private String gotWhat(XMLEvent e) {
+<span class="nc" id="L323">		String v = null;</span>
+
+<span class="nc bnc" id="L325" title="All 4 branches missed.">		switch (e.getEventType()) {</span>
+		case START_ELEMENT:
+<span class="nc" id="L327">			v = e.asStartElement().getName().getLocalPart();</span>
+<span class="nc" id="L328">			break;</span>
+		case END_ELEMENT:
+<span class="nc" id="L330">			v = e.asEndElement().getName().getLocalPart();</span>
+<span class="nc" id="L331">			break;</span>
+		case ATTRIBUTE:
+<span class="nc" id="L333">			v = ((Attribute) e).getName().getLocalPart();</span>
+			break;
+		}
+
+<span class="nc" id="L337">		return gotWhat(e.getEventType(), v);</span>
+	}
+
+	private String gotWhat(int type, String v) {
+<span class="nc bnc" id="L341" title="All 11 branches missed.">		switch (type) {</span>
+		case START_ELEMENT:
+<span class="nc" id="L343">			return String.format(&quot;'&lt;%s&gt;'&quot;, v);</span>
+		case END_ELEMENT:
+<span class="nc" id="L345">			return String.format(&quot;'&lt;/%s&gt;'&quot;, v);</span>
+		case ATTRIBUTE:
+<span class="nc" id="L347">			return String.format(&quot;attribute '%s'&quot;, v);</span>
+		case NAMESPACE:
+<span class="nc" id="L349">			return &quot;namespace&quot;;</span>
+		case PROCESSING_INSTRUCTION:
+<span class="nc" id="L351">			return &quot;processing instruction&quot;;</span>
+		case COMMENT:
+<span class="nc" id="L353">			return &quot;comment&quot;;</span>
+		case START_DOCUMENT:
+<span class="nc" id="L355">			return &quot;document start&quot;;</span>
+		case END_DOCUMENT:
+<span class="nc" id="L357">			return &quot;document end&quot;;</span>
+		case DTD:
+<span class="nc" id="L359">			return &quot;dtd&quot;;</span>
+		case CHARACTERS:
+<span class="nc" id="L361">			return &quot;characters&quot;;</span>
+		default:
+<span class="nc" id="L363">			return &quot;UNKNOWN&quot;;</span>
+		}
+	}
+
+	private void skipWhiteSpaces() throws IOException, XMLStreamException {
+		XMLEvent e;
+
+		do {
+<span class="nc bnc" id="L371" title="All 2 branches missed.">			if (events.size() &gt; 0)</span>
+<span class="nc" id="L372">				e = events.pop();</span>
+			else
+<span class="nc" id="L374">				e = reader.nextEvent();</span>
+<span class="nc bnc" id="L375" title="All 4 branches missed.">		} while (isEvent(e, XMLEvent.CHARACTERS, null) &amp;&amp; e.asCharacters().getData().matches(&quot;^\\s*$&quot;));</span>
+
+<span class="nc" id="L377">		pushback(e);</span>
+<span class="nc" id="L378">	}</span>
+
+	/**
+	 * Open a new xml events stream.
+	 *
+	 * @param stream
+	 * @throws IOException
+	 */
+	protected void openStream(Reader stream) throws IOException {
+<span class="nc bnc" id="L387" title="All 2 branches missed.">		if (reader != null)</span>
+<span class="nc" id="L388">			closeStream();</span>
+
+		try {
+			XMLEvent e;
+
+<span class="nc" id="L393">			reader = XMLInputFactory.newInstance().createXMLEventReader(stream);</span>
+
+<span class="nc" id="L395">			e = getNextEvent();</span>
+<span class="nc" id="L396">			checkValid(e, XMLEvent.START_DOCUMENT, null);</span>
+
+<span class="nc" id="L398">			afterStartDocument();</span>
+<span class="nc" id="L399">		} catch (XMLStreamException e) {</span>
+<span class="nc" id="L400">			throw new IOException(e);</span>
+<span class="nc" id="L401">		} catch (FactoryConfigurationError e) {</span>
+<span class="nc" id="L402">			throw new IOException(e);</span>
+		}
+<span class="nc" id="L404">	}</span>
+
+	/**
+	 * Close the current opened stream.
+	 *
+	 * @throws IOException
+	 */
+	protected void closeStream() throws IOException {
+		try {
+<span class="nc" id="L413">			beforeEndDocument();</span>
+<span class="nc" id="L414">			reader.close();</span>
+<span class="nc" id="L415">		} catch (XMLStreamException e) {</span>
+<span class="nc" id="L416">			throw new IOException(e);</span>
+		} finally {
+<span class="nc" id="L418">			reader = null;</span>
+		}
+<span class="nc" id="L420">	}</span>
+
+	/**
+	 * Convert an attribute to a valid constant name.
+	 *
+	 * @param a
+	 * @return
+	 * @see #toConstantName(String)
+	 */
+	protected String toConstantName(Attribute a) {
+<span class="nc" id="L430">		return toConstantName(a.getName().getLocalPart());</span>
+	}
+
+	/**
+	 * Convert a string to a valid constant name. String is put to upper case and
+	 * all non-word characters are replaced by '_'.
+	 *
+	 * @param value
+	 * @return
+	 */
+	protected String toConstantName(String value) {
+<span class="nc" id="L441">		return value.toUpperCase().replaceAll(&quot;\\W&quot;, &quot;_&quot;);</span>
+	}
+
+	/**
+	 * Base for parsers, providing some usefull features.
+	 */
+<span class="nc" id="L447">	protected class Parser {</span>
+		/**
+		 * Read a sequence of characters and return these characters as a string.
+		 * Characters are read until a non-character event is reached.
+		 *
+		 * @return a sequence of characters
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		protected String __characters() throws IOException, XMLStreamException {
+			XMLEvent e;
+<span class="nc" id="L458">			StringBuilder buffer = new StringBuilder();</span>
+
+<span class="nc" id="L460">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L462" title="All 2 branches missed.">			while (e.getEventType() == XMLEvent.CHARACTERS) {</span>
+<span class="nc" id="L463">				buffer.append(e.asCharacters().getData());</span>
+<span class="nc" id="L464">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L467">			pushback(e);</span>
+
+<span class="nc" id="L469">			return buffer.toString();</span>
+		}
+
+		/**
+		 * Get attributes of a start element in a map. Attributes should be described in
+		 * an enumeration such that {@link FileSourceXML#toConstantName(Attribute)}
+		 * correspond to names of enumeration constants.
+		 *
+		 * @param &lt;T&gt;
+		 *            type of the enumeration describing attributes
+		 * @param cls
+		 *            class of the enumeration T
+		 * @param e
+		 *            start event from which attributes have to be extracted
+		 * @return a mapping between enum constants and attribute values.
+		 */
+		protected &lt;T extends Enum&lt;T&gt;&gt; EnumMap&lt;T, String&gt; getAttributes(Class&lt;T&gt; cls, StartElement e) {
+<span class="nc" id="L486">			EnumMap&lt;T, String&gt; values = new EnumMap&lt;T, String&gt;(cls);</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L489">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+
+<span class="nc bnc" id="L491" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L492">				Attribute a = attributes.next();</span>
+
+<span class="nc bnc" id="L494" title="All 2 branches missed.">				for (int i = 0; i &lt; cls.getEnumConstants().length; i++) {</span>
+<span class="nc bnc" id="L495" title="All 2 branches missed.">					if (cls.getEnumConstants()[i].name().equals(toConstantName(a))) {</span>
+<span class="nc" id="L496">						values.put(cls.getEnumConstants()[i], a.getValue());</span>
+<span class="nc" id="L497">						break;</span>
+					}
+				}
+			}
+
+<span class="nc" id="L502">			return values;</span>
+		}
+
+		/**
+		 * Check if all required attributes are present.
+		 *
+		 * @param &lt;T&gt;
+		 *            type of the enumeration describing attributes
+		 * @param e
+		 *            the event
+		 * @param attributes
+		 *            extracted attributes
+		 * @param required
+		 *            array of required attributes
+		 * @throws XMLStreamException
+		 *             if at least one required attribute is not found
+		 */
+		protected &lt;T extends Enum&lt;T&gt;&gt; void checkRequiredAttributes(XMLEvent e, EnumMap&lt;T, String&gt; attributes,
+				T... required) throws XMLStreamException {
+<span class="nc bnc" id="L521" title="All 2 branches missed.">			if (required != null) {</span>
+<span class="nc bnc" id="L522" title="All 2 branches missed.">				for (int i = 0; i &lt; required.length; i++) {</span>
+<span class="nc bnc" id="L523" title="All 2 branches missed.">					if (!attributes.containsKey(required[i]))</span>
+<span class="nc" id="L524">						newParseError(e, true, &quot;'%s' attribute is required for &lt;%s&gt; element&quot;,</span>
+<span class="nc" id="L525">								required[i].name().toLowerCase(), e.asStartElement().getName().getLocalPart());</span>
+				}
+			}
+<span class="nc" id="L528">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

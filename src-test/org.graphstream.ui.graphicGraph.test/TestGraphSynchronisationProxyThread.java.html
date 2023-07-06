@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestGraphSynchronisationProxyThread.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.test</a> &gt; <span class="el_source">TestGraphSynchronisationProxyThread.java</span></div><h1>TestGraphSynchronisationProxyThread.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.test;
+
+import static org.junit.Assert.*;
+
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+
+import javax.swing.Timer;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.stream.thread.ThreadProxyPipe;
+import org.graphstream.ui.graphicGraph.GraphicGraph;
+import org.graphstream.ui.graphicGraph.GraphicSprite;
+import org.graphstream.ui.graphicGraph.stylesheet.Style;
+import org.graphstream.ui.spriteManager.Sprite;
+import org.graphstream.ui.spriteManager.SpriteManager;
+import org.junit.Test;
+
+/**
+ * Test the bases of the viewer.
+ */
+<span class="nc" id="L56">public class TestGraphSynchronisationProxyThread {</span>
+	@Test
+	public void testGraphSynchronisation() {
+		// Here a Graph is created in this thread and another thread is created
+		// with a GraphicGraph.
+		// The two graphs being in separate threads we use thread proxies
+		// filters to pass
+		// informations between the two. Once again we will use synchronisation
+		// (the two graphs
+		// listen at each other). In the direction Graph -&gt; GraphicGraph the
+		// graphic graph listens
+		// at ALL the events (elements + attributes). In the direction
+		// GraphicGraph -&gt; Graph, the
+		// graph only listen at attributes since we do not intend to add
+		// elements directly in the
+		// graphic graph.
+
+<span class="nc" id="L73">		Graph main = new MultiGraph(&quot;main&quot;);</span>
+<span class="nc" id="L74">		ThreadProxyPipe toGraphic = new ThreadProxyPipe();</span>
+<span class="nc" id="L75">		toGraphic.init(main);</span>
+
+<span class="nc" id="L77">		InTheSwingThread viewerThread = new InTheSwingThread(toGraphic);</span>
+<span class="nc" id="L78">		ThreadProxyPipe toMain = viewerThread.getProxy();</span>
+
+<span class="nc" id="L80">		toMain.addAttributeSink(main); // Get the graphic graph proxy.</span>
+
+		// Now launch the graphic graph in the Swing thread using a Swing Timer.
+
+<span class="nc" id="L84">		viewerThread.start();</span>
+
+		// We modify the graph in the main thread.
+
+<span class="nc" id="L88">		Node A = main.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L89">		Node B = main.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L90">		Node C = main.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L91">		main.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L92">		main.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L93">		main.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L95">		SpriteManager sman = new SpriteManager(main);</span>
+<span class="nc" id="L96">		Sprite S1 = sman.addSprite(&quot;S1&quot;);</span>
+<span class="nc" id="L97">		Sprite S2 = sman.addSprite(&quot;S2&quot;);</span>
+<span class="nc" id="L98">		Sprite S3 = sman.addSprite(&quot;S3&quot;);</span>
+
+<span class="nc" id="L100">		S3.setPosition(1, 2, 2);</span>
+<span class="nc" id="L101">		S3.setPosition(2, 3, 2);</span>
+<span class="nc" id="L102">		S3.setPosition(3, 2, 1);</span>
+
+<span class="nc" id="L104">		A.setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L105">		B.setAttribute(&quot;ui.bar&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L106">		C.setAttribute(&quot;truc&quot;); // Not prefixed by UI, will not pass.</span>
+<span class="nc" id="L107">		S1.setAttribute(&quot;ui.foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L108">		main.stepBegins(1);</span>
+
+<span class="nc" id="L110">		toMain.pump();</span>
+
+		// We ask the Swing thread to modify the graphic graph.
+
+<span class="nc" id="L114">		main.stepBegins(2);</span>
+<span class="nc" id="L115">		main.setAttribute(&quot;ui.EQUIP&quot;); // Remember GraphicGraph filters</span>
+										// attributes.
+
+		// Wait and stop.
+
+<span class="nc" id="L120">		toMain.pump();</span>
+<span class="nc" id="L121">		sleep(1000);</span>
+<span class="nc" id="L122">		toMain.pump();</span>
+
+<span class="nc" id="L124">		main.setAttribute(&quot;ui.STOP&quot;);</span>
+
+<span class="nc" id="L126">		toMain.pump();</span>
+<span class="nc" id="L127">		sleep(1000);</span>
+<span class="nc" id="L128">		toMain.pump();</span>
+
+		// ****************************************************************************************
+		// Now we can begin the real test. We ensure the timer in the Swing
+		// graph stopped and check
+		// If the two graphs (main and graphic) synchronized correctly.
+
+<span class="nc" id="L135">		GraphicGraph graphic = viewerThread.graphic;</span>
+
+<span class="nc" id="L137">		assertTrue(viewerThread.isStopped());</span>
+<span class="nc" id="L138">		assertFalse(main.hasAttribute(&quot;ui.EQUIP&quot;));</span>
+<span class="nc" id="L139">		assertFalse(graphic.hasAttribute(&quot;ui.EQUIP&quot;));</span>
+<span class="nc" id="L140">		assertTrue(main.hasAttribute(&quot;ui.STOP&quot;));</span>
+<span class="nc" id="L141">		assertTrue(graphic.hasAttribute(&quot;ui.STOP&quot;));</span>
+
+<span class="nc" id="L143">		assertEquals(3, graphic.getStep(), 0);</span>
+<span class="nc" id="L144">		assertEquals(2, main.getStep(), 0); // We do not listen at elements events</span>
+											// the step 3
+											// of the graphic graph did not
+											// reached us.
+		// Assert all events passed toward the graphic graph.
+
+<span class="nc" id="L150">		assertEquals(3, graphic.getNodeCount());</span>
+<span class="nc" id="L151">		assertEquals(3, graphic.getEdgeCount());</span>
+<span class="nc" id="L152">		assertEquals(3, graphic.getSpriteCount());</span>
+<span class="nc" id="L153">		assertNotNull(graphic.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L154">		assertNotNull(graphic.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L155">		assertNotNull(graphic.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L156">		assertNotNull(graphic.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L157">		assertNotNull(graphic.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L158">		assertNotNull(graphic.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L159">		assertNotNull(graphic.getSprite(&quot;S1&quot;));</span>
+<span class="nc" id="L160">		assertNotNull(graphic.getSprite(&quot;S2&quot;));</span>
+<span class="nc" id="L161">		assertEquals(&quot;bar&quot;, graphic.getNode(&quot;A&quot;).getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L162">		assertEquals(&quot;foo&quot;, graphic.getNode(&quot;B&quot;).getAttribute(&quot;ui.bar&quot;));</span>
+		// assertNull( graphic.getNode(&quot;C&quot;).getAttribute( &quot;truc&quot; ) ); // Should
+		// not pass the attribute filter.
+<span class="nc" id="L165">		assertEquals(&quot;bar&quot;, graphic.getSprite(&quot;S1&quot;).getAttribute(&quot;ui.foo&quot;));</span>
+<span class="nc" id="L166">		assertEquals(&quot;bar&quot;, sman.getSprite(&quot;S1&quot;).getAttribute(&quot;ui.foo&quot;));</span>
+
+		// Assert attributes passed back to the graph from the graphic graph.
+
+<span class="nc" id="L170">		Object xyz1[] = { 4, 3, 2 };</span>
+<span class="nc" id="L171">		Object xyz2[] = { 2, 1, 0 };</span>
+<span class="nc" id="L172">		Object xyz3[] = { 3, 2, 1 };</span>
+
+<span class="nc" id="L174">		assertArrayEquals(xyz1, (Object[]) main.getNode(&quot;A&quot;).getAttribute(&quot;xyz&quot;));</span>
+<span class="nc" id="L175">		assertArrayEquals(xyz2, (Object[]) main.getNode(&quot;B&quot;).getAttribute(&quot;xyz&quot;));</span>
+<span class="nc" id="L176">		assertArrayEquals(xyz3, (Object[]) main.getNode(&quot;C&quot;).getAttribute(&quot;xyz&quot;));</span>
+
+<span class="nc" id="L178">		assertEquals(&quot;foobar&quot;, S2.getAttribute(&quot;ui.foobar&quot;));</span>
+
+<span class="nc" id="L180">		GraphicSprite gs3 = graphic.getSprite(&quot;S3&quot;);</span>
+
+<span class="nc" id="L182">		assertEquals(0.5f, S1.getX(), 0);</span>
+<span class="nc" id="L183">		assertEquals(0, S1.getY(), 0);</span>
+<span class="nc" id="L184">		assertEquals(0, S1.getZ(), 0);</span>
+<span class="nc" id="L185">		assertEquals(1, S2.getX(), 0);</span>
+<span class="nc" id="L186">		assertEquals(2, S2.getY(), 0);</span>
+<span class="nc" id="L187">		assertEquals(3, S2.getZ(), 0);</span>
+
+<span class="nc" id="L189">		assertEquals(3, gs3.getX(), 0);</span>
+<span class="nc" id="L190">		assertEquals(2, gs3.getY(), 0);</span>
+<span class="nc" id="L191">		assertEquals(1, gs3.getZ(), 0);</span>
+<span class="nc" id="L192">	}</span>
+
+	protected void sleep(int millis) {
+		try {
+<span class="nc" id="L196">			Thread.sleep(millis);</span>
+<span class="nc" id="L197">		} catch (InterruptedException e) {</span>
+		}
+<span class="nc" id="L199">	}</span>
+
+	/**
+	 * The graphic graph in the Swing thread.
+	 */
+	public static class InTheSwingThread implements ActionListener {
+		protected ThreadProxyPipe fromMain;
+
+		protected GraphicGraph graphic;
+
+		protected Timer timer;
+
+<span class="nc" id="L211">		public InTheSwingThread(ThreadProxyPipe input) {</span>
+<span class="nc" id="L212">			fromMain = input;</span>
+<span class="nc" id="L213">			graphic = new GraphicGraph(&quot;gg&quot;);</span>
+<span class="nc" id="L214">			timer = new Timer(40, this);</span>
+
+<span class="nc" id="L216">			timer.setRepeats(true);</span>
+<span class="nc" id="L217">			timer.setCoalesce(true);</span>
+<span class="nc" id="L218">			input.addSink(graphic);</span>
+<span class="nc" id="L219">		}</span>
+
+		public void start() {
+<span class="nc" id="L222">			timer.start();</span>
+<span class="nc" id="L223">		}</span>
+
+		public boolean isStopped() {
+<span class="nc bnc" id="L226" title="All 2 branches missed.">			return (!timer.isRunning());</span>
+		}
+
+		public void actionPerformed(ActionEvent e) {
+<span class="nc" id="L230">			fromMain.pump();</span>
+
+			// We wait for some attributes to be added. Such events trigger
+			// actions that modify
+			// the graphic graph and should be propagated (synchronised) to the
+			// main graph.
+			// When we encounter the &quot;ui.STOP&quot; event we stop the timer.
+
+<span class="nc bnc" id="L238" title="All 2 branches missed.">			if (graphic.hasAttribute(&quot;ui.EQUIP&quot;)) {</span>
+<span class="nc" id="L239">				Node A = graphic.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L240">				Node B = graphic.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L241">				Node C = graphic.getNode(&quot;C&quot;);</span>
+
+<span class="nc bnc" id="L243" title="All 2 branches missed.">				if (A != null)</span>
+<span class="nc" id="L244">					A.setAttribute(&quot;xyz&quot;, 4, 3, 2);</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">				if (B != null)</span>
+<span class="nc" id="L246">					B.setAttribute(&quot;xyz&quot;, 2, 1, 0);</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">				if (C != null)</span>
+<span class="nc" id="L248">					C.setAttribute(&quot;xyz&quot;, 3, 2, 1);</span>
+
+<span class="nc" id="L250">				GraphicSprite S1 = graphic.getSprite(&quot;S1&quot;);</span>
+<span class="nc" id="L251">				GraphicSprite S2 = graphic.getSprite(&quot;S2&quot;);</span>
+
+<span class="nc bnc" id="L253" title="All 2 branches missed.">				if (S2 != null) {</span>
+<span class="nc" id="L254">					S2.setAttribute(&quot;ui.foobar&quot;, &quot;foobar&quot;);</span>
+<span class="nc" id="L255">					S2.setPosition(1, 2, 3, Style.Units.GU);</span>
+				}
+
+<span class="nc bnc" id="L258" title="All 2 branches missed.">				if (S1 != null)</span>
+<span class="nc" id="L259">					S1.setPosition(0.5f);</span>
+
+<span class="nc" id="L261">				graphic.removeAttribute(&quot;ui.EQUIP&quot;);</span>
+<span class="nc" id="L262">				graphic.stepBegins(3);</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">			} else if (graphic.hasAttribute(&quot;ui.STOP&quot;)) {</span>
+<span class="nc" id="L264">				timer.stop();</span>
+				// System.err.printf( &quot;STOP!%n&quot; );
+			}
+<span class="nc" id="L267">		}</span>
+
+		public ThreadProxyPipe getProxy() {
+<span class="nc" id="L270">			ThreadProxyPipe toMain = new ThreadProxyPipe();</span>
+<span class="nc" id="L271">			toMain.init(graphic);</span>
+
+			// fromMain.synchronizeWith( toMain, graphic );
+
+<span class="nc" id="L275">			return toMain;</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

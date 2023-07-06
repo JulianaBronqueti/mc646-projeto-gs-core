@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>PathTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.test</a> &gt; <span class="el_source">PathTest.java</span></div><h1>PathTest.java</h1><pre class="source lang-java linenums">package org.graphstream.graph.test;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Path;
+import org.graphstream.graph.implementations.DefaultGraph;
+import org.junit.Test;
+
+<span class="nc" id="L8">public class PathTest {</span>
+
+	@Test(expected = IllegalArgumentException.class)
+	public void add_nodeHeadMustBeInEdge() {
+<span class="nc" id="L12">		Graph graph = createSimpleGraph();</span>
+<span class="nc" id="L13">		Path path = new Path();</span>
+
+<span class="nc" id="L15">		path.setRoot(graph.getNode(&quot;a&quot;));</span>
+
+		// this has to fail as there is no edge between nodes &quot;a&quot; and &quot;c&quot;
+<span class="nc" id="L18">		path.add(graph.getEdge(&quot;cd&quot;));</span>
+<span class="nc" id="L19">	}</span>
+
+	@Test(expected = IllegalArgumentException.class)
+	public void add_whenAddingEdgeRootMustBeSet() {
+<span class="nc" id="L23">		Graph graph = createSimpleGraph();</span>
+<span class="nc" id="L24">		Path path = new Path();</span>
+
+		// this has to fail as root of the path is not set
+<span class="nc" id="L27">		path.add(graph.getEdge(&quot;ab&quot;));</span>
+<span class="nc" id="L28">	}</span>
+
+	private Graph createSimpleGraph() {
+<span class="nc" id="L31">		Graph graph = new DefaultGraph(&quot;test&quot;);</span>
+<span class="nc" id="L32">		graph.setStrict(false);</span>
+<span class="nc" id="L33">		graph.setAutoCreate(true);</span>
+
+<span class="nc" id="L35">		graph.addEdge(&quot;ab&quot;, &quot;a&quot;, &quot;b&quot;);</span>
+<span class="nc" id="L36">		graph.addEdge(&quot;bc&quot;, &quot;b&quot;, &quot;c&quot;);</span>
+<span class="nc" id="L37">		graph.addEdge(&quot;cd&quot;, &quot;c&quot;, &quot;d&quot;);</span>
+
+<span class="nc" id="L39">		return graph;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

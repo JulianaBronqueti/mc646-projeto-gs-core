@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Selector.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.stylesheet</a> &gt; <span class="el_source">Selector.java</span></div><h1>Selector.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.stylesheet;
+
+/**
+ * A selector is the part of a CSS rule that defines to which element a style
+ * applies in the graph.
+ * 
+ * @author Antoine Dutot
+ * @author Yoann Pign�
+ */
+public class Selector {
+	/**
+	 * Types of elements.
+	 */
+<span class="nc" id="L46">	public static enum Type {</span>
+<span class="nc" id="L47">		ANY, GRAPH, NODE, EDGE, SPRITE</span>
+	};
+
+	/**
+	 * The kind of element this matcher applies to.
+	 */
+	public Type type;
+
+	/**
+	 * If the selector specify an identifier.
+	 */
+	public String id;
+
+	/**
+	 * If the selector specify a class.
+	 */
+	public String clazz;
+
+	/**
+	 * If the selector also specify a pseudo class.
+	 */
+	public String pseudoClass;
+
+	/**
+	 * New selector for a given type of element.
+	 * 
+	 * @param type
+	 *            The element type of this selector.
+	 */
+<span class="nc" id="L76">	public Selector(Type type) {</span>
+<span class="nc" id="L77">		this.type = type;</span>
+<span class="nc" id="L78">	}</span>
+
+	/**
+	 * New selector for a given type of element. This constructor allows to specify
+	 * either an identifier or a class to restrict this selector. If the identifier
+	 * is given, the class will never be used (as identifiers are finer than
+	 * classes). If the identifier is null the class will be used. The identifier
+	 * allow to select only one element by its name. The class allows to select
+	 * several elements.
+	 * 
+	 * @param type
+	 *            The element type of this selector.
+	 * @param identifier
+	 *            The element name.
+	 * @param clazz
+	 *            The element class.
+	 */
+<span class="nc" id="L95">	public Selector(Type type, String identifier, String clazz) {</span>
+<span class="nc" id="L96">		this.type = type;</span>
+<span class="nc" id="L97">		setId(identifier);</span>
+<span class="nc" id="L98">		setClass(clazz);</span>
+<span class="nc" id="L99">	}</span>
+
+	/**
+	 * Utility constructor that assign the correct type to the selector from a
+	 * string. The type must be &quot;node&quot;, &quot;edge&quot;, &quot;graph&quot;, or &quot;sprite&quot;.
+	 * 
+	 * @param type
+	 *            Either &quot;node&quot;, &quot;edge&quot;, &quot;graph&quot; or &quot;sprite&quot;.
+	 */
+<span class="nc" id="L108">	public Selector(String type) {</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">		if (type.equals(&quot;node&quot;))</span>
+<span class="nc" id="L110">			this.type = Type.NODE;</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">		else if (type.equals(&quot;edge&quot;))</span>
+<span class="nc" id="L112">			this.type = Type.EDGE;</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">		else if (type.equals(&quot;graph&quot;))</span>
+<span class="nc" id="L114">			this.type = Type.GRAPH;</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">		else if (type.equals(&quot;sprite&quot;))</span>
+<span class="nc" id="L116">			this.type = Type.SPRITE;</span>
+		else
+<span class="nc" id="L118">			throw new RuntimeException(&quot;invalid matcher type '&quot; + type + &quot;'&quot;);</span>
+<span class="nc" id="L119">	}</span>
+
+	/**
+	 * New selector, copy of another.
+	 * 
+	 * @param other
+	 *            The other selector.
+	 */
+<span class="nc" id="L127">	public Selector(Selector other) {</span>
+<span class="nc" id="L128">		this.type = other.type;</span>
+<span class="nc" id="L129">		setId(other.id);</span>
+<span class="nc" id="L130">		setClass(other.clazz);</span>
+<span class="nc" id="L131">	}</span>
+
+	/**
+	 * Specify the identifier of the unique element this selector applies to.
+	 * 
+	 * @param id
+	 *            A string that identifies an element of the graph.
+	 */
+	public void setId(String id) {
+<span class="nc" id="L140">		this.id = id;</span>
+<span class="nc" id="L141">	}</span>
+
+	/**
+	 * Specify the class of the elements this selector applies to.
+	 * 
+	 * @param clazz
+	 *            A string that matches all elements of a given class.
+	 */
+	public void setClass(String clazz) {
+<span class="nc" id="L150">		this.clazz = clazz;</span>
+<span class="nc" id="L151">	}</span>
+
+	/**
+	 * Specify the pseudo-class of the elements this selector applies to.
+	 * 
+	 * @param pseudoClass
+	 *            A string that matches all elements of a given pseudo-class.
+	 */
+	public void setPseudoClass(String pseudoClass) {
+<span class="nc" id="L160">		this.pseudoClass = pseudoClass;</span>
+<span class="nc" id="L161">	}</span>
+
+	/**
+	 * The kind of elements this selector applies to.
+	 * 
+	 * @return An element type.
+	 */
+	public Type getType() {
+<span class="nc" id="L169">		return type;</span>
+	}
+
+	/**
+	 * The identifier of the element this selector uniquely applies to. This can be
+	 * null if this selector is general.
+	 * 
+	 * @return The identifier or null if the selector is general.
+	 */
+	public String getId() {
+<span class="nc" id="L179">		return id;</span>
+	}
+
+	/**
+	 * The class of elements this selector applies to. This can be null if this
+	 * selector is general.
+	 * 
+	 * @return A class name or null if the selector is general.
+	 */
+	public String getClazz() {
+<span class="nc" id="L189">		return clazz;</span>
+	}
+
+	/**
+	 * The pseudo-class of elements this selector applies to. This can be null.
+	 * 
+	 * @return A pseudo-class name or null.
+	 */
+	public String getPseudoClass() {
+<span class="nc" id="L198">		return pseudoClass;</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc bnc" id="L203" title="All 2 branches missed.">		return String.format(&quot;%s%s%s%s&quot;, type.toString(), id != null ? String.format(&quot;#%s&quot;, id) : &quot;&quot;,</span>
+<span class="nc bnc" id="L204" title="All 2 branches missed.">				clazz != null ? String.format(&quot;.%s&quot;, clazz) : &quot;&quot;,</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">				pseudoClass != null ? String.format(&quot;:%s&quot;, pseudoClass) : &quot;&quot;);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

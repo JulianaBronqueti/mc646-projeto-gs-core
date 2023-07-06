@@ -1,0 +1,646 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ByteProxy.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.binary</a> &gt; <span class="el_source">ByteProxy.java</span></div><h1>ByteProxy.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2016-02-01
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.binary;
+
+import org.graphstream.stream.Pipe;
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.SourceBase;
+import org.graphstream.stream.Replayable;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Logger;
+
+/**
+ * This class is a proxy that can exchange event binary-encoded (opposed to
+ * text-encoder) with another proxy.
+ * &lt;p/&gt;
+ * It can be either a server that will listen to connections, or a client that
+ * will connect to a server. The
+ * {@link org.graphstream.stream.binary.ByteFactory} passed to the constructor
+ * will define the encoder and decoder of binary data.
+ * &lt;p/&gt;
+ * Proxy can run on its own thread, just by calling the
+ * {@link ByteProxy#start()} method. It can be manually used with the
+ * {@link ByteProxy#poll()} method that process available
+ * {@link java.nio.channels.SelectionKey}.
+ *
+ * @since 31/01/16.
+ */
+public class ByteProxy extends SourceBase implements Pipe, Runnable {
+<span class="nc" id="L68">	private static final Logger LOGGER = Logger.getLogger(ByteProxy.class.getName());</span>
+
+	/**
+	 * Defines the mode of this proy, server or client.
+	 */
+<span class="nc" id="L73">	public enum Mode {</span>
+<span class="nc" id="L74">		/**</span>
+		 * The proxy is a server. It has its own
+		 * {@link java.nio.channels.ServerSocketChannel} and can listen to entering
+		 * connections.
+		 */
+<span class="nc" id="L79">		SERVER,</span>
+<span class="nc" id="L80">		/**</span>
+		 * The proxy is just a client that connects to another proxy server.
+		 */
+<span class="nc" id="L83">		CLIENT</span>
+	}
+
+<span class="nc" id="L86">	protected static final int BUFFER_INITIAL_SIZE = 8192;</span>
+
+	protected final ByteFactory byteFactory;
+	protected final ByteEncoder encoder;
+	protected final ByteDecoder decoder;
+
+	/**
+	 * Flag to tell is the proxy is running or not.
+	 */
+	protected final AtomicBoolean running;
+
+	/**
+	 * Proxy mode.
+	 */
+	public final Mode mode;
+
+	/**
+	 * The address the proxy is bound to. If in server mode, this is the address
+	 * where the server is listening to connections. If in client mode, this is the
+	 * address where the proxy is connected to.
+	 */
+	public final InetAddress address;
+
+	/**
+	 * The port listened or connected to.
+	 */
+	public final int port;
+
+	/**
+	 * The main channel of the proxy. If in server mode, it will be the
+	 * {@link java.nio.channels.ServerSocketChannel}. Else, just the
+	 * {@link java.nio.channels.SocketChannel} connected to the server.
+	 */
+	protected SelectableChannel mainChannel;
+
+	/**
+	 * Multiplexor.
+	 */
+	protected Selector selector;
+
+	/**
+	 * The thread processing selection key when the proxy has been started. If the
+	 * proxy is not started, the field will be null.
+	 */
+	protected Thread thread;
+
+	/**
+	 * List of opened channels that can be written when new events are received by
+	 * the proxy.
+	 */
+	protected Collection&lt;SocketChannel&gt; writableChannels;
+
+	/**
+	 * If not null, this will be replayed when a new connection occured.
+	 */
+	protected Replayable replayable;
+
+	/**
+	 * Create a new ByteProxy, in server mode, which will be bound to a local
+	 * address and the given port.
+	 *
+	 * @param factory
+	 *            the factory to create encoder and decoder
+	 * @param port
+	 *            port to bind the server to
+	 * @throws IOException
+	 *             if troubles occurred while connecting the socket
+	 */
+	public ByteProxy(ByteFactory factory, int port) throws IOException {
+<span class="nc" id="L155">		this(factory, Mode.SERVER, InetAddress.getLocalHost(), port);</span>
+<span class="nc" id="L156">	}</span>
+
+	/**
+	 * Complete constructor of the proxy.
+	 *
+	 * @param factory
+	 *            the factory to create encoder and decoder
+	 * @param mode
+	 *            mode of the proxy
+	 * @param address
+	 *            address to listen or to connect to
+	 * @param port
+	 *            port to listen or to connect to
+	 * @throws IOException
+	 *             if troubles occurred while connecting the socket
+	 */
+<span class="nc" id="L172">	public ByteProxy(ByteFactory factory, Mode mode, InetAddress address, int port) throws IOException {</span>
+<span class="nc" id="L173">		running = new AtomicBoolean(false);</span>
+<span class="nc" id="L174">		writableChannels = new LinkedList&lt;&gt;();</span>
+<span class="nc" id="L175">		replayable = null;</span>
+<span class="nc" id="L176">		thread = null;</span>
+
+<span class="nc" id="L178">		this.mode = mode;</span>
+<span class="nc" id="L179">		this.address = address;</span>
+<span class="nc" id="L180">		this.port = port;</span>
+
+<span class="nc" id="L182">		byteFactory = factory;</span>
+<span class="nc" id="L183">		encoder = factory.createByteEncoder();</span>
+<span class="nc" id="L184">		decoder = factory.createByteDecoder();</span>
+
+<span class="nc" id="L186">		encoder.addTransport(new ByteEncoder.Transport() {</span>
+			@Override
+			public void send(ByteBuffer buffer) {
+<span class="nc" id="L189">				doSend(buffer);</span>
+<span class="nc" id="L190">			}</span>
+		});
+
+<span class="nc" id="L193">		decoder.addSink(new Sink() {</span>
+			@Override
+			public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L196">				sendGraphAttributeAdded(sourceId, timeId, attribute, value);</span>
+<span class="nc" id="L197">			}</span>
+
+			@Override
+			public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+					Object newValue) {
+<span class="nc" id="L202">				sendGraphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L203">			}</span>
+
+			@Override
+			public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L207">				sendGraphAttributeRemoved(sourceId, timeId, attribute);</span>
+<span class="nc" id="L208">			}</span>
+
+			@Override
+			public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute,
+					Object value) {
+<span class="nc" id="L213">				sendNodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L214">			}</span>
+
+			@Override
+			public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute,
+					Object oldValue, Object newValue) {
+<span class="nc" id="L219">				sendNodeAttributeChanged(sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L220">			}</span>
+
+			@Override
+			public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L224">				sendNodeAttributeRemoved(sourceId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L225">			}</span>
+
+			@Override
+			public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute,
+					Object value) {
+<span class="nc" id="L230">				sendEdgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L231">			}</span>
+
+			@Override
+			public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute,
+					Object oldValue, Object newValue) {
+<span class="nc" id="L236">				sendEdgeAttributeChanged(sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L237">			}</span>
+
+			@Override
+			public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L241">				sendEdgeAttributeRemoved(sourceId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L242">			}</span>
+
+			@Override
+			public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L246">				sendNodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L247">			}</span>
+
+			@Override
+			public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L251">				sendNodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L252">			}</span>
+
+			@Override
+			public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+					boolean directed) {
+<span class="nc" id="L257">				sendEdgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L258">			}</span>
+
+			@Override
+			public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L262">				sendEdgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L263">			}</span>
+
+			@Override
+			public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L267">				sendGraphCleared(sourceId, timeId);</span>
+<span class="nc" id="L268">			}</span>
+
+			@Override
+			public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L272">				sendStepBegins(sourceId, timeId, step);</span>
+<span class="nc" id="L273">			}</span>
+		});
+
+<span class="nc" id="L276">		init();</span>
+<span class="nc" id="L277">	}</span>
+
+	protected void init() throws IOException {
+<span class="nc" id="L280">		InetSocketAddress isa = new InetSocketAddress(address, port);</span>
+
+<span class="nc" id="L282">		selector = Selector.open();</span>
+
+<span class="nc bnc" id="L284" title="All 3 branches missed.">		switch (mode) {</span>
+		case SERVER:
+<span class="nc" id="L286">			ServerSocketChannel serverChannel = ServerSocketChannel.open();</span>
+<span class="nc" id="L287">			serverChannel.configureBlocking(false);</span>
+<span class="nc" id="L288">			serverChannel.bind(isa);</span>
+
+<span class="nc" id="L290">			mainChannel = serverChannel;</span>
+<span class="nc" id="L291">			mainChannel.register(selector, SelectionKey.OP_ACCEPT);</span>
+
+<span class="nc" id="L293">			break;</span>
+		case CLIENT:
+<span class="nc" id="L295">			SocketChannel socketChannel = SocketChannel.open();</span>
+<span class="nc" id="L296">			socketChannel.connect(isa);</span>
+<span class="nc" id="L297">			socketChannel.finishConnect();</span>
+<span class="nc" id="L298">			socketChannel.configureBlocking(false);</span>
+
+<span class="nc" id="L300">			mainChannel = socketChannel;</span>
+<span class="nc" id="L301">			mainChannel.register(selector, SelectionKey.OP_READ + SelectionKey.OP_WRITE);</span>
+<span class="nc" id="L302">			writableChannels.add(socketChannel);</span>
+			break;
+		}
+<span class="nc" id="L305">	}</span>
+
+	/**
+	 * Set the stream that can be replayed on a new connection.
+	 *
+	 * @param replayable
+	 *            the stream to replay, or null if nothing has to be replayed.
+	 */
+	public void setReplayable(Replayable replayable) {
+<span class="nc" id="L314">		this.replayable = replayable;</span>
+<span class="nc" id="L315">	}</span>
+
+	/**
+	 * Starts the proxy worker.
+	 */
+	public synchronized void start() {
+<span class="nc bnc" id="L321" title="All 2 branches missed.">		if (thread != null) {</span>
+<span class="nc" id="L322">			LOGGER.warning(&quot;Already started.&quot;);</span>
+<span class="nc" id="L323">		} else {</span>
+<span class="nc" id="L324">			Thread t = new Thread(this);</span>
+<span class="nc" id="L325">			t.start();</span>
+		}
+<span class="nc" id="L327">	}</span>
+
+	/**
+	 * Stops the proxy worker, if running, and wait the end of the worker thread.
+	 *
+	 * @throws InterruptedException
+	 *             if an interruption occurred while waiting for the end of the
+	 *             worker thread.
+	 */
+	public void stop() throws InterruptedException {
+<span class="nc bnc" id="L337" title="All 2 branches missed.">		if (thread != null) {</span>
+<span class="nc" id="L338">			Thread t = thread;</span>
+<span class="nc" id="L339">			running.set(false);</span>
+
+<span class="nc" id="L341">			t.join();</span>
+		}
+<span class="nc" id="L343">	}</span>
+
+	@Override
+	public void run() {
+<span class="nc" id="L347">		thread = Thread.currentThread();</span>
+<span class="nc" id="L348">		running.set(true);</span>
+
+<span class="nc" id="L350">		LOGGER.info(String.format(&quot;[%s] started on %s:%d...&quot;, mode, address.getHostName(), port));</span>
+
+<span class="nc bnc" id="L352" title="All 2 branches missed.">		while (running.get()) {</span>
+<span class="nc" id="L353">			poll();</span>
+		}
+
+<span class="nc" id="L356">		thread = null;</span>
+<span class="nc" id="L357">	}</span>
+
+	protected void processSelectedKeys() throws IOException {
+<span class="nc" id="L360">		Set&lt;?&gt; readyKeys = selector.selectedKeys();</span>
+<span class="nc" id="L361">		Iterator&lt;?&gt; i = readyKeys.iterator();</span>
+
+<span class="nc bnc" id="L363" title="All 2 branches missed.">		while (i.hasNext()) {</span>
+<span class="nc" id="L364">			SelectionKey key = (SelectionKey) i.next();</span>
+
+<span class="nc" id="L366">			i.remove();</span>
+
+<span class="nc bnc" id="L368" title="All 2 branches missed.">			if (key.isAcceptable()) {</span>
+				//
+				// If a new connection occurs, register the new socket
+				// in the multiplexer.
+				//
+
+<span class="nc bnc" id="L374" title="All 2 branches missed.">				assert mode == Mode.SERVER;</span>
+
+<span class="nc" id="L376">				ServerSocketChannel ssocket = (ServerSocketChannel) key.channel();</span>
+<span class="nc" id="L377">				SocketChannel socketChannel = ssocket.accept();</span>
+
+<span class="nc" id="L379">				LOGGER.info(String.format(&quot;accepting socket %s:%d&quot;, socketChannel.socket().getInetAddress(),</span>
+<span class="nc" id="L380">						socketChannel.socket().getPort()));</span>
+
+<span class="nc" id="L382">				socketChannel.finishConnect();</span>
+<span class="nc" id="L383">				socketChannel.configureBlocking(false);</span>
+
+<span class="nc bnc" id="L385" title="All 2 branches missed.">				if (decoder != null)</span>
+<span class="nc" id="L386">					socketChannel.register(selector, SelectionKey.OP_READ);</span>
+
+<span class="nc" id="L388">				replay(socketChannel);</span>
+<span class="nc" id="L389">				writableChannels.add(socketChannel);</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">			} else if (key.isReadable()) {</span>
+				//
+				// If a message arrives, read it.
+				//
+
+<span class="nc" id="L395">				readDataChunk(key);</span>
+<span class="nc bnc" id="L396" title="All 4 branches missed.">			} else if (key.isWritable() &amp;&amp; key.attachment() != null) {</span>
+<span class="nc" id="L397">				ByteBuffer buffer = (ByteBuffer) key.attachment();</span>
+<span class="nc" id="L398">				WritableByteChannel out = (WritableByteChannel) key.channel();</span>
+
+				try {
+<span class="nc" id="L401">					out.write(buffer);</span>
+<span class="nc" id="L402">				} catch (IOException e) {</span>
+<span class="nc" id="L403">					LOGGER.severe(&quot;I/O error while writing to channel.&quot;);</span>
+<span class="nc" id="L404">					close(out);</span>
+				} finally {
+<span class="nc" id="L406">					key.cancel();</span>
+				}
+			}
+		}
+<span class="nc" id="L410">	}</span>
+
+	/**
+	 * Same as calling {@link #poll(boolean)} with blocking flag set to true.
+	 */
+	public void poll() {
+<span class="nc" id="L416">		poll(true);</span>
+<span class="nc" id="L417">	}</span>
+
+	/**
+	 * Wait until one or several chunks of message are acceptable. This method
+	 * should be called in a loop. It can be used to block a program until some data
+	 * is available.
+	 *
+	 * @param blocking
+	 *            flag true if method has to wait for some keys to be ready. If
+	 *            false, just process the available keys.
+	 */
+	public void poll(boolean blocking) {
+		try {
+<span class="nc bnc" id="L430" title="All 2 branches missed.">			if (blocking) {</span>
+<span class="nc bnc" id="L431" title="All 2 branches missed.">				if (selector.select() &gt; 0) {</span>
+<span class="nc" id="L432">					processSelectedKeys();</span>
+				}
+<span class="nc" id="L434">			} else {</span>
+<span class="nc bnc" id="L435" title="All 2 branches missed.">				if (selector.selectNow() &gt; 0) {</span>
+<span class="nc" id="L436">					processSelectedKeys();</span>
+				}
+			}
+<span class="nc" id="L439">		} catch (IOException e) {</span>
+<span class="nc" id="L440">			LOGGER.severe(String.format(&quot;I/O error in receiver //:%d thread: aborting: %s&quot;, port, e.getMessage()));</span>
+<span class="nc" id="L441">			running.set(false);</span>
+<span class="nc" id="L442">		} catch (Throwable e) {</span>
+<span class="nc" id="L443">			LOGGER.severe(String.format(&quot;Unknown error: %s&quot;, e.getMessage()));</span>
+<span class="nc" id="L444">			e.printStackTrace();</span>
+<span class="nc" id="L445">			running.set(false);</span>
+		}
+<span class="nc" id="L447">	}</span>
+
+	/**
+	 * When data is readable on a socket, send it to the appropriate buffer
+	 * (creating it if needed).
+	 */
+	protected void readDataChunk(SelectionKey key) throws IOException {
+<span class="nc" id="L454">		ByteBuffer buffer = (ByteBuffer) key.attachment();</span>
+<span class="nc" id="L455">		SocketChannel socket = (SocketChannel) key.channel();</span>
+
+<span class="nc bnc" id="L457" title="All 2 branches missed.">		if (buffer == null) {</span>
+<span class="nc" id="L458">			buffer = ByteBuffer.allocate(BUFFER_INITIAL_SIZE);</span>
+<span class="nc" id="L459">			key.attach(buffer);</span>
+
+<span class="nc" id="L461">			LOGGER.info(String.format(&quot;creating buffer for new connection from %s:%d&quot;, socket.socket().getInetAddress(),</span>
+<span class="nc" id="L462">					socket.socket().getPort()));</span>
+		}
+
+		try {
+<span class="nc" id="L466">			int r = socket.read(buffer);</span>
+
+<span class="nc bnc" id="L468" title="All 2 branches missed.">			if (r &lt; 0) {</span>
+				//
+				// End-of-stream
+				//
+
+<span class="nc" id="L473">				LOGGER.info(&quot;end-of-stream reached. Closing the mainChannel.&quot;);</span>
+<span class="nc" id="L474">				close(socket);</span>
+<span class="nc bnc" id="L475" title="All 2 branches missed.">			} else if (r == 0) {</span>
+<span class="nc" id="L476">				LOGGER.warning(&quot;Strange, no binary read.&quot;);</span>
+<span class="nc" id="L477">			} else {</span>
+<span class="nc bnc" id="L478" title="All 2 branches missed.">				while (decoder.validate(buffer)) {</span>
+<span class="nc" id="L479">					buffer.flip();</span>
+<span class="nc" id="L480">					decoder.decode(buffer);</span>
+<span class="nc" id="L481">					buffer.compact();</span>
+				}
+
+<span class="nc bnc" id="L484" title="All 2 branches missed.">				if (!buffer.hasRemaining()) {</span>
+<span class="nc" id="L485">					ByteBuffer bigger = ByteBuffer.allocate(buffer.capacity() + BUFFER_INITIAL_SIZE);</span>
+<span class="nc" id="L486">					bigger.put(buffer);</span>
+<span class="nc" id="L487">					key.attach(bigger);</span>
+				}
+			}
+<span class="nc" id="L490">		} catch (IOException e) {</span>
+<span class="nc" id="L491">			LOGGER.severe(String.format(&quot;receiver //%s:%d cannot read object socket mainChannel (I/O error): %s&quot;,</span>
+<span class="nc" id="L492">					address.getHostName(), port, e.getMessage()));</span>
+
+<span class="nc" id="L494">			close(key.channel());</span>
+		}
+<span class="nc" id="L496">	}</span>
+
+	protected void doSend(ByteBuffer buffer) {
+<span class="nc" id="L499">		ByteBuffer sendBuffer = ByteBuffer.allocate(buffer.remaining());</span>
+<span class="nc" id="L500">		sendBuffer.put(buffer);</span>
+<span class="nc" id="L501">		sendBuffer.rewind();</span>
+
+<span class="nc" id="L503">		Iterator&lt;SocketChannel&gt; channels = writableChannels.iterator();</span>
+
+<span class="nc bnc" id="L505" title="All 2 branches missed.">		while (channels.hasNext()) {</span>
+<span class="nc" id="L506">			SocketChannel writableChannel = channels.next();</span>
+
+			try {
+				try {
+<span class="nc" id="L510">					writableChannel.write(sendBuffer.duplicate());</span>
+<span class="nc" id="L511">				} catch (NotYetConnectedException e) {</span>
+<span class="nc" id="L512">					writableChannel.register(selector, SelectionKey.OP_WRITE, sendBuffer.duplicate());</span>
+				}
+<span class="nc" id="L514">			} catch (IOException e) {</span>
+<span class="nc" id="L515">				LOGGER.severe(&quot;I/O error while writing to channel : &quot; + e.getMessage());</span>
+
+<span class="nc" id="L517">				channels.remove();</span>
+<span class="nc" id="L518">				close(writableChannel);</span>
+			}
+		}
+<span class="nc" id="L521">	}</span>
+
+	protected void replay(final SocketChannel channel) {
+<span class="nc bnc" id="L524" title="All 2 branches missed.">		if (replayable != null) {</span>
+<span class="nc" id="L525">			final Replayable.Controller controller = replayable.getReplayController();</span>
+<span class="nc" id="L526">			final ByteEncoder encoder = byteFactory.createByteEncoder();</span>
+
+<span class="nc" id="L528">			encoder.addTransport(new ByteEncoder.Transport() {</span>
+				@Override
+				public void send(ByteBuffer buffer) {
+					try {
+<span class="nc" id="L532">						channel.write(buffer);</span>
+<span class="nc" id="L533">					} catch (IOException e) {</span>
+<span class="nc" id="L534">						LOGGER.severe(&quot;Failled to replay : &quot; + e.getMessage());</span>
+<span class="nc" id="L535">						controller.removeSink(encoder);</span>
+					}
+<span class="nc" id="L537">				}</span>
+			});
+
+<span class="nc" id="L540">			controller.addSink(encoder);</span>
+<span class="nc" id="L541">			controller.replay();</span>
+		}
+<span class="nc" id="L543">	}</span>
+
+	protected void close(Channel channel) {
+<span class="nc" id="L546">		writableChannels.remove(channel);</span>
+
+<span class="nc bnc" id="L548" title="All 2 branches missed.">		if (channel == mainChannel) {</span>
+<span class="nc" id="L549">			LOGGER.warning(&quot;Closing main channel.&quot;);</span>
+
+<span class="nc bnc" id="L551" title="All 2 branches missed.">			if (running.get()) {</span>
+				try {
+<span class="nc" id="L553">					stop();</span>
+<span class="nc" id="L554">				} catch (InterruptedException e) {</span>
+<span class="nc" id="L555">					LOGGER.warning(&quot;Failed to properly terminate the worker.&quot;);</span>
+				}
+			}
+		}
+
+		try {
+<span class="nc" id="L561">			channel.close();</span>
+<span class="nc" id="L562">		} catch (IOException e) {</span>
+<span class="nc" id="L563">			LOGGER.warning(&quot;closing channel: &quot; + e.getMessage());</span>
+		}
+<span class="nc" id="L565">	}</span>
+
+	@Override
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L569">		encoder.graphAttributeAdded(sourceId, timeId, attribute, value);</span>
+<span class="nc" id="L570">	}</span>
+
+	@Override
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L575">		encoder.graphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L576">	}</span>
+
+	@Override
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L580">		encoder.graphAttributeRemoved(sourceId, timeId, attribute);</span>
+<span class="nc" id="L581">	}</span>
+
+	@Override
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L585">		encoder.nodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L586">	}</span>
+
+	@Override
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L591">		encoder.nodeAttributeChanged(sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L592">	}</span>
+
+	@Override
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L596">		encoder.nodeAttributeRemoved(sourceId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L597">	}</span>
+
+	@Override
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L601">		encoder.edgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L602">	}</span>
+
+	@Override
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L607">		encoder.edgeAttributeChanged(sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L608">	}</span>
+
+	@Override
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L612">		encoder.edgeAttributeRemoved(sourceId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L613">	}</span>
+
+	@Override
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L617">		encoder.nodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L618">	}</span>
+
+	@Override
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L622">		encoder.nodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L623">	}</span>
+
+	@Override
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L628">		encoder.edgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L629">	}</span>
+
+	@Override
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L633">		encoder.edgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L634">	}</span>
+
+	@Override
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L638">		encoder.graphCleared(sourceId, timeId);</span>
+<span class="nc" id="L639">	}</span>
+
+	@Override
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L643">		encoder.stepBegins(sourceId, timeId, step);</span>
+<span class="nc" id="L644">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

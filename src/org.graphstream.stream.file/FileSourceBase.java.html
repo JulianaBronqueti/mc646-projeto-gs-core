@@ -1,0 +1,1246 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSourceBase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSourceBase.java</span></div><h1>FileSourceBase.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Richard O. Legendi &lt;richard.legendi@gmail.com&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StreamTokenizer;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+
+import org.graphstream.stream.SourceBase;
+import org.graphstream.ui.geom.Point3;
+
+/**
+ * Base for various graph file input.
+ * 
+ * &lt;p&gt;
+ * This class is a piece of crap. However it is still used in many places... :-(
+ * TODO use a parser generator to replace it.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * This class provides parsing utilities to help the creation of new graph
+ * readers/parsers. It handles a stack of input files that allow to easily
+ * implements &quot;includes&quot; (that is interrupting the parsing of a file to input
+ * another one). It wraps stream tokenizers allowing to eat or get specific
+ * token types easily.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * It is well suited for graph formats using text (not binary), but not for XML
+ * based files where a real XML parser would probably be better.
+ * &lt;/p&gt;
+ */
+public abstract class FileSourceBase extends SourceBase implements FileSource {
+	// Attributes
+
+	/**
+	 * The quote character. Can be changed in descendants.
+	 */
+<span class="nc" id="L81">	protected int QUOTE_CHAR = '&quot;';</span>
+
+	/**
+	 * The comment character. Can be changed in descendants.
+	 */
+<span class="nc" id="L86">	protected int COMMENT_CHAR = '#';</span>
+
+	/**
+	 * Is EOL significant?.
+	 */
+<span class="nc" id="L91">	protected boolean eol_is_significant = false;</span>
+
+	/**
+	 * Stack of tokenizers/filenames. Each tokenizer is open on a file. When an
+	 * include is found, the current tokenizer is pushed on the stack and a new one
+	 * for the included file is created. Once the included file is parsed, the
+	 * tokenizer is popped of the stack and the previous one is used.
+	 */
+<span class="nc" id="L99">	protected ArrayList&lt;CurrentFile&gt; tok_stack = new ArrayList&lt;CurrentFile&gt;();</span>
+
+	/**
+	 * Current tokenizer.
+	 */
+	protected StreamTokenizer st;
+
+	/**
+	 * Current file name.
+	 */
+	protected String filename;
+
+	/**
+	 * Map of unknown attributes to corresponding classes.
+	 */
+<span class="nc" id="L114">	protected HashMap&lt;String, String&gt; attribute_classes = new HashMap&lt;String, String&gt;();</span>
+
+	// Constructors
+
+	/**
+	 * No-op constructor.
+	 */
+<span class="nc" id="L121">	protected FileSourceBase() {</span>
+<span class="nc" id="L122">	}</span>
+
+	/**
+	 * Setup the reader End-Of-Line policy.
+	 * 
+	 * @param eol_is_significant
+	 *            If true EOL will be returned as a token, else it is ignored.
+	 */
+<span class="nc" id="L130">	protected FileSourceBase(boolean eol_is_significant) {</span>
+<span class="nc" id="L131">		this.eol_is_significant = eol_is_significant;</span>
+<span class="nc" id="L132">	}</span>
+
+	/**
+	 * Setup the reader End-Of-Line policy and specific comment and quote
+	 * characters.
+	 * 
+	 * @param eol_is_significant
+	 *            If true EOL will be returned as a token, else it is ignored.
+	 * @param commentChar
+	 *            Character used for one line comments.
+	 * @param quoteChar
+	 *            Character used to enclose quotations.
+	 */
+<span class="nc" id="L145">	protected FileSourceBase(boolean eol_is_significant, int commentChar, int quoteChar) {</span>
+<span class="nc" id="L146">		this.eol_is_significant = eol_is_significant;</span>
+
+<span class="nc" id="L148">		this.COMMENT_CHAR = commentChar;</span>
+<span class="nc" id="L149">		this.QUOTE_CHAR = quoteChar;</span>
+<span class="nc" id="L150">	}</span>
+
+	// Access
+
+	// Command -- Complete modeField.
+
+	public void readAll(String filename) throws IOException {
+<span class="nc" id="L157">		begin(filename);</span>
+<span class="nc bnc" id="L158" title="All 2 branches missed.">		while (nextEvents())</span>
+			;
+<span class="nc" id="L160">		end();</span>
+<span class="nc" id="L161">	}</span>
+
+	public void readAll(URL url) throws IOException {
+<span class="nc" id="L164">		begin(url);</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">		while (nextEvents())</span>
+			;
+<span class="nc" id="L167">		end();</span>
+<span class="nc" id="L168">	}</span>
+
+	public void readAll(InputStream stream) throws IOException {
+<span class="nc" id="L171">		begin(stream);</span>
+<span class="nc bnc" id="L172" title="All 2 branches missed.">		while (nextEvents())</span>
+			;
+<span class="nc" id="L174">		end();</span>
+<span class="nc" id="L175">	}</span>
+
+	public void readAll(Reader reader) throws IOException {
+<span class="nc" id="L178">		begin(reader);</span>
+<span class="nc bnc" id="L179" title="All 2 branches missed.">		while (nextEvents())</span>
+			;
+<span class="nc" id="L181">		end();</span>
+<span class="nc" id="L182">	}</span>
+
+	// Commands -- By-event modeField.
+
+	public void begin(String filename) throws IOException {
+<span class="nc" id="L187">		pushTokenizer(filename);</span>
+<span class="nc" id="L188">	}</span>
+
+	public void begin(InputStream stream) throws IOException {
+<span class="nc" id="L191">		pushTokenizer(stream);</span>
+<span class="nc" id="L192">	}</span>
+
+	public void begin(URL url) throws IOException {
+<span class="nc" id="L195">		pushTokenizer(url);</span>
+<span class="nc" id="L196">	}</span>
+
+	public void begin(Reader reader) throws IOException {
+<span class="nc" id="L199">		pushTokenizer(reader);</span>
+<span class="nc" id="L200">	}</span>
+
+	public abstract boolean nextEvents() throws IOException;
+
+	public void end() throws IOException {
+<span class="nc" id="L205">		popTokenizer();</span>
+<span class="nc" id="L206">	}</span>
+
+	// Command
+
+	/**
+	 * Declare that when &lt;code&gt;attribute&lt;/code&gt; is found, the corresponding
+	 * &lt;code&gt;attribute_class&lt;/code&gt; must be instantiated and inserted in the current
+	 * element being parsed. This is equivalent to the &quot;map&quot; keyword of the GML
+	 * file. An attribute appears in a GML file as a name followed by a &quot;[...]&quot;
+	 * block. The contents of this block defines sub-attributes that must map to
+	 * public fields of the attribute. Only attributes that are not handled
+	 * specifically by this parser can be added.
+	 * 
+	 * @param attribute
+	 *            must name the attribute.
+	 * @param attribute_class
+	 *            must be the complete name of a Java class that will represent the
+	 *            attribute.
+	 */
+	public void addAttributeClass(String attribute, String attribute_class) {
+<span class="nc" id="L226">		attribute_classes.put(attribute, attribute_class);</span>
+<span class="nc" id="L227">	}</span>
+
+	// Command -- Parsing -- Include mechanism
+
+	/**
+	 * Include the content of a &lt;code&gt;file&lt;/code&gt;. This pushes a new tokenizer on
+	 * the input stack, calls the {@link #continueParsingInInclude()} method (that
+	 * must be implemented to read the include contents) and when finished pops the
+	 * tokenizer of the input stack.
+	 */
+	protected void include(String file) throws IOException {
+<span class="nc" id="L238">		pushTokenizer(file);</span>
+<span class="nc" id="L239">		continueParsingInInclude();</span>
+<span class="nc" id="L240">		popTokenizer();</span>
+<span class="nc" id="L241">	}</span>
+
+	/**
+	 * Must be implemented to read the content of an include. The current tokenizer
+	 * will be set to the included file. When this method returns, the include file
+	 * will be closed an parsing will continue where it was before inclusion.
+	 */
+	protected abstract void continueParsingInInclude() throws IOException;
+
+	/**
+	 * Push a tokenizer created from a file name on the file stack and make it
+	 * current.
+	 * 
+	 * @param file
+	 *            Name of the file used as source for the tokenizer.
+	 */
+	protected void pushTokenizer(String file) throws IOException {
+		StreamTokenizer tok;
+		CurrentFile cur;
+		Reader reader;
+
+		try {
+<span class="nc" id="L263">			reader = createReaderFrom(file);</span>
+<span class="nc" id="L264">			tok = createTokenizer(reader);</span>
+
+<span class="nc" id="L266">			cur = new CurrentFile(file, tok, reader);</span>
+<span class="nc" id="L267">		} catch (FileNotFoundException e) {</span>
+<span class="nc" id="L268">			throw new IOException(&quot;cannot read file '&quot; + file + &quot;', not found: &quot; + e.getMessage());</span>
+		}
+
+<span class="nc" id="L271">		configureTokenizer(tok);</span>
+<span class="nc" id="L272">		tok_stack.add(cur);</span>
+
+<span class="nc" id="L274">		st = tok;</span>
+<span class="nc" id="L275">		filename = file;</span>
+<span class="nc" id="L276">	}</span>
+
+	/**
+	 * Create a reader for by the tokenizer.
+	 * 
+	 * @param file
+	 *            File name to be opened.
+	 * @return a reader for the tokenizer.
+	 * @throws FileNotFoundException
+	 *             If the given file does not exist or un readable.
+	 */
+	protected Reader createReaderFrom(String file) throws FileNotFoundException {
+<span class="nc" id="L288">		return new BufferedReader(new FileReader(file));</span>
+	}
+
+	/**
+	 * Create a stream that can be read by the tokenizer.
+	 * 
+	 * @param stream
+	 *            Input stream to be open as a reader.
+	 * @return a reader for the tokenizer.
+	 */
+	protected Reader createReaderFrom(InputStream stream) {
+<span class="nc" id="L299">		return new BufferedReader(new InputStreamReader(stream));</span>
+	}
+
+	/**
+	 * Push a tokenizer created from a stream on the file stack and make it current.
+	 * 
+	 * @param url
+	 *            The URL used as source for the tokenizer.
+	 */
+	protected void pushTokenizer(URL url) throws IOException {
+<span class="nc" id="L309">		pushTokenizer(url.openStream(), url.toString());</span>
+<span class="nc" id="L310">	}</span>
+
+	/**
+	 * Push a tokenizer created from a stream on the file stack and make it current.
+	 * 
+	 * @param stream
+	 *            The stream used as source for the tokenizer.
+	 */
+	protected void pushTokenizer(InputStream stream) throws IOException {
+<span class="nc" id="L319">		pushTokenizer(stream, &quot;&lt;?input-stream?&gt;&quot;);</span>
+<span class="nc" id="L320">	}</span>
+
+	/**
+	 * Push a tokenizer created from a stream on the file stack and make it current.
+	 * 
+	 * @param stream
+	 *            The stream used as source for the tokenizer.
+	 * @param name
+	 *            The name of the input stream.
+	 */
+	protected void pushTokenizer(InputStream stream, String name) throws IOException {
+		StreamTokenizer tok;
+		CurrentFile cur;
+		Reader reader;
+
+<span class="nc" id="L335">		reader = createReaderFrom(stream);</span>
+<span class="nc" id="L336">		tok = createTokenizer(reader);</span>
+<span class="nc" id="L337">		cur = new CurrentFile(name, tok, reader);</span>
+
+<span class="nc" id="L339">		configureTokenizer(tok);</span>
+<span class="nc" id="L340">		tok_stack.add(cur);</span>
+
+<span class="nc" id="L342">		st = tok;</span>
+<span class="nc" id="L343">		filename = name;</span>
+<span class="nc" id="L344">	}</span>
+
+	/**
+	 * Push a tokenizer created from a reader on the file stack and make it current.
+	 * 
+	 * @param reader
+	 *            The reader used as source for the tokenizer.
+	 */
+	protected void pushTokenizer(Reader reader) throws IOException {
+		StreamTokenizer tok;
+		CurrentFile cur;
+
+<span class="nc" id="L356">		tok = createTokenizer(reader);</span>
+<span class="nc" id="L357">		cur = new CurrentFile(&quot;&lt;?reader?&gt;&quot;, tok, reader);</span>
+<span class="nc" id="L358">		configureTokenizer(tok);</span>
+<span class="nc" id="L359">		tok_stack.add(cur);</span>
+
+<span class="nc" id="L361">		st = tok;</span>
+<span class="nc" id="L362">		filename = &quot;&lt;?reader?&gt;&quot;;</span>
+
+<span class="nc" id="L364">	}</span>
+
+	/**
+	 * Create a tokenizer from an input source.
+	 * 
+	 * @param reader
+	 *            The reader.
+	 * @return The new tokenizer.
+	 * @throws IOException
+	 *             For any I/O error.
+	 */
+	private StreamTokenizer createTokenizer(Reader reader) throws IOException {
+<span class="nc" id="L376">		return new StreamTokenizer(new BufferedReader(reader));</span>
+	}
+
+	/**
+	 * Method to override to configure the tokenizer behaviour. It is called each
+	 * time a tokenizer is created (for the parsed file and all included files).
+	 */
+	protected void configureTokenizer(StreamTokenizer tok) throws IOException {
+<span class="nc bnc" id="L384" title="All 2 branches missed.">		if (COMMENT_CHAR &gt; 0)</span>
+<span class="nc" id="L385">			tok.commentChar(COMMENT_CHAR);</span>
+<span class="nc" id="L386">		tok.quoteChar(QUOTE_CHAR);</span>
+<span class="nc" id="L387">		tok.eolIsSignificant(eol_is_significant);</span>
+<span class="nc" id="L388">		tok.wordChars('_', '_');</span>
+<span class="nc" id="L389">		tok.parseNumbers();</span>
+<span class="nc" id="L390">	}</span>
+
+	/**
+	 * Remove the current tokenizer from the stack and restore the previous one (if
+	 * any).
+	 */
+	protected void popTokenizer() throws IOException {
+<span class="nc" id="L397">		int n = tok_stack.size();</span>
+
+<span class="nc bnc" id="L399" title="All 2 branches missed.">		if (n &lt;= 0)</span>
+<span class="nc" id="L400">			throw new RuntimeException(&quot;poped one too many tokenizer&quot;);</span>
+
+<span class="nc" id="L402">		n -= 1;</span>
+
+<span class="nc" id="L404">		CurrentFile cur = tok_stack.remove(n);</span>
+<span class="nc" id="L405">		cur.reader.close();</span>
+
+<span class="nc bnc" id="L407" title="All 2 branches missed.">		if (n &gt; 0) {</span>
+<span class="nc" id="L408">			n -= 1;</span>
+
+<span class="nc" id="L410">			cur = tok_stack.get(n);</span>
+
+<span class="nc" id="L412">			st = cur.tok;</span>
+<span class="nc" id="L413">			filename = cur.file;</span>
+		}
+<span class="nc" id="L415">	}</span>
+
+	// Low level parsing
+
+	/**
+	 * Push back the last read thing, so that it can be read anew. This allows to
+	 * explore one token ahead, and if not corresponding to what is expected, go
+	 * back.
+	 */
+	protected void pushBack() {
+<span class="nc" id="L425">		st.pushBack();</span>
+<span class="nc" id="L426">	}</span>
+
+	/**
+	 * Read EOF or report garbage at end of file.
+	 */
+	protected void eatEof() throws IOException {
+<span class="nc" id="L432">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L434" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L435">			parseError(&quot;garbage at end of file, expecting EOF, &quot; + gotWhat(tok));</span>
+<span class="nc" id="L436">	}</span>
+
+	/**
+	 * Read EOL.
+	 */
+	protected void eatEol() throws IOException {
+<span class="nc" id="L442">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L444" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_EOL)</span>
+<span class="nc" id="L445">			parseError(&quot;expecting EOL, &quot; + gotWhat(tok));</span>
+<span class="nc" id="L446">	}</span>
+
+	/**
+	 * Read EOL or EOF.
+	 * 
+	 * @return The token read StreamTokenizer.TT_EOL or StreamTokenizer.TT_EOF.
+	 */
+	protected int eatEolOrEof() throws IOException {
+<span class="nc" id="L454">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L456" title="All 4 branches missed.">		if (tok != StreamTokenizer.TT_EOL &amp;&amp; tok != StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L457">			parseError(&quot;expecting EOL or EOF, &quot; + gotWhat(tok));</span>
+
+<span class="nc" id="L459">		return tok;</span>
+	}
+
+	/**
+	 * Read an expected &lt;code&gt;word&lt;/code&gt; token or generate a parse error.
+	 */
+	protected void eatWord(String word) throws IOException {
+<span class="nc" id="L466">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L468" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L469">			parseError(&quot;expecting `&quot; + word + &quot;', &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L471" title="All 2 branches missed.">		if (!st.sval.equals(word))</span>
+<span class="nc" id="L472">			parseError(&quot;expecting `&quot; + word + &quot;' got `&quot; + st.sval + &quot;'&quot;);</span>
+<span class="nc" id="L473">	}</span>
+
+	/**
+	 * Read an expected word among the given word list or generate a parse error.
+	 * 
+	 * @param words
+	 *            The expected words.
+	 */
+	protected void eatWords(String... words) throws IOException {
+<span class="nc" id="L482">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L484" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L485">			parseError(&quot;expecting one of `[&quot; + Arrays.toString(words) + &quot;]', &quot; + gotWhat(tok));</span>
+
+<span class="nc" id="L487">		boolean found = false;</span>
+
+<span class="nc bnc" id="L489" title="All 2 branches missed.">		for (String word : words) {</span>
+<span class="nc bnc" id="L490" title="All 2 branches missed.">			if (st.sval.equals(word)) {</span>
+<span class="nc" id="L491">				found = true;</span>
+<span class="nc" id="L492">				break;</span>
+			}
+		}
+
+<span class="nc bnc" id="L496" title="All 2 branches missed.">		if (!found)</span>
+<span class="nc" id="L497">			parseError(&quot;expecting one of `[&quot; + Arrays.toString(words) + &quot;]', got `&quot; + st.sval + &quot;'&quot;);</span>
+<span class="nc" id="L498">	}</span>
+
+	/**
+	 * Eat either a word or another, and return the eated one.
+	 * 
+	 * @param word1
+	 *            The first word to eat.
+	 * @param word2
+	 *            The alternative word to eat.
+	 * @return The word eaten.
+	 */
+	protected String eatOneOfTwoWords(String word1, String word2) throws IOException {
+<span class="nc" id="L510">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L512" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L513">			parseError(&quot;expecting `&quot; + word1 + &quot;' or  `&quot; + word2 + &quot;', &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L515" title="All 2 branches missed.">		if (st.sval.equals(word1))</span>
+<span class="nc" id="L516">			return word1;</span>
+
+<span class="nc bnc" id="L518" title="All 2 branches missed.">		if (st.sval.equals(word2))</span>
+<span class="nc" id="L519">			return word2;</span>
+
+<span class="nc" id="L521">		parseError(&quot;expecting `&quot; + word1 + &quot;' or `&quot; + word2 + &quot;' got `&quot; + st.sval + &quot;'&quot;);</span>
+<span class="nc" id="L522">		return null;</span>
+	}
+
+	/**
+	 * Eat the expected symbol or generate a parse error.
+	 */
+	protected void eatSymbol(char symbol) throws IOException {
+<span class="nc" id="L529">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L531" title="All 2 branches missed.">		if (tok != symbol)</span>
+<span class="nc" id="L532">			parseError(&quot;expecting symbol `&quot; + symbol + &quot;', &quot; + gotWhat(tok));</span>
+<span class="nc" id="L533">	}</span>
+
+	/**
+	 * Eat one of the list of expected &lt;code&gt;symbols&lt;/code&gt; or generate a parse
+	 * error none of &lt;code&gt;symbols&lt;/code&gt; can be found.
+	 */
+	protected int eatSymbols(String symbols) throws IOException {
+<span class="nc" id="L540">		int tok = st.nextToken();</span>
+<span class="nc" id="L541">		int n = symbols.length();</span>
+<span class="nc" id="L542">		boolean f = false;</span>
+
+<span class="nc bnc" id="L544" title="All 2 branches missed.">		for (int i = 0; i &lt; n; ++i) {</span>
+<span class="nc bnc" id="L545" title="All 2 branches missed.">			if (tok == symbols.charAt(i)) {</span>
+<span class="nc" id="L546">				f = true;</span>
+<span class="nc" id="L547">				i = n;</span>
+			}
+		}
+
+<span class="nc bnc" id="L551" title="All 2 branches missed.">		if (!f)</span>
+<span class="nc" id="L552">			parseError(&quot;expecting one of symbols `&quot; + symbols + &quot;', &quot; + gotWhat(tok));</span>
+
+<span class="nc" id="L554">		return tok;</span>
+	}
+
+	/**
+	 * Eat the expected &lt;code&gt;word&lt;/code&gt; or push back what was read so that it can
+	 * be read anew.
+	 */
+	protected void eatWordOrPushbak(String word) throws IOException {
+<span class="nc" id="L562">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L564" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L565">			pushBack();</span>
+
+<span class="nc bnc" id="L567" title="All 2 branches missed.">		if (!st.sval.equals(word))</span>
+<span class="nc" id="L568">			pushBack();</span>
+<span class="nc" id="L569">	}</span>
+
+	/**
+	 * Eat the expected &lt;code&gt;symbol&lt;/code&gt; or push back what was read so that it
+	 * can be read anew.
+	 */
+	protected void eatSymbolOrPushback(char symbol) throws IOException {
+<span class="nc" id="L576">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L578" title="All 2 branches missed.">		if (tok != symbol)</span>
+<span class="nc" id="L579">			pushBack();</span>
+<span class="nc" id="L580">	}</span>
+
+	/**
+	 * Eat all until an EOL is found. The EOL is also eaten. This works only if EOL
+	 * is significant (else it does nothing).
+	 */
+	protected void eatAllUntilEol() throws IOException {
+<span class="nc bnc" id="L587" title="All 2 branches missed.">		if (!eol_is_significant)</span>
+<span class="nc" id="L588">			return;</span>
+
+<span class="nc" id="L590">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L592" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L593">			return;</span>
+
+<span class="nc bnc" id="L595" title="All 4 branches missed.">		while ((tok != StreamTokenizer.TT_EOL) &amp;&amp; (tok != StreamTokenizer.TT_EOF)) {</span>
+<span class="nc" id="L596">			tok = st.nextToken();</span>
+		}
+<span class="nc" id="L598">	}</span>
+
+	/**
+	 * Eat all availables EOLs.
+	 */
+	protected void eatAllEols() throws IOException {
+<span class="nc bnc" id="L604" title="All 2 branches missed.">		if (!eol_is_significant)</span>
+<span class="nc" id="L605">			return;</span>
+
+<span class="nc" id="L607">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L609" title="All 2 branches missed.">		while (tok == StreamTokenizer.TT_EOL)</span>
+<span class="nc" id="L610">			tok = st.nextToken();</span>
+
+<span class="nc" id="L612">		pushBack();</span>
+<span class="nc" id="L613">	}</span>
+
+	/**
+	 * Read a word or generate a parse error.
+	 */
+	protected String getWord() throws IOException {
+<span class="nc" id="L619">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L621" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L622">			parseError(&quot;expecting a word, &quot; + gotWhat(tok));</span>
+
+<span class="nc" id="L624">		return st.sval;</span>
+	}
+
+	/**
+	 * Get a symbol.
+	 */
+	protected char getSymbol() throws IOException {
+<span class="nc" id="L631">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L633" title="All 6 branches missed.">		if (tok &gt; 0 &amp;&amp; tok != StreamTokenizer.TT_WORD &amp;&amp; tok != StreamTokenizer.TT_NUMBER</span>
+<span class="nc bnc" id="L634" title="All 6 branches missed.">				&amp;&amp; tok != StreamTokenizer.TT_EOL &amp;&amp; tok != StreamTokenizer.TT_EOF &amp;&amp; tok != QUOTE_CHAR</span>
+<span class="nc bnc" id="L635" title="All 2 branches missed.">				&amp;&amp; tok != COMMENT_CHAR) {</span>
+<span class="nc" id="L636">			return (char) tok;</span>
+		}
+
+<span class="nc" id="L639">		parseError(&quot;expecting a symbol, &quot; + gotWhat(tok));</span>
+<span class="nc" id="L640">		return (char) 0; // Never reached.</span>
+	}
+
+	/**
+	 * Get a symbol or push back what was read so that it can be read anew. If no
+	 * symbol is found, 0 is returned.
+	 */
+	protected char getSymbolOrPushback() throws IOException {
+<span class="nc" id="L648">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L650" title="All 6 branches missed.">		if (tok &gt; 0 &amp;&amp; tok != StreamTokenizer.TT_WORD &amp;&amp; tok != StreamTokenizer.TT_NUMBER</span>
+<span class="nc bnc" id="L651" title="All 6 branches missed.">				&amp;&amp; tok != StreamTokenizer.TT_EOL &amp;&amp; tok != StreamTokenizer.TT_EOF &amp;&amp; tok != QUOTE_CHAR</span>
+<span class="nc bnc" id="L652" title="All 2 branches missed.">				&amp;&amp; tok != COMMENT_CHAR) {</span>
+<span class="nc" id="L653">			return (char) tok;</span>
+		}
+
+<span class="nc" id="L656">		pushBack();</span>
+
+<span class="nc" id="L658">		return (char) 0;</span>
+	}
+
+	/**
+	 * Read a string constant (between quotes) or generate a parse error. Return the
+	 * content of the string without the quotes.
+	 */
+	protected String getString() throws IOException {
+<span class="nc" id="L666">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L668" title="All 2 branches missed.">		if (tok != QUOTE_CHAR)</span>
+<span class="nc" id="L669">			parseError(&quot;expecting a string constant, &quot; + gotWhat(tok));</span>
+
+<span class="nc" id="L671">		return st.sval;</span>
+	}
+
+	/**
+	 * Read a word or number or generate a parse error. If it is a number it is
+	 * converted to a string before being returned.
+	 */
+	protected String getWordOrNumber() throws IOException {
+<span class="nc" id="L679">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L681" title="All 4 branches missed.">		if (tok != StreamTokenizer.TT_WORD &amp;&amp; tok != StreamTokenizer.TT_NUMBER)</span>
+<span class="nc" id="L682">			parseError(&quot;expecting a word or number, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L684" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER) {</span>
+			// If st.nval is an integer, as it is stored into a double,
+			// toString() will transform it by automatically adding &quot;.0&quot;, we
+			// prevent this. The tokenizer does not allow to read integers.
+
+<span class="nc bnc" id="L689" title="All 2 branches missed.">			if ((st.nval - ((int) st.nval)) == 0)</span>
+<span class="nc" id="L690">				return Integer.toString((int) st.nval);</span>
+			else
+<span class="nc" id="L692">				return Double.toString(st.nval);</span>
+		} else {
+<span class="nc" id="L694">			return st.sval;</span>
+		}
+	}
+
+	/**
+	 * Read a string or number or generate a parse error. If it is a number it is
+	 * converted to a string before being returned.
+	 */
+	protected String getStringOrNumber() throws IOException {
+<span class="nc" id="L703">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L705" title="All 4 branches missed.">		if (tok != QUOTE_CHAR &amp;&amp; tok != StreamTokenizer.TT_NUMBER)</span>
+<span class="nc" id="L706">			parseError(&quot;expecting a string constant or a number, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L708" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER) {</span>
+<span class="nc bnc" id="L709" title="All 2 branches missed.">			if ((st.nval - ((int) st.nval)) == 0)</span>
+<span class="nc" id="L710">				return Integer.toString((int) st.nval);</span>
+			else
+<span class="nc" id="L712">				return Double.toString(st.nval);</span>
+		} else {
+<span class="nc" id="L714">			return st.sval;</span>
+		}
+	}
+
+	/**
+	 * Read a string or number or pushback and return null. If it is a number it is
+	 * converted to a string before being returned.
+	 */
+	protected String getStringOrWordOrNumberOrPushback() throws IOException {
+<span class="nc" id="L723">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L725" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_EOL || tok == StreamTokenizer.TT_EOF) {</span>
+<span class="nc" id="L726">			pushBack();</span>
+<span class="nc" id="L727">			return null;</span>
+		}
+
+<span class="nc bnc" id="L730" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER) {</span>
+<span class="nc bnc" id="L731" title="All 2 branches missed.">			if ((st.nval - ((int) st.nval)) == 0)</span>
+<span class="nc" id="L732">				return Integer.toString((int) st.nval);</span>
+			else
+<span class="nc" id="L734">				return Double.toString(st.nval);</span>
+<span class="nc bnc" id="L735" title="All 4 branches missed.">		} else if (tok == StreamTokenizer.TT_WORD || tok == QUOTE_CHAR) {</span>
+<span class="nc" id="L736">			return st.sval;</span>
+		} else {
+<span class="nc" id="L738">			pushBack();</span>
+<span class="nc" id="L739">			return null;</span>
+		}
+	}
+
+	/**
+	 * Read a string or number or generate a parse error. If it is a number it is
+	 * converted to a string before being returned.
+	 */
+	protected String getStringOrWordOrNumber() throws IOException {
+<span class="nc" id="L748">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L750" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_EOL || tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L751">			parseError(&quot;expecting word, string or number, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L753" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER) {</span>
+<span class="nc bnc" id="L754" title="All 2 branches missed.">			if ((st.nval - ((int) st.nval)) == 0)</span>
+<span class="nc" id="L755">				return Integer.toString((int) st.nval);</span>
+			else
+<span class="nc" id="L757">				return Double.toString(st.nval);</span>
+		} else {
+<span class="nc" id="L759">			return st.sval;</span>
+		}
+	}
+
+	/**
+	 * Read a string or number or generate a parse error. The returned value is
+	 * converted to a Number of a String depending on its type.
+	 */
+	protected Object getStringOrWordOrNumberO() throws IOException {
+<span class="nc" id="L768">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L770" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_EOL || tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L771">			parseError(&quot;expecting word, string or number, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L773" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER) {</span>
+<span class="nc" id="L774">			return st.nval;</span>
+		} else {
+<span class="nc" id="L776">			return st.sval;</span>
+		}
+	}
+
+	/**
+	 * Read a string or number or generate a parse error. The returned value is
+	 * converted to a Number of a String depending on its type.
+	 */
+	protected Object getStringOrWordOrSymbolOrNumberO() throws IOException {
+<span class="nc" id="L785">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L787" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_EOL || tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L788">			parseError(&quot;expecting word, string or number, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L790" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER) {</span>
+<span class="nc" id="L791">			return st.nval;</span>
+<span class="nc bnc" id="L792" title="All 2 branches missed.">		} else if (tok == StreamTokenizer.TT_WORD) {</span>
+<span class="nc" id="L793">			return st.sval;</span>
+		} else
+<span class="nc" id="L795">			return Character.toString((char) tok);</span>
+	}
+
+	/**
+	 * Read a word or string or generate a parse error.
+	 */
+	protected String getWordOrString() throws IOException {
+<span class="nc" id="L802">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L804" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_WORD || tok == QUOTE_CHAR)</span>
+<span class="nc" id="L805">			return st.sval;</span>
+
+<span class="nc" id="L807">		parseError(&quot;expecting a word or string, &quot; + gotWhat(tok));</span>
+<span class="nc" id="L808">		return null;</span>
+	}
+
+	/**
+	 * Read a word or symbol or generate a parse error.
+	 */
+	protected String getWordOrSymbol() throws IOException {
+<span class="nc" id="L815">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L817" title="All 6 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER || tok == QUOTE_CHAR || tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L818">			parseError(&quot;expecting a word or symbol, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L820" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L821">			return st.sval;</span>
+		else
+<span class="nc" id="L823">			return Character.toString((char) tok);</span>
+	}
+
+	/**
+	 * Read a word or symbol or push back the read thing so that it is readable
+	 * anew. In the second case, null is returned.
+	 */
+	protected String getWordOrSymbolOrPushback() throws IOException {
+<span class="nc" id="L831">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L833" title="All 6 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER || tok == QUOTE_CHAR || tok == StreamTokenizer.TT_EOF) {</span>
+<span class="nc" id="L834">			pushBack();</span>
+<span class="nc" id="L835">			return null;</span>
+		}
+
+<span class="nc bnc" id="L838" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L839">			return st.sval;</span>
+		else
+<span class="nc" id="L841">			return Character.toString((char) tok);</span>
+	}
+
+	/**
+	 * Read a word or symbol or string or generate a parse error.
+	 */
+	protected String getWordOrSymbolOrString() throws IOException {
+<span class="nc" id="L848">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L850" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER || tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L851">			parseError(&quot;expecting a word, symbol or string, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L853" title="All 2 branches missed.">		if (tok == QUOTE_CHAR)</span>
+<span class="nc" id="L854">			return st.sval;</span>
+
+<span class="nc bnc" id="L856" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L857">			return st.sval;</span>
+		else
+<span class="nc" id="L859">			return Character.toString((char) tok);</span>
+	}
+
+	/**
+	 * Read a word or symbol or string or number or generate a parse error.
+	 */
+	protected String getAllExceptedEof() throws IOException {
+<span class="nc" id="L866">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L868" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L869">			parseError(&quot;expecting all excepted EOF, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L871" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER || tok == StreamTokenizer.TT_EOF) {</span>
+<span class="nc bnc" id="L872" title="All 2 branches missed.">			if ((st.nval - ((int) st.nval)) == 0)</span>
+<span class="nc" id="L873">				return Integer.toString((int) st.nval);</span>
+			else
+<span class="nc" id="L875">				return Double.toString(st.nval);</span>
+		}
+
+<span class="nc bnc" id="L878" title="All 2 branches missed.">		if (tok == QUOTE_CHAR)</span>
+<span class="nc" id="L879">			return st.sval;</span>
+
+<span class="nc bnc" id="L881" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L882">			return st.sval;</span>
+		else
+<span class="nc" id="L884">			return Character.toString((char) tok);</span>
+	}
+
+	/**
+	 * Read a word, a symbol or EOF, or generate a parse error. If this is EOF, the
+	 * string &quot;EOF&quot; is returned.
+	 */
+	protected String getWordOrSymbolOrEof() throws IOException {
+<span class="nc" id="L892">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L894" title="All 4 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER || tok == QUOTE_CHAR)</span>
+<span class="nc" id="L895">			parseError(&quot;expecting a word or symbol, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L897" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L898">			return st.sval;</span>
+<span class="nc bnc" id="L899" title="All 2 branches missed.">		else if (tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L900">			return &quot;EOF&quot;;</span>
+		else
+<span class="nc" id="L902">			return Character.toString((char) tok);</span>
+	}
+
+	/**
+	 * Read a word or symbol or string or EOL/EOF or generate a parse error. If EOL
+	 * is read the &quot;EOL&quot; string is returned. If EOF is read the &quot;EOF&quot; string is
+	 * returned.
+	 * 
+	 * @return A string.
+	 */
+	protected String getWordOrSymbolOrStringOrEolOrEof() throws IOException {
+<span class="nc" id="L913">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L915" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER)</span>
+<span class="nc" id="L916">			parseError(&quot;expecting a word, symbol or string, &quot; + gotWhat(tok));</span>
+
+<span class="nc bnc" id="L918" title="All 2 branches missed.">		if (tok == QUOTE_CHAR)</span>
+<span class="nc" id="L919">			return st.sval;</span>
+
+<span class="nc bnc" id="L921" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L922">			return st.sval;</span>
+
+<span class="nc bnc" id="L924" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L925">			return &quot;EOF&quot;;</span>
+
+<span class="nc bnc" id="L927" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOL)</span>
+<span class="nc" id="L928">			return &quot;EOL&quot;;</span>
+
+<span class="nc" id="L930">		return Character.toString((char) tok);</span>
+	}
+
+	/**
+	 * Read a word or number or string or EOL/EOF or generate a parse error. If EOL
+	 * is read the &quot;EOL&quot; string is returned. If EOF is read the &quot;EOF&quot; string is
+	 * returned. If a number is returned, it is converted to a string as follows: if
+	 * it is an integer, only the integer part is converted to a string without dot
+	 * or comma and no leading zeros. If it is a float the fractional part is also
+	 * converted and the dot is used as separator.
+	 * 
+	 * @return A string.
+	 */
+	protected String getWordOrNumberOrStringOrEolOrEof() throws IOException {
+<span class="nc" id="L944">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L946" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER) {</span>
+<span class="nc bnc" id="L947" title="All 2 branches missed.">			if (st.nval - ((int) st.nval) != 0)</span>
+<span class="nc" id="L948">				return Double.toString(st.nval);</span>
+
+<span class="nc" id="L950">			return Integer.toString((int) st.nval);</span>
+		}
+
+<span class="nc bnc" id="L953" title="All 2 branches missed.">		if (tok == QUOTE_CHAR)</span>
+<span class="nc" id="L954">			return st.sval;</span>
+
+<span class="nc bnc" id="L956" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L957">			return st.sval;</span>
+
+<span class="nc bnc" id="L959" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L960">			return &quot;EOF&quot;;</span>
+
+<span class="nc bnc" id="L962" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOL)</span>
+<span class="nc" id="L963">			return &quot;EOL&quot;;</span>
+
+<span class="nc" id="L965">		parseError(&quot;expecting a word, a number, a string, EOL or EOF, &quot; + gotWhat(tok));</span>
+<span class="nc" id="L966">		return null; // Never happen, parseError throws unconditionally an</span>
+						// exception.
+	}
+
+	/**
+	 * Read a word or string or EOL/EOF or generate a parse error. If EOL is read
+	 * the &quot;EOL&quot; string is returned. If EOF is read the &quot;EOF&quot; string is returned.
+	 * 
+	 * @return A string.
+	 */
+	protected String getWordOrStringOrEolOrEof() throws IOException {
+<span class="nc" id="L977">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L979" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L980">			return st.sval;</span>
+
+<span class="nc bnc" id="L982" title="All 2 branches missed.">		if (tok == QUOTE_CHAR)</span>
+<span class="nc" id="L983">			return st.sval;</span>
+
+<span class="nc bnc" id="L985" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOL)</span>
+<span class="nc" id="L986">			return &quot;EOL&quot;;</span>
+
+<span class="nc bnc" id="L988" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L989">			return &quot;EOF&quot;;</span>
+
+<span class="nc" id="L991">		parseError(&quot;expecting a word, a string, EOL or EOF, &quot; + gotWhat(tok));</span>
+<span class="nc" id="L992">		return null; // Never happen, parseError throws unconditionally an</span>
+						// exception.
+	}
+
+	// Order: Word | String | Symbol | Number | Eol | Eof
+
+	/**
+	 * Read a word or number or string or EOL/EOF or generate a parse error. If EOL
+	 * is read the &quot;EOL&quot; string is returned. If EOF is read the &quot;EOF&quot; string is
+	 * returned. If a number is returned, it is converted to a string as follows: if
+	 * it is an integer, only the integer part is converted to a string without dot
+	 * or comma and no leading zeros. If it is a float the fractional part is also
+	 * converted and the dot is used as separator.
+	 * 
+	 * @return A string.
+	 */
+	protected String getWordOrSymbolOrNumberOrStringOrEolOrEof() throws IOException {
+<span class="nc" id="L1009">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L1011" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_NUMBER) {</span>
+<span class="nc bnc" id="L1012" title="All 2 branches missed.">			if (st.nval - ((int) st.nval) != 0)</span>
+<span class="nc" id="L1013">				return Double.toString(st.nval);</span>
+
+<span class="nc" id="L1015">			return Integer.toString((int) st.nval);</span>
+		}
+
+<span class="nc bnc" id="L1018" title="All 2 branches missed.">		if (tok == QUOTE_CHAR)</span>
+<span class="nc" id="L1019">			return st.sval;</span>
+
+<span class="nc bnc" id="L1021" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_WORD)</span>
+<span class="nc" id="L1022">			return st.sval;</span>
+
+<span class="nc bnc" id="L1024" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOF)</span>
+<span class="nc" id="L1025">			return &quot;EOF&quot;;</span>
+
+<span class="nc bnc" id="L1027" title="All 2 branches missed.">		if (tok == StreamTokenizer.TT_EOL)</span>
+<span class="nc" id="L1028">			return &quot;EOL&quot;;</span>
+
+<span class="nc" id="L1030">		return Character.toString((char) tok);</span>
+	}
+
+	/**
+	 * Read a number or generate a parse error.
+	 */
+	protected double getNumber() throws IOException {
+<span class="nc" id="L1037">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L1039" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_NUMBER)</span>
+<span class="nc" id="L1040">			parseError(&quot;expecting a number, &quot; + gotWhat(tok));</span>
+
+<span class="nc" id="L1042">		return st.nval;</span>
+	}
+
+	/**
+	 * Read a number (possibly with an exponent) or generate a parse error.
+	 */
+	protected double getNumberExp() throws IOException {
+<span class="nc" id="L1049">		int tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L1051" title="All 2 branches missed.">		if (tok != StreamTokenizer.TT_NUMBER)</span>
+<span class="nc" id="L1052">			parseError(&quot;expecting a number, &quot; + gotWhat(tok));</span>
+
+<span class="nc" id="L1054">		double nb = st.nval;</span>
+
+<span class="nc" id="L1056">		tok = st.nextToken();</span>
+
+<span class="nc bnc" id="L1058" title="All 6 branches missed.">		if (tok == StreamTokenizer.TT_WORD &amp;&amp; (st.sval.startsWith(&quot;e-&quot;) || st.sval.startsWith(&quot;e+&quot;))) {</span>
+<span class="nc" id="L1059">			double exp = Double.parseDouble(st.sval.substring(2));</span>
+<span class="nc" id="L1060">			return Math.pow(nb, exp);</span>
+		} else {
+<span class="nc" id="L1062">			st.pushBack();</span>
+		}
+
+<span class="nc" id="L1065">		return nb;</span>
+	}
+
+	/**
+	 * Return a string containing &quot;got &quot; then the content of the current
+	 * &lt;code&gt;token&lt;/code&gt;.
+	 */
+	protected String gotWhat(int token) {
+<span class="nc bnc" id="L1073" title="All 4 branches missed.">		switch (token) {</span>
+		case StreamTokenizer.TT_NUMBER:
+<span class="nc" id="L1075">			return &quot;got number `&quot; + st.nval + &quot;'&quot;;</span>
+		case StreamTokenizer.TT_WORD:
+<span class="nc" id="L1077">			return &quot;got word `&quot; + st.sval + &quot;'&quot;;</span>
+		case StreamTokenizer.TT_EOF:
+<span class="nc" id="L1079">			return &quot;got EOF&quot;;</span>
+		default:
+<span class="nc bnc" id="L1081" title="All 2 branches missed.">			if (token == QUOTE_CHAR)</span>
+<span class="nc" id="L1082">				return &quot;got string constant `&quot; + st.sval + &quot;'&quot;;</span>
+			else
+<span class="nc" id="L1084">				return &quot;unknown symbol `&quot; + token + &quot;' (&quot; + ((char) token) + &quot;)&quot;;</span>
+		}
+	}
+
+	/**
+	 * Generate a parse error.
+	 */
+	protected void parseError(String message) throws IOException {
+<span class="nc" id="L1092">		throw new IOException(&quot;parse error: &quot; + filename + &quot;: &quot; + st.lineno() + &quot;: &quot; + message);</span>
+	}
+
+	// Access
+
+	/**
+	 * True if the &lt;code&gt;string&lt;/code&gt; represents a truth statement (&quot;1&quot;, &quot;true&quot;,
+	 * &quot;yes&quot;, &quot;on&quot;).
+	 */
+	protected boolean isTrue(String string) {
+<span class="nc" id="L1102">		string = string.toLowerCase();</span>
+
+<span class="nc bnc" id="L1104" title="All 2 branches missed.">		if (string.equals(&quot;1&quot;))</span>
+<span class="nc" id="L1105">			return true;</span>
+<span class="nc bnc" id="L1106" title="All 2 branches missed.">		if (string.equals(&quot;true&quot;))</span>
+<span class="nc" id="L1107">			return true;</span>
+<span class="nc bnc" id="L1108" title="All 2 branches missed.">		if (string.equals(&quot;yes&quot;))</span>
+<span class="nc" id="L1109">			return true;</span>
+<span class="nc bnc" id="L1110" title="All 2 branches missed.">		if (string.equals(&quot;on&quot;))</span>
+<span class="nc" id="L1111">			return true;</span>
+
+<span class="nc" id="L1113">		return false;</span>
+	}
+
+	/**
+	 * True if the &lt;code&gt;string&lt;/code&gt; represents a false statement (&quot;0&quot;, &quot;false&quot;,
+	 * &quot;no&quot;, &quot;off&quot;).
+	 */
+	protected boolean isFalse(String string) {
+<span class="nc" id="L1121">		string = string.toLowerCase();</span>
+
+<span class="nc bnc" id="L1123" title="All 2 branches missed.">		if (string.equals(&quot;0&quot;))</span>
+<span class="nc" id="L1124">			return true;</span>
+<span class="nc bnc" id="L1125" title="All 2 branches missed.">		if (string.equals(&quot;false&quot;))</span>
+<span class="nc" id="L1126">			return true;</span>
+<span class="nc bnc" id="L1127" title="All 2 branches missed.">		if (string.equals(&quot;no&quot;))</span>
+<span class="nc" id="L1128">			return true;</span>
+<span class="nc bnc" id="L1129" title="All 2 branches missed.">		if (string.equals(&quot;off&quot;))</span>
+<span class="nc" id="L1130">			return true;</span>
+
+<span class="nc" id="L1132">		return false;</span>
+	}
+
+	/**
+	 * Uses {@link #isTrue(String)} and {@link #isFalse(String)} to determine if
+	 * &lt;code&gt;value&lt;/code&gt; is a truth value and return the corresponding boolean.
+	 * 
+	 * @throws NumberFormatException
+	 *             if the &lt;code&gt;value&lt;/code&gt; is not a truth value.
+	 */
+	protected boolean getBoolean(String value) throws NumberFormatException {
+<span class="nc bnc" id="L1143" title="All 2 branches missed.">		if (isTrue(value))</span>
+<span class="nc" id="L1144">			return true;</span>
+<span class="nc bnc" id="L1145" title="All 2 branches missed.">		if (isFalse(value))</span>
+<span class="nc" id="L1146">			return false;</span>
+<span class="nc" id="L1147">		throw new NumberFormatException(&quot;not a truth value `&quot; + value + &quot;'&quot;);</span>
+	}
+
+	/**
+	 * Try to transform &lt;code&gt;value&lt;/code&gt; into a double.
+	 * 
+	 * @throws NumberFormatException
+	 *             if the &lt;code&gt;value&lt;/code&gt; is not a double.
+	 */
+	protected double getReal(String value) throws NumberFormatException {
+<span class="nc" id="L1157">		return Double.parseDouble(value);</span>
+	}
+
+	/**
+	 * Try to transform &lt;code&gt;value&lt;/code&gt; into a long.
+	 * 
+	 * @throws NumberFormatException
+	 *             if the &lt;code&gt;value&lt;/code&gt; is not a long.
+	 */
+	protected long getInteger(String value) throws NumberFormatException {
+<span class="nc" id="L1167">		return Long.parseLong(value);</span>
+	}
+
+	/**
+	 * Get a number triplet with numbers separated by comas and return a new point
+	 * for it. For example &quot;0,1,2&quot;.
+	 */
+	protected Point3 getPoint3(String value) throws NumberFormatException {
+<span class="nc" id="L1175">		int p0 = value.indexOf(',');</span>
+<span class="nc" id="L1176">		int p1 = value.indexOf(',', p0 + 1);</span>
+
+<span class="nc bnc" id="L1178" title="All 4 branches missed.">		if (p0 &gt; 0 &amp;&amp; p1 &gt; 0) {</span>
+			String n0, n1, n2;
+			float v0, v1, v2;
+
+<span class="nc" id="L1182">			n0 = value.substring(0, p0);</span>
+<span class="nc" id="L1183">			n1 = value.substring(p0 + 1, p1);</span>
+<span class="nc" id="L1184">			n2 = value.substring(p1 + 1);</span>
+
+<span class="nc" id="L1186">			v0 = Float.parseFloat(n0);</span>
+<span class="nc" id="L1187">			v1 = Float.parseFloat(n1);</span>
+<span class="nc" id="L1188">			v2 = Float.parseFloat(n2);</span>
+
+<span class="nc" id="L1190">			return new Point3(v0, v1, v2);</span>
+		}
+
+<span class="nc" id="L1193">		throw new NumberFormatException(&quot;value '&quot; + value + &quot;' not in a valid point3 format&quot;);</span>
+	}
+
+	/*
+	 * Get a number triplet with numbers separated by comas and return new bounds
+	 * for it. For example &quot;0,1,2&quot;. protected Bounds3 getBounds3(String value)
+	 * throws NumberFormatException { int p0 = value.indexOf(','); int p1 =
+	 * value.indexOf(',', p0 + 1);
+	 * 
+	 * if (p0 &gt; 0 &amp;&amp; p1 &gt; 0) { String n0, n1, n2; float v0, v1, v2;
+	 * 
+	 * n0 = value.substring(0, p0); n1 = value.substring(p0 + 1, p1); n2 =
+	 * value.substring(p1 + 1);
+	 * 
+	 * v0 = Float.parseFloat(n0); v1 = Float.parseFloat(n1); v2 =
+	 * Float.parseFloat(n2);
+	 * 
+	 * return new Bounds3(v0, v1, v2); }
+	 * 
+	 * throw new NumberFormatException(&quot;value '&quot; + value +
+	 * &quot;' not in a valid point3 format&quot;); }
+	 */
+
+	// Nested classes
+
+	/**
+	 * Currently processed file.
+	 * &lt;p&gt;
+	 * The graph reader base can process includes in files, and handles a stack of
+	 * files.
+	 * &lt;/p&gt;
+	 * 
+	 */
+	protected static class CurrentFile {
+		/**
+		 * The file name.
+		 */
+		public String file;
+
+		/**
+		 * The stream tokenizer.
+		 */
+		public StreamTokenizer tok;
+
+		public Reader reader;
+
+<span class="nc" id="L1239">		public CurrentFile(String f, StreamTokenizer t, Reader reader) {</span>
+<span class="nc" id="L1240">			file = f;</span>
+<span class="nc" id="L1241">			tok = t;</span>
+<span class="nc" id="L1242">			this.reader = reader;</span>
+<span class="nc" id="L1243">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

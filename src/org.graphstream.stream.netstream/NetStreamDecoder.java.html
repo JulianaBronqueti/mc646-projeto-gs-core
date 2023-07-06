@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>NetStreamDecoder.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.netstream</a> &gt; <span class="el_source">NetStreamDecoder.java</span></div><h1>NetStreamDecoder.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-05-31
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.netstream;
+
+import org.graphstream.stream.binary.ByteDecoder;
+import org.graphstream.stream.SourceBase;
+
+import static org.graphstream.stream.netstream.NetStreamUtils.*;
+
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.util.logging.Logger;
+
+/**
+ * @since 22/01/16.
+ */
+<span class="nc" id="L47">public class NetStreamDecoder extends SourceBase implements ByteDecoder {</span>
+<span class="nc" id="L48">	private static final Logger LOGGER = Logger.getLogger(NetStreamDecoder.class.getName());</span>
+
+	@Override
+	public boolean validate(ByteBuffer buffer) {
+<span class="nc bnc" id="L52" title="All 2 branches missed.">		if (buffer.position() &gt;= 4) {</span>
+<span class="nc" id="L53">			int size = buffer.getInt(0);</span>
+<span class="nc bnc" id="L54" title="All 2 branches missed.">			return buffer.position() &gt;= size;</span>
+		}
+
+<span class="nc" id="L57">		return false;</span>
+	}
+
+	@Override
+	public void decode(ByteBuffer bb) {
+		try {
+<span class="nc" id="L63">			int size = bb.getInt();</span>
+<span class="nc" id="L64">			String streamId = NetStreamUtils.decodeString(bb);</span>
+<span class="nc" id="L65">			int cmd = bb.get();</span>
+
+<span class="nc bnc" id="L67" title="All 2 branches missed.">			if (cmd == NetStreamConstants.EVENT_ADD_NODE) {</span>
+<span class="nc" id="L68">				serve_EVENT_ADD_NODE(bb);</span>
+<span class="nc bnc" id="L69" title="All 2 branches missed.">			} else if ((cmd &amp; 0xFF) == (NetStreamConstants.EVENT_DEL_NODE &amp; 0xFF)) {</span>
+<span class="nc" id="L70">				serve_DEL_NODE(bb);</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_ADD_EDGE) {</span>
+<span class="nc" id="L72">				serve_EVENT_ADD_EDGE(bb);</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_DEL_EDGE) {</span>
+<span class="nc" id="L74">				serve_EVENT_DEL_EDGE(bb);</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_STEP) {</span>
+<span class="nc" id="L76">				serve_EVENT_STEP(bb);</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_CLEARED) {</span>
+<span class="nc" id="L78">				serve_EVENT_CLEARED(bb);</span>
+<span class="nc bnc" id="L79" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_ADD_GRAPH_ATTR) {</span>
+<span class="nc" id="L80">				serve_EVENT_ADD_GRAPH_ATTR(bb);</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_CHG_GRAPH_ATTR) {</span>
+<span class="nc" id="L82">				serve_EVENT_CHG_GRAPH_ATTR(bb);</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_DEL_GRAPH_ATTR) {</span>
+<span class="nc" id="L84">				serve_EVENT_DEL_GRAPH_ATTR(bb);</span>
+<span class="nc bnc" id="L85" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_ADD_NODE_ATTR) {</span>
+<span class="nc" id="L86">				serve_EVENT_ADD_NODE_ATTR(bb);</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_CHG_NODE_ATTR) {</span>
+<span class="nc" id="L88">				serve_EVENT_CHG_NODE_ATTR(bb);</span>
+<span class="nc bnc" id="L89" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_DEL_NODE_ATTR) {</span>
+<span class="nc" id="L90">				serve_EVENT_DEL_NODE_ATTR(bb);</span>
+<span class="nc bnc" id="L91" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_ADD_EDGE_ATTR) {</span>
+<span class="nc" id="L92">				serve_EVENT_ADD_EDGE_ATTR(bb);</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_CHG_EDGE_ATTR) {</span>
+<span class="nc" id="L94">				serve_EVENT_CHG_EDGE_ATTR(bb);</span>
+<span class="nc bnc" id="L95" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_DEL_EDGE_ATTR) {</span>
+<span class="nc" id="L96">				serve_EVENT_DEL_EDGE_ATTR(bb);</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">			} else if (cmd == NetStreamConstants.EVENT_END) {</span>
+<span class="nc" id="L98">				LOGGER.info(&quot;NetStreamReceiver : Client properly ended the connection.&quot;);</span>
+<span class="nc" id="L99">			} else {</span>
+<span class="nc" id="L100">				LOGGER.warning(&quot;NetStreamReceiver: Don't know this command: &quot; + cmd);</span>
+			}
+<span class="nc" id="L102">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L103">			LOGGER.warning(&quot;bad buffer&quot;);</span>
+		}
+<span class="nc" id="L105">	}</span>
+
+	/**
+	 * @param bb
+	 * @see NetStreamConstants#EVENT_DEL_EDGE
+	 */
+	protected void serve_EVENT_DEL_EDGE_ATTR(ByteBuffer bb) {
+<span class="nc" id="L112">		LOGGER.finest(&quot;NetStreamServer: Received DEL_EDGE_ATTR command.&quot;);</span>
+
+<span class="nc" id="L114">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L115">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L116">		String edgeId = decodeString(bb);</span>
+<span class="nc" id="L117">		String attrId = decodeString(bb);</span>
+
+<span class="nc" id="L119">		sendEdgeAttributeRemoved(sourceId, timeId, edgeId, attrId);</span>
+<span class="nc" id="L120">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_CHG_EDGE_ATTR
+	 */
+	protected void serve_EVENT_CHG_EDGE_ATTR(ByteBuffer bb) {
+<span class="nc" id="L126">		LOGGER.finest(&quot;NetStreamServer: Received CHG_EDGE_ATTR command.&quot;);</span>
+
+<span class="nc" id="L128">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L129">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L130">		String edgeId = decodeString(bb);</span>
+<span class="nc" id="L131">		String attrId = decodeString(bb);</span>
+<span class="nc" id="L132">		int oldValueType = decodeType(bb);</span>
+<span class="nc" id="L133">		Object oldValue = decodeValue(bb, oldValueType);</span>
+<span class="nc" id="L134">		int newValueType = decodeType(bb);</span>
+<span class="nc" id="L135">		Object newValue = decodeValue(bb, newValueType);</span>
+
+<span class="nc" id="L137">		sendEdgeAttributeChanged(sourceId, timeId, edgeId, attrId, oldValue, newValue);</span>
+
+<span class="nc" id="L139">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_ADD_EDGE_ATTR
+	 */
+	protected void serve_EVENT_ADD_EDGE_ATTR(ByteBuffer bb) {
+<span class="nc" id="L145">		LOGGER.finest(&quot;NetStreamServer: Received ADD_EDGE_ATTR command.&quot;);</span>
+
+<span class="nc" id="L147">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L148">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L149">		String edgeId = decodeString(bb);</span>
+<span class="nc" id="L150">		String attrId = decodeString(bb);</span>
+<span class="nc" id="L151">		Object value = decodeValue(bb, decodeType(bb));</span>
+
+<span class="nc" id="L153">		sendEdgeAttributeAdded(sourceId, timeId, edgeId, attrId, value);</span>
+
+<span class="nc" id="L155">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_DEL_NODE_ATTR
+	 */
+	protected void serve_EVENT_DEL_NODE_ATTR(ByteBuffer bb) {
+<span class="nc" id="L161">		LOGGER.finest(&quot;NetStreamServer: Received DEL_NODE_ATTR command.&quot;);</span>
+
+<span class="nc" id="L163">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L164">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L165">		String nodeId = decodeString(bb);</span>
+<span class="nc" id="L166">		String attrId = decodeString(bb);</span>
+
+<span class="nc" id="L168">		sendNodeAttributeRemoved(sourceId, timeId, nodeId, attrId);</span>
+
+<span class="nc" id="L170">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_CHG_NODE_ATTR
+	 */
+	protected void serve_EVENT_CHG_NODE_ATTR(ByteBuffer bb) {
+<span class="nc" id="L176">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_CHG_NODE_ATTR command.&quot;);</span>
+
+<span class="nc" id="L178">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L179">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L180">		String nodeId = decodeString(bb);</span>
+<span class="nc" id="L181">		String attrId = decodeString(bb);</span>
+<span class="nc" id="L182">		int oldValueType = decodeType(bb);</span>
+<span class="nc" id="L183">		Object oldValue = decodeValue(bb, oldValueType);</span>
+<span class="nc" id="L184">		int newValueType = decodeType(bb);</span>
+<span class="nc" id="L185">		Object newValue = decodeValue(bb, newValueType);</span>
+
+<span class="nc" id="L187">		sendNodeAttributeChanged(sourceId, timeId, nodeId, attrId, oldValue, newValue);</span>
+<span class="nc" id="L188">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_ADD_NODE_ATTR
+	 */
+	protected void serve_EVENT_ADD_NODE_ATTR(ByteBuffer bb) {
+<span class="nc" id="L194">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_ADD_NODE_ATTR command.&quot;);</span>
+
+<span class="nc" id="L196">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L197">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L198">		String nodeId = decodeString(bb);</span>
+<span class="nc" id="L199">		String attrId = decodeString(bb);</span>
+<span class="nc" id="L200">		Object value = decodeValue(bb, decodeType(bb));</span>
+
+<span class="nc" id="L202">		sendNodeAttributeAdded(sourceId, timeId, nodeId, attrId, value);</span>
+<span class="nc" id="L203">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_DEL_GRAPH_ATTR
+	 */
+	protected void serve_EVENT_DEL_GRAPH_ATTR(ByteBuffer bb) {
+<span class="nc" id="L209">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_DEL_GRAPH_ATTR command.&quot;);</span>
+
+<span class="nc" id="L211">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L212">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L213">		String attrId = decodeString(bb);</span>
+
+<span class="nc" id="L215">		sendGraphAttributeRemoved(sourceId, timeId, attrId);</span>
+<span class="nc" id="L216">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_CHG_GRAPH_ATTR
+	 */
+	protected void serve_EVENT_CHG_GRAPH_ATTR(ByteBuffer bb) {
+<span class="nc" id="L222">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_CHG_GRAPH_ATTR command.&quot;);</span>
+
+<span class="nc" id="L224">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L225">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L226">		String attrId = decodeString(bb);</span>
+<span class="nc" id="L227">		int oldValueType = decodeType(bb);</span>
+<span class="nc" id="L228">		Object oldValue = decodeValue(bb, oldValueType);</span>
+<span class="nc" id="L229">		int newValueType = decodeType(bb);</span>
+<span class="nc" id="L230">		Object newValue = decodeValue(bb, newValueType);</span>
+
+<span class="nc" id="L232">		sendGraphAttributeChanged(sourceId, timeId, attrId, oldValue, newValue);</span>
+<span class="nc" id="L233">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_ADD_GRAPH_ATTR
+	 */
+	protected void serve_EVENT_ADD_GRAPH_ATTR(ByteBuffer bb) {
+<span class="nc" id="L239">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_ADD_GRAPH_ATTR command.&quot;);</span>
+
+<span class="nc" id="L241">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L242">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L243">		String attrId = decodeString(bb);</span>
+<span class="nc" id="L244">		Object value = decodeValue(bb, decodeType(bb));</span>
+
+<span class="nc" id="L246">		LOGGER.finest(String.format(&quot;NetStreamServer | EVENT_ADD_GRAPH_ATTR | %s=%s&quot;, attrId, value.toString()));</span>
+
+<span class="nc" id="L248">		sendGraphAttributeAdded(sourceId, timeId, attrId, value);</span>
+<span class="nc" id="L249">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_CLEARED
+	 */
+	protected void serve_EVENT_CLEARED(ByteBuffer bb) {
+<span class="nc" id="L255">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_CLEARED command.&quot;);</span>
+
+<span class="nc" id="L257">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L258">		long timeId = decodeUnsignedVarint(bb);</span>
+
+<span class="nc" id="L260">		sendGraphCleared(sourceId, timeId);</span>
+<span class="nc" id="L261">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_STEP
+	 */
+	protected void serve_EVENT_STEP(ByteBuffer bb) {
+<span class="nc" id="L267">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_STEP command.&quot;);</span>
+
+<span class="nc" id="L269">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L270">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L271">		double time = decodeDouble(bb);</span>
+
+<span class="nc" id="L273">		sendStepBegins(sourceId, timeId, time);</span>
+<span class="nc" id="L274">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_DEL_EDGE
+	 */
+	protected void serve_EVENT_DEL_EDGE(ByteBuffer bb) {
+<span class="nc" id="L280">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_DEL_EDGE command.&quot;);</span>
+
+<span class="nc" id="L282">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L283">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L284">		String edgeId = decodeString(bb);</span>
+
+<span class="nc" id="L286">		sendEdgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L287">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_ADD_EDGE
+	 */
+	protected void serve_EVENT_ADD_EDGE(ByteBuffer bb) {
+<span class="nc" id="L293">		LOGGER.finest(&quot;NetStreamServer: Received ADD_EDGE command.&quot;);</span>
+
+<span class="nc" id="L295">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L296">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L297">		String edgeId = decodeString(bb);</span>
+<span class="nc" id="L298">		String from = decodeString(bb);</span>
+<span class="nc" id="L299">		String to = decodeString(bb);</span>
+<span class="nc" id="L300">		boolean directed = decodeBoolean(bb);</span>
+
+<span class="nc" id="L302">		sendEdgeAdded(sourceId, timeId, edgeId, from, to, directed);</span>
+<span class="nc" id="L303">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_DEL_NODE
+	 */
+	protected void serve_DEL_NODE(ByteBuffer bb) {
+<span class="nc" id="L309">		LOGGER.finest(&quot;NetStreamServer: Received DEL_NODE command.&quot;);</span>
+
+<span class="nc" id="L311">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L312">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L313">		String nodeId = decodeString(bb);</span>
+
+<span class="nc" id="L315">		sendNodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L316">	}</span>
+
+	/**
+	 * @see NetStreamConstants#EVENT_ADD_NODE
+	 */
+	protected void serve_EVENT_ADD_NODE(ByteBuffer bb) {
+<span class="nc" id="L322">		LOGGER.finest(&quot;NetStreamServer: Received EVENT_ADD_NODE command&quot;);</span>
+
+<span class="nc" id="L324">		String sourceId = decodeString(bb);</span>
+<span class="nc" id="L325">		long timeId = decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L326">		String nodeId = decodeString(bb);</span>
+
+<span class="nc" id="L328">		sendNodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L329">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

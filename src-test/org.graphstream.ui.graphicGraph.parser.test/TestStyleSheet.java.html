@@ -1,0 +1,898 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestStyleSheet.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.parser.test</a> &gt; <span class="el_source">TestStyleSheet.java</span></div><h1>TestStyleSheet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Tim Wundke &lt;gtwundke@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.parser.test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.DefaultGraph;
+import org.graphstream.ui.graphicGraph.StyleGroup;
+import org.graphstream.ui.graphicGraph.StyleGroupSet;
+import org.graphstream.ui.graphicGraph.StyleGroup.ElementEvents;
+import org.graphstream.ui.graphicGraph.stylesheet.Rule;
+import org.graphstream.ui.graphicGraph.stylesheet.Style;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleSheet;
+import org.junit.*;
+import static org.junit.Assert.*;
+
+/**
+ * Run several tests on the style sheet package.
+ *
+ * @author Antoine Dutot
+ */
+<span class="nc" id="L60">public class TestStyleSheet {</span>
+	public static void main(String args[]) {
+		// Instead of JUnit, we can use this main() :
+
+<span class="nc" id="L64">		TestStyleSheet tss = new TestStyleSheet();</span>
+<span class="nc" id="L65">		tss.setUp();</span>
+<span class="nc" id="L66">		tss.testInitialParsing();</span>
+<span class="nc" id="L67">		tss.testRuleQuery();</span>
+<span class="nc" id="L68">		tss.testStyleGroups();</span>
+<span class="nc" id="L69">		tss.testStyleEvents();</span>
+<span class="nc" id="L70">	}</span>
+
+	Graph graph;
+	Node A, B, C, D;
+	Edge AB, BC, CD, DA;
+	StyleSheet stylesheet;
+
+	@Before
+	public void setUp() {
+<span class="nc" id="L79">		graph = new DefaultGraph(&quot;g1&quot;);</span>
+
+<span class="nc" id="L81">		A = graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L82">		B = graph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L83">		C = graph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L84">		D = graph.addNode(&quot;D&quot;);</span>
+<span class="nc" id="L85">		AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L86">		BC = graph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L87">		CD = graph.addEdge(&quot;CD&quot;, &quot;C&quot;, &quot;D&quot;);</span>
+<span class="nc" id="L88">		DA = graph.addEdge(&quot;DA&quot;, &quot;D&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L90">		B.setAttribute(&quot;ui.class&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L91">		C.setAttribute(&quot;ui.class&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L92">		D.setAttribute(&quot;ui.class&quot;, &quot;bar&quot;, &quot;foo&quot;);</span>
+
+<span class="nc" id="L94">		AB.setAttribute(&quot;ui.class&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L95">		BC.setAttribute(&quot;ui.class&quot;, &quot;foo&quot;);</span>
+
+		// B (foo)
+		// _/ \_
+		// _/ \_(foo)
+		// / (foo) \
+		// A C (foo)
+		// \_ _/
+		// \_ _/
+		// \ /
+		// D (bar,foo)
+
+<span class="nc" id="L107">		stylesheet = new StyleSheet();</span>
+
+		// The main style sheet, other style sheets are &quot;cascaded&quot; in addition
+		// of this one.
+
+		try {
+<span class="nc" id="L113">			stylesheet.parseFromString(styleSheet1);</span>
+<span class="nc" id="L114">		} catch (IOException e) {</span>
+		}
+<span class="nc" id="L116">	}</span>
+
+<span class="nc" id="L118">	public static String styleSheet1 = &quot;graph            { fill-color: white,black; }&quot;</span>
+			+ &quot;node             { fill-color: blue;        }&quot; + &quot;edge             { fill-color: green;       }&quot;
+			+ &quot;sprite           { fill-color: cyan;        }&quot; + &quot;node#A           { fill-color: magenta;     }&quot;
+			+ &quot;edge#AB          { fill-color: yellow;      }&quot; + &quot;node.foo         { fill-color: orange;      }&quot;
+			+ &quot;node.bar         { fill-color: grey;        }&quot; + &quot;node:clicked     { stroke-width: 1px;       }&quot;
+			+ &quot;node#A:clicked   { stroke-width: 2px;       }&quot; + &quot;node.foo:clicked { stroke-width: 3px;       }&quot;
+			+ &quot;node#A:selected  { stroke-width: 4px;       }&quot;;
+
+	@Test
+	public void testInitialParsing() {
+<span class="nc" id="L128">		assertEquals(0, stylesheet.getGraphStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L129">		assertEquals(0, stylesheet.getGraphStyleNameSpace().getClassRulesCount());</span>
+
+<span class="nc" id="L131">		assertEquals(1, stylesheet.getNodeStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L132">		assertEquals(2, stylesheet.getNodeStyleNameSpace().getClassRulesCount());</span>
+
+<span class="nc" id="L134">		assertEquals(1, stylesheet.getEdgeStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L135">		assertEquals(0, stylesheet.getEdgeStyleNameSpace().getClassRulesCount());</span>
+
+<span class="nc" id="L137">		assertEquals(0, stylesheet.getSpriteStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L138">		assertEquals(0, stylesheet.getSpriteStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L139">	}</span>
+
+	@Test
+	public void testRuleQuery() {
+<span class="nc" id="L143">		ArrayList&lt;Rule&gt; rulesA = stylesheet.getRulesFor(A);</span>
+<span class="nc" id="L144">		String idA = stylesheet.getStyleGroupIdFor(A, rulesA);</span>
+<span class="nc" id="L145">		ArrayList&lt;Rule&gt; rulesB = stylesheet.getRulesFor(B);</span>
+<span class="nc" id="L146">		String idB = stylesheet.getStyleGroupIdFor(B, rulesB);</span>
+<span class="nc" id="L147">		ArrayList&lt;Rule&gt; rulesC = stylesheet.getRulesFor(C);</span>
+<span class="nc" id="L148">		String idC = stylesheet.getStyleGroupIdFor(C, rulesC);</span>
+<span class="nc" id="L149">		ArrayList&lt;Rule&gt; rulesD = stylesheet.getRulesFor(D);</span>
+<span class="nc" id="L150">		String idD = stylesheet.getStyleGroupIdFor(D, rulesD);</span>
+
+<span class="nc" id="L152">		ArrayList&lt;Rule&gt; rulesAB = stylesheet.getRulesFor(AB);</span>
+<span class="nc" id="L153">		String idAB = stylesheet.getStyleGroupIdFor(AB, rulesAB);</span>
+<span class="nc" id="L154">		ArrayList&lt;Rule&gt; rulesBC = stylesheet.getRulesFor(BC);</span>
+<span class="nc" id="L155">		String idBC = stylesheet.getStyleGroupIdFor(BC, rulesBC);</span>
+<span class="nc" id="L156">		ArrayList&lt;Rule&gt; rulesCD = stylesheet.getRulesFor(CD);</span>
+<span class="nc" id="L157">		String idCD = stylesheet.getStyleGroupIdFor(CD, rulesCD);</span>
+<span class="nc" id="L158">		ArrayList&lt;Rule&gt; rulesDA = stylesheet.getRulesFor(DA);</span>
+<span class="nc" id="L159">		String idDA = stylesheet.getStyleGroupIdFor(DA, rulesDA);</span>
+
+<span class="nc" id="L161">		assertTrue(idA.equals(&quot;n_A&quot;));</span>
+<span class="nc" id="L162">		assertTrue(idB.equals(&quot;n(foo)&quot;));</span>
+<span class="nc" id="L163">		assertTrue(idC.equals(&quot;n(foo)&quot;));</span>
+<span class="nc" id="L164">		assertTrue(idD.equals(&quot;n(bar,foo)&quot;));</span>
+<span class="nc" id="L165">		assertTrue(idAB.equals(&quot;e_AB&quot;));</span>
+<span class="nc" id="L166">		assertTrue(idBC.equals(&quot;e&quot;));</span>
+<span class="nc" id="L167">		assertTrue(idCD.equals(&quot;e&quot;));</span>
+<span class="nc" id="L168">		assertTrue(idDA.equals(&quot;e&quot;));</span>
+
+<span class="nc" id="L170">		System.err.printf(&quot;----%n&quot;);</span>
+<span class="nc" id="L171">		System.err.printf(&quot;A %s%n&quot;, displayGroup(idA, rulesA));</span>
+<span class="nc" id="L172">		System.err.printf(&quot;B %s%n&quot;, displayGroup(idB, rulesB));</span>
+<span class="nc" id="L173">		System.err.printf(&quot;C %s%n&quot;, displayGroup(idC, rulesC));</span>
+<span class="nc" id="L174">		System.err.printf(&quot;D %s%n&quot;, displayGroup(idD, rulesD));</span>
+<span class="nc" id="L175">		System.err.printf(&quot;----%n&quot;);</span>
+<span class="nc" id="L176">		System.err.printf(&quot;AB %s%n&quot;, displayGroup(idAB, rulesAB));</span>
+<span class="nc" id="L177">		System.err.printf(&quot;BC %s%n&quot;, displayGroup(idBC, rulesBC));</span>
+<span class="nc" id="L178">		System.err.printf(&quot;CD %s%n&quot;, displayGroup(idCD, rulesCD));</span>
+<span class="nc" id="L179">		System.err.printf(&quot;DA %s%n&quot;, displayGroup(idDA, rulesDA));</span>
+<span class="nc" id="L180">	}</span>
+
+	protected void populateGroupSet(StyleGroupSet sgs) {
+<span class="nc" id="L183">		sgs.addElement(graph);</span>
+<span class="nc" id="L184">		sgs.addElement(A);</span>
+<span class="nc" id="L185">		sgs.addElement(B);</span>
+<span class="nc" id="L186">		sgs.addElement(C);</span>
+<span class="nc" id="L187">		sgs.addElement(D);</span>
+<span class="nc" id="L188">		sgs.addElement(AB);</span>
+<span class="nc" id="L189">		sgs.addElement(BC);</span>
+<span class="nc" id="L190">		sgs.addElement(CD);</span>
+<span class="nc" id="L191">		sgs.addElement(DA);</span>
+<span class="nc" id="L192">	}</span>
+
+	@Test
+	public void testStyleGroups() {
+<span class="nc" id="L196">		StyleGroupSet sgs = new StyleGroupSet(stylesheet);</span>
+
+<span class="nc" id="L198">		populateGroupSet(sgs);</span>
+
+<span class="nc" id="L200">		System.err.printf(&quot;There are %d groups !!%n&quot;, sgs.getGroupCount());</span>
+<span class="nc" id="L201">		Iterator&lt;? extends StyleGroup&gt; i = sgs.getGroupIterator();</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">		while (i.hasNext())</span>
+<span class="nc" id="L203">			System.err.printf(&quot;  %s&quot;, i.next().toString());</span>
+
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		assertTrue(sgs.getGroupCount() == 6);</span>
+
+<span class="nc" id="L207">		System.err.printf(&quot;----%n&quot;);</span>
+<span class="nc" id="L208">		System.err.printf(sgs.toString());</span>
+
+<span class="nc" id="L210">		Style sG = sgs.getStyleForElement(graph);</span>
+<span class="nc" id="L211">		Style sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L212">		Style sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L213">		Style sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L214">		Style sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L216">		Style sAB = sgs.getStyleForElement(AB);</span>
+<span class="nc" id="L217">		Style sBC = sgs.getStyleForElement(BC);</span>
+<span class="nc" id="L218">		Style sCD = sgs.getStyleForElement(CD);</span>
+<span class="nc" id="L219">		Style sDA = sgs.getStyleForElement(DA);</span>
+
+<span class="nc" id="L221">		assertEquals(2, sG.getFillColorCount());</span>
+<span class="nc" id="L222">		assertEquals(1, sA.getFillColorCount());</span>
+<span class="nc" id="L223">		assertEquals(1, sB.getFillColorCount());</span>
+<span class="nc" id="L224">		assertEquals(1, sC.getFillColorCount());</span>
+<span class="nc" id="L225">		assertEquals(1, sD.getFillColorCount());</span>
+<span class="nc bnc" id="L226" title="All 4 branches missed.">		assertTrue(sG.getFillColor(0).getRed() == 255 &amp;&amp; sG.getFillColor(0).getGreen() == 255</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">				&amp;&amp; sG.getFillColor(0).getBlue() == 255);</span>
+<span class="nc bnc" id="L228" title="All 4 branches missed.">		assertTrue(sG.getFillColor(1).getRed() == 0 &amp;&amp; sG.getFillColor(1).getGreen() == 0</span>
+<span class="nc bnc" id="L229" title="All 2 branches missed.">				&amp;&amp; sG.getFillColor(1).getBlue() == 0);</span>
+<span class="nc bnc" id="L230" title="All 4 branches missed.">		assertTrue(sA.getFillColor(0).getRed() == 255 &amp;&amp; sA.getFillColor(0).getGreen() == 0</span>
+<span class="nc bnc" id="L231" title="All 2 branches missed.">				&amp;&amp; sA.getFillColor(0).getBlue() == 255);</span>
+<span class="nc bnc" id="L232" title="All 4 branches missed.">		assertTrue(sB.getFillColor(0).getRed() == 255 &amp;&amp; sB.getFillColor(0).getGreen() == 165</span>
+<span class="nc bnc" id="L233" title="All 2 branches missed.">				&amp;&amp; sB.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L234" title="All 4 branches missed.">		assertTrue(sC.getFillColor(0).getRed() == 255 &amp;&amp; sC.getFillColor(0).getGreen() == 165</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">				&amp;&amp; sC.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L236" title="All 4 branches missed.">		assertTrue(sD.getFillColor(0).getRed() == 190 &amp;&amp; sD.getFillColor(0).getGreen() == 190</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">				&amp;&amp; sD.getFillColor(0).getBlue() == 190);</span>
+
+<span class="nc" id="L239">		assertEquals(1, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L240">		assertEquals(1, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L241">		assertEquals(1, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L242">		assertEquals(1, sD.getStrokeWidth().value, 0);</span>
+
+<span class="nc bnc" id="L244" title="All 4 branches missed.">		assertTrue(sAB.getFillColor(0).getRed() == 255 &amp;&amp; sAB.getFillColor(0).getGreen() == 255</span>
+<span class="nc bnc" id="L245" title="All 2 branches missed.">				&amp;&amp; sAB.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L246" title="All 4 branches missed.">		assertTrue(sBC.getFillColor(0).getRed() == 0 &amp;&amp; sBC.getFillColor(0).getGreen() == 255</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">				&amp;&amp; sBC.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L248" title="All 4 branches missed.">		assertTrue(sCD.getFillColor(0).getRed() == 0 &amp;&amp; sCD.getFillColor(0).getGreen() == 255</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">				&amp;&amp; sCD.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L250" title="All 4 branches missed.">		assertTrue(sDA.getFillColor(0).getRed() == 0 &amp;&amp; sDA.getFillColor(0).getGreen() == 255</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">				&amp;&amp; sDA.getFillColor(0).getBlue() == 0);</span>
+
+<span class="nc" id="L253">		sgs.release();</span>
+<span class="nc" id="L254">	}</span>
+
+	protected String displayGroup(String id, ArrayList&lt;Rule&gt; rules) {
+<span class="nc" id="L257">		StringBuilder builder = new StringBuilder();</span>
+
+<span class="nc" id="L259">		builder.append(&quot;(&quot;);</span>
+<span class="nc" id="L260">		builder.append(id);</span>
+<span class="nc" id="L261">		builder.append(&quot;) &quot;);</span>
+<span class="nc" id="L262">		builder.append(rules.size());</span>
+<span class="nc" id="L263">		builder.append(&quot; [ &quot;);</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">		for (int i = 0; i &lt; rules.size(); ++i) {</span>
+<span class="nc" id="L265">			builder.append(rules.get(i).selector.toString());</span>
+<span class="nc" id="L266">			builder.append(&quot; &quot;);</span>
+		}
+<span class="nc" id="L268">		builder.append(&quot;]&quot;);</span>
+<span class="nc" id="L269">		return builder.toString();</span>
+	}
+
+	@Test
+	public void testStyleEvents() {
+<span class="nc" id="L274">		StyleGroupSet sgs = new StyleGroupSet(stylesheet);</span>
+
+<span class="nc" id="L276">		populateGroupSet(sgs);</span>
+
+<span class="nc" id="L278">		StyleGroup sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L279">		StyleGroup sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L280">		StyleGroup sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L281">		StyleGroup sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L283">		assertEquals(1, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L284">		assertEquals(1, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L285">		assertEquals(1, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L286">		assertEquals(1, sD.getStrokeWidth().value, 0);</span>
+
+		// Test global events (events that apply to a whole group or groups).
+
+<span class="nc" id="L290">		sgs.pushEvent(&quot;clicked&quot;); // This is normally done automatically by the</span>
+									// GraphicElement
+
+<span class="nc" id="L293">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L294">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L295">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L296">		sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L298">		assertEquals(2, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L299">		assertEquals(3, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L300">		assertEquals(3, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L301">		assertEquals(3, sD.getStrokeWidth().value, 0);</span>
+
+		// Ensure that inherited styles are still correct
+<span class="nc bnc" id="L304" title="All 4 branches missed.">		assertTrue(sA.getFillColor(0).getRed() == 255 &amp;&amp; sA.getFillColor(0).getGreen() == 0</span>
+<span class="nc bnc" id="L305" title="All 2 branches missed.">				&amp;&amp; sA.getFillColor(0).getBlue() == 255);</span>
+<span class="nc bnc" id="L306" title="All 4 branches missed.">		assertTrue(sB.getFillColor(0).getRed() == 255 &amp;&amp; sB.getFillColor(0).getGreen() == 165</span>
+<span class="nc bnc" id="L307" title="All 2 branches missed.">				&amp;&amp; sB.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L308" title="All 4 branches missed.">		assertTrue(sC.getFillColor(0).getRed() == 255 &amp;&amp; sC.getFillColor(0).getGreen() == 165</span>
+<span class="nc bnc" id="L309" title="All 2 branches missed.">				&amp;&amp; sC.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L310" title="All 4 branches missed.">		assertTrue(sD.getFillColor(0).getRed() == 190 &amp;&amp; sD.getFillColor(0).getGreen() == 190</span>
+<span class="nc bnc" id="L311" title="All 2 branches missed.">				&amp;&amp; sD.getFillColor(0).getBlue() == 190);</span>
+
+<span class="nc" id="L313">		sgs.popEvent(&quot;clicked&quot;); // This is normally done automatically by the</span>
+									// GraphicElement
+
+<span class="nc" id="L316">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L317">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L318">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L319">		sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L321">		assertEquals(1, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L322">		assertEquals(1, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L323">		assertEquals(1, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L324">		assertEquals(1, sD.getStrokeWidth().value, 0);</span>
+
+<span class="nc" id="L326">		sgs.pushEvent(&quot;clicked&quot;); // Both events at a time.</span>
+<span class="nc" id="L327">		sgs.pushEvent(&quot;selected&quot;); // They should cascade.</span>
+
+<span class="nc" id="L329">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L330">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L331">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L332">		sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L334">		assertEquals(4, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L335">		assertEquals(3, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L336">		assertEquals(3, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L337">		assertEquals(3, sD.getStrokeWidth().value, 0);</span>
+
+		// Ensure that inherited styles are still correct
+<span class="nc bnc" id="L340" title="All 4 branches missed.">		assertTrue(sA.getFillColor(0).getRed() == 255 &amp;&amp; sA.getFillColor(0).getGreen() == 0</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">				&amp;&amp; sA.getFillColor(0).getBlue() == 255);</span>
+<span class="nc bnc" id="L342" title="All 4 branches missed.">		assertTrue(sB.getFillColor(0).getRed() == 255 &amp;&amp; sB.getFillColor(0).getGreen() == 165</span>
+<span class="nc bnc" id="L343" title="All 2 branches missed.">				&amp;&amp; sB.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L344" title="All 4 branches missed.">		assertTrue(sC.getFillColor(0).getRed() == 255 &amp;&amp; sC.getFillColor(0).getGreen() == 165</span>
+<span class="nc bnc" id="L345" title="All 2 branches missed.">				&amp;&amp; sC.getFillColor(0).getBlue() == 0);</span>
+<span class="nc bnc" id="L346" title="All 4 branches missed.">		assertTrue(sD.getFillColor(0).getRed() == 190 &amp;&amp; sD.getFillColor(0).getGreen() == 190</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">				&amp;&amp; sD.getFillColor(0).getBlue() == 190);</span>
+
+<span class="nc" id="L349">		sgs.popEvent(&quot;clicked&quot;); // This is normally done automatically by the</span>
+									// GraphicElement
+<span class="nc" id="L351">		sgs.popEvent(&quot;selected&quot;); // This is normally done automatically by the</span>
+									// GraphicElement
+
+		// Now test individual events, that is events that apply to
+		// an individual element only.
+
+<span class="nc" id="L357">		sA = sgs.getStyleForElement(A);</span>
+
+<span class="nc" id="L359">		assertFalse(sA.hasEventElements());</span>
+
+<span class="nc" id="L361">		sgs.pushEventFor(A, &quot;clicked&quot;); // This is normally done automatically</span>
+										// by the GraphicElement
+<span class="nc" id="L363">		sgs.pushEventFor(B, &quot;clicked&quot;); // This is normally done automatically</span>
+										// by the GraphicElement
+
+<span class="nc" id="L366">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L367">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L368">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L369">		sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L371">		assertTrue(sA.hasEventElements());</span>
+
+<span class="nc" id="L373">		assertEquals(1, sA.getStrokeWidth().value, 0); // Individual events must be</span>
+														// activated
+<span class="nc" id="L375">		assertEquals(1, sB.getStrokeWidth().value, 0); // to work, so just pushing</span>
+														// them is not
+<span class="nc" id="L377">		assertEquals(1, sC.getStrokeWidth().value, 0); // sufficient.</span>
+<span class="nc" id="L378">		assertEquals(1, sD.getStrokeWidth().value, 0);</span>
+
+<span class="nc" id="L380">		sA.activateEventsFor(A);</span>
+<span class="nc" id="L381">		assertEquals(2, sA.getStrokeWidth().value, 0); // Only A should change.</span>
+<span class="nc" id="L382">		assertEquals(1, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L383">		assertEquals(1, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L384">		assertEquals(1, sD.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L385">		sA.deactivateEvents();</span>
+<span class="nc" id="L386">		sB.activateEventsFor(B);</span>
+<span class="nc" id="L387">		assertEquals(1, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L388">		assertEquals(3, sB.getStrokeWidth().value, 0); // B and all its group</span>
+														// change.
+<span class="nc" id="L390">		assertEquals(3, sC.getStrokeWidth().value, 0); // Therefore C also changes.</span>
+<span class="nc" id="L391">		assertEquals(1, sD.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L392">		sB.deactivateEvents();</span>
+
+<span class="nc" id="L394">		sgs.popEventFor(A, &quot;clicked&quot;); // This is normally done automatically by</span>
+										// the GraphicElement
+<span class="nc" id="L396">		sgs.popEventFor(B, &quot;clicked&quot;); // This is normally done automatically by</span>
+										// the GraphicElement
+
+		// Now two individual events at a time.
+
+<span class="nc" id="L401">		sgs.pushEventFor(A, &quot;clicked&quot;); // This is normally done automatically</span>
+										// by the GraphicElement
+<span class="nc" id="L403">		sgs.pushEventFor(A, &quot;selected&quot;); // This is normally done automatically</span>
+											// by the GraphicElement
+
+<span class="nc" id="L406">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L407">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L408">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L409">		sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L411">		assertEquals(1, sA.getStrokeWidth().value, 0); // Individual events must be</span>
+														// activated
+<span class="nc" id="L413">		assertEquals(1, sB.getStrokeWidth().value, 0); // to work, so just pushing</span>
+														// them is not
+<span class="nc" id="L415">		assertEquals(1, sC.getStrokeWidth().value, 0); // sufficient.</span>
+<span class="nc" id="L416">		assertEquals(1, sD.getStrokeWidth().value, 0);</span>
+
+<span class="nc" id="L418">		sA.activateEventsFor(A);</span>
+<span class="nc" id="L419">		assertEquals(4, sA.getStrokeWidth().value, 0); // Only A should change,</span>
+														// &quot;selected&quot; has
+<span class="nc" id="L421">		assertEquals(1, sB.getStrokeWidth().value, 0); // precedence over &quot;clicked&quot;</span>
+														// since added
+<span class="nc" id="L423">		assertEquals(1, sC.getStrokeWidth().value, 0); // after.</span>
+<span class="nc" id="L424">		assertEquals(1, sD.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L425">		sA.deactivateEvents();</span>
+
+<span class="nc" id="L427">		sgs.popEventFor(A, &quot;clicked&quot;); // This is normally done automatically by</span>
+										// the GraphicElement
+<span class="nc" id="L429">		sgs.popEventFor(A, &quot;selected&quot;); // This is normally done automatically</span>
+										// by the GraphicElement
+
+<span class="nc" id="L432">		sgs.release();</span>
+<span class="nc" id="L433">	}</span>
+
+<span class="nc" id="L435">	public static String styleSheet2 = &quot;node { fill-color: yellow; stroke-width: 10px; }&quot;;</span>
+
+<span class="nc" id="L437">	public static String styleSheet3 = &quot;node#B { stroke-width: 5px; }&quot;;</span>
+
+<span class="nc" id="L439">	public static String styleSheet4 = &quot;edge.foo { stroke-width: 2px; }&quot;;</span>
+
+	@Test
+	public void testStyleChange() throws IOException {
+<span class="nc" id="L443">		StyleGroupSet sgs = new StyleGroupSet(stylesheet);</span>
+
+<span class="nc" id="L445">		populateGroupSet(sgs);</span>
+
+<span class="nc bnc" id="L447" title="All 2 branches missed.">		assertTrue(sgs.getGroupCount() == 6);</span>
+
+		// Augment the style sheet a new style sheet that change an existing
+		// style.
+
+<span class="nc" id="L452">		stylesheet.parseFromString(styleSheet2);</span>
+
+<span class="nc" id="L454">		assertEquals(6, sgs.getGroupCount());</span>
+<span class="nc" id="L455">		assertEquals(0, stylesheet.getGraphStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L456">		assertEquals(0, stylesheet.getGraphStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L457">		assertEquals(1, stylesheet.getNodeStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L458">		assertEquals(2, stylesheet.getNodeStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L459">		assertEquals(1, stylesheet.getEdgeStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L460">		assertEquals(0, stylesheet.getEdgeStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L461">		assertEquals(0, stylesheet.getSpriteStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L462">		assertEquals(0, stylesheet.getSpriteStyleNameSpace().getClassRulesCount());</span>
+
+		// All nodes should have a border of 10px except the clicked ones.
+
+<span class="nc" id="L466">		Style sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L467">		Style sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L468">		Style sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L469">		Style sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L471">		assertEquals(10, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L472">		assertEquals(10, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L473">		assertEquals(10, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L474">		assertEquals(10, sD.getStrokeWidth().value, 0);</span>
+
+<span class="nc" id="L476">		sgs.pushEvent(&quot;clicked&quot;);</span>
+<span class="nc" id="L477">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L478">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L479">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L480">		sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L482">		assertEquals(2, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L483">		assertEquals(3, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L484">		assertEquals(3, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L485">		assertEquals(3, sD.getStrokeWidth().value, 0);</span>
+
+<span class="nc" id="L487">		sgs.popEvent(&quot;clicked&quot;);</span>
+<span class="nc" id="L488">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L489">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L490">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L491">		sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L493">		assertEquals(10, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L494">		assertEquals(10, sB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L495">		assertEquals(10, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L496">		assertEquals(10, sD.getStrokeWidth().value, 0);</span>
+
+		// Now augment the style sheet with a change that applies only to node
+		// B.
+
+<span class="nc" id="L501">		stylesheet.parseFromString(styleSheet3);</span>
+
+<span class="nc" id="L503">		assertEquals(7, sgs.getGroupCount());</span>
+<span class="nc" id="L504">		assertEquals(0, stylesheet.getGraphStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L505">		assertEquals(0, stylesheet.getGraphStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L506">		assertEquals(2, stylesheet.getNodeStyleNameSpace().getIdRulesCount()); // &lt;--</span>
+																				// +1
+<span class="nc" id="L508">		assertEquals(2, stylesheet.getNodeStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L509">		assertEquals(1, stylesheet.getEdgeStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L510">		assertEquals(0, stylesheet.getEdgeStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L511">		assertEquals(0, stylesheet.getSpriteStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L512">		assertEquals(0, stylesheet.getSpriteStyleNameSpace().getClassRulesCount());</span>
+
+<span class="nc" id="L514">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L515">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L516">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L517">		sD = sgs.getStyleForElement(D);</span>
+
+<span class="nc" id="L519">		assertEquals(10, sA.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L520">		assertEquals(5, sB.getStrokeWidth().value, 0); // &lt;-- The specific style</span>
+														// changed.
+<span class="nc" id="L522">		assertEquals(10, sC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L523">		assertEquals(10, sD.getStrokeWidth().value, 0);</span>
+
+		// Now augment the style sheet with a change that applies to all edges
+		// with the &quot;.foo&quot; class.
+
+<span class="nc" id="L528">		stylesheet.parseFromString(styleSheet4);</span>
+
+<span class="nc" id="L530">		assertEquals(8, sgs.getGroupCount()); // (e_AB disappears, e_AB(foo) and</span>
+												// e(foo) appear)
+<span class="nc" id="L532">		assertEquals(0, stylesheet.getGraphStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L533">		assertEquals(0, stylesheet.getGraphStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L534">		assertEquals(2, stylesheet.getNodeStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L535">		assertEquals(2, stylesheet.getNodeStyleNameSpace().getClassRulesCount());</span>
+<span class="nc" id="L536">		assertEquals(1, stylesheet.getEdgeStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L537">		assertEquals(1, stylesheet.getEdgeStyleNameSpace().getClassRulesCount()); // &lt;--</span>
+																					// +1
+<span class="nc" id="L539">		assertEquals(0, stylesheet.getSpriteStyleNameSpace().getIdRulesCount());</span>
+<span class="nc" id="L540">		assertEquals(0, stylesheet.getSpriteStyleNameSpace().getClassRulesCount());</span>
+
+<span class="nc" id="L542">		Style sAB = sgs.getStyleForElement(AB);</span>
+<span class="nc" id="L543">		Style sBC = sgs.getStyleForElement(BC);</span>
+<span class="nc" id="L544">		Style sCD = sgs.getStyleForElement(CD);</span>
+<span class="nc" id="L545">		Style sDA = sgs.getStyleForElement(DA);</span>
+
+<span class="nc" id="L547">		assertEquals(2, sAB.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L548">		assertEquals(2, sBC.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L549">		assertEquals(1, sCD.getStrokeWidth().value, 0);</span>
+<span class="nc" id="L550">		assertEquals(1, sDA.getStrokeWidth().value, 0);</span>
+
+<span class="nc" id="L552">		System.err.printf(&quot;After adding new style sheets, there are %d groups !!%n&quot;, sgs.getGroupCount());</span>
+<span class="nc" id="L553">		Iterator&lt;? extends StyleGroup&gt; i = sgs.getGroupIterator();</span>
+<span class="nc bnc" id="L554" title="All 2 branches missed.">		while (i.hasNext())</span>
+<span class="nc" id="L555">			System.err.printf(&quot;  %s&quot;, i.next().toString());</span>
+
+<span class="nc" id="L557">		sgs.release();</span>
+<span class="nc" id="L558">	}</span>
+
+	@Test
+	public void testZIndex() throws IOException {
+<span class="nc" id="L562">		StyleGroupSet sgs = new StyleGroupSet(stylesheet);</span>
+
+<span class="nc" id="L564">		populateGroupSet(sgs);</span>
+
+<span class="nc bnc" id="L566" title="All 2 branches missed.">		assertTrue(sgs.getGroupCount() == 6);</span>
+
+		// Now test the default Z index
+
+<span class="nc" id="L570">		Iterator&lt;HashSet&lt;StyleGroup&gt;&gt; zIndex = sgs.getZIterator();</span>
+
+		// The groups we expect in order.
+<span class="nc" id="L573">		HashSet&lt;String&gt; groups1 = new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L574">		HashSet&lt;String&gt; groups2 = new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L575">		HashSet&lt;String&gt; groups3 = new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L576">		HashSet&lt;String&gt; groups4 = new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L577">		HashSet&lt;String&gt; groups5 = new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L578">		groups1.add(&quot;g&quot;);</span>
+<span class="nc" id="L579">		groups2.add(&quot;e&quot;);</span>
+<span class="nc" id="L580">		groups2.add(&quot;e_AB&quot;);</span>
+<span class="nc" id="L581">		groups3.add(&quot;n_A&quot;);</span>
+<span class="nc" id="L582">		groups3.add(&quot;n(foo)&quot;);</span>
+<span class="nc" id="L583">		groups3.add(&quot;n(bar,foo)&quot;);</span>
+
+<span class="nc" id="L585">		System.err.printf(&quot;---- zIndex ----%n&quot;);</span>
+
+<span class="nc" id="L587">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L588">		HashSet&lt;StyleGroup&gt; cell = zIndex.next();</span>
+<span class="nc bnc" id="L589" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L590">			assertTrue(groups1.contains(g.getId()));</span>
+<span class="nc bnc" id="L591" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 0);</span>
+		}
+
+<span class="nc" id="L594">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L595">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L596" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L597">			assertTrue(groups2.contains(g.getId()));</span>
+<span class="nc bnc" id="L598" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 1);</span>
+		}
+
+<span class="nc" id="L601">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L602">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L603" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L604">			assertTrue(groups3.contains(g.getId()));</span>
+<span class="nc bnc" id="L605" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 2);</span>
+		}
+
+<span class="nc bnc" id="L608" title="All 2 branches missed.">		assertTrue(!zIndex.hasNext());</span>
+
+<span class="nc" id="L610">		System.err.printf(&quot;The Z index is :%n&quot;);</span>
+<span class="nc" id="L611">		System.err.printf(&quot;%s&quot;, sgs.getZIndex().toString());</span>
+
+		// Now test the way the z-index is kept up to date when changing the
+		// style.
+		// The change affects styles that already exist.
+
+<span class="nc" id="L617">		System.err.printf(&quot;---- zIndex 2 ----%n&quot;);</span>
+
+<span class="nc" id="L619">		stylesheet.parseFromString(styleSheet5);</span>
+
+<span class="nc bnc" id="L621" title="All 2 branches missed.">		assertTrue(sgs.getGroupCount() == 6);</span>
+
+<span class="nc" id="L623">		zIndex = sgs.getZIterator();</span>
+<span class="nc" id="L624">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L625">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L626" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L627">			assertTrue(groups1.contains(g.getId()));</span>
+<span class="nc bnc" id="L628" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 0);</span>
+		}
+
+<span class="nc" id="L631">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L632">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L633" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L634">			assertTrue(groups3.contains(g.getId()));</span>
+<span class="nc bnc" id="L635" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 1);</span>
+		}
+
+<span class="nc" id="L638">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L639">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L640" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L641">			assertTrue(groups2.contains(g.getId()));</span>
+<span class="nc bnc" id="L642" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 2);</span>
+		}
+
+<span class="nc bnc" id="L645" title="All 2 branches missed.">		assertTrue(!zIndex.hasNext());</span>
+
+<span class="nc" id="L647">		System.err.printf(&quot;The Z index is : %n&quot;);</span>
+<span class="nc" id="L648">		System.err.printf(&quot;%s&quot;, sgs.getZIndex().toString());</span>
+
+		// Now change only one specific (id) style.
+
+<span class="nc" id="L652">		System.err.printf(&quot;---- zIndex 3 ----%n&quot;);</span>
+<span class="nc" id="L653">		stylesheet.parseFromString(styleSheet6);</span>
+
+<span class="nc bnc" id="L655" title="All 2 branches missed.">		assertTrue(sgs.getGroupCount() == 6);</span>
+<span class="nc" id="L656">		groups2.clear();</span>
+<span class="nc" id="L657">		groups3.clear();</span>
+<span class="nc" id="L658">		groups2.add(&quot;n_A&quot;);</span>
+<span class="nc" id="L659">		groups3.add(&quot;e&quot;);</span>
+<span class="nc" id="L660">		groups3.add(&quot;e_AB&quot;);</span>
+<span class="nc" id="L661">		groups4.add(&quot;n(bar,foo)&quot;);</span>
+<span class="nc" id="L662">		groups4.add(&quot;n(foo)&quot;);</span>
+
+<span class="nc" id="L664">		zIndex = sgs.getZIterator();</span>
+<span class="nc" id="L665">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L666">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L667" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L668">			assertTrue(groups1.contains(g.getId()));</span>
+<span class="nc bnc" id="L669" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 0);</span>
+		}
+
+<span class="nc" id="L672">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L673">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L674" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L675">			assertTrue(groups2.contains(g.getId()));</span>
+<span class="nc bnc" id="L676" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 1);</span>
+		}
+
+<span class="nc" id="L679">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L680">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L681" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L682">			assertTrue(groups3.contains(g.getId()));</span>
+<span class="nc bnc" id="L683" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 2);</span>
+		}
+
+<span class="nc" id="L686">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L687">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L688" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L689">			assertTrue(groups4.contains(g.getId()));</span>
+<span class="nc bnc" id="L690" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 5);</span>
+		}
+
+<span class="nc bnc" id="L693" title="All 2 branches missed.">		assertTrue(!zIndex.hasNext());</span>
+
+<span class="nc" id="L695">		System.err.printf(&quot;The Z index is : %n&quot;);</span>
+<span class="nc" id="L696">		System.err.printf(&quot;%s&quot;, sgs.getZIndex().toString());</span>
+
+		// Now add a style with a Z index.s
+
+<span class="nc" id="L700">		System.err.printf(&quot;---- zIndex 4 ----%n&quot;);</span>
+<span class="nc" id="L701">		stylesheet.parseFromString(styleSheet7);</span>
+
+<span class="nc bnc" id="L703" title="All 2 branches missed.">		assertTrue(sgs.getGroupCount() == 7);</span>
+<span class="nc" id="L704">		groups5.add(&quot;e_DA&quot;);</span>
+
+<span class="nc" id="L706">		zIndex = sgs.getZIterator();</span>
+<span class="nc" id="L707">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L708">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L709" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L710">			assertTrue(groups1.contains(g.getId()));</span>
+<span class="nc bnc" id="L711" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 0);</span>
+		}
+
+<span class="nc" id="L714">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L715">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L716" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L717">			assertTrue(groups2.contains(g.getId()));</span>
+<span class="nc bnc" id="L718" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 1);</span>
+		}
+
+<span class="nc" id="L721">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L722">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L723" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L724">			assertTrue(groups3.contains(g.getId()));</span>
+<span class="nc bnc" id="L725" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 2);</span>
+		}
+
+<span class="nc" id="L728">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L729">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L730" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L731">			assertTrue(groups4.contains(g.getId()));</span>
+<span class="nc bnc" id="L732" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 5);</span>
+		}
+
+<span class="nc" id="L735">		assertTrue(zIndex.hasNext());</span>
+<span class="nc" id="L736">		cell = zIndex.next();</span>
+<span class="nc bnc" id="L737" title="All 2 branches missed.">		for (StyleGroup g : cell) {</span>
+<span class="nc" id="L738">			assertTrue(groups5.contains(g.getId()));</span>
+<span class="nc bnc" id="L739" title="All 2 branches missed.">			assertTrue(g.getZIndex() == 7);</span>
+		}
+
+<span class="nc" id="L742">		System.err.printf(&quot;The Z index is : %n&quot;);</span>
+<span class="nc" id="L743">		System.err.printf(&quot;%s&quot;, sgs.getZIndex().toString());</span>
+<span class="nc" id="L744">	}</span>
+
+	@Test
+	public void testShadow() throws IOException {
+<span class="nc" id="L748">		StyleGroupSet sgs = new StyleGroupSet(stylesheet);</span>
+
+<span class="nc" id="L750">		populateGroupSet(sgs);</span>
+
+		// First test with the default style sheet, no shadows.
+
+<span class="nc" id="L754">		Iterator&lt;StyleGroup&gt; shadow = sgs.getShadowIterator();</span>
+<span class="nc" id="L755">		int count = 0;</span>
+
+<span class="nc bnc" id="L757" title="All 2 branches missed.">		while (shadow.hasNext()) {</span>
+<span class="nc" id="L758">			shadow.next();</span>
+<span class="nc" id="L759">			count++;</span>
+		}
+
+<span class="nc bnc" id="L762" title="All 2 branches missed.">		assertTrue(count == 0);</span>
+
+		// Then we add a style that adds shadows to all nodes.
+
+<span class="nc" id="L766">		stylesheet.parseFromString(styleSheet8);</span>
+<span class="nc bnc" id="L767" title="All 2 branches missed.">		assertTrue(sgs.getGroupCount() == 6);</span>
+<span class="nc" id="L768">		HashSet&lt;String&gt; groups = new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L769">		groups.add(&quot;n_A&quot;);</span>
+<span class="nc" id="L770">		groups.add(&quot;n(bar,foo)&quot;);</span>
+<span class="nc" id="L771">		groups.add(&quot;n(foo)&quot;);</span>
+
+<span class="nc" id="L773">		shadow = sgs.getShadowIterator();</span>
+<span class="nc" id="L774">		count = 0;</span>
+
+<span class="nc bnc" id="L776" title="All 2 branches missed.">		while (shadow.hasNext()) {</span>
+<span class="nc" id="L777">			StyleGroup g = shadow.next();</span>
+<span class="nc" id="L778">			assertTrue(groups.contains(g.getId()));</span>
+<span class="nc" id="L779">			count++;</span>
+		}
+
+<span class="nc bnc" id="L782" title="All 2 branches missed.">		assertTrue(count == 3); // There are three node groups.</span>
+
+		// Then we add a style that adds shadows to a specific edge.
+
+<span class="nc" id="L786">		stylesheet.parseFromString(styleSheet9);</span>
+<span class="nc bnc" id="L787" title="All 2 branches missed.">		assertTrue(sgs.getGroupCount() == 6);</span>
+<span class="nc" id="L788">		groups.add(&quot;e_AB&quot;);</span>
+
+<span class="nc" id="L790">		shadow = sgs.getShadowIterator();</span>
+<span class="nc" id="L791">		count = 0;</span>
+
+<span class="nc bnc" id="L793" title="All 2 branches missed.">		while (shadow.hasNext()) {</span>
+<span class="nc" id="L794">			StyleGroup g = shadow.next();</span>
+<span class="nc" id="L795">			assertTrue(groups.contains(g.getId()));</span>
+<span class="nc" id="L796">			count++;</span>
+		}
+
+<span class="nc bnc" id="L799" title="All 2 branches missed.">		assertTrue(count == 4); // Three node groups, plus one edge group (e_AB)</span>
+<span class="nc" id="L800">	}</span>
+
+<span class="nc" id="L802">	public static String styleSheet10 = &quot;node.foo { fill-mode: dyn-plain; fill-color: red, green, blue; }&quot;;</span>
+
+	@Test
+	public void testStyleGroupIterators() {
+		try {
+<span class="nc" id="L807">			stylesheet.parseFromString(styleSheet10);</span>
+<span class="nc" id="L808">		} catch (IOException e) {</span>
+<span class="nc" id="L809">			assertFalse(true);</span>
+		}
+
+<span class="nc" id="L812">		StyleGroupSet sgs = new StyleGroupSet(stylesheet);</span>
+
+<span class="nc" id="L814">		populateGroupSet(sgs);</span>
+
+<span class="nc" id="L816">		StyleGroup sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L817">		StyleGroup sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L818">		StyleGroup sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L819">		StyleGroup sD = sgs.getStyleForElement(D);</span>
+
+		// First test the basic iterator. B and C should be in the same group.
+
+<span class="nc bnc" id="L823" title="All 2 branches missed.">		assertTrue(sB == sC); // B and C are in the same group.</span>
+<span class="nc bnc" id="L824" title="All 2 branches missed.">		assertFalse(sA == sB);</span>
+<span class="nc bnc" id="L825" title="All 2 branches missed.">		assertFalse(sB == sD);</span>
+
+<span class="nc" id="L827">		HashSet&lt;String&gt; expected = new HashSet&lt;String&gt;();</span>
+
+<span class="nc" id="L829">		expected.add(&quot;B&quot;);</span>
+<span class="nc" id="L830">		expected.add(&quot;C&quot;);</span>
+
+<span class="nc bnc" id="L832" title="All 2 branches missed.">		for (Element element : sB) {</span>
+<span class="nc" id="L833">			assertTrue(expected.contains(element.getId()));</span>
+<span class="nc" id="L834">			expected.remove(element.getId());</span>
+		}
+
+<span class="nc" id="L837">		assertEquals(0, expected.size());</span>
+
+		// Now test the fact
+
+<span class="nc" id="L841">		B.setAttribute(&quot;ui.color&quot;, 2);</span>
+<span class="nc" id="L842">		sgs.pushEventFor(B, &quot;clicked&quot;); // This is normally done automatically</span>
+										// by the GraphicElement
+<span class="nc" id="L844">		sgs.pushElementAsDynamic(B); // This is normally done automatically by</span>
+										// the GraphicElement
+<span class="nc" id="L846">		sA = sgs.getStyleForElement(A);</span>
+<span class="nc" id="L847">		sB = sgs.getStyleForElement(B);</span>
+<span class="nc" id="L848">		sC = sgs.getStyleForElement(C);</span>
+<span class="nc" id="L849">		sD = sgs.getStyleForElement(D);</span>
+<span class="nc bnc" id="L850" title="All 2 branches missed.">		assertTrue(sB == sC); // B and C are still in the same group.</span>
+<span class="nc bnc" id="L851" title="All 2 branches missed.">		assertFalse(sA == sB);</span>
+<span class="nc bnc" id="L852" title="All 2 branches missed.">		assertFalse(sB == sD);</span>
+<span class="nc" id="L853">		assertTrue(sB.elementHasEvents(B));</span>
+<span class="nc" id="L854">		assertTrue(sB.elementIsDynamic(B));</span>
+
+<span class="nc" id="L856">		expected.add(&quot;B&quot;);</span>
+
+<span class="nc bnc" id="L858" title="All 2 branches missed.">		for (Element element : sB.dynamicElements()) {</span>
+<span class="nc" id="L859">			assertTrue(expected.contains(element.getId()));</span>
+<span class="nc" id="L860">			expected.remove(element.getId());</span>
+		}
+
+<span class="nc" id="L863">		assertEquals(0, expected.size());</span>
+
+<span class="nc" id="L865">		expected.add(&quot;B&quot;);</span>
+
+<span class="nc bnc" id="L867" title="All 2 branches missed.">		for (ElementEvents events : sB.elementsEvents()) {</span>
+<span class="nc" id="L868">			assertTrue(expected.contains(events.getElement().getId()));</span>
+<span class="nc" id="L869">			assertEquals(1, events.events().length);</span>
+<span class="nc" id="L870">			assertEquals(&quot;clicked&quot;, events.events()[0]);</span>
+<span class="nc" id="L871">			expected.remove(events.getElement().getId());</span>
+		}
+
+<span class="nc" id="L874">		assertEquals(0, expected.size());</span>
+
+<span class="nc" id="L876">		expected.add(&quot;C&quot;);</span>
+
+<span class="nc bnc" id="L878" title="All 2 branches missed.">		for (Element element : sB.bulkElements()) {</span>
+<span class="nc" id="L879">			assertTrue(expected.contains(element.getId()));</span>
+<span class="nc" id="L880">			expected.remove(element.getId());</span>
+		}
+
+<span class="nc" id="L883">		assertEquals(0, expected.size());</span>
+
+<span class="nc" id="L885">		sgs.popEventFor(B, &quot;clicked&quot;);</span>
+<span class="nc" id="L886">	}</span>
+
+<span class="nc" id="L888">	public static String styleSheet5 = &quot;node { z-index: 1; }&quot; + &quot;edge { z-index: 2; }&quot;;</span>
+
+<span class="nc" id="L890">	public static String styleSheet6 = &quot;node.foo { z-index: 5; }&quot;;</span>
+
+<span class="nc" id="L892">	public static String styleSheet7 = &quot;edge#DA { z-index: 7; }&quot;;</span>
+
+<span class="nc" id="L894">	public static String styleSheet8 = &quot;node { shadow-mode: plain; }&quot;;</span>
+
+<span class="nc" id="L896">	public static String styleSheet9 = &quot;edge#AB { shadow-mode: plain; }&quot;;</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

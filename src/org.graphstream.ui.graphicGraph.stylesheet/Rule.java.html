@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Rule.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.stylesheet</a> &gt; <span class="el_source">Rule.java</span></div><h1>Rule.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-07-05
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.stylesheet;
+
+import java.util.HashSet;
+
+/**
+ * Style application rule.
+ * 
+ * &lt;p&gt;
+ * A rule is made of a selector and values. The selector identifies the
+ * element(s) this rule applies to, and the values are styles to apply to the
+ * matched elements.
+ * &lt;/p&gt;
+ */
+public class Rule {
+	// Attributes
+
+	/**
+	 * The match.
+	 */
+	public Selector selector;
+
+	/**
+	 * The style.
+	 */
+	public Style style;
+
+	/**
+	 * Optionally, the rule can store all the style groups it participates in.
+	 */
+	public HashSet&lt;String&gt; groups;
+
+	// Constructors
+
+<span class="nc" id="L65">	protected Rule() {</span>
+<span class="nc" id="L66">	}</span>
+
+	/**
+	 * New rule with a matcher.
+	 * 
+	 * @param selector
+	 *            The rule selector.
+	 */
+<span class="nc" id="L74">	public Rule(Selector selector) {</span>
+<span class="nc" id="L75">		this.selector = selector;</span>
+<span class="nc" id="L76">	}</span>
+
+<span class="nc" id="L78">	public Rule(Selector selector, Rule parent) {</span>
+<span class="nc" id="L79">		this.selector = selector;</span>
+<span class="nc" id="L80">		this.style = new Style(parent);</span>
+<span class="nc" id="L81">	}</span>
+
+	/**
+	 * This rule style.
+	 * 
+	 * @return The rule style.
+	 */
+	public Style getStyle() {
+<span class="nc" id="L89">		return style;</span>
+	}
+
+	/**
+	 * The group this rule participate in, maybe null if the rule does not
+	 * participate in any group.
+	 * 
+	 * @return The group set or null.
+	 */
+	public HashSet&lt;String&gt; getGroups() {
+<span class="nc" id="L99">		return groups;</span>
+	}
+
+	/**
+	 * True if this rule selector match the given identifier.
+	 * 
+	 * @param identifier
+	 *            The identifier to test for the match.
+	 * @return True if matching.
+	 */
+	public boolean matchId(String identifier) {
+<span class="nc" id="L110">		String ident = selector.getId();</span>
+
+<span class="nc bnc" id="L112" title="All 2 branches missed.">		if (ident != null)</span>
+<span class="nc" id="L113">			return ident.equals(identifier);</span>
+
+<span class="nc" id="L115">		return false;</span>
+	}
+
+	/**
+	 * Change the style.
+	 * 
+	 * @param style
+	 *            A style specification.
+	 */
+	public void setStyle(Style style) {
+<span class="nc" id="L125">		this.style = style;</span>
+<span class="nc" id="L126">	}</span>
+
+	/**
+	 * Specify that this rule participates in the given style group.
+	 * 
+	 * @param groupId
+	 *            The group unique identifier.
+	 */
+	public void addGroup(String groupId) {
+<span class="nc bnc" id="L135" title="All 2 branches missed.">		if (groups == null)</span>
+<span class="nc" id="L136">			groups = new HashSet&lt;String&gt;();</span>
+<span class="nc" id="L137">		groups.add(groupId);</span>
+<span class="nc" id="L138">	}</span>
+
+	/**
+	 * Remove this rule from the style group.
+	 * 
+	 * @param groupId
+	 *            The group unique identifier.
+	 */
+	public void removeGroup(String groupId) {
+<span class="nc bnc" id="L147" title="All 2 branches missed.">		if (groups != null)</span>
+<span class="nc" id="L148">			groups.remove(groupId);</span>
+<span class="nc" id="L149">	}</span>
+
+	@Override
+	public String toString() {
+<span class="nc" id="L153">		return toString(-1);</span>
+	}
+
+	public String toString(int level) {
+<span class="nc" id="L157">		StringBuilder builder = new StringBuilder();</span>
+<span class="nc" id="L158">		String prefix = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L160" title="All 2 branches missed.">		if (level &gt; 0) {</span>
+<span class="nc bnc" id="L161" title="All 2 branches missed.">			for (int i = 0; i &lt; level; i++)</span>
+<span class="nc" id="L162">				prefix += &quot;    &quot;;</span>
+		}
+
+<span class="nc" id="L165">		builder.append(prefix);</span>
+<span class="nc" id="L166">		builder.append(selector.toString());</span>
+<span class="nc" id="L167">		builder.append(style.toString(level + 1));</span>
+
+<span class="nc" id="L169">		return builder.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

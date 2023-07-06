@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestThreadProxyPipe.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.thread.test</a> &gt; <span class="el_source">TestThreadProxyPipe.java</span></div><h1>TestThreadProxyPipe.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.thread.test;
+
+import java.io.IOException;
+import java.io.StringWriter;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.stream.file.FileSinkDGS;
+import org.graphstream.stream.thread.ThreadProxyPipe;
+import org.junit.Assert;
+import org.junit.Test;
+
+/**
+ * Test the thread proxy filter.
+ * 
+ * &lt;p&gt;
+ * Sadly it is quite difficult to test thread things using junit.
+ * &lt;/p&gt;
+ */
+public class TestThreadProxyPipe {
+	public static void main(String args[]) {
+<span class="nc" id="L55">		new TestThreadProxyPipe();</span>
+<span class="nc" id="L56">	}</span>
+
+<span class="nc" id="L58">	public TestThreadProxyPipe() {</span>
+
+<span class="nc" id="L60">	}</span>
+
+	@Test
+	public void Test1_GraphToWardGraph() {
+<span class="nc" id="L64">		Graph source = new MultiGraph(&quot;g1&quot;);</span>
+<span class="nc" id="L65">		Graph target = new MultiGraph(&quot;g2&quot;);</span>
+
+		// Start to populate the graph to test the &quot;replay&quot; feature of the
+		// proxy.
+
+<span class="nc" id="L70">		source.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L71">		source.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L72">		source.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L73">		source.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L74">		source.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L75">		source.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L77">		source.getNode(&quot;A&quot;).setAttribute(&quot;A1&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L78">		source.getNode(&quot;A&quot;).setAttribute(&quot;A2&quot;, &quot;foo&quot;);</span>
+
+<span class="nc" id="L80">		ThreadProxyPipe proxy = new ThreadProxyPipe();</span>
+<span class="nc" id="L81">		proxy.addSink(target);</span>
+<span class="nc" id="L82">		proxy.init(source, true);</span>
+
+<span class="nc" id="L84">		Thread other = new Thread(new AnotherThread(proxy, target) {</span>
+			public void run() {
+				// The second part of the test starts
+				// in this target thread.
+
+<span class="nc" id="L89">				boolean loop = true;</span>
+
+				do {
+<span class="nc" id="L92">					proxy.pump();</span>
+
+<span class="nc bnc" id="L94" title="All 2 branches missed.">					if (target.hasAttribute(&quot;STOP!&quot;))</span>
+<span class="nc" id="L95">						loop = false;</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">				} while (loop);</span>
+<span class="nc" id="L97">			}</span>
+
+		});
+
+<span class="nc" id="L101">		other.start();</span>
+
+		// The first part of the test begins in this
+		// source thread.
+
+<span class="nc" id="L106">		source.addNode(&quot;X&quot;);</span>
+<span class="nc" id="L107">		source.addNode(&quot;Y&quot;);</span>
+<span class="nc" id="L108">		source.addNode(&quot;Z&quot;);</span>
+<span class="nc" id="L109">		source.addEdge(&quot;XY&quot;, &quot;X&quot;, &quot;Y&quot;);</span>
+<span class="nc" id="L110">		source.addEdge(&quot;YZ&quot;, &quot;Y&quot;, &quot;Z&quot;);</span>
+<span class="nc" id="L111">		source.addEdge(&quot;ZX&quot;, &quot;Z&quot;, &quot;X&quot;);</span>
+<span class="nc" id="L112">		source.addEdge(&quot;XA&quot;, &quot;X&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L113">		source.removeEdge(&quot;AB&quot;);</span>
+<span class="nc" id="L114">		source.removeNode(&quot;B&quot;);</span>
+<span class="nc" id="L115">		source.getNode(&quot;X&quot;).setAttribute(&quot;X1&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L116">		source.getNode(&quot;X&quot;).setAttribute(&quot;X1&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L117">		source.getNode(&quot;A&quot;).removeAttribute(&quot;A1&quot;);</span>
+
+<span class="nc" id="L119">		source.setAttribute(&quot;STOP!&quot;);</span>
+
+		// End of the test, wait for the other thread to terminate
+
+		try {
+<span class="nc" id="L124">			other.join();</span>
+<span class="nc" id="L125">		} catch (InterruptedException e) {</span>
+<span class="nc" id="L126">			e.printStackTrace();</span>
+		}
+
+		// Now test the results in the target thread.
+<span class="nc" id="L130">	}</span>
+
+	/**
+	 * Separate runnable that knows about the proxy.
+	 */
+	public abstract class AnotherThread implements Runnable {
+		protected ThreadProxyPipe proxy;
+
+		protected Graph target;
+
+<span class="nc" id="L140">		public AnotherThread(ThreadProxyPipe proxy, Graph target) {</span>
+<span class="nc" id="L141">			this.proxy = proxy;</span>
+<span class="nc" id="L142">			this.target = target;</span>
+<span class="nc" id="L143">		}</span>
+	}
+
+	@Test
+	public void test() {
+		try {
+<span class="nc bnc" id="L149" title="All 2 branches missed.">			for (int i = 0; i &lt; 100; i++)</span>
+<span class="nc" id="L150">				testOne();</span>
+<span class="nc" id="L151">		} catch (IOException e) {</span>
+<span class="nc" id="L152">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L154">	}</span>
+
+	public void testOne() throws IOException {
+<span class="nc" id="L157">		Graph g = new AdjacencyListGraph(&quot;g&quot;);</span>
+<span class="nc" id="L158">		ThreadProxyPipe tpp = new ThreadProxyPipe();</span>
+<span class="nc" id="L159">		tpp.init(g);</span>
+
+<span class="nc" id="L161">		FileSinkDGS dgs1 = new FileSinkDGS();</span>
+<span class="nc" id="L162">		FileSinkDGS dgs2 = new FileSinkDGS();</span>
+<span class="nc" id="L163">		StringWriter w1 = new StringWriter();</span>
+<span class="nc" id="L164">		StringWriter w2 = new StringWriter();</span>
+
+<span class="nc" id="L166">		Actor a = new Actor(tpp);</span>
+<span class="nc" id="L167">		Thread t = new Thread(a);</span>
+
+<span class="nc" id="L169">		g.addSink(dgs1);</span>
+<span class="nc" id="L170">		tpp.addSink(dgs2);</span>
+
+<span class="nc" id="L172">		dgs1.begin(w1);</span>
+<span class="nc" id="L173">		dgs2.begin(w2);</span>
+
+<span class="nc" id="L175">		t.start();</span>
+<span class="nc" id="L176">		generateRandom(g, 1000);</span>
+
+		try {
+<span class="nc" id="L179">			Thread.yield();</span>
+<span class="nc" id="L180">			a.alive = false;</span>
+<span class="nc" id="L181">			t.join();</span>
+<span class="nc" id="L182">		} catch (InterruptedException e) {</span>
+		}
+
+<span class="nc" id="L185">		w1.close();</span>
+<span class="nc" id="L186">		w2.close();</span>
+
+<span class="nc" id="L188">		String str1 = w1.toString();</span>
+<span class="nc" id="L189">		String str2 = w2.toString();</span>
+
+<span class="nc bnc" id="L191" title="All 2 branches missed.">		Assert.assertTrue(str1.length() &gt; 0);</span>
+<span class="nc" id="L192">		Assert.assertEquals(str1, str2);</span>
+<span class="nc" id="L193">	}</span>
+
+	static class Actor implements Runnable {
+		ThreadProxyPipe pipe;
+		boolean alive;
+
+<span class="nc" id="L199">		public Actor(ThreadProxyPipe pipe) {</span>
+<span class="nc" id="L200">			this.pipe = pipe;</span>
+<span class="nc" id="L201">			this.alive = true;</span>
+<span class="nc" id="L202">		}</span>
+
+		public void run() {
+			do
+<span class="nc" id="L206">				pipe.pump();</span>
+<span class="nc bnc" id="L207" title="All 4 branches missed.">			while (alive || pipe.hasPostRemaining());</span>
+<span class="nc" id="L208">		}</span>
+	}
+
+	protected int ri(int size) {
+<span class="nc" id="L212">		return (int) (Math.random() * size);</span>
+	}
+
+	protected Object rv() {
+<span class="nc" id="L216">		int i = ri(3);</span>
+
+<span class="nc bnc" id="L218" title="All 4 branches missed.">		switch (i) {</span>
+		case 0:
+<span class="nc" id="L220">			return ri(1000);</span>
+		case 1:
+<span class="nc" id="L222">			return Math.random() * 1000;</span>
+		case 2: {
+<span class="nc" id="L224">			StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L225">			String chars = &quot;abcedfghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789&quot;;</span>
+
+<span class="nc bnc" id="L227" title="All 2 branches missed.">			for (int j = 0; j &lt; 16; j++)</span>
+<span class="nc" id="L228">				sb.append(chars.charAt(ri(chars.length())));</span>
+
+<span class="nc" id="L230">			return sb.toString();</span>
+		}
+		default:
+<span class="nc" id="L233">			return null;</span>
+		}
+	}
+
+	protected void generateRandom(Graph g, int size) {
+<span class="nc" id="L238">		String[] attributes = { &quot;a&quot;, &quot;b&quot;, &quot;c&quot;, &quot;d&quot;, &quot;e&quot;, &quot;f&quot;, &quot;g&quot; };</span>
+
+<span class="nc bnc" id="L240" title="All 2 branches missed.">		for (int i = 0; i &lt; size; i++) {</span>
+<span class="nc" id="L241">			Node n = g.addNode(String.format(&quot;%d&quot;, i));</span>
+
+<span class="nc bnc" id="L243" title="All 2 branches missed.">			for (int j = 0; j &lt; 3; j++)</span>
+<span class="nc" id="L244">				n.setAttribute(attributes[ri(attributes.length)], rv());</span>
+		}
+
+<span class="nc bnc" id="L247" title="All 2 branches missed.">		for (int i = 0; i &lt; size; i++) {</span>
+			Node a, b;
+
+<span class="nc" id="L250">			a = g.getNode((int) (Math.random() * size));</span>
+
+			do {
+<span class="nc" id="L253">				b = g.getNode((int) (Math.random() * size));</span>
+<span class="nc bnc" id="L254" title="All 2 branches missed.">			} while (a == b);</span>
+
+<span class="nc" id="L256">			Edge e = g.addEdge(String.format(&quot;edge%d&quot;, i), a, b);</span>
+
+<span class="nc bnc" id="L258" title="All 2 branches missed.">			for (int j = 0; j &lt; 3; j++)</span>
+<span class="nc" id="L259">				e.setAttribute(attributes[ri(attributes.length)], rv());</span>
+		}
+<span class="nc" id="L261">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

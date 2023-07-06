@@ -1,0 +1,1742 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>StyleSheetParser.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.stylesheet.parser</a> &gt; <span class="el_source">StyleSheetParser.java</span></div><h1>StyleSheetParser.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.stylesheet.parser;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.Reader;
+
+import org.graphstream.ui.graphicGraph.stylesheet.*;
+
+import org.graphstream.util.parser.ParseException;
+import org.graphstream.util.parser.SimpleCharStream;
+import org.graphstream.util.parser.Token;
+import org.graphstream.util.parser.TokenMgrError;
+
+@SuppressWarnings(&quot;unused&quot;)
+public class StyleSheetParser implements StyleSheetParserConstants {
+	/**
+	 * The style sheet.
+	 */
+	protected StyleSheet stylesheet;
+
+	public StyleSheetParser(StyleSheet stylesheet, InputStream stream) {
+<span class="nc" id="L55">		this(stream);</span>
+<span class="nc" id="L56">		this.stylesheet = stylesheet;</span>
+<span class="nc" id="L57">	}</span>
+
+	public StyleSheetParser(StyleSheet stylesheet, Reader stream) {
+<span class="nc" id="L60">		this(stream);</span>
+<span class="nc" id="L61">		this.stylesheet = stylesheet;</span>
+<span class="nc" id="L62">	}</span>
+
+	public static class Number {
+		public float value;
+<span class="nc" id="L66">		public Style.Units units = Style.Units.PX;</span>
+
+<span class="nc" id="L68">		public Number(float value, Style.Units units) {</span>
+<span class="nc" id="L69">			this.value = value;</span>
+<span class="nc" id="L70">			this.units = units;</span>
+<span class="nc" id="L71">		}</span>
+	}
+
+	/**
+	 * Closes the parser, closing the opened stream.
+	 */
+	public void close() throws IOException {
+<span class="nc" id="L78">		jj_input_stream.close();</span>
+<span class="nc" id="L79">	}</span>
+
+	/*
+	 * The parser.
+	 */
+	final public void start() throws ParseException {
+		Rule r;
+		label_1: while (true) {
+<span class="nc bnc" id="L87" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case GRAPH:
+			case EDGE:
+			case NODE:
+			case SPRITE:
+			case COMMENT:
+				;
+<span class="nc" id="L94">				break;</span>
+			default:
+<span class="nc" id="L96">				jj_la1[0] = jj_gen;</span>
+<span class="nc" id="L97">				break label_1;</span>
+			}
+<span class="nc bnc" id="L99" title="All 5 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case GRAPH:
+			case EDGE:
+			case NODE:
+			case SPRITE:
+<span class="nc" id="L104">				r = rule();</span>
+<span class="nc" id="L105">				stylesheet.addRule(r);</span>
+<span class="nc" id="L106">				break;</span>
+			case COMMENT:
+<span class="nc" id="L108">				jj_consume_token(COMMENT);</span>
+<span class="nc" id="L109">				break;</span>
+			default:
+<span class="nc" id="L111">				jj_la1[1] = jj_gen;</span>
+<span class="nc" id="L112">				jj_consume_token(-1);</span>
+<span class="nc" id="L113">				throw new ParseException();</span>
+			}
+		}
+<span class="nc" id="L116">		jj_consume_token(0);</span>
+<span class="nc" id="L117">	}</span>
+
+	final public Rule rule() throws ParseException {
+		Selector select;
+		Style style;
+		Rule rule;
+<span class="nc" id="L123">		select = select();</span>
+<span class="nc" id="L124">		rule = new Rule(select);</span>
+<span class="nc" id="L125">		style = new Style();</span>
+<span class="nc" id="L126">		rule.setStyle(style);</span>
+<span class="nc" id="L127">		jj_consume_token(LBRACE);</span>
+<span class="nc" id="L128">		styles(style);</span>
+<span class="nc" id="L129">		jj_consume_token(RBRACE);</span>
+		{
+			if (true)
+<span class="nc" id="L132">				return rule;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public void styles(Style style) throws ParseException {
+<span class="nc" id="L138">		label_2: while (true) {</span>
+<span class="nc bnc" id="L139" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case FILLMODE:
+			case FILLCOLOR:
+			case FILLIMAGE:
+			case STROKEMODE:
+			case STROKECOLOR:
+			case STROKEWIDTH:
+			case SHADOWMODE:
+			case SHADOWCOLOR:
+			case SHADOWWIDTH:
+			case SHADOWOFFSET:
+			case TEXTMODE:
+			case TEXTCOLOR:
+			case TEXTSTYLE:
+			case TEXTFONT:
+			case TEXTSIZE:
+			case TEXTVISIBILITYMODE:
+			case TEXTVISIBILITY:
+			case TEXTBACKGROUNDMODE:
+			case TEXTBACKGROUNDCOLOR:
+			case TEXTOFFSET:
+			case TEXTPADDING:
+			case ICONMODE:
+			case ICON:
+			case PADDING:
+			case ZINDEX:
+			case VISIBILITYMODE:
+			case VISIBILITY:
+			case SHAPE:
+			case SIZE:
+			case SIZEMODE:
+			case SHAPEPOINTS:
+			case TEXTALIGNMENT:
+			case JCOMPONENT:
+			case ARROWIMGURL:
+			case ARROWSIZE:
+			case ARROWSHAPE:
+			case SPRITEORIENT:
+			case CANVASCOLOR:
+			case COMMENT:
+				;
+<span class="nc" id="L180">				break;</span>
+			default:
+<span class="nc" id="L182">				jj_la1[2] = jj_gen;</span>
+<span class="nc" id="L183">				break label_2;</span>
+			}
+<span class="nc" id="L185">			style(style);</span>
+		}
+<span class="nc" id="L187">	}</span>
+
+	final public void stylesStart(Style style) throws ParseException {
+<span class="nc" id="L190">		label_3: while (true) {</span>
+<span class="nc bnc" id="L191" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case FILLMODE:
+			case FILLCOLOR:
+			case FILLIMAGE:
+			case STROKEMODE:
+			case STROKECOLOR:
+			case STROKEWIDTH:
+			case SHADOWMODE:
+			case SHADOWCOLOR:
+			case SHADOWWIDTH:
+			case SHADOWOFFSET:
+			case TEXTMODE:
+			case TEXTCOLOR:
+			case TEXTSTYLE:
+			case TEXTFONT:
+			case TEXTSIZE:
+			case TEXTVISIBILITYMODE:
+			case TEXTVISIBILITY:
+			case TEXTBACKGROUNDMODE:
+			case TEXTBACKGROUNDCOLOR:
+			case TEXTOFFSET:
+			case TEXTPADDING:
+			case ICONMODE:
+			case ICON:
+			case PADDING:
+			case ZINDEX:
+			case VISIBILITYMODE:
+			case VISIBILITY:
+			case SHAPE:
+			case SIZE:
+			case SIZEMODE:
+			case SHAPEPOINTS:
+			case TEXTALIGNMENT:
+			case JCOMPONENT:
+			case ARROWIMGURL:
+			case ARROWSIZE:
+			case ARROWSHAPE:
+			case SPRITEORIENT:
+			case CANVASCOLOR:
+			case COMMENT:
+				;
+<span class="nc" id="L232">				break;</span>
+			default:
+<span class="nc" id="L234">				jj_la1[3] = jj_gen;</span>
+<span class="nc" id="L235">				break label_3;</span>
+			}
+<span class="nc" id="L237">			style(style);</span>
+		}
+<span class="nc" id="L239">		jj_consume_token(0);</span>
+<span class="nc" id="L240">	}</span>
+
+	final public Selector select() throws ParseException {
+		Token t;
+		Selector select;
+<span class="nc bnc" id="L245" title="All 7 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case GRAPH:
+<span class="nc" id="L247">			jj_consume_token(GRAPH);</span>
+<span class="nc" id="L248">			select = new Selector(Selector.Type.GRAPH);</span>
+<span class="nc" id="L249">			break;</span>
+		case NODE:
+<span class="nc" id="L251">			jj_consume_token(NODE);</span>
+<span class="nc" id="L252">			select = new Selector(Selector.Type.NODE);</span>
+<span class="nc" id="L253">			break;</span>
+		case EDGE:
+<span class="nc" id="L255">			jj_consume_token(EDGE);</span>
+<span class="nc" id="L256">			select = new Selector(Selector.Type.EDGE);</span>
+<span class="nc" id="L257">			break;</span>
+		case SPRITE:
+<span class="nc" id="L259">			jj_consume_token(SPRITE);</span>
+<span class="nc" id="L260">			select = new Selector(Selector.Type.SPRITE);</span>
+<span class="nc" id="L261">			break;</span>
+		default:
+<span class="nc" id="L263">			jj_la1[4] = jj_gen;</span>
+<span class="nc" id="L264">			jj_consume_token(-1);</span>
+<span class="nc" id="L265">			throw new ParseException();</span>
+		}
+<span class="nc bnc" id="L267" title="All 4 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case DOT:
+		case SHARP:
+<span class="nc bnc" id="L270" title="All 5 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case SHARP:
+<span class="nc" id="L272">				jj_consume_token(SHARP);</span>
+<span class="nc bnc" id="L273" title="All 6 branches missed.">				switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+				case IDENTIFIER:
+<span class="nc" id="L275">					t = jj_consume_token(IDENTIFIER);</span>
+<span class="nc" id="L276">					select.setId(t.image);</span>
+<span class="nc" id="L277">					break;</span>
+				case STRING:
+<span class="nc" id="L279">					t = jj_consume_token(STRING);</span>
+<span class="nc" id="L280">					select.setId(t.image.substring(1, t.image.length() - 1));</span>
+<span class="nc" id="L281">					break;</span>
+				case REAL:
+<span class="nc" id="L283">					t = jj_consume_token(REAL);</span>
+<span class="nc" id="L284">					select.setId(t.image.toString());</span>
+<span class="nc" id="L285">					break;</span>
+				default:
+<span class="nc" id="L287">					jj_la1[5] = jj_gen;</span>
+<span class="nc" id="L288">					jj_consume_token(-1);</span>
+<span class="nc" id="L289">					throw new ParseException();</span>
+				}
+				break;
+			case DOT:
+<span class="nc" id="L293">				jj_consume_token(DOT);</span>
+<span class="nc bnc" id="L294" title="All 7 branches missed.">				switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+				case IDENTIFIER:
+<span class="nc" id="L296">					t = jj_consume_token(IDENTIFIER);</span>
+<span class="nc" id="L297">					select.setClass(t.image);</span>
+<span class="nc" id="L298">					break;</span>
+				case CLICKED:
+<span class="nc" id="L300">					t = jj_consume_token(CLICKED);</span>
+<span class="nc" id="L301">					select.setClass(&quot;clicked&quot;);</span>
+<span class="nc" id="L302">					break;</span>
+				case SELECTED:
+<span class="nc" id="L304">					t = jj_consume_token(SELECTED);</span>
+<span class="nc" id="L305">					select.setClass(&quot;selected&quot;);</span>
+<span class="nc" id="L306">					break;</span>
+				case STRING:
+<span class="nc" id="L308">					t = jj_consume_token(STRING);</span>
+<span class="nc" id="L309">					select.setClass(t.image.substring(1, t.image.length() - 1));</span>
+<span class="nc" id="L310">					break;</span>
+				default:
+<span class="nc" id="L312">					jj_la1[6] = jj_gen;</span>
+<span class="nc" id="L313">					jj_consume_token(-1);</span>
+<span class="nc" id="L314">					throw new ParseException();</span>
+				}
+				break;
+			default:
+<span class="nc" id="L318">				jj_la1[7] = jj_gen;</span>
+<span class="nc" id="L319">				jj_consume_token(-1);</span>
+<span class="nc" id="L320">				throw new ParseException();</span>
+			}
+			break;
+		default:
+<span class="nc" id="L324">			jj_la1[8] = jj_gen;</span>
+			;
+		}
+<span class="nc bnc" id="L327" title="All 4 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case COLON:
+<span class="nc" id="L329">			jj_consume_token(COLON);</span>
+<span class="nc bnc" id="L330" title="All 7 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case CLICKED:
+<span class="nc" id="L332">				jj_consume_token(CLICKED);</span>
+<span class="nc" id="L333">				select.setPseudoClass(&quot;clicked&quot;);</span>
+<span class="nc" id="L334">				break;</span>
+			case SELECTED:
+<span class="nc" id="L336">				jj_consume_token(SELECTED);</span>
+<span class="nc" id="L337">				select.setPseudoClass(&quot;selected&quot;);</span>
+<span class="nc" id="L338">				break;</span>
+			case STRING:
+<span class="nc" id="L340">				t = jj_consume_token(STRING);</span>
+<span class="nc" id="L341">				select.setPseudoClass(t.image.substring(1, t.image.length() - 1));</span>
+<span class="nc" id="L342">				break;</span>
+			case IDENTIFIER:
+<span class="nc" id="L344">				t = jj_consume_token(IDENTIFIER);</span>
+<span class="nc" id="L345">				select.setPseudoClass(t.image);</span>
+<span class="nc" id="L346">				break;</span>
+			default:
+<span class="nc" id="L348">				jj_la1[9] = jj_gen;</span>
+<span class="nc" id="L349">				jj_consume_token(-1);</span>
+<span class="nc" id="L350">				throw new ParseException();</span>
+			}
+			break;
+		default:
+<span class="nc" id="L354">			jj_la1[10] = jj_gen;</span>
+			;
+		}
+		{
+			if (true)
+<span class="nc" id="L359">				return select;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public void style(Style style) throws ParseException {
+		Color color;
+		Colors colors;
+		String url;
+		Value value;
+		Values values;
+		Style.FillMode fillMode;
+		Style.StrokeMode strokeMode;
+		Style.ShadowMode shadowMode;
+		Style.TextMode textMode;
+		Style.TextVisibilityMode textVisMode;
+		Style.TextBackgroundMode textBgMode;
+		Style.TextStyle textStyle;
+		Style.TextAlignment textAlignment;
+		Style.IconMode iconMode;
+		Style.VisibilityMode visMode;
+		Style.SizeMode sizeMode;
+		Style.Shape shape;
+		Style.SpriteOrientation spriteOrient;
+		Style.ArrowShape arrowShape;
+		Style.JComponents component;
+<span class="nc bnc" id="L385" title="All 42 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case COMMENT:
+<span class="nc" id="L387">			jj_consume_token(COMMENT);</span>
+<span class="nc" id="L388">			break;</span>
+		case ZINDEX:
+<span class="nc" id="L390">			jj_consume_token(ZINDEX);</span>
+<span class="nc" id="L391">			jj_consume_token(COLON);</span>
+<span class="nc" id="L392">			value = value();</span>
+<span class="nc" id="L393">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L394">			style.setValue(&quot;z-index&quot;, new Integer((int) value.value));</span>
+<span class="nc" id="L395">			break;</span>
+		case FILLMODE:
+<span class="nc" id="L397">			jj_consume_token(FILLMODE);</span>
+<span class="nc" id="L398">			jj_consume_token(COLON);</span>
+<span class="nc" id="L399">			fillMode = fillMode();</span>
+<span class="nc" id="L400">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L401">			style.setValue(&quot;fill-mode&quot;, fillMode);</span>
+<span class="nc" id="L402">			break;</span>
+		case FILLCOLOR:
+<span class="nc" id="L404">			jj_consume_token(FILLCOLOR);</span>
+<span class="nc" id="L405">			jj_consume_token(COLON);</span>
+<span class="nc" id="L406">			colors = colors();</span>
+<span class="nc" id="L407">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L408">			style.setValue(&quot;fill-color&quot;, colors);</span>
+<span class="nc" id="L409">			break;</span>
+		case FILLIMAGE:
+<span class="nc" id="L411">			jj_consume_token(FILLIMAGE);</span>
+<span class="nc" id="L412">			jj_consume_token(COLON);</span>
+<span class="nc" id="L413">			url = url();</span>
+<span class="nc" id="L414">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L415">			style.setValue(&quot;fill-image&quot;, url);</span>
+<span class="nc" id="L416">			break;</span>
+		case STROKEMODE:
+<span class="nc" id="L418">			jj_consume_token(STROKEMODE);</span>
+<span class="nc" id="L419">			jj_consume_token(COLON);</span>
+<span class="nc" id="L420">			strokeMode = strokeMode();</span>
+<span class="nc" id="L421">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L422">			style.setValue(&quot;stroke-mode&quot;, strokeMode);</span>
+<span class="nc" id="L423">			break;</span>
+		case STROKECOLOR:
+<span class="nc" id="L425">			jj_consume_token(STROKECOLOR);</span>
+<span class="nc" id="L426">			jj_consume_token(COLON);</span>
+<span class="nc" id="L427">			colors = colors();</span>
+<span class="nc" id="L428">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L429">			style.setValue(&quot;stroke-color&quot;, colors);</span>
+<span class="nc" id="L430">			break;</span>
+		case STROKEWIDTH:
+<span class="nc" id="L432">			jj_consume_token(STROKEWIDTH);</span>
+<span class="nc" id="L433">			jj_consume_token(COLON);</span>
+<span class="nc" id="L434">			value = value();</span>
+<span class="nc" id="L435">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L436">			style.setValue(&quot;stroke-width&quot;, value);</span>
+<span class="nc" id="L437">			break;</span>
+		case SHADOWMODE:
+<span class="nc" id="L439">			jj_consume_token(SHADOWMODE);</span>
+<span class="nc" id="L440">			jj_consume_token(COLON);</span>
+<span class="nc" id="L441">			shadowMode = shadowMode();</span>
+<span class="nc" id="L442">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L443">			style.setValue(&quot;shadow-mode&quot;, shadowMode);</span>
+<span class="nc" id="L444">			break;</span>
+		case SHADOWCOLOR:
+<span class="nc" id="L446">			jj_consume_token(SHADOWCOLOR);</span>
+<span class="nc" id="L447">			jj_consume_token(COLON);</span>
+<span class="nc" id="L448">			colors = colors();</span>
+<span class="nc" id="L449">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L450">			style.setValue(&quot;shadow-color&quot;, colors);</span>
+<span class="nc" id="L451">			break;</span>
+		case SHADOWWIDTH:
+<span class="nc" id="L453">			jj_consume_token(SHADOWWIDTH);</span>
+<span class="nc" id="L454">			jj_consume_token(COLON);</span>
+<span class="nc" id="L455">			value = value();</span>
+<span class="nc" id="L456">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L457">			style.setValue(&quot;shadow-width&quot;, value);</span>
+<span class="nc" id="L458">			break;</span>
+		case SHADOWOFFSET:
+<span class="nc" id="L460">			jj_consume_token(SHADOWOFFSET);</span>
+<span class="nc" id="L461">			jj_consume_token(COLON);</span>
+<span class="nc" id="L462">			values = values();</span>
+<span class="nc" id="L463">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L464">			style.setValue(&quot;shadow-offset&quot;, values);</span>
+<span class="nc" id="L465">			break;</span>
+		case PADDING:
+<span class="nc" id="L467">			jj_consume_token(PADDING);</span>
+<span class="nc" id="L468">			jj_consume_token(COLON);</span>
+<span class="nc" id="L469">			values = values();</span>
+<span class="nc" id="L470">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L471">			style.setValue(&quot;padding&quot;, values);</span>
+<span class="nc" id="L472">			break;</span>
+		case TEXTMODE:
+<span class="nc" id="L474">			jj_consume_token(TEXTMODE);</span>
+<span class="nc" id="L475">			jj_consume_token(COLON);</span>
+<span class="nc" id="L476">			textMode = textMode();</span>
+<span class="nc" id="L477">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L478">			style.setValue(&quot;text-mode&quot;, textMode);</span>
+<span class="nc" id="L479">			break;</span>
+		case TEXTVISIBILITYMODE:
+<span class="nc" id="L481">			jj_consume_token(TEXTVISIBILITYMODE);</span>
+<span class="nc" id="L482">			jj_consume_token(COLON);</span>
+<span class="nc" id="L483">			textVisMode = textVisMode();</span>
+<span class="nc" id="L484">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L485">			style.setValue(&quot;text-visibility-mode&quot;, textVisMode);</span>
+<span class="nc" id="L486">			break;</span>
+		case TEXTVISIBILITY:
+<span class="nc" id="L488">			jj_consume_token(TEXTVISIBILITY);</span>
+<span class="nc" id="L489">			jj_consume_token(COLON);</span>
+<span class="nc" id="L490">			values = values();</span>
+<span class="nc" id="L491">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L492">			style.setValue(&quot;text-visibility&quot;, values);</span>
+<span class="nc" id="L493">			break;</span>
+		case TEXTBACKGROUNDMODE:
+<span class="nc" id="L495">			jj_consume_token(TEXTBACKGROUNDMODE);</span>
+<span class="nc" id="L496">			jj_consume_token(COLON);</span>
+<span class="nc" id="L497">			textBgMode = textBgMode();</span>
+<span class="nc" id="L498">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L499">			style.setValue(&quot;text-background-mode&quot;, textBgMode);</span>
+<span class="nc" id="L500">			break;</span>
+		case TEXTCOLOR:
+<span class="nc" id="L502">			jj_consume_token(TEXTCOLOR);</span>
+<span class="nc" id="L503">			jj_consume_token(COLON);</span>
+<span class="nc" id="L504">			colors = colors();</span>
+<span class="nc" id="L505">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L506">			style.setValue(&quot;text-color&quot;, colors);</span>
+<span class="nc" id="L507">			break;</span>
+		case TEXTBACKGROUNDCOLOR:
+<span class="nc" id="L509">			jj_consume_token(TEXTBACKGROUNDCOLOR);</span>
+<span class="nc" id="L510">			jj_consume_token(COLON);</span>
+<span class="nc" id="L511">			colors = colors();</span>
+<span class="nc" id="L512">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L513">			style.setValue(&quot;text-background-color&quot;, colors);</span>
+<span class="nc" id="L514">			break;</span>
+		case TEXTSTYLE:
+<span class="nc" id="L516">			jj_consume_token(TEXTSTYLE);</span>
+<span class="nc" id="L517">			jj_consume_token(COLON);</span>
+<span class="nc" id="L518">			textStyle = textStyle();</span>
+<span class="nc" id="L519">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L520">			style.setValue(&quot;text-style&quot;, textStyle);</span>
+<span class="nc" id="L521">			break;</span>
+		case TEXTFONT:
+<span class="nc" id="L523">			jj_consume_token(TEXTFONT);</span>
+<span class="nc" id="L524">			jj_consume_token(COLON);</span>
+<span class="nc" id="L525">			url = font();</span>
+<span class="nc" id="L526">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L527">			style.setValue(&quot;text-font&quot;, url);</span>
+<span class="nc" id="L528">			break;</span>
+		case TEXTSIZE:
+<span class="nc" id="L530">			jj_consume_token(TEXTSIZE);</span>
+<span class="nc" id="L531">			jj_consume_token(COLON);</span>
+<span class="nc" id="L532">			value = value();</span>
+<span class="nc" id="L533">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L534">			style.setValue(&quot;text-size&quot;, value);</span>
+<span class="nc" id="L535">			break;</span>
+		case TEXTALIGNMENT:
+<span class="nc" id="L537">			jj_consume_token(TEXTALIGNMENT);</span>
+<span class="nc" id="L538">			jj_consume_token(COLON);</span>
+<span class="nc" id="L539">			textAlignment = textAlign();</span>
+<span class="nc" id="L540">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L541">			style.setValue(&quot;text-alignment&quot;, textAlignment);</span>
+<span class="nc" id="L542">			break;</span>
+		case TEXTOFFSET:
+<span class="nc" id="L544">			jj_consume_token(TEXTOFFSET);</span>
+<span class="nc" id="L545">			jj_consume_token(COLON);</span>
+<span class="nc" id="L546">			values = values();</span>
+<span class="nc" id="L547">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L548">			style.setValue(&quot;text-offset&quot;, values);</span>
+<span class="nc" id="L549">			break;</span>
+		case TEXTPADDING:
+<span class="nc" id="L551">			jj_consume_token(TEXTPADDING);</span>
+<span class="nc" id="L552">			jj_consume_token(COLON);</span>
+<span class="nc" id="L553">			values = values();</span>
+<span class="nc" id="L554">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L555">			style.setValue(&quot;text-padding&quot;, values);</span>
+<span class="nc" id="L556">			break;</span>
+		case ICONMODE:
+<span class="nc" id="L558">			jj_consume_token(ICONMODE);</span>
+<span class="nc" id="L559">			jj_consume_token(COLON);</span>
+<span class="nc" id="L560">			iconMode = iconMode();</span>
+<span class="nc" id="L561">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L562">			style.setValue(&quot;icon-mode&quot;, iconMode);</span>
+<span class="nc" id="L563">			break;</span>
+		case ICON:
+<span class="nc" id="L565">			jj_consume_token(ICON);</span>
+<span class="nc" id="L566">			jj_consume_token(COLON);</span>
+<span class="nc" id="L567">			url = icon();</span>
+<span class="nc" id="L568">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L569">			style.setValue(&quot;icon&quot;, url);</span>
+<span class="nc" id="L570">			break;</span>
+		case JCOMPONENT:
+<span class="nc" id="L572">			jj_consume_token(JCOMPONENT);</span>
+<span class="nc" id="L573">			jj_consume_token(COLON);</span>
+<span class="nc" id="L574">			component = jcomponent();</span>
+<span class="nc" id="L575">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L576">			style.setValue(&quot;jcomponent&quot;, component);</span>
+<span class="nc" id="L577">			break;</span>
+		case VISIBILITYMODE:
+<span class="nc" id="L579">			jj_consume_token(VISIBILITYMODE);</span>
+<span class="nc" id="L580">			jj_consume_token(COLON);</span>
+<span class="nc" id="L581">			visMode = visMode();</span>
+<span class="nc" id="L582">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L583">			style.setValue(&quot;visibility-mode&quot;, visMode);</span>
+<span class="nc" id="L584">			break;</span>
+		case VISIBILITY:
+<span class="nc" id="L586">			jj_consume_token(VISIBILITY);</span>
+<span class="nc" id="L587">			jj_consume_token(COLON);</span>
+<span class="nc" id="L588">			values = values();</span>
+<span class="nc" id="L589">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L590">			style.setValue(&quot;visibility&quot;, values);</span>
+<span class="nc" id="L591">			break;</span>
+		case SIZEMODE:
+<span class="nc" id="L593">			jj_consume_token(SIZEMODE);</span>
+<span class="nc" id="L594">			jj_consume_token(COLON);</span>
+<span class="nc" id="L595">			sizeMode = sizeMode();</span>
+<span class="nc" id="L596">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L597">			style.setValue(&quot;size-mode&quot;, sizeMode);</span>
+<span class="nc" id="L598">			break;</span>
+		case SIZE:
+<span class="nc" id="L600">			jj_consume_token(SIZE);</span>
+<span class="nc" id="L601">			jj_consume_token(COLON);</span>
+<span class="nc" id="L602">			values = values();</span>
+<span class="nc" id="L603">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L604">			style.setValue(&quot;size&quot;, values);</span>
+<span class="nc" id="L605">			break;</span>
+		case SHAPEPOINTS:
+<span class="nc" id="L607">			jj_consume_token(SHAPEPOINTS);</span>
+<span class="nc" id="L608">			jj_consume_token(COLON);</span>
+<span class="nc" id="L609">			values = values();</span>
+<span class="nc" id="L610">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L611">			style.setValue(&quot;shape-points&quot;, values);</span>
+<span class="nc" id="L612">			break;</span>
+		case SHAPE:
+<span class="nc" id="L614">			jj_consume_token(SHAPE);</span>
+<span class="nc" id="L615">			jj_consume_token(COLON);</span>
+<span class="nc" id="L616">			shape = shape();</span>
+<span class="nc" id="L617">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L618">			style.setValue(&quot;shape&quot;, shape);</span>
+<span class="nc" id="L619">			break;</span>
+		case SPRITEORIENT:
+<span class="nc" id="L621">			jj_consume_token(SPRITEORIENT);</span>
+<span class="nc" id="L622">			jj_consume_token(COLON);</span>
+<span class="nc" id="L623">			spriteOrient = spriteOrient();</span>
+<span class="nc" id="L624">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L625">			style.setValue(&quot;sprite-orientation&quot;, spriteOrient);</span>
+<span class="nc" id="L626">			break;</span>
+		case ARROWSHAPE:
+<span class="nc" id="L628">			jj_consume_token(ARROWSHAPE);</span>
+<span class="nc" id="L629">			jj_consume_token(COLON);</span>
+<span class="nc" id="L630">			arrowShape = arrowShape();</span>
+<span class="nc" id="L631">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L632">			style.setValue(&quot;arrow-shape&quot;, arrowShape);</span>
+<span class="nc" id="L633">			break;</span>
+		case ARROWIMGURL:
+<span class="nc" id="L635">			jj_consume_token(ARROWIMGURL);</span>
+<span class="nc" id="L636">			jj_consume_token(COLON);</span>
+<span class="nc" id="L637">			url = url();</span>
+<span class="nc" id="L638">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L639">			style.setValue(&quot;arrow-image&quot;, url);</span>
+<span class="nc" id="L640">			break;</span>
+		case ARROWSIZE:
+<span class="nc" id="L642">			jj_consume_token(ARROWSIZE);</span>
+<span class="nc" id="L643">			jj_consume_token(COLON);</span>
+<span class="nc" id="L644">			values = values();</span>
+<span class="nc" id="L645">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L646">			style.setValue(&quot;arrow-size&quot;, values);</span>
+<span class="nc" id="L647">			break;</span>
+		case CANVASCOLOR:
+<span class="nc" id="L649">			jj_consume_token(CANVASCOLOR);</span>
+<span class="nc" id="L650">			jj_consume_token(COLON);</span>
+<span class="nc" id="L651">			colors = colors();</span>
+<span class="nc" id="L652">			jj_consume_token(SEMICOLON);</span>
+<span class="nc" id="L653">			style.setValue(&quot;canvas-color&quot;, colors);</span>
+<span class="nc" id="L654">			break;</span>
+		default:
+<span class="nc" id="L656">			jj_la1[11] = jj_gen;</span>
+<span class="nc" id="L657">			jj_consume_token(-1);</span>
+<span class="nc" id="L658">			throw new ParseException();</span>
+		}
+<span class="nc" id="L660">	}</span>
+
+	final public Value value() throws ParseException {
+		Token t;
+<span class="nc" id="L664">		Style.Units units = Style.Units.PX;</span>
+<span class="nc" id="L665">		Value value = null;</span>
+<span class="nc" id="L666">		t = jj_consume_token(REAL);</span>
+<span class="nc" id="L667">		String nb = t.image.toLowerCase();</span>
+
+<span class="nc bnc" id="L669" title="All 2 branches missed.">		if (nb.endsWith(&quot;px&quot;)) {</span>
+<span class="nc" id="L670">			units = Style.Units.PX;</span>
+<span class="nc" id="L671">			nb = nb.substring(0, nb.length() - 2);</span>
+<span class="nc bnc" id="L672" title="All 2 branches missed.">		} else if (nb.endsWith(&quot;gu&quot;)) {</span>
+<span class="nc" id="L673">			units = Style.Units.GU;</span>
+<span class="nc" id="L674">			nb = nb.substring(0, nb.length() - 2);</span>
+<span class="nc bnc" id="L675" title="All 2 branches missed.">		} else if (nb.endsWith(&quot;%&quot;)) {</span>
+<span class="nc" id="L676">			units = Style.Units.PERCENTS;</span>
+<span class="nc" id="L677">			nb = nb.substring(0, nb.length() - 1);</span>
+		}
+
+		try {
+<span class="nc" id="L681">			value = new Value(units, Float.parseFloat(nb));</span>
+<span class="nc" id="L682">		} catch (NumberFormatException e) {</span>
+<span class="nc" id="L683">			generateParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L687">				return value;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Values values() throws ParseException {
+		Values values;
+		Value value;
+<span class="nc" id="L695">		value = value();</span>
+<span class="nc" id="L696">		values = new Values(value.units, value.value);</span>
+<span class="nc" id="L697">		label_4: while (true) {</span>
+<span class="nc bnc" id="L698" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case COMA:
+				;
+<span class="nc" id="L701">				break;</span>
+			default:
+<span class="nc" id="L703">				jj_la1[12] = jj_gen;</span>
+<span class="nc" id="L704">				break label_4;</span>
+			}
+<span class="nc" id="L706">			jj_consume_token(COMA);</span>
+<span class="nc" id="L707">			value = value();</span>
+<span class="nc" id="L708">			values.addValues(value.value);</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L712">				return values;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public String url() throws ParseException {
+		Token t;
+<span class="nc" id="L719">		jj_consume_token(URL);</span>
+<span class="nc" id="L720">		jj_consume_token(LPAREN);</span>
+<span class="nc" id="L721">		t = jj_consume_token(STRING);</span>
+<span class="nc" id="L722">		jj_consume_token(RPAREN);</span>
+		{
+			if (true)
+<span class="nc" id="L725">				return t.image.substring(1, t.image.length() - 1);</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public String icon() throws ParseException {
+		String s;
+<span class="nc bnc" id="L732" title="All 5 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case DYNICON:
+<span class="nc" id="L734">			jj_consume_token(DYNICON); {</span>
+			if (true)
+<span class="nc" id="L736">				return &quot;dynamic&quot;;</span>
+		}
+			break;
+		case URL:
+<span class="nc" id="L740">			s = url(); {</span>
+			if (true)
+<span class="nc" id="L742">				return s;</span>
+		}
+			break;
+		default:
+<span class="nc" id="L746">			jj_la1[13] = jj_gen;</span>
+<span class="nc" id="L747">			jj_consume_token(-1);</span>
+<span class="nc" id="L748">			throw new ParseException();</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public String font() throws ParseException {
+		Token t;
+		String s;
+<span class="nc bnc" id="L756" title="All 5 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case IDENTIFIER:
+<span class="nc" id="L758">			t = jj_consume_token(IDENTIFIER);</span>
+<span class="nc" id="L759">			s = t.image;</span>
+<span class="nc" id="L760">			break;</span>
+		case STRING:
+<span class="nc" id="L762">			t = jj_consume_token(STRING);</span>
+<span class="nc" id="L763">			s = t.image.substring(1, t.image.length() - 1);</span>
+<span class="nc" id="L764">			break;</span>
+		default:
+<span class="nc" id="L766">			jj_la1[14] = jj_gen;</span>
+<span class="nc" id="L767">			jj_consume_token(-1);</span>
+<span class="nc" id="L768">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L772">				return s;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Color color() throws ParseException {
+		Token t;
+		String s;
+		Token r, g, b, a;
+<span class="nc bnc" id="L781" title="All 8 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case RGB:
+<span class="nc" id="L783">			jj_consume_token(RGB);</span>
+<span class="nc" id="L784">			jj_consume_token(LPAREN);</span>
+<span class="nc" id="L785">			r = jj_consume_token(REAL);</span>
+<span class="nc" id="L786">			jj_consume_token(COMA);</span>
+<span class="nc" id="L787">			g = jj_consume_token(REAL);</span>
+<span class="nc" id="L788">			jj_consume_token(COMA);</span>
+<span class="nc" id="L789">			b = jj_consume_token(REAL);</span>
+<span class="nc" id="L790">			jj_consume_token(RPAREN);</span>
+<span class="nc" id="L791">			s = String.format(&quot;rgb(%s,%s,%s)&quot;, r.image, g.image, b.image);</span>
+<span class="nc" id="L792">			break;</span>
+		case RGBA:
+<span class="nc" id="L794">			jj_consume_token(RGBA);</span>
+<span class="nc" id="L795">			jj_consume_token(LPAREN);</span>
+<span class="nc" id="L796">			r = jj_consume_token(REAL);</span>
+<span class="nc" id="L797">			jj_consume_token(COMA);</span>
+<span class="nc" id="L798">			g = jj_consume_token(REAL);</span>
+<span class="nc" id="L799">			jj_consume_token(COMA);</span>
+<span class="nc" id="L800">			b = jj_consume_token(REAL);</span>
+<span class="nc" id="L801">			jj_consume_token(COMA);</span>
+<span class="nc" id="L802">			a = jj_consume_token(REAL);</span>
+<span class="nc" id="L803">			jj_consume_token(RPAREN);</span>
+<span class="nc" id="L804">			s = String.format(&quot;rgba(%s,%s,%s,%s)&quot;, r.image, g.image, b.image, a.image);</span>
+<span class="nc" id="L805">			break;</span>
+		case HTMLCOLOR:
+<span class="nc" id="L807">			t = jj_consume_token(HTMLCOLOR);</span>
+<span class="nc" id="L808">			s = t.image;</span>
+<span class="nc" id="L809">			break;</span>
+		case IDENTIFIER:
+<span class="nc" id="L811">			t = jj_consume_token(IDENTIFIER);</span>
+<span class="nc" id="L812">			s = t.image;</span>
+<span class="nc" id="L813">			break;</span>
+		case STRING:
+<span class="nc" id="L815">			t = jj_consume_token(STRING);</span>
+<span class="nc" id="L816">			s = t.image.substring(1, t.image.length() - 1);</span>
+<span class="nc" id="L817">			break;</span>
+		default:
+<span class="nc" id="L819">			jj_la1[15] = jj_gen;</span>
+<span class="nc" id="L820">			jj_consume_token(-1);</span>
+<span class="nc" id="L821">			throw new ParseException();</span>
+		}
+<span class="nc" id="L823">		Color color = Style.convertColor(s);</span>
+<span class="nc bnc" id="L824" title="All 2 branches missed.">		if (color == null)</span>
+<span class="nc" id="L825">			color = Color.BLACK;</span>
+		{
+			if (true)
+<span class="nc" id="L828">				return color;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Colors colors() throws ParseException {
+<span class="nc" id="L834">		Colors colors = new Colors();</span>
+		Color color;
+<span class="nc" id="L836">		color = color();</span>
+<span class="nc" id="L837">		colors.add(color);</span>
+<span class="nc" id="L838">		label_5: while (true) {</span>
+<span class="nc bnc" id="L839" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case COMA:
+				;
+<span class="nc" id="L842">				break;</span>
+			default:
+<span class="nc" id="L844">				jj_la1[16] = jj_gen;</span>
+<span class="nc" id="L845">				break label_5;</span>
+			}
+<span class="nc" id="L847">			jj_consume_token(COMA);</span>
+<span class="nc" id="L848">			color = color();</span>
+<span class="nc" id="L849">			colors.add(color);</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L853">				return colors;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.FillMode fillMode() throws ParseException {
+		Style.FillMode m;
+<span class="nc bnc" id="L860" title="All 15 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NONE:
+<span class="nc" id="L862">			jj_consume_token(NONE);</span>
+<span class="nc" id="L863">			m = Style.FillMode.NONE;</span>
+<span class="nc" id="L864">			break;</span>
+		case PLAIN:
+<span class="nc" id="L866">			jj_consume_token(PLAIN);</span>
+<span class="nc" id="L867">			m = Style.FillMode.PLAIN;</span>
+<span class="nc" id="L868">			break;</span>
+		case DYNPLAIN:
+<span class="nc" id="L870">			jj_consume_token(DYNPLAIN);</span>
+<span class="nc" id="L871">			m = Style.FillMode.DYN_PLAIN;</span>
+<span class="nc" id="L872">			break;</span>
+		case GRADIENTRADIAL:
+<span class="nc" id="L874">			jj_consume_token(GRADIENTRADIAL);</span>
+<span class="nc" id="L875">			m = Style.FillMode.GRADIENT_RADIAL;</span>
+<span class="nc" id="L876">			break;</span>
+		case GRADIENTVERTICAL:
+<span class="nc" id="L878">			jj_consume_token(GRADIENTVERTICAL);</span>
+<span class="nc" id="L879">			m = Style.FillMode.GRADIENT_VERTICAL;</span>
+<span class="nc" id="L880">			break;</span>
+		case GRADIENTHORIZONTAL:
+<span class="nc" id="L882">			jj_consume_token(GRADIENTHORIZONTAL);</span>
+<span class="nc" id="L883">			m = Style.FillMode.GRADIENT_HORIZONTAL;</span>
+<span class="nc" id="L884">			break;</span>
+		case GRADIENTDIAGONAL1:
+<span class="nc" id="L886">			jj_consume_token(GRADIENTDIAGONAL1);</span>
+<span class="nc" id="L887">			m = Style.FillMode.GRADIENT_DIAGONAL1;</span>
+<span class="nc" id="L888">			break;</span>
+		case GRADIENTDIAGONAL2:
+<span class="nc" id="L890">			jj_consume_token(GRADIENTDIAGONAL2);</span>
+<span class="nc" id="L891">			m = Style.FillMode.GRADIENT_DIAGONAL2;</span>
+<span class="nc" id="L892">			break;</span>
+		case IMAGETILED:
+<span class="nc" id="L894">			jj_consume_token(IMAGETILED);</span>
+<span class="nc" id="L895">			m = Style.FillMode.IMAGE_TILED;</span>
+<span class="nc" id="L896">			break;</span>
+		case IMAGESCALED:
+<span class="nc" id="L898">			jj_consume_token(IMAGESCALED);</span>
+<span class="nc" id="L899">			m = Style.FillMode.IMAGE_SCALED;</span>
+<span class="nc" id="L900">			break;</span>
+		case IMAGESCALEDRATIOMAX:
+<span class="nc" id="L902">			jj_consume_token(IMAGESCALEDRATIOMAX);</span>
+<span class="nc" id="L903">			m = Style.FillMode.IMAGE_SCALED_RATIO_MAX;</span>
+<span class="nc" id="L904">			break;</span>
+		case IMAGESCALEDRATIOMIN:
+<span class="nc" id="L906">			jj_consume_token(IMAGESCALEDRATIOMIN);</span>
+<span class="nc" id="L907">			m = Style.FillMode.IMAGE_SCALED_RATIO_MIN;</span>
+<span class="nc" id="L908">			break;</span>
+		default:
+<span class="nc" id="L910">			jj_la1[17] = jj_gen;</span>
+<span class="nc" id="L911">			jj_consume_token(-1);</span>
+<span class="nc" id="L912">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L916">				return m;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.StrokeMode strokeMode() throws ParseException {
+		Style.StrokeMode m;
+<span class="nc bnc" id="L923" title="All 8 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NONE:
+<span class="nc" id="L925">			jj_consume_token(NONE);</span>
+<span class="nc" id="L926">			m = Style.StrokeMode.NONE;</span>
+<span class="nc" id="L927">			break;</span>
+		case PLAIN:
+<span class="nc" id="L929">			jj_consume_token(PLAIN);</span>
+<span class="nc" id="L930">			m = Style.StrokeMode.PLAIN;</span>
+<span class="nc" id="L931">			break;</span>
+		case DASHES:
+<span class="nc" id="L933">			jj_consume_token(DASHES);</span>
+<span class="nc" id="L934">			m = Style.StrokeMode.DASHES;</span>
+<span class="nc" id="L935">			break;</span>
+		case DOTS:
+<span class="nc" id="L937">			jj_consume_token(DOTS);</span>
+<span class="nc" id="L938">			m = Style.StrokeMode.DOTS;</span>
+<span class="nc" id="L939">			break;</span>
+		case DOUBLE:
+<span class="nc" id="L941">			jj_consume_token(DOUBLE);</span>
+<span class="nc" id="L942">			m = Style.StrokeMode.DOUBLE;</span>
+<span class="nc" id="L943">			break;</span>
+		default:
+<span class="nc" id="L945">			jj_la1[18] = jj_gen;</span>
+<span class="nc" id="L946">			jj_consume_token(-1);</span>
+<span class="nc" id="L947">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L951">				return m;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.ShadowMode shadowMode() throws ParseException {
+		Style.ShadowMode s;
+<span class="nc bnc" id="L958" title="All 10 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NONE:
+<span class="nc" id="L960">			jj_consume_token(NONE);</span>
+<span class="nc" id="L961">			s = Style.ShadowMode.NONE;</span>
+<span class="nc" id="L962">			break;</span>
+		case PLAIN:
+<span class="nc" id="L964">			jj_consume_token(PLAIN);</span>
+<span class="nc" id="L965">			s = Style.ShadowMode.PLAIN;</span>
+<span class="nc" id="L966">			break;</span>
+		case GRADIENTRADIAL:
+<span class="nc" id="L968">			jj_consume_token(GRADIENTRADIAL);</span>
+<span class="nc" id="L969">			s = Style.ShadowMode.GRADIENT_RADIAL;</span>
+<span class="nc" id="L970">			break;</span>
+		case GRADIENTHORIZONTAL:
+<span class="nc" id="L972">			jj_consume_token(GRADIENTHORIZONTAL);</span>
+<span class="nc" id="L973">			s = Style.ShadowMode.GRADIENT_HORIZONTAL;</span>
+<span class="nc" id="L974">			break;</span>
+		case GRADIENTVERTICAL:
+<span class="nc" id="L976">			jj_consume_token(GRADIENTVERTICAL);</span>
+<span class="nc" id="L977">			s = Style.ShadowMode.GRADIENT_VERTICAL;</span>
+<span class="nc" id="L978">			break;</span>
+		case GRADIENTDIAGONAL1:
+<span class="nc" id="L980">			jj_consume_token(GRADIENTDIAGONAL1);</span>
+<span class="nc" id="L981">			s = Style.ShadowMode.GRADIENT_DIAGONAL1;</span>
+<span class="nc" id="L982">			break;</span>
+		case GRADIENTDIAGONAL2:
+<span class="nc" id="L984">			jj_consume_token(GRADIENTDIAGONAL2);</span>
+<span class="nc" id="L985">			s = Style.ShadowMode.GRADIENT_DIAGONAL2;</span>
+<span class="nc" id="L986">			break;</span>
+		default:
+<span class="nc" id="L988">			jj_la1[19] = jj_gen;</span>
+<span class="nc" id="L989">			jj_consume_token(-1);</span>
+<span class="nc" id="L990">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L994">				return s;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.TextMode textMode() throws ParseException {
+		Style.TextMode m;
+<span class="nc bnc" id="L1001" title="All 6 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NORMAL:
+<span class="nc" id="L1003">			jj_consume_token(NORMAL);</span>
+<span class="nc" id="L1004">			m = Style.TextMode.NORMAL;</span>
+<span class="nc" id="L1005">			break;</span>
+		case HIDDEN:
+<span class="nc" id="L1007">			jj_consume_token(HIDDEN);</span>
+<span class="nc" id="L1008">			m = Style.TextMode.HIDDEN;</span>
+<span class="nc" id="L1009">			break;</span>
+		case TRUNCATED:
+<span class="nc" id="L1011">			jj_consume_token(TRUNCATED);</span>
+<span class="nc" id="L1012">			m = Style.TextMode.TRUNCATED;</span>
+<span class="nc" id="L1013">			break;</span>
+		default:
+<span class="nc" id="L1015">			jj_la1[20] = jj_gen;</span>
+<span class="nc" id="L1016">			jj_consume_token(-1);</span>
+<span class="nc" id="L1017">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1021">				return m;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.TextVisibilityMode textVisMode() throws ParseException {
+		Style.TextVisibilityMode m;
+<span class="nc bnc" id="L1028" title="All 10 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NORMAL:
+<span class="nc" id="L1030">			jj_consume_token(NORMAL);</span>
+<span class="nc" id="L1031">			m = Style.TextVisibilityMode.NORMAL;</span>
+<span class="nc" id="L1032">			break;</span>
+		case HIDDEN:
+<span class="nc" id="L1034">			jj_consume_token(HIDDEN);</span>
+<span class="nc" id="L1035">			m = Style.TextVisibilityMode.HIDDEN;</span>
+<span class="nc" id="L1036">			break;</span>
+		case ATZOOM:
+<span class="nc" id="L1038">			jj_consume_token(ATZOOM);</span>
+<span class="nc" id="L1039">			m = Style.TextVisibilityMode.AT_ZOOM;</span>
+<span class="nc" id="L1040">			break;</span>
+		case UNDERZOOM:
+<span class="nc" id="L1042">			jj_consume_token(UNDERZOOM);</span>
+<span class="nc" id="L1043">			m = Style.TextVisibilityMode.UNDER_ZOOM;</span>
+<span class="nc" id="L1044">			break;</span>
+		case OVERZOOM:
+<span class="nc" id="L1046">			jj_consume_token(OVERZOOM);</span>
+<span class="nc" id="L1047">			m = Style.TextVisibilityMode.OVER_ZOOM;</span>
+<span class="nc" id="L1048">			break;</span>
+		case ZOOMRANGE:
+<span class="nc" id="L1050">			jj_consume_token(ZOOMRANGE);</span>
+<span class="nc" id="L1051">			m = Style.TextVisibilityMode.ZOOM_RANGE;</span>
+<span class="nc" id="L1052">			break;</span>
+		case ZOOMS:
+<span class="nc" id="L1054">			jj_consume_token(ZOOMS);</span>
+<span class="nc" id="L1055">			m = Style.TextVisibilityMode.ZOOMS;</span>
+<span class="nc" id="L1056">			break;</span>
+		default:
+<span class="nc" id="L1058">			jj_la1[21] = jj_gen;</span>
+<span class="nc" id="L1059">			jj_consume_token(-1);</span>
+<span class="nc" id="L1060">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1064">				return m;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.TextBackgroundMode textBgMode() throws ParseException {
+		Style.TextBackgroundMode m;
+<span class="nc bnc" id="L1071" title="All 6 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NONE:
+<span class="nc" id="L1073">			jj_consume_token(NONE);</span>
+<span class="nc" id="L1074">			m = Style.TextBackgroundMode.NONE;</span>
+<span class="nc" id="L1075">			break;</span>
+		case PLAIN:
+<span class="nc" id="L1077">			jj_consume_token(PLAIN);</span>
+<span class="nc" id="L1078">			m = Style.TextBackgroundMode.PLAIN;</span>
+<span class="nc" id="L1079">			break;</span>
+		case ROUNDEDBOX:
+<span class="nc" id="L1081">			jj_consume_token(ROUNDEDBOX);</span>
+<span class="nc" id="L1082">			m = Style.TextBackgroundMode.ROUNDEDBOX;</span>
+<span class="nc" id="L1083">			break;</span>
+		default:
+<span class="nc" id="L1085">			jj_la1[22] = jj_gen;</span>
+<span class="nc" id="L1086">			jj_consume_token(-1);</span>
+<span class="nc" id="L1087">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1091">				return m;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.TextStyle textStyle() throws ParseException {
+		Style.TextStyle t;
+<span class="nc bnc" id="L1098" title="All 7 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NORMAL:
+<span class="nc" id="L1100">			jj_consume_token(NORMAL);</span>
+<span class="nc" id="L1101">			t = Style.TextStyle.NORMAL;</span>
+<span class="nc" id="L1102">			break;</span>
+		case BOLD:
+<span class="nc" id="L1104">			jj_consume_token(BOLD);</span>
+<span class="nc" id="L1105">			t = Style.TextStyle.BOLD;</span>
+<span class="nc" id="L1106">			break;</span>
+		case ITALIC:
+<span class="nc" id="L1108">			jj_consume_token(ITALIC);</span>
+<span class="nc" id="L1109">			t = Style.TextStyle.ITALIC;</span>
+<span class="nc" id="L1110">			break;</span>
+		case BOLD_ITALIC:
+<span class="nc" id="L1112">			jj_consume_token(BOLD_ITALIC);</span>
+<span class="nc" id="L1113">			t = Style.TextStyle.BOLD_ITALIC;</span>
+<span class="nc" id="L1114">			break;</span>
+		default:
+<span class="nc" id="L1116">			jj_la1[23] = jj_gen;</span>
+<span class="nc" id="L1117">			jj_consume_token(-1);</span>
+<span class="nc" id="L1118">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1122">				return t;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.SizeMode sizeMode() throws ParseException {
+		Style.SizeMode m;
+<span class="nc bnc" id="L1129" title="All 6 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NORMAL:
+<span class="nc" id="L1131">			jj_consume_token(NORMAL);</span>
+<span class="nc" id="L1132">			m = Style.SizeMode.NORMAL;</span>
+<span class="nc" id="L1133">			break;</span>
+		case FIT:
+<span class="nc" id="L1135">			jj_consume_token(FIT);</span>
+<span class="nc" id="L1136">			m = Style.SizeMode.FIT;</span>
+<span class="nc" id="L1137">			break;</span>
+		case DYNSIZE:
+<span class="nc" id="L1139">			jj_consume_token(DYNSIZE);</span>
+<span class="nc" id="L1140">			m = Style.SizeMode.DYN_SIZE;</span>
+<span class="nc" id="L1141">			break;</span>
+		default:
+<span class="nc" id="L1143">			jj_la1[24] = jj_gen;</span>
+<span class="nc" id="L1144">			jj_consume_token(-1);</span>
+<span class="nc" id="L1145">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1149">				return m;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.TextAlignment textAlign() throws ParseException {
+		Style.TextAlignment t;
+<span class="nc bnc" id="L1156" title="All 12 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case CENTER:
+<span class="nc" id="L1158">			jj_consume_token(CENTER);</span>
+<span class="nc" id="L1159">			t = Style.TextAlignment.CENTER;</span>
+<span class="nc" id="L1160">			break;</span>
+		case LEFT:
+<span class="nc" id="L1162">			jj_consume_token(LEFT);</span>
+<span class="nc" id="L1163">			t = Style.TextAlignment.LEFT;</span>
+<span class="nc" id="L1164">			break;</span>
+		case RIGHT:
+<span class="nc" id="L1166">			jj_consume_token(RIGHT);</span>
+<span class="nc" id="L1167">			t = Style.TextAlignment.RIGHT;</span>
+<span class="nc" id="L1168">			break;</span>
+		case ATLEFT:
+<span class="nc" id="L1170">			jj_consume_token(ATLEFT);</span>
+<span class="nc" id="L1171">			t = Style.TextAlignment.AT_LEFT;</span>
+<span class="nc" id="L1172">			break;</span>
+		case ATRIGHT:
+<span class="nc" id="L1174">			jj_consume_token(ATRIGHT);</span>
+<span class="nc" id="L1175">			t = Style.TextAlignment.AT_RIGHT;</span>
+<span class="nc" id="L1176">			break;</span>
+		case UNDER:
+<span class="nc" id="L1178">			jj_consume_token(UNDER);</span>
+<span class="nc" id="L1179">			t = Style.TextAlignment.UNDER;</span>
+<span class="nc" id="L1180">			break;</span>
+		case ABOVE:
+<span class="nc" id="L1182">			jj_consume_token(ABOVE);</span>
+<span class="nc" id="L1183">			t = Style.TextAlignment.ABOVE;</span>
+<span class="nc" id="L1184">			break;</span>
+		case JUSTIFY:
+<span class="nc" id="L1186">			jj_consume_token(JUSTIFY);</span>
+<span class="nc" id="L1187">			t = Style.TextAlignment.JUSTIFY;</span>
+<span class="nc" id="L1188">			break;</span>
+		case ALONG:
+<span class="nc" id="L1190">			jj_consume_token(ALONG);</span>
+<span class="nc" id="L1191">			t = Style.TextAlignment.ALONG;</span>
+<span class="nc" id="L1192">			break;</span>
+		default:
+<span class="nc" id="L1194">			jj_la1[25] = jj_gen;</span>
+<span class="nc" id="L1195">			jj_consume_token(-1);</span>
+<span class="nc" id="L1196">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1200">				return t;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.IconMode iconMode() throws ParseException {
+		Style.IconMode i;
+<span class="nc bnc" id="L1207" title="All 8 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NONE:
+<span class="nc" id="L1209">			jj_consume_token(NONE);</span>
+<span class="nc" id="L1210">			i = Style.IconMode.NONE;</span>
+<span class="nc" id="L1211">			break;</span>
+		case ATLEFT:
+<span class="nc" id="L1213">			jj_consume_token(ATLEFT);</span>
+<span class="nc" id="L1214">			i = Style.IconMode.AT_LEFT;</span>
+<span class="nc" id="L1215">			break;</span>
+		case ATRIGHT:
+<span class="nc" id="L1217">			jj_consume_token(ATRIGHT);</span>
+<span class="nc" id="L1218">			i = Style.IconMode.AT_RIGHT;</span>
+<span class="nc" id="L1219">			break;</span>
+		case ABOVE:
+<span class="nc" id="L1221">			jj_consume_token(ABOVE);</span>
+<span class="nc" id="L1222">			i = Style.IconMode.ABOVE;</span>
+<span class="nc" id="L1223">			break;</span>
+		case UNDER:
+<span class="nc" id="L1225">			jj_consume_token(UNDER);</span>
+<span class="nc" id="L1226">			i = Style.IconMode.UNDER;</span>
+<span class="nc" id="L1227">			break;</span>
+		default:
+<span class="nc" id="L1229">			jj_la1[26] = jj_gen;</span>
+<span class="nc" id="L1230">			jj_consume_token(-1);</span>
+<span class="nc" id="L1231">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1235">				return i;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.VisibilityMode visMode() throws ParseException {
+		Style.VisibilityMode m;
+<span class="nc bnc" id="L1242" title="All 10 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NORMAL:
+<span class="nc" id="L1244">			jj_consume_token(NORMAL);</span>
+<span class="nc" id="L1245">			m = Style.VisibilityMode.NORMAL;</span>
+<span class="nc" id="L1246">			break;</span>
+		case HIDDEN:
+<span class="nc" id="L1248">			jj_consume_token(HIDDEN);</span>
+<span class="nc" id="L1249">			m = Style.VisibilityMode.HIDDEN;</span>
+<span class="nc" id="L1250">			break;</span>
+		case ATZOOM:
+<span class="nc" id="L1252">			jj_consume_token(ATZOOM);</span>
+<span class="nc" id="L1253">			m = Style.VisibilityMode.AT_ZOOM;</span>
+<span class="nc" id="L1254">			break;</span>
+		case UNDERZOOM:
+<span class="nc" id="L1256">			jj_consume_token(UNDERZOOM);</span>
+<span class="nc" id="L1257">			m = Style.VisibilityMode.UNDER_ZOOM;</span>
+<span class="nc" id="L1258">			break;</span>
+		case OVERZOOM:
+<span class="nc" id="L1260">			jj_consume_token(OVERZOOM);</span>
+<span class="nc" id="L1261">			m = Style.VisibilityMode.OVER_ZOOM;</span>
+<span class="nc" id="L1262">			break;</span>
+		case ZOOMRANGE:
+<span class="nc" id="L1264">			jj_consume_token(ZOOMRANGE);</span>
+<span class="nc" id="L1265">			m = Style.VisibilityMode.ZOOM_RANGE;</span>
+<span class="nc" id="L1266">			break;</span>
+		case ZOOMS:
+<span class="nc" id="L1268">			jj_consume_token(ZOOMS);</span>
+<span class="nc" id="L1269">			m = Style.VisibilityMode.ZOOMS;</span>
+<span class="nc" id="L1270">			break;</span>
+		default:
+<span class="nc" id="L1272">			jj_la1[27] = jj_gen;</span>
+<span class="nc" id="L1273">			jj_consume_token(-1);</span>
+<span class="nc" id="L1274">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1278">				return m;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.Shape shape() throws ParseException {
+		Style.Shape s;
+<span class="nc bnc" id="L1285" title="All 30 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case CIRCLE:
+<span class="nc" id="L1287">			jj_consume_token(CIRCLE);</span>
+<span class="nc" id="L1288">			s = Style.Shape.CIRCLE;</span>
+<span class="nc" id="L1289">			break;</span>
+		case BOX:
+<span class="nc" id="L1291">			jj_consume_token(BOX);</span>
+<span class="nc" id="L1292">			s = Style.Shape.BOX;</span>
+<span class="nc" id="L1293">			break;</span>
+		case ROUNDEDBOX:
+<span class="nc" id="L1295">			jj_consume_token(ROUNDEDBOX);</span>
+<span class="nc" id="L1296">			s = Style.Shape.ROUNDED_BOX;</span>
+<span class="nc" id="L1297">			break;</span>
+		case TRIANGLE:
+<span class="nc" id="L1299">			jj_consume_token(TRIANGLE);</span>
+<span class="nc" id="L1300">			s = Style.Shape.TRIANGLE;</span>
+<span class="nc" id="L1301">			break;</span>
+		case CROSS:
+<span class="nc" id="L1303">			jj_consume_token(CROSS);</span>
+<span class="nc" id="L1304">			s = Style.Shape.CROSS;</span>
+<span class="nc" id="L1305">			break;</span>
+		case DIAMOND:
+<span class="nc" id="L1307">			jj_consume_token(DIAMOND);</span>
+<span class="nc" id="L1308">			s = Style.Shape.DIAMOND;</span>
+<span class="nc" id="L1309">			break;</span>
+		case POLYGON:
+<span class="nc" id="L1311">			jj_consume_token(POLYGON);</span>
+<span class="nc" id="L1312">			s = Style.Shape.POLYGON;</span>
+<span class="nc" id="L1313">			break;</span>
+		case FREEPLANE:
+<span class="nc" id="L1315">			jj_consume_token(FREEPLANE);</span>
+<span class="nc" id="L1316">			s = Style.Shape.FREEPLANE;</span>
+<span class="nc" id="L1317">			break;</span>
+		case TEXTBOX:
+<span class="nc" id="L1319">			jj_consume_token(TEXTBOX);</span>
+<span class="nc" id="L1320">			s = Style.Shape.TEXT_BOX;</span>
+<span class="nc" id="L1321">			break;</span>
+		case TEXTROUNDEDBOX:
+<span class="nc" id="L1323">			jj_consume_token(TEXTROUNDEDBOX);</span>
+<span class="nc" id="L1324">			s = Style.Shape.TEXT_ROUNDED_BOX;</span>
+<span class="nc" id="L1325">			break;</span>
+		case TEXTCIRCLE:
+<span class="nc" id="L1327">			jj_consume_token(TEXTCIRCLE);</span>
+<span class="nc" id="L1328">			s = Style.Shape.TEXT_CIRCLE;</span>
+<span class="nc" id="L1329">			break;</span>
+		case TEXTDIAMOND:
+<span class="nc" id="L1331">			jj_consume_token(TEXTDIAMOND);</span>
+<span class="nc" id="L1332">			s = Style.Shape.TEXT_DIAMOND;</span>
+<span class="nc" id="L1333">			break;</span>
+		case TEXTPARAGRAPH:
+<span class="nc" id="L1335">			jj_consume_token(TEXTPARAGRAPH);</span>
+<span class="nc" id="L1336">			s = Style.Shape.TEXT_PARAGRAPH;</span>
+<span class="nc" id="L1337">			break;</span>
+		case JCOMPONENT:
+<span class="nc" id="L1339">			jj_consume_token(JCOMPONENT);</span>
+<span class="nc" id="L1340">			s = Style.Shape.JCOMPONENT;</span>
+<span class="nc" id="L1341">			break;</span>
+		case PIECHART:
+<span class="nc" id="L1343">			jj_consume_token(PIECHART);</span>
+<span class="nc" id="L1344">			s = Style.Shape.PIE_CHART;</span>
+<span class="nc" id="L1345">			break;</span>
+		case FLOW:
+<span class="nc" id="L1347">			jj_consume_token(FLOW);</span>
+<span class="nc" id="L1348">			s = Style.Shape.FLOW;</span>
+<span class="nc" id="L1349">			break;</span>
+		case ARROW:
+<span class="nc" id="L1351">			jj_consume_token(ARROW);</span>
+<span class="nc" id="L1352">			s = Style.Shape.ARROW;</span>
+<span class="nc" id="L1353">			break;</span>
+		case LINE:
+<span class="nc" id="L1355">			jj_consume_token(LINE);</span>
+<span class="nc" id="L1356">			s = Style.Shape.LINE;</span>
+<span class="nc" id="L1357">			break;</span>
+		case ANGLE:
+<span class="nc" id="L1359">			jj_consume_token(ANGLE);</span>
+<span class="nc" id="L1360">			s = Style.Shape.ANGLE;</span>
+<span class="nc" id="L1361">			break;</span>
+		case CUBICCURVE:
+<span class="nc" id="L1363">			jj_consume_token(CUBICCURVE);</span>
+<span class="nc" id="L1364">			s = Style.Shape.CUBIC_CURVE;</span>
+<span class="nc" id="L1365">			break;</span>
+		case POLYLINE:
+<span class="nc" id="L1367">			jj_consume_token(POLYLINE);</span>
+<span class="nc" id="L1368">			s = Style.Shape.POLYLINE;</span>
+<span class="nc" id="L1369">			break;</span>
+		case POLYLINESCALED:
+<span class="nc" id="L1371">			jj_consume_token(POLYLINESCALED);</span>
+<span class="nc" id="L1372">			s = Style.Shape.POLYLINE_SCALED;</span>
+<span class="nc" id="L1373">			break;</span>
+		case BLOB:
+<span class="nc" id="L1375">			jj_consume_token(BLOB);</span>
+<span class="nc" id="L1376">			s = Style.Shape.BLOB;</span>
+<span class="nc" id="L1377">			break;</span>
+		case SQUARELINE:
+<span class="nc" id="L1379">			jj_consume_token(SQUARELINE);</span>
+<span class="nc" id="L1380">			s = Style.Shape.SQUARELINE;</span>
+<span class="nc" id="L1381">			break;</span>
+		case LSQUARELINE:
+<span class="nc" id="L1383">			jj_consume_token(LSQUARELINE);</span>
+<span class="nc" id="L1384">			s = Style.Shape.LSQUARELINE;</span>
+<span class="nc" id="L1385">			break;</span>
+		case HSQUARELINE:
+<span class="nc" id="L1387">			jj_consume_token(HSQUARELINE);</span>
+<span class="nc" id="L1388">			s = Style.Shape.HSQUARELINE;</span>
+<span class="nc" id="L1389">			break;</span>
+		case VSQUARELINE:
+<span class="nc" id="L1391">			jj_consume_token(VSQUARELINE);</span>
+<span class="nc" id="L1392">			s = Style.Shape.VSQUARELINE;</span>
+<span class="nc" id="L1393">			break;</span>
+		default:
+<span class="nc" id="L1395">			jj_la1[28] = jj_gen;</span>
+<span class="nc" id="L1396">			jj_consume_token(-1);</span>
+<span class="nc" id="L1397">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1401">				return s;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.ArrowShape arrowShape() throws ParseException {
+		Style.ArrowShape s;
+<span class="nc bnc" id="L1408" title="All 8 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NONE:
+<span class="nc" id="L1410">			jj_consume_token(NONE);</span>
+<span class="nc" id="L1411">			s = Style.ArrowShape.NONE;</span>
+<span class="nc" id="L1412">			break;</span>
+		case ARROW:
+<span class="nc" id="L1414">			jj_consume_token(ARROW);</span>
+<span class="nc" id="L1415">			s = Style.ArrowShape.ARROW;</span>
+<span class="nc" id="L1416">			break;</span>
+		case CIRCLE:
+<span class="nc" id="L1418">			jj_consume_token(CIRCLE);</span>
+<span class="nc" id="L1419">			s = Style.ArrowShape.CIRCLE;</span>
+<span class="nc" id="L1420">			break;</span>
+		case DIAMOND:
+<span class="nc" id="L1422">			jj_consume_token(DIAMOND);</span>
+<span class="nc" id="L1423">			s = Style.ArrowShape.DIAMOND;</span>
+<span class="nc" id="L1424">			break;</span>
+		case IMAGE:
+<span class="nc" id="L1426">			jj_consume_token(IMAGE);</span>
+<span class="nc" id="L1427">			s = Style.ArrowShape.IMAGE;</span>
+<span class="nc" id="L1428">			break;</span>
+		default:
+<span class="nc" id="L1430">			jj_la1[29] = jj_gen;</span>
+<span class="nc" id="L1431">			jj_consume_token(-1);</span>
+<span class="nc" id="L1432">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1436">				return s;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.JComponents jcomponent() throws ParseException {
+		Style.JComponents c;
+<span class="nc bnc" id="L1443" title="All 6 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case BUTTON:
+<span class="nc" id="L1445">			jj_consume_token(BUTTON);</span>
+<span class="nc" id="L1446">			c = Style.JComponents.BUTTON;</span>
+<span class="nc" id="L1447">			break;</span>
+		case TEXTFIELD:
+<span class="nc" id="L1449">			jj_consume_token(TEXTFIELD);</span>
+<span class="nc" id="L1450">			c = Style.JComponents.TEXT_FIELD;</span>
+<span class="nc" id="L1451">			break;</span>
+		case PANEL:
+<span class="nc" id="L1453">			jj_consume_token(PANEL);</span>
+<span class="nc" id="L1454">			c = Style.JComponents.PANEL;</span>
+<span class="nc" id="L1455">			break;</span>
+		default:
+<span class="nc" id="L1457">			jj_la1[30] = jj_gen;</span>
+<span class="nc" id="L1458">			jj_consume_token(-1);</span>
+<span class="nc" id="L1459">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1463">				return c;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	final public Style.SpriteOrientation spriteOrient() throws ParseException {
+		Style.SpriteOrientation s;
+<span class="nc bnc" id="L1470" title="All 9 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case NONE:
+<span class="nc" id="L1472">			jj_consume_token(NONE);</span>
+<span class="nc" id="L1473">			s = Style.SpriteOrientation.NONE;</span>
+<span class="nc" id="L1474">			break;</span>
+		case TO:
+<span class="nc" id="L1476">			jj_consume_token(TO);</span>
+<span class="nc" id="L1477">			s = Style.SpriteOrientation.TO;</span>
+<span class="nc" id="L1478">			break;</span>
+		case FROM:
+<span class="nc" id="L1480">			jj_consume_token(FROM);</span>
+<span class="nc" id="L1481">			s = Style.SpriteOrientation.FROM;</span>
+<span class="nc" id="L1482">			break;</span>
+		case NODE0:
+<span class="nc" id="L1484">			jj_consume_token(NODE0);</span>
+<span class="nc" id="L1485">			s = Style.SpriteOrientation.NODE0;</span>
+<span class="nc" id="L1486">			break;</span>
+		case NODE1:
+<span class="nc" id="L1488">			jj_consume_token(NODE1);</span>
+<span class="nc" id="L1489">			s = Style.SpriteOrientation.NODE1;</span>
+<span class="nc" id="L1490">			break;</span>
+		case PROJECTION:
+<span class="nc" id="L1492">			jj_consume_token(PROJECTION);</span>
+<span class="nc" id="L1493">			s = Style.SpriteOrientation.PROJECTION;</span>
+<span class="nc" id="L1494">			break;</span>
+		default:
+<span class="nc" id="L1496">			jj_la1[31] = jj_gen;</span>
+<span class="nc" id="L1497">			jj_consume_token(-1);</span>
+<span class="nc" id="L1498">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L1502">				return s;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	/** Generated Token Manager. */
+	public StyleSheetParserTokenManager token_source;
+	SimpleCharStream jj_input_stream;
+	/** Current token. */
+	public Token token;
+	/** Next token. */
+	public Token jj_nt;
+	private int jj_ntk;
+	private int jj_gen;
+<span class="nc" id="L1516">	final private int[] jj_la1 = new int[32];</span>
+	static private int[] jj_la1_0;
+	static private int[] jj_la1_1;
+	static private int[] jj_la1_2;
+	static private int[] jj_la1_3;
+	static private int[] jj_la1_4;
+	static {
+<span class="nc" id="L1523">		jj_la1_init_0();</span>
+<span class="nc" id="L1524">		jj_la1_init_1();</span>
+<span class="nc" id="L1525">		jj_la1_init_2();</span>
+<span class="nc" id="L1526">		jj_la1_init_3();</span>
+<span class="nc" id="L1527">		jj_la1_init_4();</span>
+<span class="nc" id="L1528">	}</span>
+
+	private static void jj_la1_init_0() {
+<span class="nc" id="L1531">		jj_la1_0 = new int[] { 0xf000000, 0xf000000, 0xf0000000, 0xf0000000, 0xf000000, 0x600000, 0x400000, 0x4200,</span>
+<span class="nc" id="L1532">				0x4200, 0x400000, 0x8000, 0xf0000000, 0x20000, 0x800000, 0x400000, 0x5c0000, 0x20000, 0x0, 0x0, 0x0,</span>
+				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, };
+<span class="nc" id="L1534">	}</span>
+
+	private static void jj_la1_init_1() {
+<span class="nc" id="L1537">		jj_la1_1 = new int[] { 0x0, 0x0, 0xffffffff, 0xffffffff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xffffffff, 0x0,</span>
+<span class="nc" id="L1538">				0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x10000000, 0x0, 0x0, 0x0, };</span>
+<span class="nc" id="L1539">	}</span>
+
+	private static void jj_la1_init_2() {
+<span class="nc" id="L1542">		jj_la1_2 = new int[] { 0x0, 0x0, 0x3, 0x3, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x0, 0x20, 0x0, 0x0, 0x0,</span>
+<span class="nc" id="L1543">				0xfbe0c, 0x801c4, 0x83e04, 0x304000, 0x7d04000, 0x80004, 0x70100000, 0x8100010, 0x80000000, 0x80000,</span>
+<span class="nc" id="L1544">				0x7d04000, 0x0, 0x80000, 0x0, 0x80000, };</span>
+<span class="nc" id="L1545">	}</span>
+
+	private static void jj_la1_init_3() {
+<span class="nc" id="L1548">		jj_la1_3 = new int[] { 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,</span>
+<span class="nc" id="L1549">				0x0, 0x0, 0x0, 0x0, 0x20000, 0x0, 0x0, 0xff, 0x63, 0x0, 0xff1fff00, 0x80100, 0xe00000, 0x0, };</span>
+<span class="nc" id="L1550">	}</span>
+
+	private static void jj_la1_init_4() {
+<span class="nc" id="L1553">		jj_la1_4 = new int[] { 0x8000, 0x8000, 0x8000, 0x8000, 0x0, 0x4000, 0x7000, 0x0, 0x0, 0x7000, 0x0, 0x8000, 0x0,</span>
+<span class="nc" id="L1554">				0x0, 0x4000, 0x4000, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1f, 0x24, 0x0,</span>
+<span class="nc" id="L1555">				0xf80, };</span>
+<span class="nc" id="L1556">	}</span>
+
+	/** Constructor with InputStream. */
+	public StyleSheetParser(java.io.InputStream stream) {
+<span class="nc" id="L1560">		this(stream, null);</span>
+<span class="nc" id="L1561">	}</span>
+
+	/** Constructor with InputStream and supplied encoding */
+<span class="nc" id="L1564">	public StyleSheetParser(java.io.InputStream stream, String encoding) {</span>
+		try {
+<span class="nc" id="L1566">			jj_input_stream = new SimpleCharStream(stream, encoding, 1, 1);</span>
+<span class="nc" id="L1567">		} catch (java.io.UnsupportedEncodingException e) {</span>
+<span class="nc" id="L1568">			throw new RuntimeException(e);</span>
+		}
+<span class="nc" id="L1570">		token_source = new StyleSheetParserTokenManager(jj_input_stream);</span>
+<span class="nc" id="L1571">		token = new Token();</span>
+<span class="nc" id="L1572">		jj_ntk = -1;</span>
+<span class="nc" id="L1573">		jj_gen = 0;</span>
+<span class="nc bnc" id="L1574" title="All 2 branches missed.">		for (int i = 0; i &lt; 32; i++)</span>
+<span class="nc" id="L1575">			jj_la1[i] = -1;</span>
+<span class="nc" id="L1576">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.InputStream stream) {
+<span class="nc" id="L1580">		ReInit(stream, null);</span>
+<span class="nc" id="L1581">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.InputStream stream, String encoding) {
+		try {
+<span class="nc" id="L1586">			jj_input_stream.ReInit(stream, encoding, 1, 1);</span>
+<span class="nc" id="L1587">		} catch (java.io.UnsupportedEncodingException e) {</span>
+<span class="nc" id="L1588">			throw new RuntimeException(e);</span>
+		}
+<span class="nc" id="L1590">		token_source.ReInit(jj_input_stream);</span>
+<span class="nc" id="L1591">		token = new Token();</span>
+<span class="nc" id="L1592">		jj_ntk = -1;</span>
+<span class="nc" id="L1593">		jj_gen = 0;</span>
+<span class="nc bnc" id="L1594" title="All 2 branches missed.">		for (int i = 0; i &lt; 32; i++)</span>
+<span class="nc" id="L1595">			jj_la1[i] = -1;</span>
+<span class="nc" id="L1596">	}</span>
+
+	/** Constructor. */
+<span class="nc" id="L1599">	public StyleSheetParser(java.io.Reader stream) {</span>
+<span class="nc" id="L1600">		jj_input_stream = new SimpleCharStream(stream, 1, 1);</span>
+<span class="nc" id="L1601">		token_source = new StyleSheetParserTokenManager(jj_input_stream);</span>
+<span class="nc" id="L1602">		token = new Token();</span>
+<span class="nc" id="L1603">		jj_ntk = -1;</span>
+<span class="nc" id="L1604">		jj_gen = 0;</span>
+<span class="nc bnc" id="L1605" title="All 2 branches missed.">		for (int i = 0; i &lt; 32; i++)</span>
+<span class="nc" id="L1606">			jj_la1[i] = -1;</span>
+<span class="nc" id="L1607">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.Reader stream) {
+<span class="nc" id="L1611">		jj_input_stream.ReInit(stream, 1, 1);</span>
+<span class="nc" id="L1612">		token_source.ReInit(jj_input_stream);</span>
+<span class="nc" id="L1613">		token = new Token();</span>
+<span class="nc" id="L1614">		jj_ntk = -1;</span>
+<span class="nc" id="L1615">		jj_gen = 0;</span>
+<span class="nc bnc" id="L1616" title="All 2 branches missed.">		for (int i = 0; i &lt; 32; i++)</span>
+<span class="nc" id="L1617">			jj_la1[i] = -1;</span>
+<span class="nc" id="L1618">	}</span>
+
+	/** Constructor with generated Token Manager. */
+<span class="nc" id="L1621">	public StyleSheetParser(StyleSheetParserTokenManager tm) {</span>
+<span class="nc" id="L1622">		token_source = tm;</span>
+<span class="nc" id="L1623">		token = new Token();</span>
+<span class="nc" id="L1624">		jj_ntk = -1;</span>
+<span class="nc" id="L1625">		jj_gen = 0;</span>
+<span class="nc bnc" id="L1626" title="All 2 branches missed.">		for (int i = 0; i &lt; 32; i++)</span>
+<span class="nc" id="L1627">			jj_la1[i] = -1;</span>
+<span class="nc" id="L1628">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(StyleSheetParserTokenManager tm) {
+<span class="nc" id="L1632">		token_source = tm;</span>
+<span class="nc" id="L1633">		token = new Token();</span>
+<span class="nc" id="L1634">		jj_ntk = -1;</span>
+<span class="nc" id="L1635">		jj_gen = 0;</span>
+<span class="nc bnc" id="L1636" title="All 2 branches missed.">		for (int i = 0; i &lt; 32; i++)</span>
+<span class="nc" id="L1637">			jj_la1[i] = -1;</span>
+<span class="nc" id="L1638">	}</span>
+
+	private Token jj_consume_token(int kind) throws ParseException {
+		Token oldToken;
+<span class="nc bnc" id="L1642" title="All 2 branches missed.">		if ((oldToken = token).next != null)</span>
+<span class="nc" id="L1643">			token = token.next;</span>
+		else
+<span class="nc" id="L1645">			token = token.next = token_source.getNextToken();</span>
+<span class="nc" id="L1646">		jj_ntk = -1;</span>
+<span class="nc bnc" id="L1647" title="All 2 branches missed.">		if (token.kind == kind) {</span>
+<span class="nc" id="L1648">			jj_gen++;</span>
+<span class="nc" id="L1649">			return token;</span>
+		}
+<span class="nc" id="L1651">		token = oldToken;</span>
+<span class="nc" id="L1652">		jj_kind = kind;</span>
+<span class="nc" id="L1653">		throw generateParseException();</span>
+	}
+
+	/** Get the next Token. */
+	final public Token getNextToken() {
+<span class="nc bnc" id="L1658" title="All 2 branches missed.">		if (token.next != null)</span>
+<span class="nc" id="L1659">			token = token.next;</span>
+		else
+<span class="nc" id="L1661">			token = token.next = token_source.getNextToken();</span>
+<span class="nc" id="L1662">		jj_ntk = -1;</span>
+<span class="nc" id="L1663">		jj_gen++;</span>
+<span class="nc" id="L1664">		return token;</span>
+	}
+
+	/** Get the specific Token. */
+	final public Token getToken(int index) {
+<span class="nc" id="L1669">		Token t = token;</span>
+<span class="nc bnc" id="L1670" title="All 2 branches missed.">		for (int i = 0; i &lt; index; i++) {</span>
+<span class="nc bnc" id="L1671" title="All 2 branches missed.">			if (t.next != null)</span>
+<span class="nc" id="L1672">				t = t.next;</span>
+			else
+<span class="nc" id="L1674">				t = t.next = token_source.getNextToken();</span>
+		}
+<span class="nc" id="L1676">		return t;</span>
+	}
+
+	private int jj_ntk() {
+<span class="nc bnc" id="L1680" title="All 2 branches missed.">		if ((jj_nt = token.next) == null)</span>
+<span class="nc" id="L1681">			return (jj_ntk = (token.next = token_source.getNextToken()).kind);</span>
+		else
+<span class="nc" id="L1683">			return (jj_ntk = jj_nt.kind);</span>
+	}
+
+<span class="nc" id="L1686">	private java.util.List&lt;int[]&gt; jj_expentries = new java.util.ArrayList&lt;int[]&gt;();</span>
+	private int[] jj_expentry;
+<span class="nc" id="L1688">	private int jj_kind = -1;</span>
+
+	/** Generate ParseException. */
+	public ParseException generateParseException() {
+<span class="nc" id="L1692">		jj_expentries.clear();</span>
+<span class="nc" id="L1693">		boolean[] la1tokens = new boolean[144];</span>
+<span class="nc bnc" id="L1694" title="All 2 branches missed.">		if (jj_kind &gt;= 0) {</span>
+<span class="nc" id="L1695">			la1tokens[jj_kind] = true;</span>
+<span class="nc" id="L1696">			jj_kind = -1;</span>
+		}
+<span class="nc bnc" id="L1698" title="All 2 branches missed.">		for (int i = 0; i &lt; 32; i++) {</span>
+<span class="nc bnc" id="L1699" title="All 2 branches missed.">			if (jj_la1[i] == jj_gen) {</span>
+<span class="nc bnc" id="L1700" title="All 2 branches missed.">				for (int j = 0; j &lt; 32; j++) {</span>
+<span class="nc bnc" id="L1701" title="All 2 branches missed.">					if ((jj_la1_0[i] &amp; (1 &lt;&lt; j)) != 0) {</span>
+<span class="nc" id="L1702">						la1tokens[j] = true;</span>
+					}
+<span class="nc bnc" id="L1704" title="All 2 branches missed.">					if ((jj_la1_1[i] &amp; (1 &lt;&lt; j)) != 0) {</span>
+<span class="nc" id="L1705">						la1tokens[32 + j] = true;</span>
+					}
+<span class="nc bnc" id="L1707" title="All 2 branches missed.">					if ((jj_la1_2[i] &amp; (1 &lt;&lt; j)) != 0) {</span>
+<span class="nc" id="L1708">						la1tokens[64 + j] = true;</span>
+					}
+<span class="nc bnc" id="L1710" title="All 2 branches missed.">					if ((jj_la1_3[i] &amp; (1 &lt;&lt; j)) != 0) {</span>
+<span class="nc" id="L1711">						la1tokens[96 + j] = true;</span>
+					}
+<span class="nc bnc" id="L1713" title="All 2 branches missed.">					if ((jj_la1_4[i] &amp; (1 &lt;&lt; j)) != 0) {</span>
+<span class="nc" id="L1714">						la1tokens[128 + j] = true;</span>
+					}
+				}
+			}
+		}
+<span class="nc bnc" id="L1719" title="All 2 branches missed.">		for (int i = 0; i &lt; 144; i++) {</span>
+<span class="nc bnc" id="L1720" title="All 2 branches missed.">			if (la1tokens[i]) {</span>
+<span class="nc" id="L1721">				jj_expentry = new int[1];</span>
+<span class="nc" id="L1722">				jj_expentry[0] = i;</span>
+<span class="nc" id="L1723">				jj_expentries.add(jj_expentry);</span>
+			}
+		}
+<span class="nc" id="L1726">		int[][] exptokseq = new int[jj_expentries.size()][];</span>
+<span class="nc bnc" id="L1727" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_expentries.size(); i++) {</span>
+<span class="nc" id="L1728">			exptokseq[i] = jj_expentries.get(i);</span>
+		}
+<span class="nc" id="L1730">		return new ParseException(token, exptokseq, tokenImage);</span>
+	}
+
+	/** Enable tracing. */
+	final public void enable_tracing() {
+<span class="nc" id="L1735">	}</span>
+
+	/** Disable tracing. */
+	final public void disable_tracing() {
+<span class="nc" id="L1739">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>LayoutRunner.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.layout</a> &gt; <span class="el_source">LayoutRunner.java</span></div><h1>LayoutRunner.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2010-01-20
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.layout;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.stream.ProxyPipe;
+import org.graphstream.stream.Source;
+import org.graphstream.stream.thread.ThreadProxyPipe;
+
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * Allows to run a layout in a distinct thread.
+ * 
+ * &lt;p&gt;
+ * A layout runner will run in its own thread and periodically activate a layout
+ * algorithm on a graph event stream (you do not need a graph). This
+ * implementation is mainly used by the graph viewer but could be used by any
+ * program that needs a layout algorithm that run continuously on a dynamic
+ * graph (adapting the layout as the graph changes).
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * The layout algorithms in GraphStream are iterative versions that can be
+ * called repeatedly to take graph dynamics into account and may produce a
+ * result only after several invocations. This is why the layout runner invokes
+ * the layout on a regular basis. The runner is temporized, it will not run in a
+ * loop as fast as possible, instead it will wait a little between each layout
+ * invocation. When the last layout invocation indicated the layout was good, it
+ * will wait longer that when the last invocation indicated the layout was not
+ * good (stabilized). These two times can be configured using
+ * {@link #setNaps(long, long)}.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * Once you finished using the runner, you must call {@link #release()} to break
+ * the link with the event source and stop the thread. The runner cannot be used
+ * after.
+ * &lt;/p&gt;
+ */
+public class LayoutRunner extends Thread {
+
+	/**
+	 * class level logger
+	 */
+<span class="nc" id="L79">	private static final Logger logger = Logger.getLogger(LayoutRunner.class.getSimpleName());</span>
+
+	/**
+	 * The layout algorithm.
+	 */
+<span class="nc" id="L84">	protected Layout layout = null;</span>
+
+	/**
+	 * The proxy on the source of graph events.
+	 */
+<span class="nc" id="L89">	protected ThreadProxyPipe pumpPipe = null;</span>
+
+	/**
+	 * The meaning of life.
+	 */
+<span class="nc" id="L94">	protected boolean loop = true;</span>
+
+	/**
+	 * The time to wait between each layout invocation, when the layout stabilized.
+	 */
+<span class="nc" id="L99">	protected long longNap = 80;</span>
+
+	/**
+	 * The time to wait between each layout invocation, when the layout is not yet
+	 * stabilized.
+	 */
+<span class="nc" id="L105">	protected long shortNap = 10;</span>
+
+	/**
+	 * New layout runner that listens at the given source and compute a layout on
+	 * its graph structure in a distinct thread.
+	 * 
+	 * @param source
+	 *            The source of graph events.
+	 * @param layout
+	 *            The layout algorithm to use.
+	 */
+	public LayoutRunner(Source source, Layout layout) {
+<span class="nc" id="L117">		this(source, layout, true);</span>
+<span class="nc" id="L118">	}</span>
+
+	/**
+	 * New layout runner that listen at the given source and compute a layout on its
+	 * graph structure in a distinct thread.
+	 * 
+	 * @param source
+	 *            The source of graph events.
+	 * @param layout
+	 *            The layout algorithm to use.
+	 * @param start
+	 *            Start the layout thread immediately ? Else the start() method must
+	 *            be called later.
+	 */
+<span class="nc" id="L132">	public LayoutRunner(Source source, Layout layout, boolean start) {</span>
+<span class="nc" id="L133">		this.layout = layout;</span>
+<span class="nc" id="L134">		this.pumpPipe = new ThreadProxyPipe();</span>
+<span class="nc" id="L135">		this.pumpPipe.addSink(layout);</span>
+
+<span class="nc bnc" id="L137" title="All 2 branches missed.">		if (start)</span>
+<span class="nc" id="L138">			start();</span>
+
+<span class="nc" id="L140">		this.pumpPipe.init(source);</span>
+<span class="nc" id="L141">	}</span>
+
+	/**
+	 * New layout runner that listen at the given graph and compute a layout on its
+	 * graph structure in a distinct thread. A pipe is still created to listen at
+	 * the graph. This means that the graph is never directly used.
+	 * 
+	 * @param graph
+	 *            The source of graph events.
+	 * @param layout
+	 *            The layout algorithm to use.
+	 * @param start
+	 *            Start the layout thread immediately ? Else the start() method must
+	 *            be called later.
+	 * @param replay
+	 *            If the graph already contains some data, replay events to create
+	 *            the data, this is mostly always needed.
+	 */
+<span class="nc" id="L159">	public LayoutRunner(Graph graph, Layout layout, boolean start, boolean replay) {</span>
+<span class="nc" id="L160">		this.layout = layout;</span>
+<span class="nc" id="L161">		this.pumpPipe = new ThreadProxyPipe();</span>
+<span class="nc" id="L162">		this.pumpPipe.addSink(layout);</span>
+
+<span class="nc bnc" id="L164" title="All 2 branches missed.">		if (start)</span>
+<span class="nc" id="L165">			start();</span>
+
+<span class="nc" id="L167">		this.pumpPipe.init(graph, replay);</span>
+<span class="nc" id="L168">	}</span>
+
+	/**
+	 * Pipe out whose input is connected to the layout algorithm. You can safely
+	 * connect as a sink to it to receive events of the layout from a distinct
+	 * thread.
+	 */
+	public ProxyPipe newLayoutPipe() {
+<span class="nc" id="L176">		ThreadProxyPipe tpp = new ThreadProxyPipe();</span>
+<span class="nc" id="L177">		tpp.init(layout);</span>
+
+<span class="nc" id="L179">		return tpp;</span>
+	}
+
+	@Override
+	public void run() {
+<span class="nc" id="L184">		String layoutName = layout.getLayoutAlgorithmName();</span>
+
+<span class="nc bnc" id="L186" title="All 2 branches missed.">		while (loop) {</span>
+<span class="nc" id="L187">			double limit = layout.getStabilizationLimit();</span>
+
+<span class="nc" id="L189">			pumpPipe.pump();</span>
+<span class="nc bnc" id="L190" title="All 2 branches missed.">			if (limit &gt; 0) {</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">				if (layout.getStabilization() &gt; limit) {</span>
+<span class="nc" id="L192">					nap(longNap);</span>
+<span class="nc" id="L193">				} else {</span>
+<span class="nc" id="L194">					layout.compute();</span>
+<span class="nc" id="L195">					nap(shortNap);</span>
+				}
+<span class="nc" id="L197">			} else {</span>
+<span class="nc" id="L198">				layout.compute();</span>
+<span class="nc" id="L199">				nap(shortNap);</span>
+			}
+		}
+<span class="nc" id="L202">		logger.info(String.format(&quot;Layout '%s' process stopped.&quot;, layoutName));</span>
+<span class="nc" id="L203">	}</span>
+
+	/**
+	 * Release any link to the source of events and stop the layout proces. The
+	 * thread will end after this method has been called.
+	 */
+	public void release() {
+<span class="nc" id="L210">		pumpPipe.unregisterFromSource();</span>
+<span class="nc" id="L211">		pumpPipe.removeSink(layout);</span>
+<span class="nc" id="L212">		pumpPipe = null;</span>
+<span class="nc" id="L213">		loop = false;</span>
+
+<span class="nc bnc" id="L215" title="All 2 branches missed.">		if (Thread.currentThread() != this) {</span>
+			try {
+<span class="nc" id="L217">				this.join();</span>
+<span class="nc" id="L218">			} catch (Exception e) {</span>
+<span class="nc" id="L219">				logger.log(Level.WARNING, &quot;Unable to stop/release layout.&quot;, e);</span>
+			}
+		}
+
+<span class="nc" id="L223">		layout = null;</span>
+<span class="nc" id="L224">	}</span>
+
+	/**
+	 * Sleep for the given period of time in milliseconds.
+	 * 
+	 * @param ms
+	 *            The number of milliseconds to wait.
+	 */
+	protected void nap(long ms) {
+		try {
+<span class="nc" id="L234">			Thread.sleep(ms);</span>
+<span class="nc" id="L235">		} catch (Exception e) {</span>
+		}
+<span class="nc" id="L237">	}</span>
+
+	/**
+	 * Configure the time to wait between each layout invocation. The long nap
+	 * configures the time to wait when the last layout invocation indicated the
+	 * layout was stabilized, the short nap is used in the other case.
+	 * 
+	 * @param longNap
+	 *            The time to wait between stabilized layout invocations, by default
+	 *            80.
+	 * @param shortNap
+	 *            The time to wait between non stabilized layout invocations, by
+	 *            default 10.
+	 */
+	public void setNaps(long longNap, long shortNap) {
+<span class="nc" id="L252">		this.longNap = longNap;</span>
+<span class="nc" id="L253">		this.shortNap = shortNap;</span>
+<span class="nc" id="L254">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

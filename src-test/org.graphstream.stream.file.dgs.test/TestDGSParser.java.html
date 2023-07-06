@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestDGSParser.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.dgs.test</a> &gt; <span class="el_source">TestDGSParser.java</span></div><h1>TestDGSParser.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-12-06
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.dgs.test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.awt.Color;
+import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.stream.SinkAdapter;
+import org.graphstream.stream.file.FileSourceDGS;
+import org.graphstream.util.VerboseSink;
+import org.graphstream.util.parser.ParseException;
+import org.junit.Test;
+
+<span class="nc" id="L60">public class TestDGSParser {</span>
+
+	protected File newTemporaryFile(String suffix) throws IOException {
+<span class="nc" id="L63">		return File.createTempFile(getClass().getSimpleName(), suffix);</span>
+	}
+
+	protected Graph getGraph(String resource) throws IOException {
+<span class="nc" id="L67">		Graph g = new AdjacencyListGraph(&quot;test&quot;);</span>
+<span class="nc" id="L68">		FileSourceDGS in = new FileSourceDGS();</span>
+
+<span class="nc" id="L70">		in.addSink(g);</span>
+<span class="nc" id="L71">		in.readAll(getClass().getResourceAsStream(resource));</span>
+<span class="nc" id="L72">		in.removeSink(g);</span>
+
+<span class="nc" id="L74">		return g;</span>
+	}
+
+	@Test
+	public void testArrayAttribute() throws IOException {
+<span class="nc" id="L79">		Graph g = getGraph(&quot;data/attributes_array.dgs&quot;);</span>
+<span class="nc" id="L80">		Node n = g.getNode(0);</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">		if (!n.hasArray(&quot;a1&quot;))</span>
+<span class="nc" id="L83">			fail();</span>
+
+<span class="nc bnc" id="L85" title="All 2 branches missed.">		if (!n.hasArray(&quot;a2&quot;))</span>
+<span class="nc" id="L86">			fail();</span>
+
+<span class="nc" id="L88">		Object[] a1 = n.getArray(&quot;a1&quot;);</span>
+<span class="nc" id="L89">		Object[] a2 = n.getArray(&quot;a2&quot;);</span>
+<span class="nc" id="L90">		Object[] expected = { &quot;A&quot;, &quot;B&quot;, &quot;C&quot; };</span>
+
+<span class="nc" id="L92">		assertArrayEquals(expected, a1);</span>
+<span class="nc" id="L93">		assertArrayEquals(expected, a2);</span>
+<span class="nc" id="L94">	}</span>
+
+	private static class Attribute {
+		String key;
+		Class&lt;?&gt; clazz;
+		Object expected;
+
+<span class="nc" id="L101">		Attribute(String key, Class&lt;?&gt; clazz, Object expected) {</span>
+<span class="nc" id="L102">			this.key = key;</span>
+<span class="nc" id="L103">			this.clazz = clazz;</span>
+<span class="nc" id="L104">			this.expected = expected;</span>
+<span class="nc" id="L105">		}</span>
+
+		void check(Element e) {
+<span class="nc" id="L108">			Object obj = e.getAttribute(key);</span>
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">			if (expected.getClass().isArray()) {</span>
+<span class="nc" id="L111">				Object[] objArray = (Object[]) obj;</span>
+
+<span class="nc" id="L113">				assertTrue(clazz.isAssignableFrom(objArray[0].getClass()));</span>
+<span class="nc" id="L114">				assertArrayEquals((Object[]) expected, objArray);</span>
+<span class="nc" id="L115">			} else {</span>
+<span class="nc" id="L116">				assertTrue(clazz.isAssignableFrom(obj.getClass()));</span>
+<span class="nc" id="L117">				assertEquals(expected, obj);</span>
+			}
+<span class="nc" id="L119">		}</span>
+	}
+
+	@Test
+	public void testAttributes() throws IOException {
+<span class="nc" id="L124">		Graph g = getGraph(&quot;data/attributes.dgs&quot;);</span>
+
+<span class="nc" id="L126">		HashMap&lt;String, Integer&gt; map = new HashMap&lt;String, Integer&gt;();</span>
+<span class="nc" id="L127">		map.put(&quot;a&quot;, 1);</span>
+<span class="nc" id="L128">		map.put(&quot;b&quot;, 2);</span>
+<span class="nc" id="L129">		map.put(&quot;c&quot;, 3);</span>
+
+<span class="nc" id="L131">		Object[][] aoa = { { 1, 2 }, { 3 }, { 4, 5 } };</span>
+
+<span class="nc" id="L133">		Attribute[] attributes = { new Attribute(&quot;int&quot;, Integer.class, Integer.valueOf(123)),</span>
+<span class="nc" id="L134">				new Attribute(&quot;double&quot;, Double.class, Double.valueOf(123.321)),</span>
+<span class="nc" id="L135">				new Attribute(&quot;string&quot;, String.class, &quot;a string&quot;), new Attribute(&quot;word&quot;, String.class, &quot;aWord&quot;),</span>
+<span class="nc" id="L136">				new Attribute(&quot;color&quot;, Color.class, Color.RED), new Attribute(&quot;map&quot;, Map.class, map),</span>
+<span class="nc" id="L137">				new Attribute(&quot;array&quot;, Integer.class, new Object[] { 1, 2, 3 }),</span>
+<span class="nc" id="L138">				new Attribute(&quot;aoa&quot;, Object[].class, aoa),</span>
+<span class="nc" id="L139">				new Attribute(&quot;big_sci&quot;, Double.class, Double.valueOf(&quot;1.27E+07&quot;)),</span>
+<span class="nc" id="L140">				new Attribute(&quot;small_sci&quot;, Double.class, Double.valueOf(&quot;1.27E-07&quot;)),</span>
+<span class="nc" id="L141">				new Attribute(&quot;neg_sci&quot;, Double.class, Double.valueOf(&quot;-1.27E-07&quot;)) };</span>
+
+<span class="nc bnc" id="L143" title="All 2 branches missed.">		for (Node n : g) {</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">			for (Attribute a : attributes)</span>
+<span class="nc" id="L145">				a.check(n);</span>
+		}
+<span class="nc" id="L147">	}</span>
+
+	@Test
+	public void testElements() throws IOException {
+<span class="nc" id="L151">		Graph g = getGraph(&quot;data/elements.dgs&quot;);</span>
+
+		Node A, B, C;
+		Edge AB, AC, BC;
+
+<span class="nc" id="L156">		A = g.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L157">		B = g.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L158">		C = g.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L160">		assertEquals(g.getNodeCount(), 3);</span>
+
+<span class="nc" id="L162">		assertNotNull(A);</span>
+<span class="nc" id="L163">		assertNotNull(B);</span>
+<span class="nc" id="L164">		assertNotNull(C);</span>
+
+<span class="nc" id="L166">		AB = g.getEdge(&quot;AB&quot;);</span>
+<span class="nc" id="L167">		AC = g.getEdge(&quot;AC&quot;);</span>
+<span class="nc" id="L168">		BC = g.getEdge(&quot;BC&quot;);</span>
+
+<span class="nc" id="L170">		assertEquals(g.getEdgeCount(), 3);</span>
+
+<span class="nc" id="L172">		assertNotNull(AB);</span>
+<span class="nc" id="L173">		assertNotNull(AC);</span>
+<span class="nc" id="L174">		assertNotNull(BC);</span>
+
+<span class="nc" id="L176">		assertFalse(AB.isDirected());</span>
+<span class="nc" id="L177">		assertTrue(AC.isDirected());</span>
+<span class="nc" id="L178">		assertTrue(BC.isDirected());</span>
+
+<span class="nc" id="L180">		assertEquals(A, AB.getNode0());</span>
+<span class="nc" id="L181">		assertEquals(B, AB.getNode1());</span>
+<span class="nc" id="L182">		assertEquals(A, AC.getSourceNode());</span>
+<span class="nc" id="L183">		assertEquals(C, AC.getTargetNode());</span>
+<span class="nc" id="L184">		assertEquals(B, BC.getSourceNode());</span>
+<span class="nc" id="L185">		assertEquals(C, BC.getTargetNode());</span>
+<span class="nc" id="L186">	}</span>
+
+	@Test
+	public void testBadExamples() throws IOException {
+<span class="nc" id="L190">		String[] data = { &quot;bad1.dgs&quot;, &quot;bad2.dgs&quot; };</span>
+
+<span class="nc bnc" id="L192" title="All 2 branches missed.">		for (int i = 0; i &lt; data.length; i++) {</span>
+			try {
+<span class="nc" id="L194">				getGraph(&quot;data/&quot; + data[i]);</span>
+<span class="nc" id="L195">				fail();</span>
+<span class="nc" id="L196">			} catch (Exception e) {</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">				if (!(e.getCause() instanceof ParseException)) {</span>
+
+<span class="nc bnc" id="L199" title="All 2 branches missed.">					if (e instanceof IOException)</span>
+<span class="nc" id="L200">						throw (IOException) e;</span>
+					else
+<span class="nc" id="L202">						fail();</span>
+				}
+			}
+		}
+<span class="nc" id="L206">	}</span>
+
+	/**
+	 * &lt;pre&gt;
+	 * LF:    Line Feed, U+000A
+	 * VT:    Vertical Tab, U+000B
+	 * FF:    Form Feed, U+000C
+	 * CR:    Carriage Return, U+000D
+	 * CR+LF: CR (U+000D) followed by LF (U+000A)
+	 * NEL:   Next Line, U+0085
+	 * LS:    Line Separator, U+2028
+	 * PS:    Paragraph Separator, U+2029
+	 * &lt;/pre&gt;
+	 * 
+	 * Current supported EOL are LF and CR+LF.
+	 * 
+	 * @throws IOException
+	 */
+	@Test
+	public void testEOL() throws IOException {
+<span class="nc" id="L226">		String base = &quot;DGS004%neol 0 0%n%nan A%n&quot;;</span>
+<span class="nc" id="L227">		String[] eols = { /* LF */ &quot;\n&quot;, /* CR+LF */ &quot;\r\n&quot; };</span>
+<span class="nc" id="L228">		FileSourceDGS source = new FileSourceDGS();</span>
+<span class="nc" id="L229">		Graph g = new AdjacencyListGraph(&quot;eol&quot;);</span>
+
+<span class="nc" id="L231">		source.addSink(g);</span>
+
+<span class="nc bnc" id="L233" title="All 2 branches missed.">		for (String eol : eols) {</span>
+<span class="nc" id="L234">			String dgs = base.replace(&quot;%n&quot;, eol);</span>
+<span class="nc" id="L235">			StringReader in = new StringReader(dgs);</span>
+
+			try {
+<span class="nc" id="L238">				source.readAll(in);</span>
+<span class="nc" id="L239">				assertNotNull(g.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L240">				g.clear();</span>
+<span class="nc" id="L241">			} catch (IOException e) {</span>
+<span class="nc bnc" id="L242" title="All 2 branches missed.">				if (e.getCause() instanceof ParseException)</span>
+<span class="nc" id="L243">					fail();</span>
+				else
+<span class="nc" id="L245">					throw e;</span>
+			}
+		}
+<span class="nc" id="L248">	}</span>
+
+	@Test
+	public void testAttributeRemoved() throws IOException {
+<span class="nc" id="L252">		FileSourceDGS source = new FileSourceDGS();</span>
+<span class="nc" id="L253">		Graph g = new AdjacencyListGraph(&quot;eol&quot;);</span>
+
+<span class="nc" id="L255">		source.addSink(g);</span>
+<span class="nc" id="L256">		g.addSink(new TestAttributeRemoved(&quot;A&quot;, g));</span>
+<span class="nc" id="L257">		g.addSink(new VerboseSink());</span>
+
+<span class="nc" id="L259">		source.begin(getClass().getResourceAsStream(&quot;data/removeAttribute.dgs&quot;));</span>
+
+<span class="nc bnc" id="L261" title="All 2 branches missed.">		while (source.nextStep())</span>
+			;
+
+<span class="nc" id="L264">		source.end();</span>
+<span class="nc" id="L265">	}</span>
+
+	private static class TestAttributeRemoved extends SinkAdapter {
+		String nodeId;
+		boolean added;
+		boolean changed;
+		boolean removed;
+		Object value;
+		Graph g;
+
+<span class="nc" id="L275">		TestAttributeRemoved(String nodeId, Graph g) {</span>
+<span class="nc" id="L276">			added = changed = removed = false;</span>
+<span class="nc" id="L277">			value = null;</span>
+<span class="nc" id="L278">			this.nodeId = nodeId;</span>
+<span class="nc" id="L279">			this.g = g;</span>
+<span class="nc" id="L280">		}</span>
+
+		public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attributeId, Object value) {
+<span class="nc bnc" id="L283" title="All 2 branches missed.">			if (this.nodeId.equals(nodeId)) {</span>
+<span class="nc" id="L284">				assertFalse(added);</span>
+<span class="nc" id="L285">				assertFalse(changed);</span>
+<span class="nc" id="L286">				assertFalse(removed);</span>
+
+<span class="nc" id="L288">				added = true;</span>
+<span class="nc" id="L289">				this.value = value;</span>
+			}
+<span class="nc" id="L291">		}</span>
+
+		public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attributeId,
+				Object oldValue, Object newValue) {
+<span class="nc bnc" id="L295" title="All 2 branches missed.">			if (this.nodeId.equals(nodeId)) {</span>
+<span class="nc" id="L296">				assertTrue(added);</span>
+<span class="nc" id="L297">				assertFalse(changed);</span>
+<span class="nc" id="L298">				assertFalse(removed);</span>
+<span class="nc" id="L299">				assertEquals(value, oldValue);</span>
+
+<span class="nc" id="L301">				changed = true;</span>
+<span class="nc" id="L302">				value = newValue;</span>
+			}
+<span class="nc" id="L304">		}</span>
+
+		public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attributeId) {
+<span class="nc bnc" id="L307" title="All 2 branches missed.">			if (this.nodeId.equals(nodeId)) {</span>
+<span class="nc" id="L308">				assertTrue(added);</span>
+<span class="nc" id="L309">				assertTrue(changed);</span>
+<span class="nc" id="L310">				assertFalse(removed);</span>
+<span class="nc" id="L311">				assertEquals(value, g.getNode(nodeId).getAttribute(attributeId));</span>
+
+<span class="nc" id="L313">				removed = true;</span>
+<span class="nc" id="L314">				value = null;</span>
+			}
+<span class="nc" id="L316">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

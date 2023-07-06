@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkGraphML.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkGraphML.java</span></div><h1>FileSinkGraphML.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-12-06
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hans Schulz &lt;hans.schulz@sap.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.EOFException;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+
+<span class="nc" id="L45">public class FileSinkGraphML extends FileSinkBase {</span>
+
+	protected void outputEndOfFile() throws IOException {
+<span class="nc" id="L48">		print(&quot;&lt;/graphml&gt;\n&quot;);</span>
+<span class="nc" id="L49">	}</span>
+
+	protected void outputHeader() throws IOException {
+<span class="nc" id="L52">		print(&quot;&lt;?xml version=\&quot;1.0\&quot; encoding=\&quot;UTF-8\&quot;?&gt;\n&quot;);</span>
+<span class="nc" id="L53">		print(&quot;&lt;graphml xmlns=\&quot;http://graphml.graphdrawing.org/xmlns\&quot;\n&quot;);</span>
+<span class="nc" id="L54">		print(&quot;\t xmlns:xsi=\&quot;http://www.w3.org/2001/XMLSchema-instance\&quot;\n&quot;);</span>
+<span class="nc" id="L55">		print(&quot;\t xsi:schemaLocation=\&quot;http://graphml.graphdrawing.org/xmlns\n&quot;);</span>
+<span class="nc" id="L56">		print(&quot;\t   http://graphml.graphdrawing.org/xmlns/1.0/graphml.xsd\&quot;&gt;\n&quot;);</span>
+<span class="nc" id="L57">	}</span>
+
+	private void print(String format, Object... args) throws IOException {
+<span class="nc" id="L60">		output.write(String.format(format, args));</span>
+<span class="nc" id="L61">	}</span>
+
+	@Override
+	protected void exportGraph(Graph g) {
+<span class="nc" id="L65">		final Consumer&lt;Exception&gt; onException = Exception::printStackTrace;</span>
+
+<span class="nc" id="L67">		AtomicInteger attribute = new AtomicInteger(0);</span>
+<span class="nc" id="L68">		HashMap&lt;String, String&gt; nodeAttributes = new HashMap&lt;&gt;();</span>
+<span class="nc" id="L69">		HashMap&lt;String, String&gt; edgeAttributes = new HashMap&lt;&gt;();</span>
+
+<span class="nc" id="L71">		g.nodes().forEach(n -&gt; {</span>
+<span class="nc" id="L72">			n.attributeKeys().forEach(k -&gt; {</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">				if (!nodeAttributes.containsKey(k)) {</span>
+<span class="nc" id="L74">					Object value = n.getAttribute(k);</span>
+					String type;
+
+<span class="nc bnc" id="L77" title="All 2 branches missed.">					if (value == null)</span>
+<span class="nc" id="L78">						return;</span>
+
+<span class="nc" id="L80">					String id = String.format(&quot;attr%04X&quot;, attribute.getAndIncrement());</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">					if (value instanceof Boolean)</span>
+<span class="nc" id="L83">						type = &quot;boolean&quot;;</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">					else if (value instanceof Long)</span>
+<span class="nc" id="L85">						type = &quot;long&quot;;</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">					else if (value instanceof Integer)</span>
+<span class="nc" id="L87">						type = &quot;int&quot;;</span>
+<span class="nc bnc" id="L88" title="All 2 branches missed.">					else if (value instanceof Double)</span>
+<span class="nc" id="L89">						type = &quot;double&quot;;</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">					else if (value instanceof Float)</span>
+<span class="nc" id="L91">						type = &quot;float&quot;;</span>
+					else
+<span class="nc" id="L93">						type = &quot;string&quot;;</span>
+
+<span class="nc" id="L95">					nodeAttributes.put(k, id);</span>
+
+					try {
+<span class="nc" id="L98">						print(&quot;\t&lt;key id=\&quot;%s\&quot; for=\&quot;node\&quot; attr.name=\&quot;%s\&quot; attr.type=\&quot;%s\&quot;/&gt;\n&quot;, id,</span>
+<span class="nc" id="L99">								escapeXmlString(k), type);</span>
+<span class="nc" id="L100">					} catch (Exception ex) {</span>
+<span class="nc" id="L101">						onException.accept(ex);</span>
+					}
+				}
+<span class="nc" id="L104">			});</span>
+<span class="nc" id="L105">		});</span>
+
+<span class="nc" id="L107">		g.edges().forEach(n -&gt; {</span>
+<span class="nc" id="L108">			n.attributeKeys().forEach(k -&gt; {</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">				if (!edgeAttributes.containsKey(k)) {</span>
+<span class="nc" id="L110">					Object value = n.getAttribute(k);</span>
+					String type;
+
+<span class="nc bnc" id="L113" title="All 2 branches missed.">					if (value == null)</span>
+<span class="nc" id="L114">						return;</span>
+
+<span class="nc" id="L116">					String id = String.format(&quot;attr%04X&quot;, attribute.getAndIncrement());</span>
+
+<span class="nc bnc" id="L118" title="All 2 branches missed.">					if (value instanceof Boolean)</span>
+<span class="nc" id="L119">						type = &quot;boolean&quot;;</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">					else if (value instanceof Long)</span>
+<span class="nc" id="L121">						type = &quot;long&quot;;</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">					else if (value instanceof Integer)</span>
+<span class="nc" id="L123">						type = &quot;int&quot;;</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">					else if (value instanceof Double)</span>
+<span class="nc" id="L125">						type = &quot;double&quot;;</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">					else if (value instanceof Float)</span>
+<span class="nc" id="L127">						type = &quot;float&quot;;</span>
+					else
+<span class="nc" id="L129">						type = &quot;string&quot;;</span>
+
+<span class="nc" id="L131">					edgeAttributes.put(k, id);</span>
+
+					try {
+<span class="nc" id="L134">						print(&quot;\t&lt;key id=\&quot;%s\&quot; for=\&quot;edge\&quot; attr.name=\&quot;%s\&quot; attr.type=\&quot;%s\&quot;/&gt;\n&quot;, id,</span>
+<span class="nc" id="L135">								escapeXmlString(k), type);</span>
+<span class="nc" id="L136">					} catch (Exception ex) {</span>
+<span class="nc" id="L137">						onException.accept(ex);</span>
+					}
+				}
+<span class="nc" id="L140">			});</span>
+<span class="nc" id="L141">		});</span>
+
+		try {
+<span class="nc" id="L144">			print(&quot;\t&lt;graph id=\&quot;%s\&quot; edgedefault=\&quot;undirected\&quot;&gt;\n&quot;, escapeXmlString(g.getId()));</span>
+<span class="nc" id="L145">		} catch (Exception e) {</span>
+<span class="nc" id="L146">			onException.accept(e);</span>
+		}
+
+<span class="nc" id="L149">		g.nodes().forEach(n -&gt; {</span>
+			try {
+<span class="nc" id="L151">				print(&quot;\t\t&lt;node id=\&quot;%s\&quot;&gt;\n&quot;, n.getId());</span>
+
+<span class="nc" id="L153">				n.attributeKeys().forEach(k -&gt; {</span>
+					try {
+<span class="nc" id="L155">						print(&quot;\t\t\t&lt;data key=\&quot;%s\&quot;&gt;%s&lt;/data&gt;\n&quot;, nodeAttributes.get(k),</span>
+<span class="nc" id="L156">								escapeXmlString(n.getAttribute(k).toString()));</span>
+<span class="nc" id="L157">					} catch (IOException e) {</span>
+<span class="nc" id="L158">						onException.accept(e);</span>
+					}
+<span class="nc" id="L160">				});</span>
+
+<span class="nc" id="L162">				print(&quot;\t\t&lt;/node&gt;\n&quot;);</span>
+<span class="nc" id="L163">			} catch (Exception ex) {</span>
+<span class="nc" id="L164">				onException.accept(ex);</span>
+			}
+<span class="nc" id="L166">		});</span>
+
+<span class="nc" id="L168">		g.edges().forEach(e -&gt; {</span>
+			try {
+<span class="nc" id="L170">				print(&quot;\t\t&lt;edge id=\&quot;%s\&quot; source=\&quot;%s\&quot; target=\&quot;%s\&quot; directed=\&quot;%s\&quot;&gt;\n&quot;, e.getId(),</span>
+<span class="nc" id="L171">						e.getSourceNode().getId(), e.getTargetNode().getId(), e.isDirected());</span>
+
+<span class="nc" id="L173">				e.attributeKeys().forEach(k -&gt; {</span>
+					try {
+<span class="nc" id="L175">						print(&quot;\t\t\t&lt;data key=\&quot;%s\&quot;&gt;%s&lt;/data&gt;\n&quot;, edgeAttributes.get(k),</span>
+<span class="nc" id="L176">								escapeXmlString(e.getAttribute(k).toString()));</span>
+<span class="nc" id="L177">					} catch (IOException e1) {</span>
+<span class="nc" id="L178">						onException.accept(e1);</span>
+					}
+<span class="nc" id="L180">				});</span>
+
+<span class="nc" id="L182">				print(&quot;\t\t&lt;/edge&gt;\n&quot;);</span>
+<span class="nc" id="L183">			} catch (Exception ex) {</span>
+<span class="nc" id="L184">				onException.accept(ex);</span>
+			}
+<span class="nc" id="L186">		});</span>
+
+		try {
+<span class="nc" id="L189">			print(&quot;\t&lt;/graph&gt;\n&quot;);</span>
+<span class="nc" id="L190">		} catch (Exception e) {</span>
+<span class="nc" id="L191">			onException.accept(e);</span>
+		}
+<span class="nc" id="L193">	}</span>
+
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L196">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L201">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L205">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L209">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L214">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L218">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L222">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L227">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L231">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L236">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L240">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L244">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L248">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L252">		throw new UnsupportedOperationException();</span>
+	}
+
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L256">		throw new UnsupportedOperationException();</span>
+	}
+
+	private static String escapeXmlString(String string) {
+		/*
+		 * Thankfully, the unescaping part is done by the xml parser used in
+		 * FileSourceGraphML
+		 */
+<span class="nc" id="L264">		return string.replace(&quot;&amp;&quot;, &quot;&amp;amp;&quot;).replace(&quot;&lt;&quot;, &quot;&amp;lt;&quot;).replace(&quot;&gt;&quot;, &quot;&amp;gt;&quot;).replace(&quot;\&quot;&quot;, &quot;&amp;quot;&quot;)</span>
+<span class="nc" id="L265">				.replace(&quot;'&quot;, &quot;&amp;apos;&quot;);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

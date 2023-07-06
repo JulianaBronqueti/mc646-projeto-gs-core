@@ -1,0 +1,729 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Environment.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util</a> &gt; <span class="el_source">Environment.java</span></div><h1>Environment.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-22
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Richard O. Legendi &lt;richard.legendi@gmail.com&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.util;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+/**
+ * Representation of a set of parameters.
+ * 
+ * &lt;p&gt;
+ * The environment class mimics the environment variables available in any shell
+ * using a hash map of keys/values, the key being the variables names, excepted
+ * here they are called parameters.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * In addition, this class provides facilities to:
+ * &lt;ul&gt;
+ * &lt;li&gt;Read a parameter file and set the parameters from this file;&lt;/li&gt;
+ * &lt;li&gt;Write a parameter file from the parameter of this environment;&lt;/li&gt;
+ * &lt;li&gt;Parse the command line and get parameters from it;&lt;/li&gt;
+ * &lt;li&gt;Take a class as argument and set all its fields having the same name as
+ * parameters in this class;&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * As in any shell, most of the time, the environment is global and accessible
+ * from any part of the system. Here a singleton instance of this class is
+ * created and accessible from anywhere in the JVM using the
+ * {@link #getGlobalEnvironment()} method (indeed the singleton instance is
+ * created at its first access). However, it is still possible to create a
+ * private instance of this class for use in a specific part of a program.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * To read a file of parameters, simply call the
+ * {@link #readParameterFile(String)} method. In the same way, to write a set of
+ * parameters to a file, call the {@link #writeParameterFile(String)} method.
+ * The format of the parameter file is given in the description of these
+ * methods.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * To read parameters from he command line, call the
+ * {@link #readCommandLine(String[])} or
+ * {@link #readCommandLine(String[], Collection)} methods. These methods expect
+ * a format for the command line that is described in there respective
+ * documentations.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * It is also possible to setup automatically the fields of an arbitrary object,
+ * provided these fields have name that match parameters in this environment. To
+ * do this call the {@link #initializeFieldsOf(Object)} method passing the
+ * object to initialise as argument. The object to setup must provide methods of
+ * the form &quot;setThing(Type)&quot; where &quot;Thing&quot; or &quot;thing&quot; is the name of the field
+ * to set and &quot;Type&quot; is one of &quot;int&quot;, &quot;long&quot;, &quot;float&quot;, &quot;double&quot;, &quot;String&quot; and
+ * &quot;boolean&quot;. For the boolean type, the accepted values meaning true are &quot;true&quot;,
+ * &quot;on&quot;, &quot;1&quot;, and &quot;yes&quot;, all other value are considered as false.
+ * &lt;/p&gt;
+ * 
+ * TODO: how (or when) does the default configuration file is read? TODO: how to
+ * handle parameters that cannot be setup in the
+ * {@link #initializeFieldsOf(Object)}?
+ * 
+ * @author Frédéric Guinand
+ * @author Yoann Pigné
+ * @author Antoine Dutot
+ * @version 1.0 (jdk 1.5)
+ */
+<span class="nc" id="L118">public class Environment implements Cloneable {</span>
+<span class="nc" id="L119">	private static final Logger logger = Logger.getLogger(Environment.class.getSimpleName());</span>
+
+	// ---------- Attributes -----------
+
+	/**
+	 * Name of the configuration file. Default is &quot;config&quot;
+	 */
+<span class="nc" id="L126">	protected String configFileName = &quot;config&quot;;</span>
+
+	/**
+	 * Has the configuration file been read yet?.
+	 */
+<span class="nc" id="L131">	protected boolean configFileRead = false;</span>
+
+	/**
+	 * Set of parameters. This is a hash table and not a hashmap since several
+	 * thread may access this class at once.
+	 */
+<span class="nc" id="L137">	protected Hashtable&lt;String, String&gt; parameters = new Hashtable&lt;String, String&gt;();</span>
+
+	/**
+	 * When locked the environment parameters value still can be changed but it is
+	 * no more possible to add new parameters.
+	 */
+	protected boolean locked;
+
+	// --------- Static attributes ---------
+
+	/**
+	 * Global environment for the whole JVM. This global environment is available
+	 * &lt;b&gt;and editable&lt;/b&gt; from everywhere. It is create as soon as the
+	 * {@link #getGlobalEnvironment()} static method is called if this field was not
+	 * yet initialized by any other mean.
+	 * 
+	 * @see #getGlobalEnvironment()
+	 */
+<span class="nc" id="L155">	public static Environment GLOBAL_ENV;</span>
+
+	// --------- Static methods -----------
+
+	/**
+	 * Access to the global shared environment for the whole JVM. This method allows
+	 * to access a shared environment, that can be read and written from anywhere.
+	 * 
+	 * @return A singleton instance of the global environment.
+	 */
+	public static Environment getGlobalEnvironment() {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		if (GLOBAL_ENV == null)</span>
+<span class="nc" id="L167">			GLOBAL_ENV = new Environment();</span>
+
+<span class="nc" id="L169">		return GLOBAL_ENV;</span>
+	}
+
+	// --------- Methods -------------
+
+	/**
+	 * Is the environment locked?.
+	 * 
+	 * @return True if the environment is locked.
+	 * @see #lockEnvironment(boolean)
+	 */
+	public boolean isLocked() {
+<span class="nc" id="L181">		return locked;</span>
+	}
+
+	/**
+	 * Access to a parameter in the environment.
+	 * 
+	 * @param parameter
+	 *            The parameter name.
+	 * @return The parameter value (empty string if not set).
+	 */
+	public String getParameter(String parameter) {
+<span class="nc" id="L192">		String p = parameters.get(parameter);</span>
+
+<span class="nc bnc" id="L194" title="All 2 branches missed.">		return (p == null) ? &quot;&quot; : p;</span>
+	}
+
+	/**
+	 * True if the given paramter exist.
+	 * 
+	 * @param parameter
+	 *            The parameter name.
+	 * @return True if the given paramter name points to a value.
+	 */
+	public boolean hasParameter(String parameter) {
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		return (parameters.get(parameter) != null);</span>
+	}
+
+	/**
+	 * Check a parameter expected to be of boolean type. This method returns &quot;true&quot;
+	 * if the parameter exists and has a value that is &quot;1&quot;, &quot;true&quot;, &quot;on&quot; or &quot;yes&quot;
+	 * (with any possible combination of upper or lower-case letters). For any other
+	 * values of the parameter or if the parameter does not exist in the
+	 * environment, &quot;false&quot; is returned.
+	 * 
+	 * @param parameter
+	 *            The parameter name.
+	 * @return True if the parameter value means &quot;true&quot;, false for any other value
+	 *         or if the parameter does not exist.
+	 * @see #getBooleanParameteri(String)
+	 */
+	public boolean getBooleanParameter(String parameter) {
+<span class="nc" id="L222">		int val = getBooleanParameteri(parameter);</span>
+
+<span class="nc bnc" id="L224" title="All 2 branches missed.">		return (val == 1);</span>
+	}
+
+	/**
+	 * Check a parameter expected to be of boolean type. This method returns the
+	 * value 1 if the parameter has value &quot;1&quot;, &quot;true&quot;, &quot;on&quot;, &quot;yes&quot; (the case does
+	 * not matter). Else it returns 0. To account the case of non-existing
+	 * parameters, this method returns -1 if the given parameter does not exist.
+	 * 
+	 * @param parameter
+	 *            The parameter name.
+	 * @return 1 if the parameter value means &quot;true&quot;, 0 if it has any other value,
+	 *         or -1 if it does not exist.
+	 * @see #getBooleanParameter(String)
+	 */
+	public int getBooleanParameteri(String parameter) {
+<span class="nc" id="L240">		String p = parameters.get(parameter);</span>
+
+<span class="nc bnc" id="L242" title="All 2 branches missed.">		if (p != null) {</span>
+<span class="nc" id="L243">			p = p.toLowerCase();</span>
+
+<span class="nc bnc" id="L245" title="All 2 branches missed.">			if (p.equals(&quot;1&quot;))</span>
+<span class="nc" id="L246">				return 1;</span>
+<span class="nc bnc" id="L247" title="All 2 branches missed.">			if (p.equals(&quot;true&quot;))</span>
+<span class="nc" id="L248">				return 1;</span>
+<span class="nc bnc" id="L249" title="All 2 branches missed.">			if (p.equals(&quot;on&quot;))</span>
+<span class="nc" id="L250">				return 1;</span>
+<span class="nc bnc" id="L251" title="All 2 branches missed.">			if (p.equals(&quot;yes&quot;))</span>
+<span class="nc" id="L252">				return 1;</span>
+
+<span class="nc" id="L254">			return 0;</span>
+		}
+
+<span class="nc" id="L257">		return -1;</span>
+	}
+
+	/**
+	 * Get the value of a parameter that is expected to be a number. If the
+	 * parameter does not exist or is not a number, 0 is returned.
+	 * 
+	 * @param parameter
+	 *            The parameter name.
+	 * @return The numeric value of the parameter. 0 if the parameter does not exist
+	 *         or is not a number.
+	 */
+	public double getNumberParameter(String parameter) {
+<span class="nc" id="L270">		String p = parameters.get(parameter);</span>
+
+<span class="nc bnc" id="L272" title="All 2 branches missed.">		if (p != null) {</span>
+			try {
+<span class="nc" id="L274">				return Double.parseDouble(p);</span>
+<span class="nc" id="L275">			} catch (NumberFormatException e) {</span>
+<span class="nc" id="L276">				return 0;</span>
+			}
+		}
+
+<span class="nc" id="L280">		return 0;</span>
+	}
+
+	/**
+	 * Returns the number of parameters found in the configuration file.
+	 * 
+	 * @return The number of parameters found in the configuration file.
+	 */
+	public int getParameterCount() {
+<span class="nc" id="L289">		return parameters.size();</span>
+	}
+
+	/**
+	 * Set of all parameter names.
+	 * 
+	 * @return A set of all the names identifying parameters in this environment.
+	 */
+	public Set&lt;String&gt; getParametersKeySet() {
+<span class="nc" id="L298">		return parameters.keySet();</span>
+	}
+
+	/**
+	 * Generate a new Environment object with a deep copy of the elements this
+	 * object.
+	 * 
+	 * @return An Environment object identical to this one
+	 */
+	@Override
+	public Environment clone() {
+<span class="nc" id="L309">		Environment e = new Environment();</span>
+<span class="nc" id="L310">		e.configFileName = configFileName;</span>
+<span class="nc" id="L311">		e.configFileRead = configFileRead;</span>
+<span class="nc" id="L312">		e.locked = locked;</span>
+<span class="nc bnc" id="L313" title="All 2 branches missed.">		for (String key : parameters.keySet()) {</span>
+<span class="nc" id="L314">			e.parameters.put(key, parameters.get(key));</span>
+		}
+<span class="nc" id="L316">		return e;</span>
+	}
+
+	/**
+	 * Set the value of a parameter. If the parameter already exists its old value
+	 * is overwritten. This works only if the environment is not locked.
+	 * 
+	 * @param parameter
+	 *            The parameter name.
+	 * @param value
+	 *            The new parameter value.
+	 * @see #isLocked()
+	 * @see #lockEnvironment(boolean)
+	 */
+	public void setParameter(String parameter, String value) {
+<span class="nc bnc" id="L331" title="All 2 branches missed.">		if (!locked) {</span>
+<span class="nc" id="L332">			parameters.put(parameter, value);</span>
+<span class="nc" id="L333">		} else {</span>
+<span class="nc bnc" id="L334" title="All 2 branches missed.">			if (parameters.get(parameter) != null)</span>
+<span class="nc" id="L335">				parameters.put(parameter, value);</span>
+		}
+<span class="nc" id="L337">	}</span>
+
+	/**
+	 * Disallow the addition of new parameters. The already declared parameters are
+	 * still modifiable, but no new parameter can be added.
+	 * 
+	 * @param on
+	 *            If true the environment is locked.
+	 */
+	public void lockEnvironment(boolean on) {
+<span class="nc" id="L347">		locked = on;</span>
+<span class="nc" id="L348">	}</span>
+
+	/**
+	 * Initialize all the fields of the given object whose name correspond to
+	 * parameters of this environment. This works only if the object to initialize
+	 * provides methods that begins by &quot;set&quot;. For example if the object provides a
+	 * method named &quot;setThing(int value)&quot;, and if there is a parameter named &quot;thing&quot;
+	 * in this environment and its value is convertible to an integer, then the
+	 * method &quot;setThing()&quot; will be invoked on the object with the correct value.
+	 * 
+	 * @see #initializeFieldsOf(Object, String[])
+	 * @see #initializeFieldsOf(Object, Collection)
+	 * @param object
+	 *            The object to initialize.
+	 */
+	public void initializeFieldsOf(Object object) {
+<span class="nc" id="L364">		Method[] methods = object.getClass().getMethods();</span>
+
+<span class="nc bnc" id="L366" title="All 2 branches missed.">		for (Method method : methods) {</span>
+<span class="nc bnc" id="L367" title="All 2 branches missed.">			if (method.getName().startsWith(&quot;set&quot;)) {</span>
+<span class="nc" id="L368">				Class&lt;?&gt; types[] = method.getParameterTypes();</span>
+
+<span class="nc bnc" id="L370" title="All 2 branches missed.">				if (types.length == 1) {</span>
+<span class="nc" id="L371">					String name = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);</span>
+<span class="nc" id="L372">					String value = parameters.get(name);</span>
+
+<span class="nc bnc" id="L374" title="All 2 branches missed.">					if (value != null) {</span>
+<span class="nc" id="L375">						invokeSetMethod(object, method, types, name, value);</span>
+					}
+				}
+			}
+		}
+<span class="nc" id="L380">	}</span>
+
+	/**
+	 * Initialize all the fields of the given object that both appear in the given
+	 * field list and whose name correspond to parameters of this environment. See
+	 * the {@link #initializeFieldsOf(Object)} method description.
+	 * 
+	 * @see #initializeFieldsOf(Object)
+	 * @see #initializeFieldsOf(Object, Collection)
+	 * @param object
+	 *            The object to initialize.
+	 * @param fieldList
+	 *            The name of the fields to initialize in the object.
+	 */
+	public void initializeFieldsOf(Object object, String... fieldList) {
+<span class="nc" id="L395">		Method[] methods = object.getClass().getMethods();</span>
+<span class="nc" id="L396">		HashSet&lt;String&gt; names = new HashSet&lt;String&gt;();</span>
+
+<span class="nc bnc" id="L398" title="All 2 branches missed.">		for (String s : fieldList)</span>
+<span class="nc" id="L399">			names.add(s);</span>
+
+<span class="nc bnc" id="L401" title="All 2 branches missed.">		for (Method method : methods) {</span>
+<span class="nc bnc" id="L402" title="All 2 branches missed.">			if (method.getName().startsWith(&quot;set&quot;)) {</span>
+<span class="nc" id="L403">				Class&lt;?&gt; types[] = method.getParameterTypes();</span>
+
+<span class="nc bnc" id="L405" title="All 2 branches missed.">				if (types.length == 1) {</span>
+<span class="nc" id="L406">					String name = method.getName().substring(3, 4).toLowerCase() + method.getName().substring(4);</span>
+
+<span class="nc bnc" id="L408" title="All 2 branches missed.">					if (names.contains(name)) {</span>
+<span class="nc" id="L409">						String value = parameters.get(name);</span>
+
+<span class="nc bnc" id="L411" title="All 2 branches missed.">						if (value != null) {</span>
+<span class="nc" id="L412">							invokeSetMethod(object, method, types, name, value);</span>
+						}
+					}
+				}
+			}
+		}
+<span class="nc" id="L418">	}</span>
+
+	/**
+	 * Initialize all the fields of the given object that both appear in the given
+	 * field list and whose name correspond to parameters of this environment. See
+	 * the {@link #initializeFieldsOf(Object)} method description.
+	 * 
+	 * @see #initializeFieldsOf(Object)
+	 * @see #initializeFieldsOf(Object, String[])
+	 * @param object
+	 *            The object to initialize.
+	 * @param fieldList
+	 *            The name of the fields to initialize in the object.
+	 */
+	protected void initializeFieldsOf(Object object, Collection&lt;String&gt; fieldList) {
+<span class="nc" id="L433">		Method[] methods = object.getClass().getMethods();</span>
+
+<span class="nc bnc" id="L435" title="All 2 branches missed.">		for (Method method : methods) {</span>
+<span class="nc bnc" id="L436" title="All 2 branches missed.">			if (method.getName().startsWith(&quot;set&quot;)) {</span>
+<span class="nc" id="L437">				Class&lt;?&gt; types[] = method.getParameterTypes();</span>
+
+<span class="nc bnc" id="L439" title="All 2 branches missed.">				if (types.length == 1) {</span>
+<span class="nc" id="L440">					String name = method.getName().substring(3).toLowerCase();</span>
+
+<span class="nc bnc" id="L442" title="All 2 branches missed.">					if (fieldList.contains(name)) {</span>
+<span class="nc" id="L443">						String value = parameters.get(name);</span>
+
+<span class="nc bnc" id="L445" title="All 2 branches missed.">						if (value != null) {</span>
+<span class="nc" id="L446">							invokeSetMethod(object, method, types, name, value);</span>
+						}
+					}
+				}
+			}
+		}
+<span class="nc" id="L452">	}</span>
+
+	protected void invokeSetMethod(Object object, Method method, Class&lt;?&gt; types[], String name, String value) {
+		try {
+			// XXX a way to avoid this overlong and repetitive
+			// list of setters ?
+
+<span class="nc bnc" id="L459" title="All 2 branches missed.">			if (types[0] == Long.TYPE) {</span>
+				try {
+<span class="nc" id="L461">					long val = Long.parseLong(value);</span>
+<span class="nc" id="L462">					method.invoke(object, new Long(val));</span>
+<span class="nc" id="L463">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L464">					logger.warning(String.format(&quot;cannot set '%s' to the value '%s', values is not a long%n&quot;,</span>
+<span class="nc" id="L465">							method.toString(), value));</span>
+				}
+<span class="nc bnc" id="L467" title="All 2 branches missed.">			} else if (types[0] == Integer.TYPE) {</span>
+				try {
+<span class="nc" id="L469">					int val = (int) Double.parseDouble(value);</span>
+<span class="nc" id="L470">					method.invoke(object, new Integer(val));</span>
+<span class="nc" id="L471">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L472">					logger.warning(String.format(&quot;cannot set '%s' to the value '%s', values is not a int%n&quot;,</span>
+<span class="nc" id="L473">							method.toString(), value));</span>
+				}
+<span class="nc bnc" id="L475" title="All 2 branches missed.">			} else if (types[0] == Double.TYPE) {</span>
+				try {
+<span class="nc" id="L477">					double val = Double.parseDouble(value);</span>
+<span class="nc" id="L478">					method.invoke(object, new Double(val));</span>
+<span class="nc" id="L479">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L480">					logger.warning(String.format(&quot;cannot set '%s' to the value '%s', values is not a double%n&quot;,</span>
+<span class="nc" id="L481">							method.toString(), value));</span>
+				}
+<span class="nc bnc" id="L483" title="All 2 branches missed.">			} else if (types[0] == Float.TYPE) {</span>
+				try {
+<span class="nc" id="L485">					float val = Float.parseFloat(value);</span>
+<span class="nc" id="L486">					method.invoke(object, new Float(val));</span>
+<span class="nc" id="L487">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L488">					logger.warning(String.format(&quot;cannot set '%s' to the value '%s', values is not a float%n&quot;,</span>
+<span class="nc" id="L489">							method.toString(), value));</span>
+				}
+<span class="nc bnc" id="L491" title="All 2 branches missed.">			} else if (types[0] == Boolean.TYPE) {</span>
+				try {
+<span class="nc" id="L493">					boolean val = false;</span>
+<span class="nc" id="L494">					value = value.toLowerCase();</span>
+
+<span class="nc bnc" id="L496" title="All 8 branches missed.">					if (value.equals(&quot;1&quot;) || value.equals(&quot;true&quot;) || value.equals(&quot;yes&quot;) || value.equals(&quot;on&quot;))</span>
+<span class="nc" id="L497">						val = true;</span>
+
+<span class="nc" id="L499">					method.invoke(object, new Boolean(val));</span>
+<span class="nc" id="L500">				} catch (NumberFormatException e) {</span>
+<span class="nc" id="L501">					logger.warning(String.format(&quot;cannot set '%s' to the value '%s', values is not a boolean%n&quot;,</span>
+<span class="nc" id="L502">							method.toString(), value));</span>
+				}
+<span class="nc bnc" id="L504" title="All 2 branches missed.">			} else if (types[0] == String.class) {</span>
+<span class="nc" id="L505">				method.invoke(object, value);</span>
+<span class="nc" id="L506">			} else {</span>
+<span class="nc" id="L507">				logger.warning(</span>
+<span class="nc" id="L508">						String.format(&quot;cannot match parameter '%s' and the method '%s'%n&quot;, value, method.toString()));</span>
+			}
+<span class="nc" id="L510">		} catch (InvocationTargetException ite) {</span>
+<span class="nc" id="L511">			logger.warning(String.format(&quot;cannot invoke method '%s' : invocation targer error : %s%n&quot;,</span>
+<span class="nc" id="L512">					method.toString(), ite.getMessage()));</span>
+<span class="nc" id="L513">		} catch (IllegalAccessException iae) {</span>
+<span class="nc" id="L514">			logger.warning(String.format(&quot;cannot invoke method '%s' : illegal access error : %s%n&quot;, method.toString(),</span>
+<span class="nc" id="L515">					iae.getMessage()));</span>
+		}
+<span class="nc" id="L517">	}</span>
+
+	/**
+	 * Print all parameters to the given stream.
+	 * 
+	 * @param out
+	 *            The output stream to use.
+	 */
+	public void printParameters(PrintStream out) {
+<span class="nc" id="L526">		out.println(toString());</span>
+<span class="nc" id="L527">	}</span>
+
+	/**
+	 * Print all parameters the stdout.
+	 */
+	public void printParameters() {
+<span class="nc" id="L533">		printParameters(System.out);</span>
+<span class="nc" id="L534">	}</span>
+
+	@Override
+	public String toString() {
+<span class="nc" id="L538">		return parameters.toString();</span>
+	}
+
+	/**
+	 * Read the parameters from the given command line array. See the more complete
+	 * {@link #readCommandLine(String[], Collection)} method.
+	 * 
+	 * @param args
+	 *            The command line.
+	 */
+	public void readCommandLine(String[] args) {
+<span class="nc" id="L549">		readCommandLine(args, null);</span>
+<span class="nc" id="L550">	}</span>
+
+	/**
+	 * Read the parameters from the given command line array. The expected format of
+	 * this array is the following:
+	 * &lt;ul&gt;
+	 * &lt;li&gt;a word beginning by a &quot;-&quot; is the parameter name (for example
+	 * &quot;-param&quot;);&lt;/li&gt;
+	 * &lt;li&gt;if this word is immediately followed by a &quot;=&quot; and another word, this word
+	 * is considered as its string value (for example &quot;-param=aValue&quot;);&lt;/li&gt;
+	 * &lt;li&gt;If the parameter name is not followed by &quot;=&quot;, it is considered a boolean
+	 * option and its value is set to the string &quot;true&quot; (to set this to false simply
+	 * give the string &quot;-param=false&quot;);&lt;/li&gt;
+	 * &lt;li&gt;If a word is found on the command line without any preceding &quot;-&quot; but is
+	 * followed by a &quot;=&quot; and by another word, then it is considered as a key,value
+	 * brace&lt;/li&gt;
+	 * &lt;li&gt;If a word is found on the command line without any preceding &quot;-&quot; and is
+	 * not followed by any &quot;=&quot;, the it is considered to be a filename for a
+	 * configuration file. The method will try to open this file for reading. A
+	 * configuration file is composed of lines. Each line is composed of a brace
+	 * key/value separated by a &quot;=&quot;. If a line starts with a &quot;#&quot;, then it is
+	 * considered as a comment. Finally if no format is recognized the line is
+	 * inserted to the &lt;code&gt;trashcan&lt;/code&gt;.&lt;/li&gt;
+	 * &lt;/ul&gt;
+	 * 
+	 * @param args
+	 *            The command line.
+	 * @param trashcan
+	 *            Will be filled by the set of unparsed strings (can be null if
+	 *            these strings can be ignored).
+	 */
+	public void readCommandLine(String[] args, Collection&lt;String&gt; trashcan) {
+<span class="nc bnc" id="L582" title="All 2 branches missed.">		for (String arg : args) {</span>
+<span class="nc" id="L583">			boolean startsWithMinus = arg.startsWith(&quot;-&quot;);</span>
+<span class="nc" id="L584">			int equalPos = arg.indexOf('=');</span>
+<span class="nc" id="L585">			String value = &quot;true&quot;;</span>
+<span class="nc bnc" id="L586" title="All 2 branches missed.">			if (equalPos &gt;= 0) {</span>
+<span class="nc" id="L587">				value = arg.substring(equalPos + 1);</span>
+<span class="nc bnc" id="L588" title="All 2 branches missed.">				if (startsWithMinus) {</span>
+<span class="nc" id="L589">					arg = arg.substring(1, equalPos);</span>
+<span class="nc" id="L590">				} else {</span>
+<span class="nc" id="L591">					arg = arg.substring(0, equalPos);</span>
+				}
+<span class="nc" id="L593">				parameters.put(arg, value);</span>
+<span class="nc" id="L594">			} else {</span>
+<span class="nc bnc" id="L595" title="All 2 branches missed.">				if (startsWithMinus) {</span>
+<span class="nc" id="L596">					arg = arg.substring(1);</span>
+<span class="nc" id="L597">					parameters.put(arg, value);</span>
+<span class="nc" id="L598">				} else {</span>
+<span class="nc" id="L599">					readConfigFile(arg, trashcan);</span>
+				}
+			}
+		}
+<span class="nc" id="L603">	}</span>
+
+	/**
+	 * Internal method that reads a configuration file.
+	 */
+	protected void readConfigFile(String filename, Collection&lt;String&gt; trashcan) {
+		BufferedReader br;
+<span class="nc" id="L610">		int count = 0;</span>
+		try {
+<span class="nc" id="L612">			br = new BufferedReader(new FileReader(filename));</span>
+			String str;
+<span class="nc bnc" id="L614" title="All 2 branches missed.">			while ((str = br.readLine()) != null) {</span>
+<span class="nc" id="L615">				count++;</span>
+<span class="nc bnc" id="L616" title="All 4 branches missed.">				if (str.length() &gt; 0 &amp;&amp; !str.substring(0, 1).equals(&quot;#&quot;)) {</span>
+<span class="nc" id="L617">					String[] val = str.split(&quot;=&quot;);</span>
+<span class="nc bnc" id="L618" title="All 2 branches missed.">					if (val.length != 2) {</span>
+<span class="nc bnc" id="L619" title="All 2 branches missed.">						if (val.length == 1) {</span>
+<span class="nc" id="L620">							parameters.put(val[0].trim(), &quot;true&quot;);</span>
+<span class="nc" id="L621">						} else {</span>
+<span class="nc" id="L622">							logger.warning(String.format(</span>
+<span class="nc" id="L623">									&quot;Something is wrong with the configuration file \&quot;%s\&quot;near line %d :\n %s&quot;,</span>
+<span class="nc" id="L624">									filename, count, str));</span>
+<span class="nc bnc" id="L625" title="All 2 branches missed.">							if (trashcan != null) {</span>
+<span class="nc" id="L626">								trashcan.add(str);</span>
+							}
+						}
+<span class="nc" id="L629">					} else {</span>
+<span class="nc" id="L630">						String s0 = val[0].trim();</span>
+<span class="nc" id="L631">						String s1 = val[1].trim();</span>
+<span class="nc" id="L632">						parameters.put(s0, s1);</span>
+					}
+				}
+			}
+
+<span class="nc" id="L637">		} catch (FileNotFoundException fnfe) {</span>
+<span class="nc" id="L638">			System.err.printf(&quot;Tried to open \&quot;%s\&quot; as a config file: file not found.%n&quot;, filename);</span>
+<span class="nc bnc" id="L639" title="All 2 branches missed.">			if (trashcan != null) {</span>
+<span class="nc" id="L640">				trashcan.add(filename);</span>
+			}
+<span class="nc" id="L642">		} catch (IOException ioe) {</span>
+<span class="nc" id="L643">			ioe.printStackTrace();</span>
+<span class="nc" id="L644">			System.exit(0);</span>
+		}
+<span class="nc" id="L646">	}</span>
+
+	/**
+	 * Save the curent parameters to a file.
+	 * 
+	 * @param fileName
+	 *            Name of the file to save the config in.
+	 * @throws IOException
+	 *             For any output error on the given file name.
+	 */
+	public void writeParameterFile(String fileName) throws IOException {
+<span class="nc" id="L657">		BufferedWriter bw = new BufferedWriter(new FileWriter(fileName));</span>
+<span class="nc" id="L658">		Set&lt;String&gt; ks = parameters.keySet();</span>
+
+<span class="nc bnc" id="L660" title="All 2 branches missed.">		for (String key : ks) {</span>
+<span class="nc" id="L661">			bw.write(key + &quot; = &quot; + parameters.get(key));</span>
+<span class="nc" id="L662">			bw.newLine();</span>
+		}
+
+<span class="nc" id="L665">		bw.close();</span>
+<span class="nc" id="L666">	}</span>
+
+	/**
+	 * Read the default configuration file. Once this file has been correctly
+	 * parsed, the {@link #configFileRead} boolean is set to true.
+	 * 
+	 * @see #configFileName
+	 */
+	protected void readConfigurationFile() {
+		try {
+<span class="nc" id="L676">			readParameterFile(configFileName);</span>
+<span class="nc" id="L677">			configFileRead = true;</span>
+<span class="nc" id="L678">		} catch (IOException ioe) {</span>
+<span class="nc" id="L679">			logger.log(Level.WARNING, String.format(&quot;%-5s : %s : %s\n&quot;, &quot;Warning&quot;, &quot;Environment&quot;,</span>
+<span class="nc" id="L680">					&quot;Something wrong while reading the configuration file.&quot;), ioe);</span>
+		}
+<span class="nc" id="L682">	}</span>
+
+	/**
+	 * Read a parameter file. The format of this file is as follows:
+	 * &lt;ul&gt;
+	 * &lt;li&gt;Each line contains a parameter setting or a comment;&lt;/li&gt;
+	 * &lt;li&gt;Lines beginning by a &quot;#&quot; are considered comments (be careful, a &quot;#&quot; in
+	 * the middle of a line &lt;b&gt;is not&lt;/b&gt; a comment);&lt;/li&gt;
+	 * &lt;li&gt;parameters settings are of the form &quot;name=value&quot;, spaces are allowed, but
+	 * space before and after the parameter name of value will be stripped.&lt;/li&gt;
+	 * &lt;/ul&gt;
+	 * 
+	 * @param fileName
+	 *            Name of the parameter file to read.
+	 * @throws IOException
+	 *             For any error with the given parameter file name.
+	 */
+	public void readParameterFile(String fileName) throws IOException {
+		BufferedReader br;
+<span class="nc" id="L701">		int count = 0;</span>
+
+<span class="nc" id="L703">		br = new BufferedReader(new FileReader(fileName));</span>
+
+		String str;
+
+<span class="nc bnc" id="L707" title="All 2 branches missed.">		while ((str = br.readLine()) != null) {</span>
+<span class="nc" id="L708">			count++;</span>
+
+<span class="nc bnc" id="L710" title="All 4 branches missed.">			if (str.length() &gt; 0 &amp;&amp; !str.startsWith(&quot;#&quot;)) {</span>
+<span class="nc" id="L711">				String[] val = str.split(&quot;=&quot;);</span>
+
+<span class="nc bnc" id="L713" title="All 2 branches missed.">				if (val.length != 2) {</span>
+<span class="nc" id="L714">					logger.warning(String.format(&quot;%-5s : %s : %s\n&quot;, &quot;Warn&quot;, &quot;Environment&quot;,</span>
+<span class="nc" id="L715">							&quot;Something is wrong in your configuration file near line &quot; + count + &quot; : \n&quot;</span>
+<span class="nc" id="L716">									+ Arrays.toString(val)));</span>
+<span class="nc" id="L717">				} else {</span>
+<span class="nc" id="L718">					String s0 = val[0].trim();</span>
+<span class="nc" id="L719">					String s1 = val[1].trim();</span>
+
+<span class="nc" id="L721">					setParameter(s0, s1);</span>
+				}
+			}
+		}
+
+<span class="nc" id="L726">		br.close();</span>
+<span class="nc" id="L727">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

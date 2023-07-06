@@ -1,0 +1,519 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GMLParser.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.gml</a> &gt; <span class="el_source">GMLParser.java</span></div><h1>GMLParser.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-04
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.gml;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.Reader;
+
+import org.graphstream.stream.file.FileSourceGML;
+
+import org.graphstream.util.parser.ParseException;
+import org.graphstream.util.parser.Parser;
+import org.graphstream.util.parser.SimpleCharStream;
+import org.graphstream.util.parser.Token;
+import org.graphstream.util.parser.TokenMgrError;
+
+@SuppressWarnings(&quot;unused&quot;)
+public class GMLParser implements Parser, GMLParserConstants {
+<span class="nc" id="L49">	boolean inGraph = false;</span>
+	GMLContext ctx;
+	boolean step;
+
+	public GMLParser(FileSourceGML gml, InputStream stream) {
+<span class="nc" id="L54">		this(stream);</span>
+<span class="nc" id="L55">		this.ctx = new GMLContext(gml);</span>
+<span class="nc" id="L56">	}</span>
+
+	public GMLParser(FileSourceGML gml, Reader stream) {
+<span class="nc" id="L59">		this(stream);</span>
+<span class="nc" id="L60">		this.ctx = new GMLContext(gml);</span>
+<span class="nc" id="L61">	}</span>
+
+	public boolean isInGraph() {
+<span class="nc" id="L64">		return inGraph;</span>
+	}
+
+	public void open() throws IOException, ParseException {
+<span class="nc" id="L68">	}</span>
+
+	public boolean next() throws IOException, ParseException {
+<span class="nc" id="L71">		KeyValues kv = null;</span>
+<span class="nc" id="L72">		kv = nextEvents();</span>
+<span class="nc" id="L73">		ctx.handleKeyValues(kv);</span>
+
+<span class="nc bnc" id="L75" title="All 2 branches missed.">		return (kv != null);</span>
+	}
+
+	public boolean step() throws IOException, ParseException {
+<span class="nc" id="L79">		KeyValues kv = null;</span>
+<span class="nc" id="L80">		step = false;</span>
+
+<span class="nc bnc" id="L82" title="All 4 branches missed.">		while ((kv = nextEvents()) != null &amp;&amp; !step)</span>
+<span class="nc" id="L83">			ctx.handleKeyValues(kv);</span>
+
+<span class="nc bnc" id="L85" title="All 2 branches missed.">		if (kv != null)</span>
+<span class="nc" id="L86">			ctx.setNextStep(kv);</span>
+
+<span class="nc bnc" id="L88" title="All 2 branches missed.">		return (kv != null);</span>
+	}
+
+	/**
+	 * Closes the parser, closing the opened stream.
+	 */
+	public void close() throws IOException {
+<span class="nc" id="L95">		jj_input_stream.close();</span>
+<span class="nc" id="L96">	}</span>
+
+	/*****************************************************************/
+	/* The parser. */
+	/*****************************************************************/
+
+	/** Unused rule, call it to slurp in the whole file. */
+	final public void start() throws ParseException {
+<span class="nc" id="L104">		list();</span>
+<span class="nc" id="L105">	}</span>
+
+	final public void all() throws ParseException, IOException {
+<span class="nc" id="L108">		KeyValues values = new KeyValues();</span>
+		String key;
+<span class="nc bnc" id="L110" title="All 5 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case GRAPH:
+<span class="nc" id="L112">			graphStart();</span>
+<span class="nc" id="L113">			ctx.setIsInGraph(true);</span>
+<span class="nc" id="L114">			ctx.setDirected(false);</span>
+<span class="nc" id="L115">			break;</span>
+		case DIGRAPH:
+<span class="nc" id="L117">			diGraphStart();</span>
+<span class="nc" id="L118">			ctx.setIsInGraph(true);</span>
+<span class="nc" id="L119">			ctx.setDirected(true);</span>
+<span class="nc" id="L120">			break;</span>
+		default:
+<span class="nc" id="L122">			jj_la1[0] = jj_gen;</span>
+<span class="nc" id="L123">			jj_consume_token(-1);</span>
+<span class="nc" id="L124">			throw new ParseException();</span>
+		}
+<span class="nc" id="L126">		label_1: while (true) {</span>
+<span class="nc bnc" id="L127" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case STRING:
+			case KEY:
+			case COMMENT:
+				;
+<span class="nc" id="L132">				break;</span>
+			default:
+<span class="nc" id="L134">				jj_la1[1] = jj_gen;</span>
+<span class="nc" id="L135">				break label_1;</span>
+			}
+<span class="nc" id="L137">			key = keyValue(values);</span>
+<span class="nc" id="L138">			values.key = key;</span>
+<span class="nc" id="L139">			ctx.handleKeyValues(values);</span>
+<span class="nc" id="L140">			values.clear();</span>
+		}
+<span class="nc" id="L142">		graphEnd();</span>
+<span class="nc" id="L143">		values.key = null;</span>
+<span class="nc" id="L144">		inGraph = false;</span>
+<span class="nc" id="L145">		jj_consume_token(0);</span>
+<span class="nc" id="L146">	}</span>
+
+	final public void graphStart() throws ParseException {
+<span class="nc" id="L149">		jj_consume_token(GRAPH);</span>
+<span class="nc" id="L150">		jj_consume_token(LSQBR);</span>
+<span class="nc" id="L151">	}</span>
+
+	final public void diGraphStart() throws ParseException {
+<span class="nc" id="L154">		jj_consume_token(DIGRAPH);</span>
+<span class="nc" id="L155">		jj_consume_token(LSQBR);</span>
+<span class="nc" id="L156">	}</span>
+
+	final public void graphEnd() throws ParseException {
+<span class="nc" id="L159">		jj_consume_token(RSQBR);</span>
+<span class="nc" id="L160">	}</span>
+
+	/**
+	 * The top-level method to be called by the file source. Returns a set of
+	 * top-level key values or null if the end of the file was reached.
+	 * 
+	 * Top-level key values are nodes and edges as well as all key-values defined
+	 * before and after the graph.
+	 */
+	final public KeyValues nextEvents() throws ParseException {
+<span class="nc" id="L170">		KeyValues values = new KeyValues();</span>
+		String key;
+<span class="nc bnc" id="L172" title="All 8 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case GRAPH:
+<span class="nc" id="L174">			graphStart();</span>
+<span class="nc" id="L175">			values.key = null;</span>
+<span class="nc" id="L176">			ctx.setIsInGraph(true);</span>
+<span class="nc" id="L177">			ctx.setDirected(false);</span>
+<span class="nc" id="L178">			break;</span>
+		case DIGRAPH:
+<span class="nc" id="L180">			diGraphStart();</span>
+<span class="nc" id="L181">			values.key = null;</span>
+<span class="nc" id="L182">			ctx.setIsInGraph(true);</span>
+<span class="nc" id="L183">			ctx.setDirected(true);</span>
+<span class="nc" id="L184">			break;</span>
+		case RSQBR:
+<span class="nc" id="L186">			graphEnd();</span>
+<span class="nc" id="L187">			values.key = null;</span>
+<span class="nc" id="L188">			ctx.setIsInGraph(false);</span>
+<span class="nc" id="L189">			break;</span>
+		case STRING:
+		case KEY:
+		case COMMENT:
+<span class="nc" id="L193">			key = keyValue(values);</span>
+<span class="nc" id="L194">			values.key = key;</span>
+<span class="nc" id="L195">			break;</span>
+		case 0:
+<span class="nc" id="L197">			jj_consume_token(0);</span>
+<span class="nc" id="L198">			values = null;</span>
+<span class="nc" id="L199">			break;</span>
+		default:
+<span class="nc" id="L201">			jj_la1[2] = jj_gen;</span>
+<span class="nc" id="L202">			jj_consume_token(-1);</span>
+<span class="nc" id="L203">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L207">				return values;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	/**
+	 * A list of key values, all values are stored in a KeyValues object.
+	 */
+	final public KeyValues list() throws ParseException {
+<span class="nc" id="L216">		KeyValues values = new KeyValues();</span>
+<span class="nc" id="L217">		label_2: while (true) {</span>
+<span class="nc bnc" id="L218" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case STRING:
+			case KEY:
+			case COMMENT:
+				;
+<span class="nc" id="L223">				break;</span>
+			default:
+<span class="nc" id="L225">				jj_la1[3] = jj_gen;</span>
+<span class="nc" id="L226">				break label_2;</span>
+			}
+<span class="nc" id="L228">			keyValue(values);</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L232">				return values;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	/**
+	 * A set of key and value, the value can recursively be a list of key-values.
+	 * Only the key-value list &quot;graph [ ... ]&quot; is not parsed by this rule, and
+	 * parsed by another rules, so that the nextEvent() rule can be called
+	 * repeatedly.
+	 */
+	final public String keyValue(KeyValues values) throws ParseException {
+		Token k;
+		String key;
+		Object v;
+<span class="nc" id="L247">		boolean isGraph = false;</span>
+<span class="nc" id="L248">		label_3: while (true) {</span>
+<span class="nc bnc" id="L249" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case COMMENT:
+				;
+<span class="nc" id="L252">				break;</span>
+			default:
+<span class="nc" id="L254">				jj_la1[4] = jj_gen;</span>
+<span class="nc" id="L255">				break label_3;</span>
+			}
+<span class="nc" id="L257">			jj_consume_token(COMMENT);</span>
+		}
+<span class="nc bnc" id="L259" title="All 5 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case KEY:
+<span class="nc" id="L261">			k = jj_consume_token(KEY);</span>
+<span class="nc" id="L262">			key = k.image;</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">			if (key.equalsIgnoreCase(&quot;step&quot;))</span>
+<span class="nc" id="L264">				step = true;</span>
+<span class="nc" id="L265">			break;</span>
+		case STRING:
+<span class="nc" id="L267">			k = jj_consume_token(STRING);</span>
+<span class="nc" id="L268">			key = k.image.substring(1, k.image.length() - 2);</span>
+<span class="nc" id="L269">			break;</span>
+		default:
+<span class="nc" id="L271">			jj_la1[5] = jj_gen;</span>
+<span class="nc" id="L272">			jj_consume_token(-1);</span>
+<span class="nc" id="L273">			throw new ParseException();</span>
+		}
+<span class="nc" id="L275">		v = value(key);</span>
+<span class="nc" id="L276">		values.put(key, v);</span>
+<span class="nc" id="L277">		values.line = k.beginLine;</span>
+<span class="nc" id="L278">		values.column = k.beginColumn;</span>
+		{
+			if (true)
+<span class="nc" id="L281">				return key;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	/**
+	 * A value for a key, either a number, a string or a recursive list of
+	 * key-values.
+	 */
+	final public Object value(String key) throws ParseException {
+		Token t;
+		Object val;
+		KeyValues kv;
+<span class="nc bnc" id="L294" title="All 7 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case REAL:
+<span class="nc" id="L296">			t = jj_consume_token(REAL);</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">			if (t.image.indexOf('.') &lt; 0)</span>
+<span class="nc" id="L298">				val = Integer.valueOf(t.image);</span>
+			else
+<span class="nc" id="L300">				val = Double.valueOf(t.image);</span>
+<span class="nc" id="L301">			break;</span>
+		case STRING:
+<span class="nc" id="L303">			t = jj_consume_token(STRING);</span>
+<span class="nc" id="L304">			val = t.image.substring(1, t.image.length() - 1);</span>
+<span class="nc" id="L305">			break;</span>
+		case KEY:
+<span class="nc" id="L307">			t = jj_consume_token(KEY);</span>
+<span class="nc" id="L308">			val = t.image;</span>
+<span class="nc" id="L309">			break;</span>
+		case LSQBR:
+<span class="nc" id="L311">			jj_consume_token(LSQBR);</span>
+<span class="nc" id="L312">			kv = list();</span>
+<span class="nc" id="L313">			val = kv;</span>
+<span class="nc" id="L314">			jj_consume_token(RSQBR);</span>
+<span class="nc" id="L315">			break;</span>
+		default:
+<span class="nc" id="L317">			jj_la1[6] = jj_gen;</span>
+<span class="nc" id="L318">			jj_consume_token(-1);</span>
+<span class="nc" id="L319">			throw new ParseException();</span>
+		}
+		{
+			if (true)
+<span class="nc" id="L323">				return val;</span>
+		}
+		throw new Error(&quot;Missing return statement in function&quot;);
+	}
+
+	/** Generated Token Manager. */
+	public GMLParserTokenManager token_source;
+	SimpleCharStream jj_input_stream;
+	/** Current token. */
+	public Token token;
+	/** Next token. */
+	public Token jj_nt;
+	private int jj_ntk;
+	private int jj_gen;
+<span class="nc" id="L337">	final private int[] jj_la1 = new int[7];</span>
+	static private int[] jj_la1_0;
+	static {
+<span class="nc" id="L340">		jj_la1_init_0();</span>
+<span class="nc" id="L341">	}</span>
+
+	private static void jj_la1_init_0() {
+<span class="nc" id="L344">		jj_la1_0 = new int[] { 0x3000, 0xc800, 0xfa01, 0xc800, 0x8000, 0x4800, 0x4d00, };</span>
+<span class="nc" id="L345">	}</span>
+
+	/** Constructor with InputStream. */
+	public GMLParser(java.io.InputStream stream) {
+<span class="nc" id="L349">		this(stream, null);</span>
+<span class="nc" id="L350">	}</span>
+
+	/** Constructor with InputStream and supplied encoding */
+<span class="nc" id="L353">	public GMLParser(java.io.InputStream stream, String encoding) {</span>
+		try {
+<span class="nc" id="L355">			jj_input_stream = new SimpleCharStream(stream, encoding, 1, 1);</span>
+<span class="nc" id="L356">		} catch (java.io.UnsupportedEncodingException e) {</span>
+<span class="nc" id="L357">			throw new RuntimeException(e);</span>
+		}
+<span class="nc" id="L359">		token_source = new GMLParserTokenManager(jj_input_stream);</span>
+<span class="nc" id="L360">		token = new Token();</span>
+<span class="nc" id="L361">		jj_ntk = -1;</span>
+<span class="nc" id="L362">		jj_gen = 0;</span>
+<span class="nc bnc" id="L363" title="All 2 branches missed.">		for (int i = 0; i &lt; 7; i++)</span>
+<span class="nc" id="L364">			jj_la1[i] = -1;</span>
+<span class="nc" id="L365">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.InputStream stream) {
+<span class="nc" id="L369">		ReInit(stream, null);</span>
+<span class="nc" id="L370">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.InputStream stream, String encoding) {
+		try {
+<span class="nc" id="L375">			jj_input_stream.ReInit(stream, encoding, 1, 1);</span>
+<span class="nc" id="L376">		} catch (java.io.UnsupportedEncodingException e) {</span>
+<span class="nc" id="L377">			throw new RuntimeException(e);</span>
+		}
+<span class="nc" id="L379">		token_source.ReInit(jj_input_stream);</span>
+<span class="nc" id="L380">		token = new Token();</span>
+<span class="nc" id="L381">		jj_ntk = -1;</span>
+<span class="nc" id="L382">		jj_gen = 0;</span>
+<span class="nc bnc" id="L383" title="All 2 branches missed.">		for (int i = 0; i &lt; 7; i++)</span>
+<span class="nc" id="L384">			jj_la1[i] = -1;</span>
+<span class="nc" id="L385">	}</span>
+
+	/** Constructor. */
+<span class="nc" id="L388">	public GMLParser(java.io.Reader stream) {</span>
+<span class="nc" id="L389">		jj_input_stream = new SimpleCharStream(stream, 1, 1);</span>
+<span class="nc" id="L390">		token_source = new GMLParserTokenManager(jj_input_stream);</span>
+<span class="nc" id="L391">		token = new Token();</span>
+<span class="nc" id="L392">		jj_ntk = -1;</span>
+<span class="nc" id="L393">		jj_gen = 0;</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">		for (int i = 0; i &lt; 7; i++)</span>
+<span class="nc" id="L395">			jj_la1[i] = -1;</span>
+<span class="nc" id="L396">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.Reader stream) {
+<span class="nc" id="L400">		jj_input_stream.ReInit(stream, 1, 1);</span>
+<span class="nc" id="L401">		token_source.ReInit(jj_input_stream);</span>
+<span class="nc" id="L402">		token = new Token();</span>
+<span class="nc" id="L403">		jj_ntk = -1;</span>
+<span class="nc" id="L404">		jj_gen = 0;</span>
+<span class="nc bnc" id="L405" title="All 2 branches missed.">		for (int i = 0; i &lt; 7; i++)</span>
+<span class="nc" id="L406">			jj_la1[i] = -1;</span>
+<span class="nc" id="L407">	}</span>
+
+	/** Constructor with generated Token Manager. */
+<span class="nc" id="L410">	public GMLParser(GMLParserTokenManager tm) {</span>
+<span class="nc" id="L411">		token_source = tm;</span>
+<span class="nc" id="L412">		token = new Token();</span>
+<span class="nc" id="L413">		jj_ntk = -1;</span>
+<span class="nc" id="L414">		jj_gen = 0;</span>
+<span class="nc bnc" id="L415" title="All 2 branches missed.">		for (int i = 0; i &lt; 7; i++)</span>
+<span class="nc" id="L416">			jj_la1[i] = -1;</span>
+<span class="nc" id="L417">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(GMLParserTokenManager tm) {
+<span class="nc" id="L421">		token_source = tm;</span>
+<span class="nc" id="L422">		token = new Token();</span>
+<span class="nc" id="L423">		jj_ntk = -1;</span>
+<span class="nc" id="L424">		jj_gen = 0;</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">		for (int i = 0; i &lt; 7; i++)</span>
+<span class="nc" id="L426">			jj_la1[i] = -1;</span>
+<span class="nc" id="L427">	}</span>
+
+	private Token jj_consume_token(int kind) throws ParseException {
+		Token oldToken;
+<span class="nc bnc" id="L431" title="All 2 branches missed.">		if ((oldToken = token).next != null)</span>
+<span class="nc" id="L432">			token = token.next;</span>
+		else
+<span class="nc" id="L434">			token = token.next = token_source.getNextToken();</span>
+<span class="nc" id="L435">		jj_ntk = -1;</span>
+<span class="nc bnc" id="L436" title="All 2 branches missed.">		if (token.kind == kind) {</span>
+<span class="nc" id="L437">			jj_gen++;</span>
+<span class="nc" id="L438">			return token;</span>
+		}
+<span class="nc" id="L440">		token = oldToken;</span>
+<span class="nc" id="L441">		jj_kind = kind;</span>
+<span class="nc" id="L442">		throw generateParseException();</span>
+	}
+
+	/** Get the next Token. */
+	final public Token getNextToken() {
+<span class="nc bnc" id="L447" title="All 2 branches missed.">		if (token.next != null)</span>
+<span class="nc" id="L448">			token = token.next;</span>
+		else
+<span class="nc" id="L450">			token = token.next = token_source.getNextToken();</span>
+<span class="nc" id="L451">		jj_ntk = -1;</span>
+<span class="nc" id="L452">		jj_gen++;</span>
+<span class="nc" id="L453">		return token;</span>
+	}
+
+	/** Get the specific Token. */
+	final public Token getToken(int index) {
+<span class="nc" id="L458">		Token t = token;</span>
+<span class="nc bnc" id="L459" title="All 2 branches missed.">		for (int i = 0; i &lt; index; i++) {</span>
+<span class="nc bnc" id="L460" title="All 2 branches missed.">			if (t.next != null)</span>
+<span class="nc" id="L461">				t = t.next;</span>
+			else
+<span class="nc" id="L463">				t = t.next = token_source.getNextToken();</span>
+		}
+<span class="nc" id="L465">		return t;</span>
+	}
+
+	private int jj_ntk() {
+<span class="nc bnc" id="L469" title="All 2 branches missed.">		if ((jj_nt = token.next) == null)</span>
+<span class="nc" id="L470">			return (jj_ntk = (token.next = token_source.getNextToken()).kind);</span>
+		else
+<span class="nc" id="L472">			return (jj_ntk = jj_nt.kind);</span>
+	}
+
+<span class="nc" id="L475">	private java.util.List&lt;int[]&gt; jj_expentries = new java.util.ArrayList&lt;int[]&gt;();</span>
+	private int[] jj_expentry;
+<span class="nc" id="L477">	private int jj_kind = -1;</span>
+
+	/** Generate ParseException. */
+	public ParseException generateParseException() {
+<span class="nc" id="L481">		jj_expentries.clear();</span>
+<span class="nc" id="L482">		boolean[] la1tokens = new boolean[16];</span>
+<span class="nc bnc" id="L483" title="All 2 branches missed.">		if (jj_kind &gt;= 0) {</span>
+<span class="nc" id="L484">			la1tokens[jj_kind] = true;</span>
+<span class="nc" id="L485">			jj_kind = -1;</span>
+		}
+<span class="nc bnc" id="L487" title="All 2 branches missed.">		for (int i = 0; i &lt; 7; i++) {</span>
+<span class="nc bnc" id="L488" title="All 2 branches missed.">			if (jj_la1[i] == jj_gen) {</span>
+<span class="nc bnc" id="L489" title="All 2 branches missed.">				for (int j = 0; j &lt; 32; j++) {</span>
+<span class="nc bnc" id="L490" title="All 2 branches missed.">					if ((jj_la1_0[i] &amp; (1 &lt;&lt; j)) != 0) {</span>
+<span class="nc" id="L491">						la1tokens[j] = true;</span>
+					}
+				}
+			}
+		}
+<span class="nc bnc" id="L496" title="All 2 branches missed.">		for (int i = 0; i &lt; 16; i++) {</span>
+<span class="nc bnc" id="L497" title="All 2 branches missed.">			if (la1tokens[i]) {</span>
+<span class="nc" id="L498">				jj_expentry = new int[1];</span>
+<span class="nc" id="L499">				jj_expentry[0] = i;</span>
+<span class="nc" id="L500">				jj_expentries.add(jj_expentry);</span>
+			}
+		}
+<span class="nc" id="L503">		int[][] exptokseq = new int[jj_expentries.size()][];</span>
+<span class="nc bnc" id="L504" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_expentries.size(); i++) {</span>
+<span class="nc" id="L505">			exptokseq[i] = jj_expentries.get(i);</span>
+		}
+<span class="nc" id="L507">		return new ParseException(token, exptokseq, tokenImage);</span>
+	}
+
+	/** Enable tracing. */
+	final public void enable_tracing() {
+<span class="nc" id="L512">	}</span>
+
+	/** Disable tracing. */
+	final public void disable_tracing() {
+<span class="nc" id="L516">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

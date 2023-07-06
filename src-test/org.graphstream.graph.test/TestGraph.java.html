@@ -1,0 +1,822 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestGraph.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.test</a> &gt; <span class="el_source">TestGraph.java</span></div><h1>TestGraph.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Richard O. Legendi &lt;richard.legendi@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
+import java.util.HashSet;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.ElementNotFoundException;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.AbstractGraph;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.graph.implementations.MultiNode;
+import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.stream.Replayable;
+import org.junit.Test;
+
+<span class="nc" id="L58">public class TestGraph {</span>
+	@Test
+	public void testBasic() {
+<span class="nc" id="L61">		testBasic(new SingleGraph(&quot;sg&quot;));</span>
+<span class="nc" id="L62">		testBasic(new MultiGraph(&quot;mg&quot;));</span>
+<span class="nc" id="L63">		testBasic(new AdjacencyListGraph(&quot;alg&quot;));</span>
+<span class="nc" id="L64">		testBasic(new AdjacencyListGraph(&quot;AL&quot;)); // XXX</span>
+<span class="nc" id="L65">		testBasic(new SingleGraph(&quot;S&quot;)); // XXX</span>
+<span class="nc" id="L66">		testBasic(new MultiGraph(&quot;M&quot;)); // XXX</span>
+<span class="nc" id="L67">	}</span>
+
+	@Test
+	public void testReplay() {
+<span class="nc" id="L71">		AbstractGraph g1 = new AdjacencyListGraph(&quot;g1&quot;);</span>
+<span class="nc" id="L72">		Graph g2 = new AdjacencyListGraph(&quot;g2&quot;);</span>
+
+<span class="nc" id="L74">		Node A1 = g1.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L75">		Node B1 = g1.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L76">		Node C1 = g1.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L78">		Edge AB1 = g1.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L79">		Edge BC1 = g1.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L80">		Edge CA1 = g1.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L82">		A1.setAttribute(&quot;string&quot;, &quot;an example&quot;);</span>
+<span class="nc" id="L83">		B1.setAttribute(&quot;double&quot;, 42.0);</span>
+<span class="nc" id="L84">		C1.setAttribute(&quot;array&quot;, new int[] { 1, 2, 3 });</span>
+
+<span class="nc" id="L86">		AB1.setAttribute(&quot;string&quot;, &quot;an example&quot;);</span>
+<span class="nc" id="L87">		BC1.setAttribute(&quot;double&quot;, 42.0);</span>
+<span class="nc" id="L88">		CA1.setAttribute(&quot;array&quot;, new int[] { 1, 2, 3 });</span>
+
+<span class="nc" id="L90">		Replayable.Controller controller = g1.getReplayController();</span>
+<span class="nc" id="L91">		controller.addSink(g2);</span>
+<span class="nc" id="L92">		controller.replay();</span>
+
+<span class="nc" id="L94">		Node A2 = g2.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L95">		Node B2 = g2.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L96">		Node C2 = g2.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L98">		assertNotNull(A2);</span>
+<span class="nc" id="L99">		assertNotNull(B2);</span>
+<span class="nc" id="L100">		assertNotNull(C2);</span>
+
+<span class="nc" id="L102">		checkAttribute(A1, A2);</span>
+<span class="nc" id="L103">		checkAttribute(B1, B2);</span>
+<span class="nc" id="L104">		checkAttribute(C1, C2);</span>
+
+<span class="nc" id="L106">		Edge AB2 = g2.getEdge(&quot;AB&quot;);</span>
+<span class="nc" id="L107">		Edge BC2 = g2.getEdge(&quot;BC&quot;);</span>
+<span class="nc" id="L108">		Edge CA2 = g2.getEdge(&quot;CA&quot;);</span>
+
+<span class="nc" id="L110">		assertNotNull(AB2);</span>
+<span class="nc" id="L111">		assertNotNull(BC2);</span>
+<span class="nc" id="L112">		assertNotNull(CA2);</span>
+
+<span class="nc" id="L114">		checkAttribute(AB1, AB2);</span>
+<span class="nc" id="L115">		checkAttribute(BC1, BC2);</span>
+<span class="nc" id="L116">		checkAttribute(CA1, CA2);</span>
+<span class="nc" id="L117">	}</span>
+
+	protected void checkAttribute(Element e1, Element e2) {
+<span class="nc" id="L120">		e1.attributeKeys().forEach(key -&gt; {</span>
+<span class="nc" id="L121">			assertTrue(e2.hasAttribute(key));</span>
+<span class="nc" id="L122">			assertEquals(e1.getAttribute(key), e2.getAttribute(key));</span>
+<span class="nc" id="L123">		});</span>
+
+<span class="nc" id="L125">		e2.attributeKeys().forEach(key -&gt; assertTrue(e1.hasAttribute(key)));</span>
+<span class="nc" id="L126">	}</span>
+
+	protected void testBasic(Graph graph) {
+<span class="nc" id="L129">		Node A = graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L130">		Node B = graph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L131">		Node C = graph.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L133">		Edge AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L134">		Edge BC = graph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L135">		Edge CA = graph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L137">		assertEquals(3, graph.getNodeCount());</span>
+<span class="nc" id="L138">		assertEquals(3, graph.getEdgeCount());</span>
+
+<span class="nc" id="L140">		assertNotNull(A);</span>
+<span class="nc" id="L141">		assertNotNull(B);</span>
+<span class="nc" id="L142">		assertNotNull(C);</span>
+<span class="nc" id="L143">		assertNotNull(AB);</span>
+<span class="nc" id="L144">		assertNotNull(BC);</span>
+<span class="nc" id="L145">		assertNotNull(CA);</span>
+
+<span class="nc" id="L147">		assertEquals(&quot;A&quot;, A.getId());</span>
+<span class="nc" id="L148">		assertEquals(&quot;B&quot;, B.getId());</span>
+<span class="nc" id="L149">		assertEquals(&quot;C&quot;, C.getId());</span>
+<span class="nc" id="L150">		assertEquals(&quot;AB&quot;, AB.getId());</span>
+<span class="nc" id="L151">		assertEquals(&quot;BC&quot;, BC.getId());</span>
+<span class="nc" id="L152">		assertEquals(&quot;CA&quot;, CA.getId());</span>
+
+<span class="nc" id="L154">		assertEquals(A, graph.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L155">		assertEquals(B, graph.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L156">		assertEquals(C, graph.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L157">		assertEquals(AB, graph.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L158">		assertEquals(BC, graph.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L159">		assertEquals(CA, graph.getEdge(&quot;CA&quot;));</span>
+
+<span class="nc" id="L161">		assertFalse(AB.isDirected());</span>
+<span class="nc" id="L162">		assertFalse(BC.isDirected());</span>
+<span class="nc" id="L163">		assertFalse(CA.isDirected());</span>
+
+<span class="nc" id="L165">		assertEquals(A, AB.getNode0());</span>
+<span class="nc" id="L166">		assertEquals(B, AB.getNode1());</span>
+<span class="nc" id="L167">		assertEquals(A, AB.getSourceNode());</span>
+<span class="nc" id="L168">		assertEquals(B, AB.getTargetNode());</span>
+<span class="nc" id="L169">		assertEquals(B, BC.getNode0());</span>
+<span class="nc" id="L170">		assertEquals(C, BC.getNode1());</span>
+<span class="nc" id="L171">		assertEquals(B, BC.getSourceNode());</span>
+<span class="nc" id="L172">		assertEquals(C, BC.getTargetNode());</span>
+<span class="nc" id="L173">		assertEquals(C, CA.getNode0());</span>
+<span class="nc" id="L174">		assertEquals(A, CA.getNode1());</span>
+<span class="nc" id="L175">		assertEquals(C, CA.getSourceNode());</span>
+<span class="nc" id="L176">		assertEquals(A, CA.getTargetNode());</span>
+
+<span class="nc" id="L178">		assertEquals(B, AB.getOpposite(A));</span>
+<span class="nc" id="L179">		assertEquals(A, AB.getOpposite(B));</span>
+<span class="nc" id="L180">		assertEquals(C, BC.getOpposite(B));</span>
+<span class="nc" id="L181">		assertEquals(B, BC.getOpposite(C));</span>
+<span class="nc" id="L182">		assertEquals(A, CA.getOpposite(C));</span>
+<span class="nc" id="L183">		assertEquals(C, CA.getOpposite(A));</span>
+
+<span class="nc" id="L185">		assertEquals(2, A.getDegree());</span>
+<span class="nc" id="L186">		assertEquals(2, B.getDegree());</span>
+<span class="nc" id="L187">		assertEquals(2, C.getDegree());</span>
+
+<span class="nc" id="L189">		assertEquals(2, A.getInDegree());</span>
+<span class="nc" id="L190">		assertEquals(2, A.getOutDegree());</span>
+<span class="nc" id="L191">		assertEquals(2, B.getInDegree());</span>
+<span class="nc" id="L192">		assertEquals(2, B.getOutDegree());</span>
+<span class="nc" id="L193">		assertEquals(2, C.getInDegree());</span>
+<span class="nc" id="L194">		assertEquals(2, C.getOutDegree());</span>
+
+<span class="nc" id="L196">		assertTrue(A.hasEdgeFrom(&quot;B&quot;));</span>
+<span class="nc" id="L197">		assertTrue(A.hasEdgeFrom(&quot;C&quot;));</span>
+<span class="nc" id="L198">		assertTrue(B.hasEdgeFrom(&quot;A&quot;));</span>
+<span class="nc" id="L199">		assertTrue(B.hasEdgeFrom(&quot;C&quot;));</span>
+<span class="nc" id="L200">		assertTrue(C.hasEdgeFrom(&quot;A&quot;));</span>
+<span class="nc" id="L201">		assertTrue(C.hasEdgeFrom(&quot;B&quot;));</span>
+
+<span class="nc" id="L203">		assertEquals(AB, A.getEdgeFrom(&quot;B&quot;));</span>
+<span class="nc" id="L204">		assertEquals(CA, A.getEdgeFrom(&quot;C&quot;));</span>
+<span class="nc" id="L205">		assertEquals(AB, B.getEdgeFrom(&quot;A&quot;));</span>
+<span class="nc" id="L206">		assertEquals(BC, B.getEdgeFrom(&quot;C&quot;));</span>
+<span class="nc" id="L207">		assertEquals(CA, C.getEdgeFrom(&quot;A&quot;));</span>
+<span class="nc" id="L208">		assertEquals(BC, C.getEdgeFrom(&quot;B&quot;));</span>
+
+<span class="nc" id="L210">		assertTrue(A.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L211">		assertTrue(A.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L212">		assertTrue(B.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L213">		assertTrue(B.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L214">		assertTrue(C.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L215">		assertTrue(C.hasEdgeToward(&quot;B&quot;));</span>
+
+<span class="nc" id="L217">		assertEquals(AB, A.getEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L218">		assertEquals(CA, A.getEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L219">		assertEquals(AB, B.getEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L220">		assertEquals(BC, B.getEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L221">		assertEquals(CA, C.getEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L222">		assertEquals(BC, C.getEdgeToward(&quot;B&quot;));</span>
+
+<span class="nc" id="L224">		assertNull(A.getEdgeFrom(&quot;Z&quot;));</span>
+<span class="nc" id="L225">		assertNull(B.getEdgeFrom(&quot;Z&quot;));</span>
+<span class="nc" id="L226">		assertNull(C.getEdgeFrom(&quot;Z&quot;));</span>
+<span class="nc" id="L227">		assertNull(A.getEdgeToward(&quot;Z&quot;));</span>
+<span class="nc" id="L228">		assertNull(B.getEdgeToward(&quot;Z&quot;));</span>
+<span class="nc" id="L229">		assertNull(C.getEdgeToward(&quot;Z&quot;));</span>
+
+		// Loop edges
+<span class="nc" id="L232">		assertFalse(A.hasEdgeBetween(A));</span>
+<span class="nc" id="L233">		assertFalse(A.hasEdgeToward(A));</span>
+<span class="nc" id="L234">		assertFalse(A.hasEdgeFrom(A));</span>
+<span class="nc" id="L235">		assertNull(A.getEdgeBetween(A));</span>
+<span class="nc" id="L236">		assertNull(A.getEdgeToward(A));</span>
+<span class="nc" id="L237">		assertNull(A.getEdgeFrom(A));</span>
+<span class="nc" id="L238">		Edge AA = graph.addEdge(&quot;AA&quot;, &quot;A&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L239">		assertEquals(4, graph.getEdgeCount());</span>
+<span class="nc" id="L240">		assertEquals(3, A.getDegree());</span>
+<span class="nc" id="L241">		assertEquals(3, A.getInDegree());</span>
+<span class="nc" id="L242">		assertEquals(3, A.getOutDegree());</span>
+<span class="nc" id="L243">		assertTrue(A.hasEdgeBetween(A));</span>
+<span class="nc" id="L244">		assertTrue(A.hasEdgeToward(A));</span>
+<span class="nc" id="L245">		assertTrue(A.hasEdgeFrom(A));</span>
+<span class="nc" id="L246">		assertEquals(AA, A.getEdgeBetween(A));</span>
+<span class="nc" id="L247">		assertEquals(AA, A.getEdgeToward(A));</span>
+<span class="nc" id="L248">		assertEquals(AA, A.getEdgeFrom(A));</span>
+<span class="nc" id="L249">		assertEquals(A, AA.getSourceNode());</span>
+<span class="nc" id="L250">		assertEquals(A, AA.getTargetNode());</span>
+<span class="nc" id="L251">	}</span>
+
+	@Test
+	public void testDirected() {
+<span class="nc" id="L255">		testDirected(new SingleGraph(&quot;sg&quot;));</span>
+<span class="nc" id="L256">		testDirected(new MultiGraph(&quot;mg&quot;));</span>
+		// testDirected( new AdjacencyListGraph( &quot;alg&quot; ) );
+<span class="nc" id="L258">		testDirected(new AdjacencyListGraph(&quot;AL&quot;)); // XXX</span>
+<span class="nc" id="L259">		testDirected(new SingleGraph(&quot;S&quot;)); // XXX</span>
+<span class="nc" id="L260">		testDirected(new MultiGraph(&quot;M&quot;)); // XXX</span>
+<span class="nc" id="L261">	}</span>
+
+	protected void testDirected(Graph graph) {
+<span class="nc" id="L264">		Node A = graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L265">		Node B = graph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L266">		Node C = graph.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L268">		Edge AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L269">		Edge BC = graph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, true);</span>
+<span class="nc" id="L270">		Edge CA = graph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;, false);</span>
+
+		// A
+		// |\
+		// | \
+		// | \
+		// | \
+		// B---&gt;C
+
+<span class="nc" id="L279">		assertFalse(AB.isDirected());</span>
+<span class="nc" id="L280">		assertTrue(BC.isDirected());</span>
+<span class="nc" id="L281">		assertFalse(CA.isDirected());</span>
+
+<span class="nc" id="L283">		assertEquals(2, A.getDegree());</span>
+<span class="nc" id="L284">		assertEquals(2, B.getDegree());</span>
+<span class="nc" id="L285">		assertEquals(2, C.getDegree());</span>
+
+<span class="nc" id="L287">		assertEquals(2, A.getInDegree());</span>
+<span class="nc" id="L288">		assertEquals(2, A.getOutDegree());</span>
+<span class="nc" id="L289">		assertEquals(1, B.getInDegree());</span>
+<span class="nc" id="L290">		assertEquals(2, B.getOutDegree());</span>
+<span class="nc" id="L291">		assertEquals(2, C.getInDegree());</span>
+<span class="nc" id="L292">		assertEquals(1, C.getOutDegree());</span>
+
+<span class="nc" id="L294">		assertEquals(AB, A.getEdgeFrom(&quot;B&quot;));</span>
+<span class="nc" id="L295">		assertEquals(CA, A.getEdgeFrom(&quot;C&quot;));</span>
+<span class="nc" id="L296">		assertEquals(AB, B.getEdgeFrom(&quot;A&quot;));</span>
+<span class="nc" id="L297">		assertNull(B.getEdgeFrom(&quot;C&quot;));</span>
+<span class="nc" id="L298">		assertEquals(CA, C.getEdgeFrom(&quot;A&quot;));</span>
+<span class="nc" id="L299">		assertEquals(BC, C.getEdgeFrom(&quot;B&quot;));</span>
+
+<span class="nc" id="L301">		assertEquals(AB, A.getEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L302">		assertEquals(CA, A.getEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L303">		assertEquals(AB, B.getEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L304">		assertEquals(BC, B.getEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L305">		assertEquals(CA, C.getEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L306">		assertNull(C.getEdgeToward(&quot;B&quot;));</span>
+
+		// Now change things a little :
+		//
+		// A
+		// |\
+		// | \
+		// | \
+		// v \
+		// B&lt;---C
+		//
+		// BC changes its direction, and AB becomes directed.
+
+<span class="nc" id="L319">		graph.removeEdge(&quot;BC&quot;);</span>
+<span class="nc" id="L320">		BC = graph.addEdge(&quot;BC&quot;, &quot;C&quot;, &quot;B&quot;, true);</span>
+<span class="nc" id="L321">		graph.removeEdge(&quot;AB&quot;);</span>
+<span class="nc" id="L322">		AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, true);</span>
+
+<span class="nc" id="L324">		assertTrue(AB.isDirected());</span>
+<span class="nc" id="L325">		assertTrue(BC.isDirected());</span>
+<span class="nc" id="L326">		assertFalse(CA.isDirected());</span>
+
+<span class="nc" id="L328">		assertEquals(2, A.getDegree());</span>
+<span class="nc" id="L329">		assertEquals(2, B.getDegree());</span>
+<span class="nc" id="L330">		assertEquals(2, C.getDegree());</span>
+
+<span class="nc" id="L332">		assertEquals(1, A.getInDegree());</span>
+<span class="nc" id="L333">		assertEquals(2, A.getOutDegree());</span>
+<span class="nc" id="L334">		assertEquals(2, B.getInDegree());</span>
+<span class="nc" id="L335">		assertEquals(0, B.getOutDegree());</span>
+<span class="nc" id="L336">		assertEquals(1, C.getInDegree());</span>
+<span class="nc" id="L337">		assertEquals(2, C.getOutDegree());</span>
+
+<span class="nc" id="L339">		assertNull(A.getEdgeFrom(&quot;B&quot;));</span>
+<span class="nc" id="L340">		assertEquals(CA, A.getEdgeFrom(&quot;C&quot;));</span>
+<span class="nc" id="L341">		assertEquals(AB, B.getEdgeFrom(&quot;A&quot;));</span>
+<span class="nc" id="L342">		assertEquals(BC, B.getEdgeFrom(&quot;C&quot;));</span>
+<span class="nc" id="L343">		assertEquals(CA, C.getEdgeFrom(&quot;A&quot;));</span>
+<span class="nc" id="L344">		assertNull(C.getEdgeFrom(&quot;B&quot;));</span>
+
+<span class="nc" id="L346">		assertEquals(AB, A.getEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L347">		assertEquals(CA, A.getEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L348">		assertNull(B.getEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L349">		assertNull(B.getEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L350">		assertEquals(CA, C.getEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L351">		assertEquals(BC, C.getEdgeToward(&quot;B&quot;));</span>
+
+		// Directed loop edges
+<span class="nc" id="L354">		assertFalse(A.hasEdgeBetween(A));</span>
+<span class="nc" id="L355">		assertFalse(A.hasEdgeToward(A));</span>
+<span class="nc" id="L356">		assertFalse(A.hasEdgeFrom(A));</span>
+<span class="nc" id="L357">		assertNull(A.getEdgeBetween(A));</span>
+<span class="nc" id="L358">		assertNull(A.getEdgeToward(A));</span>
+<span class="nc" id="L359">		assertNull(A.getEdgeFrom(A));</span>
+<span class="nc" id="L360">		Edge AA = graph.addEdge(&quot;AA&quot;, &quot;A&quot;, &quot;A&quot;, true);</span>
+<span class="nc" id="L361">		assertEquals(4, graph.getEdgeCount());</span>
+<span class="nc" id="L362">		assertEquals(3, A.getDegree());</span>
+<span class="nc" id="L363">		assertEquals(2, A.getInDegree());</span>
+<span class="nc" id="L364">		assertEquals(3, A.getOutDegree());</span>
+<span class="nc" id="L365">		assertTrue(A.hasEdgeBetween(A));</span>
+<span class="nc" id="L366">		assertTrue(A.hasEdgeToward(A));</span>
+<span class="nc" id="L367">		assertTrue(A.hasEdgeFrom(A));</span>
+<span class="nc" id="L368">		assertEquals(AA, A.getEdgeBetween(A));</span>
+<span class="nc" id="L369">		assertEquals(AA, A.getEdgeToward(A));</span>
+<span class="nc" id="L370">		assertEquals(AA, A.getEdgeFrom(A));</span>
+<span class="nc" id="L371">		assertEquals(A, AA.getSourceNode());</span>
+<span class="nc" id="L372">		assertEquals(A, AA.getTargetNode());</span>
+<span class="nc" id="L373">	}</span>
+
+	@Test
+	public void testMulti() {
+<span class="nc" id="L377">		MultiGraph graph = new MultiGraph(&quot;g&quot;);</span>
+<span class="nc" id="L378">		MultiNode A = (MultiNode) graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L379">		MultiNode B = (MultiNode) graph.addNode(&quot;B&quot;);</span>
+
+<span class="nc" id="L381">		graph.addEdge(&quot;AB1&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L382">		graph.addEdge(&quot;AB2&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+
+<span class="nc" id="L384">		assertEquals(2, A.getDegree());</span>
+<span class="nc" id="L385">		assertEquals(2, B.getDegree());</span>
+
+		// loop edges
+<span class="nc" id="L388">		graph.addEdge(&quot;AA1&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L389">		graph.addEdge(&quot;AA2&quot;, &quot;A&quot;, &quot;B&quot;, true);</span>
+
+<span class="nc" id="L391">		assertEquals(4, A.getDegree());</span>
+<span class="nc" id="L392">	}</span>
+
+	@Test
+	public void testSingle() {
+<span class="nc" id="L396">		SingleGraph graph = new SingleGraph(&quot;g&quot;);</span>
+<span class="nc" id="L397">		Node A = graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L398">		Node B = graph.addNode(&quot;B&quot;);</span>
+
+<span class="nc" id="L400">		graph.addEdge(&quot;AB1&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+
+		try {
+<span class="nc" id="L403">			graph.addEdge(&quot;AB2&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L404">			fail();</span>
+<span class="nc" id="L405">		} catch (Exception e) {</span>
+			// Ok !
+		}
+
+<span class="nc" id="L409">		assertEquals(1, A.getDegree());</span>
+<span class="nc" id="L410">		assertEquals(1, B.getDegree());</span>
+<span class="nc" id="L411">	}</span>
+
+	@Test
+	public void testIterables() {
+<span class="nc" id="L415">		testIterables(new SingleGraph(&quot;sg&quot;));</span>
+<span class="nc" id="L416">		testIterables(new MultiGraph(&quot;mg&quot;));</span>
+		// testIterables( new AdjacencyListGraph( &quot;alg&quot; ) );
+<span class="nc" id="L418">		testIterables(new AdjacencyListGraph(&quot;AL&quot;)); // XXX</span>
+<span class="nc" id="L419">		testIterables(new SingleGraph(&quot;S&quot;)); // XXX</span>
+<span class="nc" id="L420">		testIterables(new MultiGraph(&quot;M&quot;)); // XXX</span>
+<span class="nc" id="L421">	}</span>
+
+	protected void testIterables(Graph graph) {
+<span class="nc" id="L424">		Node A = graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L425">		Node B = graph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L426">		Node C = graph.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L428">		Edge AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L429">		Edge BC = graph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L430">		Edge CA = graph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+		// Test graph iterables.
+
+<span class="nc" id="L434">		HashSet&lt;Node&gt; nodes = new HashSet&lt;Node&gt;();</span>
+<span class="nc" id="L435">		HashSet&lt;Edge&gt; edges = new HashSet&lt;Edge&gt;();</span>
+
+<span class="nc bnc" id="L437" title="All 2 branches missed.">		for (Node node : graph)</span>
+<span class="nc" id="L438">			nodes.add(node);</span>
+
+<span class="nc" id="L440">		assertEquals(3, nodes.size());</span>
+<span class="nc" id="L441">		assertTrue(nodes.contains(A));</span>
+<span class="nc" id="L442">		assertTrue(nodes.contains(B));</span>
+<span class="nc" id="L443">		assertTrue(nodes.contains(C));</span>
+<span class="nc" id="L444">		nodes.clear();</span>
+
+<span class="nc" id="L446">		graph.nodes().forEach(node -&gt; nodes.add(node));</span>
+
+<span class="nc" id="L448">		assertEquals(3, nodes.size());</span>
+<span class="nc" id="L449">		assertTrue(nodes.contains(A));</span>
+<span class="nc" id="L450">		assertTrue(nodes.contains(B));</span>
+<span class="nc" id="L451">		assertTrue(nodes.contains(C));</span>
+<span class="nc" id="L452">		nodes.clear();</span>
+
+<span class="nc" id="L454">		graph.edges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L456">		assertEquals(3, edges.size());</span>
+<span class="nc" id="L457">		assertTrue(edges.contains(AB));</span>
+<span class="nc" id="L458">		assertTrue(edges.contains(BC));</span>
+<span class="nc" id="L459">		assertTrue(edges.contains(CA));</span>
+<span class="nc" id="L460">		edges.clear();</span>
+
+		// Test node iterables.
+
+<span class="nc bnc" id="L464" title="All 2 branches missed.">		for (Edge edge : A)</span>
+<span class="nc" id="L465">			edges.add(edge);</span>
+
+<span class="nc" id="L467">		assertEquals(2, edges.size());</span>
+<span class="nc" id="L468">		assertTrue(edges.contains(AB));</span>
+<span class="nc" id="L469">		assertTrue(edges.contains(CA));</span>
+<span class="nc" id="L470">		edges.clear();</span>
+
+<span class="nc" id="L472">		A.edges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L474">		assertEquals(2, edges.size());</span>
+<span class="nc" id="L475">		assertTrue(edges.contains(AB));</span>
+<span class="nc" id="L476">		assertTrue(edges.contains(CA));</span>
+<span class="nc" id="L477">		edges.clear();</span>
+
+<span class="nc" id="L479">		B.edges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L481">		assertEquals(2, edges.size());</span>
+<span class="nc" id="L482">		assertTrue(edges.contains(AB));</span>
+<span class="nc" id="L483">		assertTrue(edges.contains(BC));</span>
+<span class="nc" id="L484">		edges.clear();</span>
+
+<span class="nc" id="L486">		C.edges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L488">		assertEquals(2, edges.size());</span>
+<span class="nc" id="L489">		assertTrue(edges.contains(BC));</span>
+<span class="nc" id="L490">		assertTrue(edges.contains(CA));</span>
+<span class="nc" id="L491">		edges.clear();</span>
+
+<span class="nc" id="L493">		graph.removeEdge(&quot;AB&quot;);</span>
+<span class="nc" id="L494">		AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, true);</span>
+
+<span class="nc" id="L496">		graph.removeEdge(&quot;BC&quot;);</span>
+<span class="nc" id="L497">		BC = graph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, true);</span>
+
+		// A
+		// |\
+		// | \
+		// | \
+		// v \
+		// B---&gt;C
+
+<span class="nc" id="L506">		A.enteringEdges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L508">		assertEquals(1, edges.size());</span>
+<span class="nc" id="L509">		assertTrue(edges.contains(CA));</span>
+<span class="nc" id="L510">		edges.clear();</span>
+
+<span class="nc" id="L512">		B.enteringEdges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L514">		assertEquals(1, edges.size());</span>
+<span class="nc" id="L515">		assertTrue(edges.contains(AB));</span>
+<span class="nc" id="L516">		edges.clear();</span>
+
+<span class="nc" id="L518">		C.enteringEdges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L520">		assertEquals(2, edges.size());</span>
+<span class="nc" id="L521">		assertTrue(edges.contains(BC));</span>
+<span class="nc" id="L522">		assertTrue(edges.contains(CA));</span>
+<span class="nc" id="L523">		edges.clear();</span>
+
+<span class="nc" id="L525">		A.leavingEdges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L527">		assertEquals(2, edges.size());</span>
+<span class="nc" id="L528">		assertTrue(edges.contains(AB));</span>
+<span class="nc" id="L529">		assertTrue(edges.contains(CA));</span>
+<span class="nc" id="L530">		edges.clear();</span>
+
+<span class="nc" id="L532">		B.leavingEdges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L534">		assertEquals(1, edges.size());</span>
+<span class="nc" id="L535">		assertTrue(edges.contains(BC));</span>
+<span class="nc" id="L536">		edges.clear();</span>
+
+<span class="nc" id="L538">		C.leavingEdges().forEach(edge -&gt; edges.add(edge));</span>
+
+<span class="nc" id="L540">		assertEquals(1, edges.size());</span>
+<span class="nc" id="L541">		assertTrue(edges.contains(CA));</span>
+<span class="nc" id="L542">		edges.clear();</span>
+<span class="nc" id="L543">	}</span>
+
+	@Test
+	public void testRemoval() {
+<span class="nc" id="L547">		testRemoval(new AdjacencyListGraph(&quot;AL&quot;)); // XXX</span>
+<span class="nc" id="L548">		testRemoval(new SingleGraph(&quot;S&quot;)); // XXX</span>
+<span class="nc" id="L549">		testRemoval(new MultiGraph(&quot;M&quot;)); // XXX</span>
+<span class="nc" id="L550">	}</span>
+
+	public void testRemoval(Graph graph) {
+<span class="nc" id="L553">		Node A = graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L554">		graph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L555">		graph.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L557">		Edge AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L558">		graph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L559">		Edge CA = graph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L561">		assertEquals(3, graph.getNodeCount());</span>
+<span class="nc" id="L562">		assertEquals(3, graph.getEdgeCount());</span>
+
+		// Remove a node. This should also remove two edges.
+
+<span class="nc" id="L566">		Node n = graph.removeNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L568">		assertEquals(2, graph.getNodeCount());</span>
+<span class="nc" id="L569">		assertEquals(1, graph.getEdgeCount());</span>
+
+<span class="nc" id="L571">		assertEquals(n, A);</span>
+<span class="nc" id="L572">		assertNull(graph.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L573">		assertNull(graph.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L574">		assertNull(graph.getNode(&quot;A&quot;));</span>
+
+<span class="nc" id="L576">		assertNotNull(graph.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L577">		assertNotNull(graph.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L578">		assertNotNull(graph.getNode(&quot;C&quot;));</span>
+
+		// Rebuild the graph and remove an edge.
+
+<span class="nc" id="L582">		A = graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L583">		AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L584">		CA = graph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L586">		assertEquals(3, graph.getNodeCount());</span>
+<span class="nc" id="L587">		assertEquals(3, graph.getEdgeCount());</span>
+
+<span class="nc" id="L589">		Edge e = graph.removeEdge(&quot;A&quot;, &quot;B&quot;);</span>
+
+<span class="nc" id="L591">		assertEquals(3, graph.getNodeCount());</span>
+<span class="nc" id="L592">		assertEquals(2, graph.getEdgeCount());</span>
+
+<span class="nc" id="L594">		assertEquals(e, AB);</span>
+<span class="nc" id="L595">		assertNull(graph.getEdge(&quot;AB&quot;));</span>
+
+<span class="nc" id="L597">		assertNotNull(graph.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L598">		assertNotNull(graph.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L599">		assertNotNull(graph.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L600">		assertNotNull(graph.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L601">		assertNotNull(graph.getEdge(&quot;CA&quot;));</span>
+
+		// Now remove another edge in another way.
+
+<span class="nc" id="L605">		e = graph.removeEdge(&quot;CA&quot;);</span>
+
+<span class="nc" id="L607">		assertEquals(3, graph.getNodeCount());</span>
+<span class="nc" id="L608">		assertEquals(1, graph.getEdgeCount());</span>
+
+<span class="nc" id="L610">		assertEquals(e, CA);</span>
+<span class="nc" id="L611">		assertNull(graph.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L612">		assertNull(graph.getEdge(&quot;CA&quot;));</span>
+
+<span class="nc" id="L614">		assertNotNull(graph.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L615">		assertNotNull(graph.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L616">		assertNotNull(graph.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L617">		assertNotNull(graph.getEdge(&quot;BC&quot;));</span>
+
+		// loop edges
+<span class="nc" id="L620">		Edge AA = graph.addEdge(&quot;AA&quot;, &quot;A&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L621">		assertEquals(2, graph.getEdgeCount());</span>
+<span class="nc" id="L622">		e = graph.removeEdge(&quot;AA&quot;);</span>
+<span class="nc" id="L623">		assertEquals(1, graph.getEdgeCount());</span>
+<span class="nc" id="L624">		assertEquals(AA, e);</span>
+<span class="nc" id="L625">		assertEquals(0, A.getDegree());</span>
+<span class="nc" id="L626">		assertNull(graph.getEdge(&quot;AA&quot;));</span>
+
+<span class="nc" id="L628">		Edge BB = graph.addEdge(&quot;BB&quot;, &quot;B&quot;, &quot;B&quot;, true);</span>
+<span class="nc" id="L629">		assertEquals(2, graph.getEdgeCount());</span>
+<span class="nc" id="L630">		e = graph.removeEdge(&quot;BB&quot;);</span>
+<span class="nc" id="L631">		assertEquals(BB, e);</span>
+<span class="nc" id="L632">		assertEquals(1, graph.getNode(&quot;B&quot;).getDegree());</span>
+<span class="nc" id="L633">		assertNull(graph.getEdge(&quot;BB&quot;));</span>
+<span class="nc" id="L634">		BB = graph.addEdge(&quot;BB&quot;, &quot;B&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L635">		graph.removeNode(&quot;B&quot;);</span>
+<span class="nc" id="L636">		assertNull(graph.getEdge(&quot;BB&quot;));</span>
+<span class="nc" id="L637">		assertEquals(0, graph.getEdgeCount());</span>
+
+<span class="nc" id="L639">		graph.addEdge(&quot;AC&quot;, &quot;A&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L640">		graph.addEdge(&quot;AA&quot;, &quot;A&quot;, &quot;A&quot;);</span>
+
+		// Test the whole graph erasing.
+
+<span class="nc" id="L644">		graph.clear();</span>
+
+<span class="nc" id="L646">		assertEquals(0, graph.getNodeCount());</span>
+<span class="nc" id="L647">		assertEquals(0, graph.getEdgeCount());</span>
+<span class="nc" id="L648">	}</span>
+	 
+	@Test
+	public void testForeignEdgeRemoval(){
+		try{
+<span class="nc" id="L653">			foreignEdgeRemoval(new SingleGraph(&quot;sg&quot;), new SingleGraph(&quot;sg&quot;));</span>
+<span class="nc" id="L654">			fail();</span>
+<span class="nc" id="L655">		} catch (ElementNotFoundException e){ /* ALL GOOD */}</span>
+		try {
+<span class="nc" id="L657">			foreignEdgeRemoval(new MultiGraph(&quot;mg&quot;), new MultiGraph(&quot;mg&quot;));</span>
+<span class="nc" id="L658">			fail();</span>
+<span class="nc" id="L659">		} catch (ElementNotFoundException e){ /* ALL GOOD */}</span>
+		try {
+<span class="nc" id="L661">			foreignEdgeRemoval(new AdjacencyListGraph(&quot;AL&quot;), new AdjacencyListGraph(&quot;AL&quot;)); // XXX</span>
+<span class="nc" id="L662">			fail();</span>
+<span class="nc" id="L663">		} catch (ElementNotFoundException e){ /* ALL GOOD */}</span>
+		try {
+<span class="nc" id="L665">			foreignEdgeRemoval(new SingleGraph(&quot;S&quot;), new MultiGraph(&quot;M&quot;)); // XXX</span>
+<span class="nc" id="L666">			fail();</span>
+<span class="nc" id="L667">		} catch (ElementNotFoundException e){ /* ALL GOOD */}</span>
+		try {
+<span class="nc" id="L669">			foreignEdgeRemoval(new AdjacencyListGraph(&quot;AL&quot;), new MultiGraph(&quot;M&quot;)); // XXX</span>
+<span class="nc" id="L670">			fail();</span>
+<span class="nc" id="L671">		} catch (ElementNotFoundException e){ /* ALL GOOD */}</span>
+
+<span class="nc" id="L673">	}</span>
+	public void foreignEdgeRemoval(Graph g1, Graph g2){
+
+<span class="nc" id="L676">			g1.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L677">			g1.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L678">			g1.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L679">			g1.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L680">			Edge BC1 = g1.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L681">			g1.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+	
+<span class="nc" id="L683">			g2.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L684">			g2.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L685">			g2.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L686">			g2.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L687">			g2.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L688">			g2.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+	
+<span class="nc" id="L690">			g2.removeEdge(BC1);</span>
+	
+<span class="nc" id="L692">	}</span>
+	
+
+	@Test(expected = ElementNotFoundException.class)
+	public void testForeignNodeRemoval(){
+<span class="nc" id="L697">		Graph g1 = new AdjacencyListGraph(&quot;1&quot;);</span>
+<span class="nc" id="L698">		Graph g2 = new AdjacencyListGraph(&quot;2&quot;);</span>
+
+<span class="nc" id="L700">		g1.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L701">		g1.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L702">		Node ng1 = g1.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L703">		g1.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L704">		g1.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L705">		g1.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L707">		g2.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L708">		g2.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L709">		g2.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L710">		g2.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L711">		g2.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L712">		g2.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L714">		g2.removeNode(ng1);</span>
+
+<span class="nc" id="L716">	}</span>
+
+	@Test
+	public void TestAddEdgeWithForeignNode(){
+<span class="nc" id="L720">		Graph g1 = new AdjacencyListGraph(&quot;1&quot;);</span>
+<span class="nc" id="L721">		Graph g2 = new AdjacencyListGraph(&quot;2&quot;);</span>
+
+<span class="nc" id="L723">		g1.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L724">		Node b1 = g1.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L725">		Node c1 = g1.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L726">		g1.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L727">		g1.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L728">		g1.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+		
+<span class="nc" id="L731">		g2.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L732">		Node b2 = g2.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L733">		Node c2 = g2.addNode(&quot;C&quot;);</span>
+		
+		try{
+<span class="nc" id="L736">			g2.addEdge(&quot;BC&quot;, b1, c1);</span>
+<span class="nc" id="L737">			fail();</span>
+<span class="nc" id="L738">		} catch (ElementNotFoundException e){ /* ALL GOOD */}</span>
+		try{
+<span class="nc" id="L740">			g2.addEdge(&quot;BC&quot;, b1, c2);</span>
+<span class="nc" id="L741">			fail();</span>
+<span class="nc" id="L742">		} catch (ElementNotFoundException e){ /* ALL GOOD */}</span>
+		try{
+<span class="nc" id="L744">			g2.addEdge(&quot;BC&quot;, b2, c1);</span>
+<span class="nc" id="L745">			fail();</span>
+<span class="nc" id="L746">		} catch (ElementNotFoundException e){ /* ALL GOOD */}</span>
+
+		
+		
+<span class="nc" id="L750">	}</span>
+
+	@Test
+	public void testGraphListener() {
+<span class="nc" id="L754">		testGraphListener(new SingleGraph(&quot;sg&quot;));</span>
+<span class="nc" id="L755">		testGraphListener(new MultiGraph(&quot;mg&quot;));</span>
+		// testGraphListener( new AdjacencyListGraph( &quot;alg&quot; ) );
+<span class="nc" id="L757">		testGraphListener(new AdjacencyListGraph(&quot;AL&quot;)); // XXX</span>
+<span class="nc" id="L758">		testGraphListener(new SingleGraph(&quot;S&quot;)); // XXX</span>
+<span class="nc" id="L759">		testGraphListener(new MultiGraph(&quot;M&quot;)); // XXX</span>
+<span class="nc" id="L760">	}</span>
+
+	protected void testGraphListener(Graph input) {
+		// We create a second graph (output) to receive the events of the first
+		// (input).
+		// We populate (or remove elements from) the input and check the output
+		// to see
+		// if it is a copy of the input.
+
+<span class="nc" id="L769">		Graph output = new MultiGraph(&quot;outout&quot;);</span>
+
+<span class="nc" id="L771">		input.addSink(output);</span>
+
+<span class="nc" id="L773">		Node A = input.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L774">		input.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L775">		input.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L777">		input.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L778">		Edge BC = input.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L779">		input.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+
+<span class="nc" id="L781">		A.setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L782">		BC.setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+
+<span class="nc" id="L784">		assertEquals(3, input.getNodeCount());</span>
+<span class="nc" id="L785">		assertEquals(3, output.getNodeCount());</span>
+<span class="nc" id="L786">		assertEquals(3, input.getEdgeCount());</span>
+<span class="nc" id="L787">		assertEquals(3, output.getEdgeCount());</span>
+
+<span class="nc" id="L789">		assertNotNull(output.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L790">		assertNotNull(output.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L791">		assertNotNull(output.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L792">		assertNotNull(output.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L793">		assertNotNull(output.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L794">		assertNotNull(output.getEdge(&quot;CA&quot;));</span>
+
+<span class="nc" id="L796">		assertEquals(&quot;bar&quot;, output.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L797">		assertEquals(&quot;bar&quot;, output.getEdge(&quot;BC&quot;).getAttribute(&quot;foo&quot;));</span>
+
+		// Now remove an attribute.
+
+<span class="nc" id="L801">		A.removeAttribute(&quot;foo&quot;);</span>
+
+<span class="nc" id="L803">		assertFalse(output.hasAttribute(&quot;foo&quot;));</span>
+
+		// Now remove a node.
+
+<span class="nc" id="L807">		input.removeNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L809">		assertEquals(2, input.getNodeCount());</span>
+<span class="nc" id="L810">		assertEquals(1, input.getEdgeCount());</span>
+<span class="nc" id="L811">		assertEquals(2, output.getNodeCount());</span>
+<span class="nc" id="L812">		assertEquals(1, output.getEdgeCount());</span>
+
+		// Now check that attribute change works.
+
+<span class="nc" id="L816">		BC.setAttribute(&quot;foo&quot;, &quot;truc&quot;);</span>
+
+<span class="nc" id="L818">		assertEquals(&quot;truc&quot;, BC.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L819">		assertEquals(&quot;truc&quot;, output.getEdge(&quot;BC&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L820">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

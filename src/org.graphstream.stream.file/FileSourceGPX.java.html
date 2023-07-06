@@ -1,0 +1,1625 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSourceGPX.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSourceGPX.java</span></div><h1>FileSourceGPX.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2012-02-09
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.IOException;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+/**
+ * Source to read GPX (GPS eXchange Format) data an XML extension to exchange
+ * gps coordinates, routes and tracks.
+ * 
+ * Read more about GPX at
+ * &lt;a href=&quot;https://en.wikipedia.org/wiki/GPS_eXchange_Format&quot;&gt;Wikipedia&lt;/a&gt;
+ * 
+ */
+public class FileSourceGPX extends FileSourceXML {
+
+	/**
+	 * Parser used by this source.
+	 */
+	protected GPXParser parser;
+
+<span class="nc" id="L58">	public FileSourceGPX() {</span>
+<span class="nc" id="L59">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.file.FileSourceXML#afterStartDocument()
+	 */
+	protected void afterStartDocument() throws IOException, XMLStreamException {
+<span class="nc" id="L67">		parser = new GPXParser();</span>
+<span class="nc" id="L68">		parser.__gpx();</span>
+<span class="nc" id="L69">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.file.FileSourceXML#beforeEndDocument()
+	 */
+	protected void beforeEndDocument() throws IOException, XMLStreamException {
+<span class="nc" id="L77">		parser = null;</span>
+<span class="nc" id="L78">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.file.FileSourceXML#nextEvents()
+	 */
+	public boolean nextEvents() throws IOException {
+<span class="nc" id="L86">		return false;</span>
+	}
+
+	protected class WayPoint {
+		String name;
+		double lat, lon, ele;
+		HashMap&lt;String, Object&gt; attributes;
+
+<span class="nc" id="L94">		WayPoint() {</span>
+<span class="nc" id="L95">			attributes = new HashMap&lt;String, Object&gt;();</span>
+<span class="nc" id="L96">			name = null;</span>
+<span class="nc" id="L97">			lat = lon = ele = 0;</span>
+<span class="nc" id="L98">		}</span>
+
+		void deploy() {
+<span class="nc" id="L101">			sendNodeAdded(sourceId, name);</span>
+<span class="nc" id="L102">			sendNodeAttributeAdded(sourceId, name, &quot;xyz&quot;, new double[] { lon, lat, ele });</span>
+
+<span class="nc bnc" id="L104" title="All 2 branches missed.">			for (String key : attributes.keySet())</span>
+<span class="nc" id="L105">				sendNodeAttributeAdded(sourceId, name, key, attributes.get(key));</span>
+<span class="nc" id="L106">		}</span>
+	}
+
+	protected class GPXParser extends Parser implements GPXConstants {
+
+		int automaticPointId;
+		int automaticRouteId;
+		int automaticEdgeId;
+
+<span class="nc" id="L115">		GPXParser() {</span>
+<span class="nc" id="L116">			automaticRouteId = 0;</span>
+<span class="nc" id="L117">			automaticPointId = 0;</span>
+<span class="nc" id="L118">			automaticEdgeId = 0;</span>
+<span class="nc" id="L119">		}</span>
+
+		/**
+		 * Base for read points since points can be one of &quot;wpt&quot;, &quot;rtept&quot;, &quot;trkpt&quot;.
+		 * 
+		 * @param elementName
+		 * @return
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private WayPoint waypoint(String elementName) throws IOException, XMLStreamException {
+			XMLEvent e;
+<span class="nc" id="L131">			WayPoint wp = new WayPoint();</span>
+			EnumMap&lt;WPTAttribute, String&gt; attributes;
+<span class="nc" id="L133">			LinkedList&lt;String&gt; links = new LinkedList&lt;String&gt;();</span>
+
+<span class="nc" id="L135">			e = getNextEvent();</span>
+<span class="nc" id="L136">			checkValid(e, XMLEvent.START_ELEMENT, elementName);</span>
+
+<span class="nc" id="L138">			attributes = getAttributes(WPTAttribute.class, e.asStartElement());</span>
+
+<span class="nc bnc" id="L140" title="All 2 branches missed.">			if (!attributes.containsKey(WPTAttribute.LAT)) {</span>
+<span class="nc" id="L141">				newParseError(e, false, &quot;attribute 'lat' is required&quot;);</span>
+			}
+
+<span class="nc bnc" id="L144" title="All 2 branches missed.">			if (!attributes.containsKey(WPTAttribute.LON)) {</span>
+<span class="nc" id="L145">				newParseError(e, false, &quot;attribute 'lon' is required&quot;);</span>
+			}
+
+<span class="nc" id="L148">			wp.lat = Double.parseDouble(attributes.get(WPTAttribute.LAT));</span>
+<span class="nc" id="L149">			wp.lon = Double.parseDouble(attributes.get(WPTAttribute.LON));</span>
+<span class="nc" id="L150">			wp.ele = 0;</span>
+
+<span class="nc" id="L152">			wp.attributes.put(&quot;lat&quot;, wp.lat);</span>
+<span class="nc" id="L153">			wp.attributes.put(&quot;lon&quot;, wp.lon);</span>
+
+<span class="nc" id="L155">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;ele&quot;)) {</span>
+<span class="nc" id="L158">				pushback(e);</span>
+<span class="nc" id="L159">				wp.ele = __ele();</span>
+<span class="nc" id="L160">				wp.attributes.put(&quot;ele&quot;, wp.ele);</span>
+
+<span class="nc" id="L162">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L165" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;time&quot;)) {</span>
+<span class="nc" id="L166">				pushback(e);</span>
+<span class="nc" id="L167">				wp.attributes.put(&quot;time&quot;, __time());</span>
+
+<span class="nc" id="L169">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L172" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;magvar&quot;)) {</span>
+<span class="nc" id="L173">				pushback(e);</span>
+<span class="nc" id="L174">				wp.attributes.put(&quot;magvar&quot;, __magvar());</span>
+
+<span class="nc" id="L176">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L179" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;geoidheight&quot;)) {</span>
+<span class="nc" id="L180">				pushback(e);</span>
+<span class="nc" id="L181">				wp.attributes.put(&quot;geoidheight&quot;, __geoidheight());</span>
+
+<span class="nc" id="L183">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L186" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;name&quot;)) {</span>
+<span class="nc" id="L187">				pushback(e);</span>
+<span class="nc" id="L188">				wp.name = __name();</span>
+
+<span class="nc" id="L190">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L193" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;cmt&quot;)) {</span>
+<span class="nc" id="L194">				pushback(e);</span>
+<span class="nc" id="L195">				wp.attributes.put(&quot;cmt&quot;, __cmt());</span>
+
+<span class="nc" id="L197">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L200" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L201">				pushback(e);</span>
+<span class="nc" id="L202">				wp.attributes.put(&quot;desc&quot;, __desc());</span>
+
+<span class="nc" id="L204">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L207" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;src&quot;)) {</span>
+<span class="nc" id="L208">				pushback(e);</span>
+<span class="nc" id="L209">				wp.attributes.put(&quot;src&quot;, __src());</span>
+
+<span class="nc" id="L211">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L214" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;link&quot;)) {</span>
+<span class="nc" id="L215">				pushback(e);</span>
+<span class="nc" id="L216">				links.add(__link());</span>
+
+<span class="nc" id="L218">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L221">			wp.attributes.put(&quot;link&quot;, links.toArray(new String[links.size()]));</span>
+
+<span class="nc bnc" id="L223" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;sym&quot;)) {</span>
+<span class="nc" id="L224">				pushback(e);</span>
+<span class="nc" id="L225">				wp.attributes.put(&quot;sym&quot;, __sym());</span>
+
+<span class="nc" id="L227">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L230" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;type&quot;)) {</span>
+<span class="nc" id="L231">				pushback(e);</span>
+<span class="nc" id="L232">				wp.attributes.put(&quot;type&quot;, __type());</span>
+
+<span class="nc" id="L234">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L237" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;fix&quot;)) {</span>
+<span class="nc" id="L238">				pushback(e);</span>
+<span class="nc" id="L239">				wp.attributes.put(&quot;fix&quot;, __fix());</span>
+
+<span class="nc" id="L241">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L244" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;sat&quot;)) {</span>
+<span class="nc" id="L245">				pushback(e);</span>
+<span class="nc" id="L246">				wp.attributes.put(&quot;sat&quot;, __sat());</span>
+
+<span class="nc" id="L248">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L251" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;hdop&quot;)) {</span>
+<span class="nc" id="L252">				pushback(e);</span>
+<span class="nc" id="L253">				wp.attributes.put(&quot;hdop&quot;, __hdop());</span>
+
+<span class="nc" id="L255">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L258" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;vdop&quot;)) {</span>
+<span class="nc" id="L259">				pushback(e);</span>
+<span class="nc" id="L260">				wp.attributes.put(&quot;vdop&quot;, __vdop());</span>
+
+<span class="nc" id="L262">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L265" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;pdop&quot;)) {</span>
+<span class="nc" id="L266">				pushback(e);</span>
+<span class="nc" id="L267">				wp.attributes.put(&quot;pdop&quot;, __pdop());</span>
+
+<span class="nc" id="L269">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L272" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;ageofdgpsdata&quot;)) {</span>
+<span class="nc" id="L273">				pushback(e);</span>
+<span class="nc" id="L274">				wp.attributes.put(&quot;ageofdgpsdata&quot;, __ageofdgpsdata());</span>
+
+<span class="nc" id="L276">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L279" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;dgpsid&quot;)) {</span>
+<span class="nc" id="L280">				pushback(e);</span>
+<span class="nc" id="L281">				wp.attributes.put(&quot;dgpsid&quot;, __dgpsid());</span>
+
+<span class="nc" id="L283">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L286" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;extensions&quot;)) {</span>
+<span class="nc" id="L287">				pushback(e);</span>
+<span class="nc" id="L288">				__extensions();</span>
+
+<span class="nc" id="L290">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L293">			checkValid(e, XMLEvent.END_ELEMENT, elementName);</span>
+
+<span class="nc bnc" id="L295" title="All 2 branches missed.">			if (wp.name == null)</span>
+<span class="nc" id="L296">				wp.name = String.format(&quot;wp#%08x&quot;, automaticPointId++);</span>
+
+<span class="nc" id="L298">			return wp;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : GPX
+		 * attributes : GPXAttribute
+		 * structure  : METADATA? WPT* RTE* TRK* EXTENSIONS?
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __gpx() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;GPXAttribute, String&gt; attributes;
+
+<span class="nc" id="L315">			e = getNextEvent();</span>
+<span class="nc" id="L316">			checkValid(e, XMLEvent.START_ELEMENT, &quot;gpx&quot;);</span>
+
+<span class="nc" id="L318">			attributes = getAttributes(GPXAttribute.class, e.asStartElement());</span>
+
+<span class="nc bnc" id="L320" title="All 2 branches missed.">			if (!attributes.containsKey(GPXAttribute.VERSION)) {</span>
+<span class="nc" id="L321">				newParseError(e, false, &quot;attribute 'version' is required&quot;);</span>
+<span class="nc" id="L322">			} else {</span>
+<span class="nc" id="L323">				sendGraphAttributeAdded(sourceId, &quot;gpx.version&quot;, attributes.get(GPXAttribute.VERSION));</span>
+			}
+
+<span class="nc bnc" id="L326" title="All 2 branches missed.">			if (!attributes.containsKey(GPXAttribute.CREATOR)) {</span>
+<span class="nc" id="L327">				newParseError(e, false, &quot;attribute 'creator' is required&quot;);</span>
+<span class="nc" id="L328">			} else {</span>
+<span class="nc" id="L329">				sendGraphAttributeAdded(sourceId, &quot;gpx.creator&quot;, attributes.get(GPXAttribute.CREATOR));</span>
+			}
+
+<span class="nc" id="L332">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L334" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;metadata&quot;)) {</span>
+<span class="nc" id="L335">				pushback(e);</span>
+<span class="nc" id="L336">				__metadata();</span>
+
+<span class="nc" id="L338">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L341" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;wpt&quot;)) {</span>
+<span class="nc" id="L342">				pushback(e);</span>
+<span class="nc" id="L343">				__wpt();</span>
+
+<span class="nc" id="L345">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L348" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;rte&quot;)) {</span>
+<span class="nc" id="L349">				pushback(e);</span>
+<span class="nc" id="L350">				__rte();</span>
+
+<span class="nc" id="L352">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L355" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;trk&quot;)) {</span>
+<span class="nc" id="L356">				pushback(e);</span>
+<span class="nc" id="L357">				__trk();</span>
+
+<span class="nc" id="L359">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L362" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;extensions&quot;)) {</span>
+<span class="nc" id="L363">				pushback(e);</span>
+<span class="nc" id="L364">				__extensions();</span>
+
+<span class="nc" id="L366">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L369">			checkValid(e, XMLEvent.END_ELEMENT, &quot;gpx&quot;);</span>
+<span class="nc" id="L370">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : METADATA
+		 * attributes : 
+		 * structure  : NAME? DESC? AUTHOR? COPYRIGHT? LINK* TIME? KEYWORDS? BOUNDS? EXTENSIONS?
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __metadata() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L385">			e = getNextEvent();</span>
+<span class="nc" id="L386">			checkValid(e, XMLEvent.START_ELEMENT, &quot;metadata&quot;);</span>
+
+<span class="nc" id="L388">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L390" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;name&quot;)) {</span>
+<span class="nc" id="L391">				pushback(e);</span>
+<span class="nc" id="L392">				sendGraphAttributeAdded(sourceId, &quot;gpx.metadata.name&quot;, __name());</span>
+
+<span class="nc" id="L394">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L397" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L398">				pushback(e);</span>
+<span class="nc" id="L399">				sendGraphAttributeAdded(sourceId, &quot;gpx.metadata.desc&quot;, __desc());</span>
+
+<span class="nc" id="L401">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L404" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;author&quot;)) {</span>
+<span class="nc" id="L405">				pushback(e);</span>
+<span class="nc" id="L406">				sendGraphAttributeAdded(sourceId, &quot;gpx.metadata.author&quot;, __author());</span>
+
+<span class="nc" id="L408">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L411" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;copyright&quot;)) {</span>
+<span class="nc" id="L412">				pushback(e);</span>
+<span class="nc" id="L413">				sendGraphAttributeAdded(sourceId, &quot;gpx.metadata.copyright&quot;, __copyright());</span>
+
+<span class="nc" id="L415">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L418">			LinkedList&lt;String&gt; links = new LinkedList&lt;String&gt;();</span>
+
+<span class="nc bnc" id="L420" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;link&quot;)) {</span>
+<span class="nc" id="L421">				pushback(e);</span>
+<span class="nc" id="L422">				links.add(__link());</span>
+
+<span class="nc" id="L424">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L427" title="All 2 branches missed.">			if (links.size() &gt; 0)</span>
+<span class="nc" id="L428">				sendGraphAttributeAdded(sourceId, &quot;gpx.metadata.links&quot;, links.toArray(new String[links.size()]));</span>
+
+<span class="nc bnc" id="L430" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;time&quot;)) {</span>
+<span class="nc" id="L431">				pushback(e);</span>
+<span class="nc" id="L432">				sendGraphAttributeAdded(sourceId, &quot;gpx.metadata.time&quot;, __time());</span>
+
+<span class="nc" id="L434">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L437" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;keywords&quot;)) {</span>
+<span class="nc" id="L438">				pushback(e);</span>
+<span class="nc" id="L439">				sendGraphAttributeAdded(sourceId, &quot;gpx.metadata.keywords&quot;, __keywords());</span>
+
+<span class="nc" id="L441">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L444" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;bounds&quot;)) {</span>
+<span class="nc" id="L445">				pushback(e);</span>
+<span class="nc" id="L446">				__bounds();</span>
+
+<span class="nc" id="L448">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L451" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;extensions&quot;)) {</span>
+<span class="nc" id="L452">				pushback(e);</span>
+<span class="nc" id="L453">				__extensions();</span>
+
+<span class="nc" id="L455">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L458">			checkValid(e, XMLEvent.END_ELEMENT, &quot;metadata&quot;);</span>
+<span class="nc" id="L459">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : WPT
+		 * attributes : WPTAttribute
+		 * structure  : ELE? TIME? MAGVAR? GEOIDHEIGHT? NAME? CMT? DESC? SRC? LINK* SYM? TYPE? FIX? SAT? HDOP? VDOP? PDOP? AGEOFDGPSDATA? DGPSID? EXTENSIONS?
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __wpt() throws IOException, XMLStreamException {
+<span class="nc" id="L472">			WayPoint wp = waypoint(&quot;wpt&quot;);</span>
+<span class="nc" id="L473">			wp.deploy();</span>
+<span class="nc" id="L474">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : RTE
+		 * attributes : 
+		 * structure  : NAME? CMT? DESC? SRC? LINK* NUMBER? TYPE? EXTENSIONS? RTEPT*
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __rte() throws IOException, XMLStreamException {
+			XMLEvent e;
+			String name, cmt, desc, src, type, time;
+			int number;
+<span class="nc" id="L490">			LinkedList&lt;String&gt; links = new LinkedList&lt;String&gt;();</span>
+<span class="nc" id="L491">			LinkedList&lt;WayPoint&gt; points = new LinkedList&lt;WayPoint&gt;();</span>
+
+<span class="nc" id="L493">			name = cmt = desc = src = type = time = null;</span>
+<span class="nc" id="L494">			number = -1;</span>
+
+<span class="nc" id="L496">			e = getNextEvent();</span>
+<span class="nc" id="L497">			checkValid(e, XMLEvent.START_ELEMENT, &quot;rte&quot;);</span>
+
+<span class="nc" id="L499">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L501" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;name&quot;)) {</span>
+<span class="nc" id="L502">				pushback(e);</span>
+<span class="nc" id="L503">				name = __name();</span>
+
+<span class="nc" id="L505">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L508" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;time&quot;)) {</span>
+<span class="nc" id="L509">				pushback(e);</span>
+<span class="nc" id="L510">				time = __time();</span>
+
+<span class="nc" id="L512">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L515" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;cmt&quot;)) {</span>
+<span class="nc" id="L516">				pushback(e);</span>
+<span class="nc" id="L517">				cmt = __cmt();</span>
+
+<span class="nc" id="L519">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L522" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L523">				pushback(e);</span>
+<span class="nc" id="L524">				desc = __desc();</span>
+
+<span class="nc" id="L526">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L529" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;src&quot;)) {</span>
+<span class="nc" id="L530">				pushback(e);</span>
+<span class="nc" id="L531">				src = __src();</span>
+
+<span class="nc" id="L533">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L536" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;link&quot;)) {</span>
+<span class="nc" id="L537">				pushback(e);</span>
+<span class="nc" id="L538">				links.add(__link());</span>
+
+<span class="nc" id="L540">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L543" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;number&quot;)) {</span>
+<span class="nc" id="L544">				pushback(e);</span>
+<span class="nc" id="L545">				number = __number();</span>
+
+<span class="nc" id="L547">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L550" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;type&quot;)) {</span>
+<span class="nc" id="L551">				pushback(e);</span>
+<span class="nc" id="L552">				type = __type();</span>
+
+<span class="nc" id="L554">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L557" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;extensions&quot;)) {</span>
+<span class="nc" id="L558">				pushback(e);</span>
+<span class="nc" id="L559">				__extensions();</span>
+
+<span class="nc" id="L561">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L564" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;rtept&quot;)) {</span>
+<span class="nc" id="L565">				pushback(e);</span>
+<span class="nc" id="L566">				points.addLast(__rtept());</span>
+
+<span class="nc" id="L568">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L571">			checkValid(e, XMLEvent.END_ELEMENT, &quot;rte&quot;);</span>
+
+<span class="nc bnc" id="L573" title="All 2 branches missed.">			if (name == null)</span>
+<span class="nc" id="L574">				name = String.format(&quot;route#%08x&quot;, automaticRouteId++);</span>
+
+<span class="nc" id="L576">			sendGraphAttributeAdded(sourceId, &quot;routes.&quot; + name, Boolean.TRUE);</span>
+<span class="nc" id="L577">			sendGraphAttributeAdded(sourceId, &quot;routes.&quot; + name + &quot;.desc&quot;, desc);</span>
+<span class="nc" id="L578">			sendGraphAttributeAdded(sourceId, &quot;routes.&quot; + name + &quot;.cmt&quot;, cmt);</span>
+<span class="nc" id="L579">			sendGraphAttributeAdded(sourceId, &quot;routes.&quot; + name + &quot;.src&quot;, src);</span>
+<span class="nc" id="L580">			sendGraphAttributeAdded(sourceId, &quot;routes.&quot; + name + &quot;.type&quot;, type);</span>
+<span class="nc" id="L581">			sendGraphAttributeAdded(sourceId, &quot;routes.&quot; + name + &quot;.time&quot;, time);</span>
+<span class="nc" id="L582">			sendGraphAttributeAdded(sourceId, &quot;routes.&quot; + name + &quot;.number&quot;, number);</span>
+
+<span class="nc bnc" id="L584" title="All 2 branches missed.">			for (int i = 0; i &lt; points.size(); i++) {</span>
+<span class="nc" id="L585">				points.get(i).deploy();</span>
+
+<span class="nc bnc" id="L587" title="All 2 branches missed.">				if (i &gt; 0) {</span>
+<span class="nc" id="L588">					String eid = String.format(&quot;seg#%08x&quot;, automaticEdgeId++);</span>
+<span class="nc" id="L589">					sendEdgeAdded(sourceId, eid, points.get(i - 1).name, points.get(i).name, true);</span>
+<span class="nc" id="L590">					sendEdgeAttributeAdded(sourceId, eid, &quot;route&quot;, name);</span>
+				}
+			}
+<span class="nc" id="L593">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : TRK
+		 * attributes : 
+		 * structure  : NAME? CMT? DESC? SRC? LINK* NUMBER? TYPE? EXTENSIONS? TRKSEG*
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __trk() throws IOException, XMLStreamException {
+			XMLEvent e;
+			String name, cmt, desc, src, type, time;
+			int number;
+<span class="nc" id="L609">			LinkedList&lt;String&gt; links = new LinkedList&lt;String&gt;();</span>
+
+<span class="nc" id="L611">			name = cmt = desc = src = type = time = null;</span>
+<span class="nc" id="L612">			number = -1;</span>
+
+<span class="nc" id="L614">			e = getNextEvent();</span>
+<span class="nc" id="L615">			checkValid(e, XMLEvent.START_ELEMENT, &quot;trk&quot;);</span>
+
+<span class="nc" id="L617">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L619" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;name&quot;)) {</span>
+<span class="nc" id="L620">				pushback(e);</span>
+<span class="nc" id="L621">				name = __name();</span>
+
+<span class="nc" id="L623">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L626" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;time&quot;)) {</span>
+<span class="nc" id="L627">				pushback(e);</span>
+<span class="nc" id="L628">				time = __time();</span>
+
+<span class="nc" id="L630">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L633" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;cmt&quot;)) {</span>
+<span class="nc" id="L634">				pushback(e);</span>
+<span class="nc" id="L635">				cmt = __cmt();</span>
+
+<span class="nc" id="L637">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L640" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L641">				pushback(e);</span>
+<span class="nc" id="L642">				desc = __desc();</span>
+
+<span class="nc" id="L644">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L647" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;src&quot;)) {</span>
+<span class="nc" id="L648">				pushback(e);</span>
+<span class="nc" id="L649">				src = __src();</span>
+
+<span class="nc" id="L651">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L654" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;link&quot;)) {</span>
+<span class="nc" id="L655">				pushback(e);</span>
+<span class="nc" id="L656">				links.add(__link());</span>
+
+<span class="nc" id="L658">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L661" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;number&quot;)) {</span>
+<span class="nc" id="L662">				pushback(e);</span>
+<span class="nc" id="L663">				number = __number();</span>
+
+<span class="nc" id="L665">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L668" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;type&quot;)) {</span>
+<span class="nc" id="L669">				pushback(e);</span>
+<span class="nc" id="L670">				type = __type();</span>
+
+<span class="nc" id="L672">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L675" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;extensions&quot;)) {</span>
+<span class="nc" id="L676">				pushback(e);</span>
+<span class="nc" id="L677">				__extensions();</span>
+
+<span class="nc" id="L679">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L682" title="All 2 branches missed.">			if (name == null)</span>
+<span class="nc" id="L683">				name = String.format(&quot;route#%08x&quot;, automaticRouteId++);</span>
+
+<span class="nc" id="L685">			sendGraphAttributeAdded(sourceId, &quot;tracks.&quot; + name, Boolean.TRUE);</span>
+<span class="nc" id="L686">			sendGraphAttributeAdded(sourceId, &quot;tracks.&quot; + name + &quot;.desc&quot;, desc);</span>
+<span class="nc" id="L687">			sendGraphAttributeAdded(sourceId, &quot;tracks.&quot; + name + &quot;.cmt&quot;, cmt);</span>
+<span class="nc" id="L688">			sendGraphAttributeAdded(sourceId, &quot;tracks.&quot; + name + &quot;.src&quot;, src);</span>
+<span class="nc" id="L689">			sendGraphAttributeAdded(sourceId, &quot;tracks.&quot; + name + &quot;.type&quot;, type);</span>
+<span class="nc" id="L690">			sendGraphAttributeAdded(sourceId, &quot;tracks.&quot; + name + &quot;.time&quot;, time);</span>
+<span class="nc" id="L691">			sendGraphAttributeAdded(sourceId, &quot;tracks.&quot; + name + &quot;.number&quot;, number);</span>
+
+<span class="nc bnc" id="L693" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;trkseg&quot;)) {</span>
+<span class="nc" id="L694">				pushback(e);</span>
+<span class="nc" id="L695">				List&lt;WayPoint&gt; wps = __trkseg();</span>
+
+<span class="nc bnc" id="L697" title="All 2 branches missed.">				for (int i = 0; i &lt; wps.size(); i++) {</span>
+<span class="nc" id="L698">					wps.get(i).deploy();</span>
+
+<span class="nc bnc" id="L700" title="All 2 branches missed.">					if (i &gt; 0) {</span>
+<span class="nc" id="L701">						String eid = String.format(&quot;seg#%08x&quot;, automaticEdgeId++);</span>
+<span class="nc" id="L702">						sendEdgeAdded(sourceId, eid, wps.get(i - 1).name, wps.get(i).name, true);</span>
+<span class="nc" id="L703">						sendEdgeAttributeAdded(sourceId, eid, &quot;route&quot;, name);</span>
+					}
+				}
+
+<span class="nc" id="L707">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L710">			checkValid(e, XMLEvent.END_ELEMENT, &quot;trk&quot;);</span>
+<span class="nc" id="L711">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : EXTENSIONS
+		 * attributes : 
+		 * structure  :
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __extensions() throws IOException, XMLStreamException {
+			XMLEvent e;
+<span class="nc" id="L725">			int stack = 0;</span>
+
+<span class="nc" id="L727">			e = getNextEvent();</span>
+<span class="nc" id="L728">			checkValid(e, XMLEvent.START_ELEMENT, &quot;extensions&quot;);</span>
+
+<span class="nc" id="L730">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L732" title="All 4 branches missed.">			while (!(isEvent(e, XMLEvent.END_ELEMENT, &quot;extensions&quot;) &amp;&amp; stack == 0)) {</span>
+<span class="nc bnc" id="L733" title="All 2 branches missed.">				if (isEvent(e, XMLEvent.END_ELEMENT, &quot;extensions&quot;))</span>
+<span class="nc" id="L734">					stack--;</span>
+<span class="nc bnc" id="L735" title="All 2 branches missed.">				else if (isEvent(e, XMLEvent.START_ELEMENT, &quot;extensions&quot;))</span>
+<span class="nc" id="L736">					stack++;</span>
+
+<span class="nc" id="L738">				e = getNextEvent();</span>
+			}
+<span class="nc" id="L740">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : NAME
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __name() throws IOException, XMLStreamException {
+			String name;
+			XMLEvent e;
+
+<span class="nc" id="L756">			e = getNextEvent();</span>
+<span class="nc" id="L757">			checkValid(e, XMLEvent.START_ELEMENT, &quot;name&quot;);</span>
+
+<span class="nc" id="L759">			name = __characters();</span>
+
+<span class="nc" id="L761">			e = getNextEvent();</span>
+<span class="nc" id="L762">			checkValid(e, XMLEvent.END_ELEMENT, &quot;name&quot;);</span>
+
+<span class="nc" id="L764">			return name;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : DESC
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __desc() throws IOException, XMLStreamException {
+			String desc;
+			XMLEvent e;
+
+<span class="nc" id="L781">			e = getNextEvent();</span>
+<span class="nc" id="L782">			checkValid(e, XMLEvent.START_ELEMENT, &quot;desc&quot;);</span>
+
+<span class="nc" id="L784">			desc = __characters();</span>
+
+<span class="nc" id="L786">			e = getNextEvent();</span>
+<span class="nc" id="L787">			checkValid(e, XMLEvent.END_ELEMENT, &quot;desc&quot;);</span>
+
+<span class="nc" id="L789">			return desc;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : AUTHOR
+		 * attributes : 
+		 * structure  : NAME? EMAIL? LINK?
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __author() throws IOException, XMLStreamException {
+<span class="nc" id="L803">			String author = &quot;&quot;;</span>
+			XMLEvent e;
+
+<span class="nc" id="L806">			e = getNextEvent();</span>
+<span class="nc" id="L807">			checkValid(e, XMLEvent.START_ELEMENT, &quot;author&quot;);</span>
+
+<span class="nc" id="L809">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L811" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;name&quot;)) {</span>
+<span class="nc" id="L812">				pushback(e);</span>
+<span class="nc" id="L813">				author += __name();</span>
+
+<span class="nc" id="L815">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L818" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;email&quot;)) {</span>
+<span class="nc" id="L819">				pushback(e);</span>
+<span class="nc" id="L820">				author += &quot; &lt;&quot; + __email() + &quot;&gt;&quot;;</span>
+
+<span class="nc" id="L822">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L825" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;link&quot;)) {</span>
+<span class="nc" id="L826">				pushback(e);</span>
+<span class="nc" id="L827">				author += &quot; (&quot; + __link() + &quot;)&quot;;</span>
+
+<span class="nc" id="L829">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L832">			e = getNextEvent();</span>
+<span class="nc" id="L833">			checkValid(e, XMLEvent.END_ELEMENT, &quot;author&quot;);</span>
+
+<span class="nc" id="L835">			return author;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : COPYRIGHT
+		 * attributes : COPYRIGHTAttribute
+		 * structure  : YEAR? LICENCE?
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __copyright() throws IOException, XMLStreamException {
+			String copyright;
+			XMLEvent e;
+			EnumMap&lt;COPYRIGHTAttribute, String&gt; attributes;
+
+<span class="nc" id="L853">			e = getNextEvent();</span>
+<span class="nc" id="L854">			checkValid(e, XMLEvent.START_ELEMENT, &quot;copyright&quot;);</span>
+
+<span class="nc" id="L856">			attributes = getAttributes(COPYRIGHTAttribute.class, e.asStartElement());</span>
+
+<span class="nc bnc" id="L858" title="All 2 branches missed.">			if (!attributes.containsKey(COPYRIGHTAttribute.AUTHOR)) {</span>
+<span class="nc" id="L859">				newParseError(e, false, &quot;attribute 'author' is required&quot;);</span>
+<span class="nc" id="L860">				copyright = &quot;unknown&quot;;</span>
+<span class="nc" id="L861">			} else</span>
+<span class="nc" id="L862">				copyright = attributes.get(COPYRIGHTAttribute.AUTHOR);</span>
+
+<span class="nc" id="L864">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L866" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;year&quot;)) {</span>
+<span class="nc" id="L867">				pushback(e);</span>
+<span class="nc" id="L868">				copyright += &quot; &quot; + __year();</span>
+
+<span class="nc" id="L870">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L873" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;license&quot;)) {</span>
+<span class="nc" id="L874">				pushback(e);</span>
+<span class="nc" id="L875">				copyright += &quot; &quot; + __license();</span>
+
+<span class="nc" id="L877">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L880">			checkValid(e, XMLEvent.END_ELEMENT, &quot;copyright&quot;);</span>
+
+<span class="nc" id="L882">			return copyright;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : LINK
+		 * attributes : LINKAttribute
+		 * structure  : TEXT? TYPE?
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __link() throws IOException, XMLStreamException {
+			String link;
+			XMLEvent e;
+			EnumMap&lt;LINKAttribute, String&gt; attributes;
+
+<span class="nc" id="L900">			e = getNextEvent();</span>
+<span class="nc" id="L901">			checkValid(e, XMLEvent.START_ELEMENT, &quot;link&quot;);</span>
+
+<span class="nc" id="L903">			attributes = getAttributes(LINKAttribute.class, e.asStartElement());</span>
+
+<span class="nc bnc" id="L905" title="All 2 branches missed.">			if (!attributes.containsKey(LINKAttribute.HREF)) {</span>
+<span class="nc" id="L906">				newParseError(e, false, &quot;attribute 'href' is required&quot;);</span>
+<span class="nc" id="L907">				link = &quot;unknown&quot;;</span>
+<span class="nc" id="L908">			} else</span>
+<span class="nc" id="L909">				link = attributes.get(LINKAttribute.HREF);</span>
+
+<span class="nc" id="L911">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L913" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;text&quot;)) {</span>
+<span class="nc" id="L914">				pushback(e);</span>
+<span class="nc" id="L915">				__text();</span>
+
+<span class="nc" id="L917">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L920" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;type&quot;)) {</span>
+<span class="nc" id="L921">				pushback(e);</span>
+<span class="nc" id="L922">				__type();</span>
+
+<span class="nc" id="L924">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L927">			checkValid(e, XMLEvent.END_ELEMENT, &quot;link&quot;);</span>
+
+<span class="nc" id="L929">			return link;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : TIME
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __time() throws IOException, XMLStreamException {
+			String time;
+			XMLEvent e;
+
+<span class="nc" id="L946">			e = getNextEvent();</span>
+<span class="nc" id="L947">			checkValid(e, XMLEvent.START_ELEMENT, &quot;time&quot;);</span>
+
+<span class="nc" id="L949">			time = __characters();</span>
+
+<span class="nc" id="L951">			e = getNextEvent();</span>
+<span class="nc" id="L952">			checkValid(e, XMLEvent.END_ELEMENT, &quot;time&quot;);</span>
+
+<span class="nc" id="L954">			return time;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : KEYWORDS
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __keywords() throws IOException, XMLStreamException {
+			String keywords;
+			XMLEvent e;
+
+<span class="nc" id="L971">			e = getNextEvent();</span>
+<span class="nc" id="L972">			checkValid(e, XMLEvent.START_ELEMENT, &quot;keywords&quot;);</span>
+
+<span class="nc" id="L974">			keywords = __characters();</span>
+
+<span class="nc" id="L976">			e = getNextEvent();</span>
+<span class="nc" id="L977">			checkValid(e, XMLEvent.END_ELEMENT, &quot;keywords&quot;);</span>
+
+<span class="nc" id="L979">			return keywords;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : BOUNDS
+		 * attributes : BOUNDSAttribute
+		 * structure  :
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __bounds() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;BOUNDSAttribute, String&gt; attributes;
+			double minlat, maxlat, minlon, maxlon;
+
+<span class="nc" id="L997">			e = getNextEvent();</span>
+<span class="nc" id="L998">			checkValid(e, XMLEvent.START_ELEMENT, &quot;bounds&quot;);</span>
+
+<span class="nc" id="L1000">			attributes = getAttributes(BOUNDSAttribute.class, e.asStartElement());</span>
+
+<span class="nc bnc" id="L1002" title="All 2 branches missed.">			if (!attributes.containsKey(BOUNDSAttribute.MINLAT)) {</span>
+<span class="nc" id="L1003">				newParseError(e, false, &quot;attribute 'minlat' is required&quot;);</span>
+			}
+
+<span class="nc bnc" id="L1006" title="All 2 branches missed.">			if (!attributes.containsKey(BOUNDSAttribute.MAXLAT)) {</span>
+<span class="nc" id="L1007">				newParseError(e, false, &quot;attribute 'maxlat' is required&quot;);</span>
+			}
+
+<span class="nc bnc" id="L1010" title="All 2 branches missed.">			if (!attributes.containsKey(BOUNDSAttribute.MINLON)) {</span>
+<span class="nc" id="L1011">				newParseError(e, false, &quot;attribute 'minlon' is required&quot;);</span>
+			}
+
+<span class="nc bnc" id="L1014" title="All 2 branches missed.">			if (!attributes.containsKey(BOUNDSAttribute.MAXLON)) {</span>
+<span class="nc" id="L1015">				newParseError(e, false, &quot;attribute 'maxlon' is required&quot;);</span>
+			}
+
+<span class="nc" id="L1018">			minlat = Double.parseDouble(attributes.get(BOUNDSAttribute.MINLAT));</span>
+<span class="nc" id="L1019">			maxlat = Double.parseDouble(attributes.get(BOUNDSAttribute.MAXLAT));</span>
+<span class="nc" id="L1020">			minlon = Double.parseDouble(attributes.get(BOUNDSAttribute.MINLON));</span>
+<span class="nc" id="L1021">			maxlon = Double.parseDouble(attributes.get(BOUNDSAttribute.MAXLON));</span>
+
+<span class="nc" id="L1023">			sendGraphAttributeAdded(sourceId, &quot;gpx.bounds&quot;, new double[] { minlat, minlon, maxlat, maxlon });</span>
+
+<span class="nc" id="L1025">			e = getNextEvent();</span>
+<span class="nc" id="L1026">			checkValid(e, XMLEvent.END_ELEMENT, &quot;bounds&quot;);</span>
+<span class="nc" id="L1027">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : ELE
+		 * attributes : 
+		 * structure  : double
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private double __ele() throws IOException, XMLStreamException {
+			String ele;
+			XMLEvent e;
+
+<span class="nc" id="L1043">			e = getNextEvent();</span>
+<span class="nc" id="L1044">			checkValid(e, XMLEvent.START_ELEMENT, &quot;ele&quot;);</span>
+
+<span class="nc" id="L1046">			ele = __characters();</span>
+
+<span class="nc" id="L1048">			e = getNextEvent();</span>
+<span class="nc" id="L1049">			checkValid(e, XMLEvent.END_ELEMENT, &quot;ele&quot;);</span>
+
+<span class="nc" id="L1051">			return Double.parseDouble(ele);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : MAGVAR
+		 * attributes : 
+		 * structure  : double in [0,360]
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private double __magvar() throws IOException, XMLStreamException {
+			String magvar;
+			XMLEvent e;
+
+<span class="nc" id="L1068">			e = getNextEvent();</span>
+<span class="nc" id="L1069">			checkValid(e, XMLEvent.START_ELEMENT, &quot;magvar&quot;);</span>
+
+<span class="nc" id="L1071">			magvar = __characters();</span>
+
+<span class="nc" id="L1073">			e = getNextEvent();</span>
+<span class="nc" id="L1074">			checkValid(e, XMLEvent.END_ELEMENT, &quot;magvar&quot;);</span>
+
+<span class="nc" id="L1076">			return Double.parseDouble(magvar);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : GEOIDHEIGHT
+		 * attributes : 
+		 * structure  : double
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private double __geoidheight() throws IOException, XMLStreamException {
+			String geoidheight;
+			XMLEvent e;
+
+<span class="nc" id="L1093">			e = getNextEvent();</span>
+<span class="nc" id="L1094">			checkValid(e, XMLEvent.START_ELEMENT, &quot;geoidheight&quot;);</span>
+
+<span class="nc" id="L1096">			geoidheight = __characters();</span>
+
+<span class="nc" id="L1098">			e = getNextEvent();</span>
+<span class="nc" id="L1099">			checkValid(e, XMLEvent.END_ELEMENT, &quot;geoidheight&quot;);</span>
+
+<span class="nc" id="L1101">			return Double.parseDouble(geoidheight);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : CMT
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __cmt() throws IOException, XMLStreamException {
+			String cmt;
+			XMLEvent e;
+
+<span class="nc" id="L1118">			e = getNextEvent();</span>
+<span class="nc" id="L1119">			checkValid(e, XMLEvent.START_ELEMENT, &quot;cmt&quot;);</span>
+
+<span class="nc" id="L1121">			cmt = __characters();</span>
+
+<span class="nc" id="L1123">			e = getNextEvent();</span>
+<span class="nc" id="L1124">			checkValid(e, XMLEvent.END_ELEMENT, &quot;cmt&quot;);</span>
+
+<span class="nc" id="L1126">			return cmt;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : SRC
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __src() throws IOException, XMLStreamException {
+			String src;
+			XMLEvent e;
+
+<span class="nc" id="L1143">			e = getNextEvent();</span>
+<span class="nc" id="L1144">			checkValid(e, XMLEvent.START_ELEMENT, &quot;src&quot;);</span>
+
+<span class="nc" id="L1146">			src = __characters();</span>
+
+<span class="nc" id="L1148">			e = getNextEvent();</span>
+<span class="nc" id="L1149">			checkValid(e, XMLEvent.END_ELEMENT, &quot;src&quot;);</span>
+
+<span class="nc" id="L1151">			return src;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : SYM
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __sym() throws IOException, XMLStreamException {
+			String sym;
+			XMLEvent e;
+
+<span class="nc" id="L1168">			e = getNextEvent();</span>
+<span class="nc" id="L1169">			checkValid(e, XMLEvent.START_ELEMENT, &quot;sym&quot;);</span>
+
+<span class="nc" id="L1171">			sym = __characters();</span>
+
+<span class="nc" id="L1173">			e = getNextEvent();</span>
+<span class="nc" id="L1174">			checkValid(e, XMLEvent.END_ELEMENT, &quot;sym&quot;);</span>
+
+<span class="nc" id="L1176">			return sym;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : TEXT
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __text() throws IOException, XMLStreamException {
+			String text;
+			XMLEvent e;
+
+<span class="nc" id="L1193">			e = getNextEvent();</span>
+<span class="nc" id="L1194">			checkValid(e, XMLEvent.START_ELEMENT, &quot;text&quot;);</span>
+
+<span class="nc" id="L1196">			text = __characters();</span>
+
+<span class="nc" id="L1198">			e = getNextEvent();</span>
+<span class="nc" id="L1199">			checkValid(e, XMLEvent.END_ELEMENT, &quot;text&quot;);</span>
+
+<span class="nc" id="L1201">			return text;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : TYPE
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __type() throws IOException, XMLStreamException {
+			String type;
+			XMLEvent e;
+
+<span class="nc" id="L1218">			e = getNextEvent();</span>
+<span class="nc" id="L1219">			checkValid(e, XMLEvent.START_ELEMENT, &quot;type&quot;);</span>
+
+<span class="nc" id="L1221">			type = __characters();</span>
+
+<span class="nc" id="L1223">			e = getNextEvent();</span>
+<span class="nc" id="L1224">			checkValid(e, XMLEvent.END_ELEMENT, &quot;type&quot;);</span>
+
+<span class="nc" id="L1226">			return type;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : FIX
+		 * attributes : 
+		 * structure  : enum FixType
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __fix() throws IOException, XMLStreamException {
+			String fix;
+			XMLEvent e;
+
+<span class="nc" id="L1243">			e = getNextEvent();</span>
+<span class="nc" id="L1244">			checkValid(e, XMLEvent.START_ELEMENT, &quot;fix&quot;);</span>
+
+<span class="nc" id="L1246">			fix = __characters();</span>
+
+<span class="nc bnc" id="L1248" title="All 2 branches missed.">			if (!fix.toLowerCase().matches(&quot;^(none|2d|3d|dgps|pps)$&quot;))</span>
+<span class="nc" id="L1249">				newParseError(e, true, &quot;invalid fix type, expecting one of 'none', '2d', '3d', 'dgps', 'pps'&quot;);</span>
+
+<span class="nc" id="L1251">			e = getNextEvent();</span>
+<span class="nc" id="L1252">			checkValid(e, XMLEvent.END_ELEMENT, &quot;fix&quot;);</span>
+
+<span class="nc" id="L1254">			return fix;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : SAT
+		 * attributes : 
+		 * structure  : positive integer
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private int __sat() throws IOException, XMLStreamException {
+			String sat;
+			XMLEvent e;
+
+<span class="nc" id="L1271">			e = getNextEvent();</span>
+<span class="nc" id="L1272">			checkValid(e, XMLEvent.START_ELEMENT, &quot;sat&quot;);</span>
+
+<span class="nc" id="L1274">			sat = __characters();</span>
+
+<span class="nc" id="L1276">			e = getNextEvent();</span>
+<span class="nc" id="L1277">			checkValid(e, XMLEvent.END_ELEMENT, &quot;sat&quot;);</span>
+
+<span class="nc" id="L1279">			return Integer.parseInt(sat);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : HDOP
+		 * attributes : 
+		 * structure  : double
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private double __hdop() throws IOException, XMLStreamException {
+			String hdop;
+			XMLEvent e;
+
+<span class="nc" id="L1296">			e = getNextEvent();</span>
+<span class="nc" id="L1297">			checkValid(e, XMLEvent.START_ELEMENT, &quot;hdop&quot;);</span>
+
+<span class="nc" id="L1299">			hdop = __characters();</span>
+
+<span class="nc" id="L1301">			e = getNextEvent();</span>
+<span class="nc" id="L1302">			checkValid(e, XMLEvent.END_ELEMENT, &quot;hdop&quot;);</span>
+
+<span class="nc" id="L1304">			return Double.parseDouble(hdop);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : VDOP
+		 * attributes : 
+		 * structure  : double
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private double __vdop() throws IOException, XMLStreamException {
+			String vdop;
+			XMLEvent e;
+
+<span class="nc" id="L1321">			e = getNextEvent();</span>
+<span class="nc" id="L1322">			checkValid(e, XMLEvent.START_ELEMENT, &quot;vdop&quot;);</span>
+
+<span class="nc" id="L1324">			vdop = __characters();</span>
+
+<span class="nc" id="L1326">			e = getNextEvent();</span>
+<span class="nc" id="L1327">			checkValid(e, XMLEvent.END_ELEMENT, &quot;vdop&quot;);</span>
+
+<span class="nc" id="L1329">			return Double.parseDouble(vdop);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : PDOP
+		 * attributes : 
+		 * structure  : double
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private double __pdop() throws IOException, XMLStreamException {
+			String pdop;
+			XMLEvent e;
+
+<span class="nc" id="L1346">			e = getNextEvent();</span>
+<span class="nc" id="L1347">			checkValid(e, XMLEvent.START_ELEMENT, &quot;pdop&quot;);</span>
+
+<span class="nc" id="L1349">			pdop = __characters();</span>
+
+<span class="nc" id="L1351">			e = getNextEvent();</span>
+<span class="nc" id="L1352">			checkValid(e, XMLEvent.END_ELEMENT, &quot;pdop&quot;);</span>
+
+<span class="nc" id="L1354">			return Double.parseDouble(pdop);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : AGEOFDGPSDATA
+		 * attributes : 
+		 * structure  : double
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private double __ageofdgpsdata() throws IOException, XMLStreamException {
+			String ageofdgpsdata;
+			XMLEvent e;
+
+<span class="nc" id="L1371">			e = getNextEvent();</span>
+<span class="nc" id="L1372">			checkValid(e, XMLEvent.START_ELEMENT, &quot;ageofdgpsdata&quot;);</span>
+
+<span class="nc" id="L1374">			ageofdgpsdata = __characters();</span>
+
+<span class="nc" id="L1376">			e = getNextEvent();</span>
+<span class="nc" id="L1377">			checkValid(e, XMLEvent.END_ELEMENT, &quot;ageofdgpsdata&quot;);</span>
+
+<span class="nc" id="L1379">			return Double.parseDouble(ageofdgpsdata);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : DGPSID
+		 * attributes : 
+		 * structure  : integer in [0,1023]
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private int __dgpsid() throws IOException, XMLStreamException {
+			String dgpsid;
+			XMLEvent e;
+
+<span class="nc" id="L1396">			e = getNextEvent();</span>
+<span class="nc" id="L1397">			checkValid(e, XMLEvent.START_ELEMENT, &quot;dgpsid&quot;);</span>
+
+<span class="nc" id="L1399">			dgpsid = __characters();</span>
+
+<span class="nc" id="L1401">			e = getNextEvent();</span>
+<span class="nc" id="L1402">			checkValid(e, XMLEvent.END_ELEMENT, &quot;dgpsid&quot;);</span>
+
+<span class="nc" id="L1404">			return Integer.parseInt(dgpsid);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : NUMBER
+		 * attributes : 
+		 * structure  : positive integer
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private int __number() throws IOException, XMLStreamException {
+			String number;
+			XMLEvent e;
+
+<span class="nc" id="L1421">			e = getNextEvent();</span>
+<span class="nc" id="L1422">			checkValid(e, XMLEvent.START_ELEMENT, &quot;number&quot;);</span>
+
+<span class="nc" id="L1424">			number = __characters();</span>
+
+<span class="nc" id="L1426">			e = getNextEvent();</span>
+<span class="nc" id="L1427">			checkValid(e, XMLEvent.END_ELEMENT, &quot;number&quot;);</span>
+
+<span class="nc" id="L1429">			return Integer.parseInt(number);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : RTEPT
+		 * attributes : 
+		 * structure  : __wptType
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private WayPoint __rtept() throws IOException, XMLStreamException {
+<span class="nc" id="L1443">			return waypoint(&quot;rtept&quot;);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : TRKPT
+		 * attributes : 
+		 * structure  : __wptType
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private WayPoint __trkpt() throws IOException, XMLStreamException {
+<span class="nc" id="L1457">			return waypoint(&quot;trkpt&quot;);</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : TRKSEG
+		 * attributes : 
+		 * structure  : TRKPT* EXTENSIONS?
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private List&lt;WayPoint&gt; __trkseg() throws IOException, XMLStreamException {
+<span class="nc" id="L1471">			LinkedList&lt;WayPoint&gt; points = new LinkedList&lt;WayPoint&gt;();</span>
+			XMLEvent e;
+
+<span class="nc" id="L1474">			e = getNextEvent();</span>
+<span class="nc" id="L1475">			checkValid(e, XMLEvent.START_ELEMENT, &quot;trkseg&quot;);</span>
+
+<span class="nc" id="L1477">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L1479" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;trkpt&quot;)) {</span>
+<span class="nc" id="L1480">				pushback(e);</span>
+<span class="nc" id="L1481">				points.addLast(__trkpt());</span>
+
+<span class="nc" id="L1483">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L1486" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;extensions&quot;)) {</span>
+<span class="nc" id="L1487">				pushback(e);</span>
+<span class="nc" id="L1488">				__extensions();</span>
+
+<span class="nc" id="L1490">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L1493">			checkValid(e, XMLEvent.END_ELEMENT, &quot;trkseg&quot;);</span>
+
+<span class="nc" id="L1495">			return points;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : EMAIL
+		 * attributes : EMAILAttribute
+		 * structure  :
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __email() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;EMAILAttribute, String&gt; attributes;
+<span class="nc" id="L1511">			String email = &quot;&quot;;</span>
+
+<span class="nc" id="L1513">			e = getNextEvent();</span>
+<span class="nc" id="L1514">			checkValid(e, XMLEvent.START_ELEMENT, &quot;email&quot;);</span>
+
+<span class="nc" id="L1516">			attributes = getAttributes(EMAILAttribute.class, e.asStartElement());</span>
+
+<span class="nc bnc" id="L1518" title="All 2 branches missed.">			if (!attributes.containsKey(EMAILAttribute.ID)) {</span>
+<span class="nc" id="L1519">				newParseError(e, false, &quot;attribute 'version' is required&quot;);</span>
+<span class="nc" id="L1520">			} else</span>
+<span class="nc" id="L1521">				email += attributes.get(EMAILAttribute.ID);</span>
+
+<span class="nc" id="L1523">			email += &quot;@&quot;;</span>
+
+<span class="nc bnc" id="L1525" title="All 2 branches missed.">			if (!attributes.containsKey(EMAILAttribute.DOMAIN)) {</span>
+<span class="nc" id="L1526">				newParseError(e, false, &quot;attribute 'version' is required&quot;);</span>
+<span class="nc" id="L1527">			} else</span>
+<span class="nc" id="L1528">				email += attributes.get(EMAILAttribute.DOMAIN);</span>
+
+<span class="nc" id="L1530">			e = getNextEvent();</span>
+<span class="nc" id="L1531">			checkValid(e, XMLEvent.END_ELEMENT, &quot;email&quot;);</span>
+
+<span class="nc" id="L1533">			return email;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : YEAR
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __year() throws IOException, XMLStreamException {
+			String year;
+			XMLEvent e;
+
+<span class="nc" id="L1550">			e = getNextEvent();</span>
+<span class="nc" id="L1551">			checkValid(e, XMLEvent.START_ELEMENT, &quot;year&quot;);</span>
+
+<span class="nc" id="L1553">			year = __characters();</span>
+
+<span class="nc" id="L1555">			e = getNextEvent();</span>
+<span class="nc" id="L1556">			checkValid(e, XMLEvent.END_ELEMENT, &quot;year&quot;);</span>
+
+<span class="nc" id="L1558">			return year;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name       : LICENSE
+		 * attributes : 
+		 * structure  : string
+		 * &lt;/pre&gt;
+		 * 
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __license() throws IOException, XMLStreamException {
+			String license;
+			XMLEvent e;
+
+<span class="nc" id="L1575">			e = getNextEvent();</span>
+<span class="nc" id="L1576">			checkValid(e, XMLEvent.START_ELEMENT, &quot;license&quot;);</span>
+
+<span class="nc" id="L1578">			license = __characters();</span>
+
+<span class="nc" id="L1580">			e = getNextEvent();</span>
+<span class="nc" id="L1581">			checkValid(e, XMLEvent.END_ELEMENT, &quot;license&quot;);</span>
+
+<span class="nc" id="L1583">			return license;</span>
+		}
+	}
+
+	public static interface GPXConstants {
+<span class="nc" id="L1588">		public static enum Balise {</span>
+<span class="nc" id="L1589">			GPX, METADATA, WPT, RTE, TRK, EXTENSIONS, NAME, DESC, AUTHOR, COPYRIGHT, LINK, TIME, KEYWORDS, BOUNDS, ELE, MAGVAR, GEOIDHEIGHT, CMT, SRC, SYM, TYPE, FIX, SAT, HDOP, VDOP, PDOP, AGEOFDGPSDATA, DGPSID, NUMBER, RTEPT, TRKSEG, TRKPT, YEAR, LICENCE, TEXT, EMAIL, PT</span>
+		}
+
+<span class="nc" id="L1592">		public static enum GPXAttribute {</span>
+<span class="nc" id="L1593">			CREATOR, VERSION</span>
+		}
+
+<span class="nc" id="L1596">		public static enum WPTAttribute {</span>
+<span class="nc" id="L1597">			LAT, LON</span>
+		}
+
+<span class="nc" id="L1600">		public static enum LINKAttribute {</span>
+<span class="nc" id="L1601">			HREF</span>
+		}
+
+<span class="nc" id="L1604">		public static enum EMAILAttribute {</span>
+<span class="nc" id="L1605">			ID, DOMAIN</span>
+		}
+
+<span class="nc" id="L1608">		public static enum PTAttribute {</span>
+<span class="nc" id="L1609">			LAT, LON</span>
+		}
+
+<span class="nc" id="L1612">		public static enum BOUNDSAttribute {</span>
+<span class="nc" id="L1613">			MINLAT, MAXLAT, MINLON, MAXLON</span>
+		}
+
+<span class="nc" id="L1616">		public static enum COPYRIGHTAttribute {</span>
+<span class="nc" id="L1617">			AUTHOR</span>
+		}
+
+<span class="nc" id="L1620">		public static enum FixType {</span>
+<span class="nc" id="L1621">			T_NONE, T_2D, T_3D, T_DGPS, T_PPS</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

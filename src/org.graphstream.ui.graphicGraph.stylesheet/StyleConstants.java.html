@@ -1,0 +1,501 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>StyleConstants.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.stylesheet</a> &gt; <span class="el_source">StyleConstants.java</span></div><h1>StyleConstants.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-07-05
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.stylesheet;
+
+import java.io.IOException;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+/**
+ * The various constants and static constant conversion methods used for
+ * styling.
+ */
+<span class="nc" id="L47">public class StyleConstants {</span>
+	// Constants
+
+	/**
+	 * The available units for numerical values.
+	 */
+<span class="nc" id="L53">	public static enum Units {</span>
+<span class="nc" id="L54">		PX, GU, PERCENTS</span>
+	};
+
+	/**
+	 * How to fill the contents of the element.
+	 */
+<span class="nc" id="L60">	public static enum FillMode {</span>
+<span class="nc" id="L61">		NONE, PLAIN, DYN_PLAIN, GRADIENT_RADIAL, GRADIENT_HORIZONTAL, GRADIENT_VERTICAL, GRADIENT_DIAGONAL1, GRADIENT_DIAGONAL2, IMAGE_TILED, IMAGE_SCALED, IMAGE_SCALED_RATIO_MAX, IMAGE_SCALED_RATIO_MIN</span>
+	};
+
+	/**
+	 * How to draw the contour of the element.
+	 */
+<span class="nc" id="L67">	public static enum StrokeMode {</span>
+<span class="nc" id="L68">		NONE, PLAIN, DASHES, DOTS, DOUBLE</span>
+	}
+
+	/**
+	 * How to draw the shadow of the element.
+	 */
+<span class="nc" id="L74">	public static enum ShadowMode {</span>
+<span class="nc" id="L75">		NONE, PLAIN, GRADIENT_RADIAL, GRADIENT_HORIZONTAL, GRADIENT_VERTICAL, GRADIENT_DIAGONAL1, GRADIENT_DIAGONAL2</span>
+	}
+
+	/**
+	 * How to show an element.
+	 */
+<span class="nc" id="L81">	public static enum VisibilityMode {</span>
+<span class="nc" id="L82">		NORMAL, HIDDEN, AT_ZOOM, UNDER_ZOOM, OVER_ZOOM, ZOOM_RANGE, ZOOMS</span>
+	}
+
+	/**
+	 * How to draw the text of an element.
+	 */
+<span class="nc" id="L88">	public static enum TextMode {</span>
+<span class="nc" id="L89">		NORMAL, TRUNCATED, HIDDEN</span>
+	}
+
+	/**
+	 * How to show the text of an element.
+	 */
+<span class="nc" id="L95">	public static enum TextVisibilityMode {</span>
+<span class="nc" id="L96">		NORMAL, HIDDEN, AT_ZOOM, UNDER_ZOOM, OVER_ZOOM, ZOOM_RANGE, ZOOMS</span>
+	}
+
+	/**
+	 * Variant of the font.
+	 */
+<span class="nc" id="L102">	public static enum TextStyle {</span>
+<span class="nc" id="L103">		NORMAL, ITALIC, BOLD, BOLD_ITALIC</span>
+	}
+
+	/**
+	 * Where to place the icon around the text (or instead of the text).
+	 */
+<span class="nc" id="L109">	public static enum IconMode {</span>
+<span class="nc" id="L110">		NONE, AT_LEFT, AT_RIGHT, UNDER, ABOVE</span>
+	}
+
+	/**
+	 * How to set the size of the element.
+	 */
+<span class="nc" id="L116">	public static enum SizeMode {</span>
+<span class="nc" id="L117">		NORMAL, FIT, DYN_SIZE</span>
+	}
+
+	/**
+	 * How to align words around their attach point.
+	 */
+<span class="nc" id="L123">	public static enum TextAlignment {</span>
+<span class="nc" id="L124">		CENTER, LEFT, RIGHT, AT_LEFT, AT_RIGHT, UNDER, ABOVE, JUSTIFY,</span>
+
+<span class="nc" id="L126">		ALONG</span>
+	}
+
+<span class="nc" id="L129">	public static enum TextBackgroundMode {</span>
+<span class="nc" id="L130">		NONE, PLAIN, ROUNDEDBOX</span>
+	}
+
+<span class="nc" id="L133">	public static enum ShapeKind {</span>
+<span class="nc" id="L134">		ELLIPSOID, RECTANGULAR, LINEAR, CURVE</span>
+	}
+
+	/**
+	 * Possible shapes for elements.
+	 */
+<span class="nc" id="L140">	public static enum Shape {</span>
+<span class="nc" id="L141">		CIRCLE(ShapeKind.ELLIPSOID), BOX(ShapeKind.RECTANGULAR), ROUNDED_BOX(ShapeKind.RECTANGULAR), DIAMOND(</span>
+<span class="nc" id="L142">				ShapeKind.RECTANGULAR), POLYGON(ShapeKind.RECTANGULAR), TRIANGLE(ShapeKind.RECTANGULAR), CROSS(</span>
+<span class="nc" id="L143">						ShapeKind.RECTANGULAR), FREEPLANE(ShapeKind.RECTANGULAR), TEXT_BOX(</span>
+<span class="nc" id="L144">								ShapeKind.RECTANGULAR), TEXT_ROUNDED_BOX(ShapeKind.RECTANGULAR), TEXT_PARAGRAPH(</span>
+<span class="nc" id="L145">										ShapeKind.RECTANGULAR), TEXT_CIRCLE(ShapeKind.ELLIPSOID), TEXT_DIAMOND(</span>
+<span class="nc" id="L146">												ShapeKind.RECTANGULAR), JCOMPONENT(ShapeKind.RECTANGULAR),</span>
+
+<span class="nc" id="L148">		PIE_CHART(ShapeKind.ELLIPSOID), FLOW(ShapeKind.LINEAR), ARROW(ShapeKind.RECTANGULAR), IMAGES(</span>
+<span class="nc" id="L149">				ShapeKind.RECTANGULAR),</span>
+
+<span class="nc" id="L151">		LINE(ShapeKind.LINEAR), ANGLE(ShapeKind.LINEAR), CUBIC_CURVE(ShapeKind.CURVE), POLYLINE(</span>
+<span class="nc" id="L152">				ShapeKind.LINEAR), POLYLINE_SCALED(ShapeKind.LINEAR), SQUARELINE(ShapeKind.LINEAR), LSQUARELINE(</span>
+<span class="nc" id="L153">						ShapeKind.LINEAR), HSQUARELINE(</span>
+<span class="nc" id="L154">								ShapeKind.LINEAR), VSQUARELINE(ShapeKind.LINEAR), BLOB(ShapeKind.CURVE);</span>
+
+		public ShapeKind kind;
+
+<span class="nc" id="L158">		Shape(ShapeKind kind) {</span>
+<span class="nc" id="L159">			this.kind = kind;</span>
+<span class="nc" id="L160">		}</span>
+	}
+
+	/**
+	 * Orientation of a sprite toward its attachment point.
+	 */
+<span class="nc" id="L166">	public static enum SpriteOrientation {</span>
+<span class="nc" id="L167">		NONE, FROM, NODE0, TO, NODE1, PROJECTION</span>
+	}
+
+	/**
+	 * Possible shapes for arrows on edges.
+	 */
+<span class="nc" id="L173">	public static enum ArrowShape {</span>
+<span class="nc" id="L174">		NONE, ARROW, CIRCLE, DIAMOND, IMAGE</span>
+	}
+
+	/**
+	 * Possible JComponents.
+	 */
+<span class="nc" id="L180">	public static enum JComponents {</span>
+<span class="nc" id="L181">		BUTTON, TEXT_FIELD, PANEL</span>
+	}
+
+	// Static
+
+	/** A set of colour names mapped to real AWT Colour objects. */
+	protected static HashMap&lt;String, Color&gt; colorMap;
+
+	/** Pattern to ensure a &quot;#FFFFFF&quot; colour is recognised. */
+	protected static Pattern sharpColor1, sharpColor2;
+
+	/** Pattern to ensure a CSS style &quot;rgb(1,2,3)&quot; colour is recognised. */
+	protected static Pattern cssColor;
+
+	/** Pattern to ensure a CSS style &quot;rgba(1,2,3,4)&quot; colour is recognised. */
+	protected static Pattern cssColorA;
+
+	/**
+	 * Pattern to ensure that java.awt.Color.toString() strings are recognised as
+	 * colour.
+	 */
+	protected static Pattern awtColor;
+
+	/** Pattern to ensure an hexadecimal number is a recognised colour. */
+	protected static Pattern hexaColor;
+
+	/** Pattern to ensure a string is a Value in various units. */
+	protected static Pattern numberUnit, number;
+
+	static {
+		// Prepare some pattern matchers.
+
+<span class="nc" id="L213">		number = Pattern.compile(&quot;\\s*(\\p{Digit}+([.]\\p{Digit})?)\\s*&quot;);</span>
+<span class="nc" id="L214">		numberUnit = Pattern.compile(&quot;\\s*(\\p{Digit}+(?:[.]\\p{Digit}+)?)\\s*(gu|px|%)\\s*&quot;);</span>
+
+<span class="nc" id="L216">		sharpColor1 = Pattern.compile(</span>
+<span class="nc" id="L217">				&quot;#(\\p{XDigit}\\p{XDigit})(\\p{XDigit}\\p{XDigit})(\\p{XDigit}\\p{XDigit})((\\p{XDigit}\\p{XDigit})?)&quot;);</span>
+<span class="nc" id="L218">		sharpColor2 = Pattern.compile(&quot;#(\\p{XDigit})(\\p{XDigit})(\\p{XDigit})((\\p{XDigit})?)&quot;);</span>
+<span class="nc" id="L219">		hexaColor = Pattern.compile(</span>
+<span class="nc" id="L220">				&quot;0[xX](\\p{XDigit}\\p{XDigit})(\\p{XDigit}\\p{XDigit})(\\p{XDigit}\\p{XDigit})((\\p{XDigit}\\p{XDigit})?)&quot;);</span>
+<span class="nc" id="L221">		cssColor = Pattern.compile(&quot;rgb\\s*\\(\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*\\)&quot;);</span>
+<span class="nc" id="L222">		cssColorA = Pattern</span>
+<span class="nc" id="L223">				.compile(&quot;rgba\\s*\\(\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*,\\s*([0-9]+)\\s*\\)&quot;);</span>
+<span class="nc" id="L224">		awtColor = Pattern.compile(&quot;java.awt.Color\\[r=([0-9]+),g=([0-9]+),b=([0-9]+)\\]&quot;);</span>
+<span class="nc" id="L225">		colorMap = new HashMap&lt;String, Color&gt;();</span>
+
+		// Load all the X11 predefined colour names and their RGB definition
+		// from a file stored in the graphstream.jar. This allows the DOT
+		// import to correctly map colour names to real AWT Color objects.
+		// There are more than 800 such colours...
+
+<span class="nc" id="L232">		URL url = StyleConstants.class.getResource(&quot;rgb.properties&quot;);</span>
+
+<span class="nc bnc" id="L234" title="All 2 branches missed.">		if (url == null)</span>
+<span class="nc" id="L235">			throw new RuntimeException(</span>
+<span class="nc" id="L236">					&quot;corrupted graphstream.jar ? the org/miv/graphstream/ui/graphicGraph/rgb.properties file is not found&quot;);</span>
+
+<span class="nc" id="L238">		Properties p = new Properties();</span>
+
+		try {
+<span class="nc" id="L241">			p.load(url.openStream());</span>
+<span class="nc" id="L242">		} catch (IOException e) {</span>
+<span class="nc" id="L243">			e.printStackTrace();</span>
+		}
+
+<span class="nc bnc" id="L246" title="All 2 branches missed.">		for (Object o : p.keySet()) {</span>
+<span class="nc" id="L247">			String key = (String) o;</span>
+<span class="nc" id="L248">			String val = p.getProperty(key);</span>
+<span class="nc" id="L249">			Color col = Color.decode(val);</span>
+
+<span class="nc" id="L251">			colorMap.put(key.toLowerCase(), col);</span>
+		}
+<span class="nc" id="L253">	}</span>
+
+	/**
+	 * Try to convert the given string value to a colour. It understands the 600
+	 * colour names of the X11 RGB data base. It also understands colours given in
+	 * the &quot;#FFFFFF&quot; format and the hexadecimal &quot;0xFFFFFF&quot; format. Finally, it
+	 * understands colours given as a &quot;rgb(1,10,100)&quot;, CSS-like format. If the input
+	 * value is null, the result is null.
+	 * 
+	 * @param anyValue
+	 *            The value to convert.
+	 * @return the converted colour or null if the conversion failed.
+	 */
+	public static Color convertColor(Object anyValue) {
+<span class="nc bnc" id="L267" title="All 2 branches missed.">		if (anyValue == null)</span>
+<span class="nc" id="L268">			return null;</span>
+
+<span class="nc bnc" id="L270" title="All 2 branches missed.">		if (anyValue instanceof Color)</span>
+<span class="nc" id="L271">			return (Color) anyValue;</span>
+
+<span class="nc bnc" id="L273" title="All 2 branches missed.">		if (anyValue instanceof String) {</span>
+<span class="nc" id="L274">			Color c = null;</span>
+<span class="nc" id="L275">			String value = (String) anyValue;</span>
+
+<span class="nc bnc" id="L277" title="All 2 branches missed.">			if (value.startsWith(&quot;#&quot;)) {</span>
+<span class="nc" id="L278">				Matcher m = sharpColor1.matcher(value);</span>
+
+<span class="nc bnc" id="L280" title="All 2 branches missed.">				if (m.matches()) {</span>
+<span class="nc bnc" id="L281" title="All 2 branches missed.">					if (value.length() == 7) {</span>
+						try {
+<span class="nc" id="L283">							c = Color.decode(value);</span>
+
+<span class="nc" id="L285">							return c;</span>
+<span class="nc" id="L286">						} catch (NumberFormatException e) {</span>
+<span class="nc" id="L287">							c = null;</span>
+						}
+<span class="nc bnc" id="L289" title="All 2 branches missed.">					} else if (value.length() == 9) {</span>
+<span class="nc" id="L290">						int r = Integer.parseInt(m.group(1), 16);</span>
+<span class="nc" id="L291">						int g = Integer.parseInt(m.group(2), 16);</span>
+<span class="nc" id="L292">						int b = Integer.parseInt(m.group(3), 16);</span>
+<span class="nc" id="L293">						int a = Integer.parseInt(m.group(4), 16);</span>
+
+<span class="nc" id="L295">						return new Color(r, g, b, a);</span>
+					}
+				}
+
+<span class="nc" id="L299">				m = sharpColor2.matcher(value);</span>
+
+<span class="nc bnc" id="L301" title="All 2 branches missed.">				if (m.matches()) {</span>
+<span class="nc bnc" id="L302" title="All 2 branches missed.">					if (value.length() &gt;= 4) {</span>
+<span class="nc" id="L303">						int r = Integer.parseInt(m.group(1), 16) * 16;</span>
+<span class="nc" id="L304">						int g = Integer.parseInt(m.group(2), 16) * 16;</span>
+<span class="nc" id="L305">						int b = Integer.parseInt(m.group(3), 16) * 16;</span>
+<span class="nc" id="L306">						int a = 255;</span>
+
+<span class="nc bnc" id="L308" title="All 2 branches missed.">						if (value.length() == 5)</span>
+<span class="nc" id="L309">							a = Integer.parseInt(m.group(4), 16) * 16;</span>
+
+<span class="nc" id="L311">						return new Color(r, g, b, a);</span>
+					}
+				}
+<span class="nc bnc" id="L314" title="All 2 branches missed.">			} else if (value.startsWith(&quot;rgb&quot;)) {</span>
+<span class="nc" id="L315">				Matcher m = cssColorA.matcher(value);</span>
+
+<span class="nc bnc" id="L317" title="All 2 branches missed.">				if (m.matches()) {</span>
+<span class="nc" id="L318">					int r = Integer.parseInt(m.group(1));</span>
+<span class="nc" id="L319">					int g = Integer.parseInt(m.group(2));</span>
+<span class="nc" id="L320">					int b = Integer.parseInt(m.group(3));</span>
+<span class="nc" id="L321">					int a = Integer.parseInt(m.group(4));</span>
+
+<span class="nc" id="L323">					return new Color(r, g, b, a);</span>
+				}
+
+<span class="nc" id="L326">				m = cssColor.matcher(value);</span>
+
+<span class="nc bnc" id="L328" title="All 2 branches missed.">				if (m.matches()) {</span>
+<span class="nc" id="L329">					int r = Integer.parseInt(m.group(1));</span>
+<span class="nc" id="L330">					int g = Integer.parseInt(m.group(2));</span>
+<span class="nc" id="L331">					int b = Integer.parseInt(m.group(3));</span>
+
+<span class="nc" id="L333">					return new Color(r, g, b);</span>
+				}
+<span class="nc bnc" id="L335" title="All 4 branches missed.">			} else if (value.startsWith(&quot;0x&quot;) || value.startsWith(&quot;0X&quot;)) {</span>
+<span class="nc" id="L336">				Matcher m = hexaColor.matcher(value);</span>
+
+<span class="nc bnc" id="L338" title="All 2 branches missed.">				if (m.matches()) {</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">					if (value.length() == 8) {</span>
+						try {
+<span class="nc" id="L341">							return Color.decode(value);</span>
+<span class="nc" id="L342">						} catch (NumberFormatException e) {</span>
+<span class="nc" id="L343">							c = null;</span>
+						}
+<span class="nc bnc" id="L345" title="All 2 branches missed.">					} else if (value.length() == 10) {</span>
+<span class="nc" id="L346">						String r = m.group(1);</span>
+<span class="nc" id="L347">						String g = m.group(2);</span>
+<span class="nc" id="L348">						String b = m.group(3);</span>
+<span class="nc" id="L349">						String a = m.group(4);</span>
+
+<span class="nc" id="L351">						return new Color(Integer.parseInt(r, 16), Integer.parseInt(g, 16), Integer.parseInt(b, 16),</span>
+<span class="nc" id="L352">								Integer.parseInt(a, 16));</span>
+					}
+				}
+<span class="nc bnc" id="L355" title="All 2 branches missed.">			} else if (value.startsWith(&quot;java.awt.Color[&quot;)) {</span>
+<span class="nc" id="L356">				Matcher m = awtColor.matcher(value);</span>
+
+<span class="nc bnc" id="L358" title="All 2 branches missed.">				if (m.matches()) {</span>
+<span class="nc" id="L359">					int r = Integer.parseInt(m.group(1));</span>
+<span class="nc" id="L360">					int g = Integer.parseInt(m.group(2));</span>
+<span class="nc" id="L361">					int b = Integer.parseInt(m.group(3));</span>
+
+<span class="nc" id="L363">					return new Color(r, g, b);</span>
+				}
+			}
+
+<span class="nc" id="L367">			return colorMap.get(value.toLowerCase());</span>
+		}
+
+		// TODO throw an exception instead ??
+<span class="nc" id="L371">		return null;</span>
+	}
+
+	/**
+	 * Check if the given value is an instance of CharSequence (String is) and
+	 * return it as a string. Else return null. If the input value is null, the
+	 * return value is null. If the value returned is larger than 128 characters,
+	 * this method cuts it to 128 characters. TODO: allow to set the max length of
+	 * these strings.
+	 * 
+	 * @param value
+	 *            The value to convert.
+	 * @return The corresponding string, or null.
+	 */
+	public static String convertLabel(Object value) {
+<span class="nc" id="L386">		String label = null;</span>
+
+<span class="nc bnc" id="L388" title="All 2 branches missed.">		if (value != null) {</span>
+<span class="nc bnc" id="L389" title="All 2 branches missed.">			if (value instanceof CharSequence)</span>
+<span class="nc" id="L390">				label = ((CharSequence) value).toString();</span>
+			else
+<span class="nc" id="L392">				label = value.toString();</span>
+
+<span class="nc bnc" id="L394" title="All 2 branches missed.">			if (label.length() &gt; 128)</span>
+<span class="nc" id="L395">				label = String.format(&quot;%s...&quot;, label.substring(0, 128));</span>
+		}
+
+<span class="nc" id="L398">		return label;</span>
+	}
+
+	/**
+	 * Try to convert an arbitrary value to a float. If it is a descendant of
+	 * Number, the float value is returned. If it is a string, a conversion is tried
+	 * to change it into a number and if successful, this number is returned as a
+	 * float. Else, the -1 value is returned as no width can be negative to indicate
+	 * the conversion failed. If the input is null, the return value is -1.
+	 * 
+	 * @param value
+	 *            The input to convert.
+	 * @return The value or -1 if the conversion failed. TODO should be named
+	 *         convertNumber
+	 */
+	public static float convertWidth(Object value) {
+<span class="nc bnc" id="L414" title="All 2 branches missed.">		if (value instanceof CharSequence) {</span>
+			try {
+<span class="nc" id="L416">				float val = Float.parseFloat(((CharSequence) value).toString());</span>
+
+<span class="nc" id="L418">				return val;</span>
+<span class="nc" id="L419">			} catch (NumberFormatException e) {</span>
+<span class="nc" id="L420">				return -1;</span>
+			}
+<span class="nc bnc" id="L422" title="All 2 branches missed.">		} else if (value instanceof Number) {</span>
+<span class="nc" id="L423">			return ((Number) value).floatValue();</span>
+		}
+
+<span class="nc" id="L426">		return -1;</span>
+	}
+
+	/**
+	 * Convert an object to a value with units. The object can be a number, in which
+	 * case the value returned contains this number in pixel units. The object can
+	 * be a string. In this case the strings understood by this method are of the
+	 * form (spaces, number, spaces, unit, spaces). For example &quot;3px&quot;, &quot;45gu&quot;,
+	 * &quot;5.5%&quot;, &quot; 25.3 gu &quot;, &quot;4&quot;, &quot; 28.1 &quot;.
+	 * 
+	 * @param value
+	 *            A Number or a CharSequence.
+	 * @return A value.
+	 */
+	public static Value convertValue(Object value) {
+<span class="nc bnc" id="L441" title="All 2 branches missed.">		if (value instanceof CharSequence) {</span>
+<span class="nc" id="L442">			CharSequence string = (CharSequence) value;</span>
+
+			// if (string == null)
+			// throw new RuntimeException(&quot;null size string ...&quot;);
+
+<span class="nc bnc" id="L447" title="All 2 branches missed.">			if (string.length() &lt; 0)</span>
+<span class="nc" id="L448">				throw new RuntimeException(&quot;empty size string ...&quot;);</span>
+
+<span class="nc" id="L450">			Matcher m = numberUnit.matcher(string);</span>
+
+<span class="nc bnc" id="L452" title="All 2 branches missed.">			if (m.matches())</span>
+<span class="nc" id="L453">				return new Value(convertUnit(m.group(2)), Float.parseFloat(m.group(1)));</span>
+
+<span class="nc" id="L455">			m = number.matcher(string);</span>
+
+<span class="nc bnc" id="L457" title="All 2 branches missed.">			if (m.matches())</span>
+<span class="nc" id="L458">				return new Value(Units.PX, Float.parseFloat(m.group(1)));</span>
+
+<span class="nc" id="L460">			throw new RuntimeException(String.format(&quot;string is not convertible to a value (%s)&quot;, string));</span>
+<span class="nc bnc" id="L461" title="All 2 branches missed.">		} else if (value instanceof Number) {</span>
+<span class="nc" id="L462">			return new Value(Units.PX, ((Number) value).floatValue());</span>
+		}
+
+<span class="nc bnc" id="L465" title="All 2 branches missed.">		if (value == null)</span>
+<span class="nc" id="L466">			throw new RuntimeException(&quot;cannot convert null value&quot;);</span>
+
+<span class="nc" id="L468">		throw new RuntimeException(String.format(&quot;value is of class %s%n&quot;, value.getClass().getName()));</span>
+	}
+
+	/** Convert &quot;gu&quot;, &quot;px&quot; and &quot;%&quot; to Units.GU, Units.PX, Units.PERCENTS. */
+	protected static Units convertUnit(String unit) {
+<span class="nc bnc" id="L473" title="All 2 branches missed.">		if (unit.equals(&quot;gu&quot;))</span>
+<span class="nc" id="L474">			return Units.GU;</span>
+<span class="nc bnc" id="L475" title="All 2 branches missed.">		else if (unit.equals(&quot;px&quot;))</span>
+<span class="nc" id="L476">			return Units.PX;</span>
+<span class="nc bnc" id="L477" title="All 2 branches missed.">		else if (unit.equals(&quot;%&quot;))</span>
+<span class="nc" id="L478">			return Units.PERCENTS;</span>
+
+<span class="nc" id="L480">		return Units.PX;</span>
+	}
+
+	/*
+	 * Try to convert an arbitrary value to a EdgeStyle. If the value is a
+	 * descendant of CharSequence, it is used and parsed to see if it maps to one of
+	 * the possible values.
+	 * 
+	 * @param value The value to convert.
+	 * 
+	 * @return The converted edge style or null if the value does not identifies an
+	 * edge style. public static EdgeStyle convertEdgeStyle( Object value ) { if(
+	 * value instanceof CharSequence ) { String s = ( (CharSequence) value
+	 * ).toString().toLowerCase();
+	 * 
+	 * if( s.equals( &quot;dots&quot; ) ) { return EdgeStyle.DOTS; } else if( s.equals(
+	 * &quot;dashes&quot; ) ) { return EdgeStyle.DASHES; } else { return EdgeStyle.PLAIN; } }
+	 * 
+	 * return null; }
+	 */
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

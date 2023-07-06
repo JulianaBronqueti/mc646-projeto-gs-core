@@ -1,0 +1,956 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TLPParser.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.tlp</a> &gt; <span class="el_source">TLPParser.java</span></div><h1>TLPParser.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-21
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.tlp;
+
+import java.io.InputStream;
+import java.io.IOException;
+import java.io.Reader;
+
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Stack;
+
+import org.graphstream.stream.SourceBase.ElementType;
+import org.graphstream.stream.file.FileSourceTLP;
+import org.graphstream.graph.implementations.AbstractElement.AttributeChangeEvent;
+
+import org.graphstream.util.parser.ParseException;
+import org.graphstream.util.parser.Parser;
+import org.graphstream.util.parser.SimpleCharStream;
+import org.graphstream.util.parser.Token;
+import org.graphstream.util.parser.TokenMgrError;
+
+/**
+ * This class defines a TLP parser.
+ */
+@SuppressWarnings(&quot;unused&quot;)
+public class TLPParser implements Parser, TLPParserConstants {
+
+<span class="nc" id="L58">	protected static enum PropertyType {</span>
+<span class="nc" id="L59">		BOOL, COLOR, DOUBLE, LAYOUT, INT, SIZE, STRING</span>
+	}
+
+	protected static class Cluster {
+		int index;
+		String name;
+
+		LinkedList&lt;String&gt; nodes;
+		LinkedList&lt;String&gt; edges;
+
+<span class="nc" id="L69">		Cluster(int index, String name) {</span>
+<span class="nc" id="L70">			this.index = index;</span>
+<span class="nc" id="L71">			this.name = name;</span>
+<span class="nc" id="L72">			this.nodes = new LinkedList&lt;String&gt;();</span>
+<span class="nc" id="L73">			this.edges = new LinkedList&lt;String&gt;();</span>
+<span class="nc" id="L74">		}</span>
+	}
+
+	/**
+	 * The DOT source associated with this parser.
+	 */
+	private FileSourceTLP tlp;
+
+	/**
+	 * Id of the parser used in events.
+	 */
+	private String sourceId;
+
+	private Cluster root;
+	private HashMap&lt;Integer, Cluster&gt; clusters;
+	private Stack&lt;Cluster&gt; stack;
+
+	/**
+	 * Create a new parser associated with a TLP source from an input stream.
+	 */
+	public TLPParser(FileSourceTLP tlp, InputStream stream) {
+<span class="nc" id="L95">		this(stream);</span>
+<span class="nc" id="L96">		init(tlp);</span>
+<span class="nc" id="L97">	}</span>
+
+	/**
+	 * Create a new parser associated with a DOT source from a reader.
+	 */
+	public TLPParser(FileSourceTLP tlp, Reader stream) {
+<span class="nc" id="L103">		this(stream);</span>
+<span class="nc" id="L104">		init(tlp);</span>
+<span class="nc" id="L105">	}</span>
+
+	/**
+	 * Closes the parser, closing the opened stream.
+	 */
+	public void close() throws IOException {
+<span class="nc" id="L111">		jj_input_stream.close();</span>
+<span class="nc" id="L112">		clusters.clear();</span>
+<span class="nc" id="L113">	}</span>
+
+	private void init(FileSourceTLP tlp) {
+<span class="nc" id="L116">		this.tlp = tlp;</span>
+<span class="nc" id="L117">		this.sourceId = String.format(&quot;&lt;DOT stream %x&gt;&quot;, System.nanoTime());</span>
+
+<span class="nc" id="L119">		this.clusters = new HashMap&lt;Integer, Cluster&gt;();</span>
+<span class="nc" id="L120">		this.stack = new Stack&lt;Cluster&gt;();</span>
+
+<span class="nc" id="L122">		this.root = new Cluster(0, &quot;&lt;root&gt;&quot;);</span>
+<span class="nc" id="L123">		this.clusters.put(0, this.root);</span>
+<span class="nc" id="L124">		this.stack.push(this.root);</span>
+<span class="nc" id="L125">	}</span>
+
+	private void addNode(String id) throws ParseException {
+<span class="nc bnc" id="L128" title="All 6 branches missed.">		if (stack.size() &gt; 1 &amp;&amp; (!root.nodes.contains(id) || !stack.get(stack.size() - 2).nodes.contains(id)))</span>
+<span class="nc" id="L129">			throw new ParseException(&quot;parent cluster do not contain the node&quot;);</span>
+
+<span class="nc bnc" id="L131" title="All 2 branches missed.">		if (stack.size() == 1)</span>
+<span class="nc" id="L132">			tlp.sendNodeAdded(sourceId, id);</span>
+
+<span class="nc" id="L134">		stack.peek().nodes.add(id);</span>
+<span class="nc" id="L135">	}</span>
+
+	private void addEdge(String id, String source, String target) throws ParseException {
+<span class="nc bnc" id="L138" title="All 6 branches missed.">		if (stack.size() &gt; 1 &amp;&amp; (!root.edges.contains(id) || !stack.get(stack.size() - 2).edges.contains(id)))</span>
+<span class="nc" id="L139">			throw new ParseException(&quot;parent cluster &quot; + stack.get(stack.size() - 2).name + &quot; do not contain the edge&quot;);</span>
+
+<span class="nc bnc" id="L141" title="All 2 branches missed.">		if (stack.size() == 1)</span>
+<span class="nc" id="L142">			tlp.sendEdgeAdded(sourceId, id, source, target, false);</span>
+
+<span class="nc" id="L144">		stack.peek().edges.add(id);</span>
+<span class="nc" id="L145">	}</span>
+
+	private void includeEdge(String id) throws ParseException {
+<span class="nc bnc" id="L148" title="All 6 branches missed.">		if (stack.size() &gt; 1 &amp;&amp; (!root.edges.contains(id) || !stack.get(stack.size() - 2).edges.contains(id)))</span>
+<span class="nc" id="L149">			throw new ParseException(&quot;parent cluster &quot; + stack.get(stack.size() - 2).name + &quot; do not contain the edge&quot;);</span>
+
+<span class="nc" id="L151">		stack.peek().edges.add(id);</span>
+<span class="nc" id="L152">	}</span>
+
+	private void graphAttribute(String key, Object value) {
+<span class="nc" id="L155">		tlp.sendAttributeChangedEvent(sourceId, sourceId, ElementType.GRAPH, key, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L156">				value);</span>
+<span class="nc" id="L157">	}</span>
+
+	private void pushCluster(int i, String name) {
+<span class="nc" id="L160">		Cluster c = new Cluster(i, name);</span>
+<span class="nc" id="L161">		clusters.put(i, c);</span>
+<span class="nc" id="L162">		stack.push(c);</span>
+<span class="nc" id="L163">	}</span>
+
+	private void popCluster() {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		if (stack.size() &gt; 1)</span>
+<span class="nc" id="L167">			stack.pop();</span>
+<span class="nc" id="L168">	}</span>
+
+	private void newProperty(Integer cluster, String name, PropertyType type, String nodeDefault, String edgeDefault,
+			HashMap&lt;String, String&gt; nodes, HashMap&lt;String, String&gt; edges) {
+<span class="nc" id="L172">		Object nodeDefaultValue = convert(type, nodeDefault);</span>
+<span class="nc" id="L173">		Object edgeDefaultValue = convert(type, edgeDefault);</span>
+<span class="nc" id="L174">		Cluster c = clusters.get(cluster);</span>
+
+<span class="nc bnc" id="L176" title="All 2 branches missed.">		for (String id : c.nodes) {</span>
+<span class="nc" id="L177">			Object value = nodeDefaultValue;</span>
+
+<span class="nc bnc" id="L179" title="All 2 branches missed.">			if (nodes.containsKey(id))</span>
+<span class="nc" id="L180">				value = convert(type, nodes.get(id));</span>
+
+<span class="nc" id="L182">			tlp.sendAttributeChangedEvent(sourceId, id, ElementType.NODE, name, AttributeChangeEvent.ADD, null, value);</span>
+		}
+
+<span class="nc bnc" id="L185" title="All 2 branches missed.">		for (String id : c.edges) {</span>
+<span class="nc" id="L186">			Object value = edgeDefaultValue;</span>
+
+<span class="nc bnc" id="L188" title="All 2 branches missed.">			if (edges.containsKey(id))</span>
+<span class="nc" id="L189">				value = convert(type, edges.get(id));</span>
+
+<span class="nc" id="L191">			tlp.sendAttributeChangedEvent(sourceId, id, ElementType.EDGE, name, AttributeChangeEvent.ADD, null, value);</span>
+		}
+<span class="nc" id="L193">	}</span>
+
+	private Object convert(PropertyType type, String value) {
+<span class="nc bnc" id="L196" title="All 5 branches missed.">		switch (type) {</span>
+		case BOOL:
+<span class="nc" id="L198">			return Boolean.valueOf(value);</span>
+		case INT:
+<span class="nc" id="L200">			return Integer.valueOf(value);</span>
+		case DOUBLE:
+<span class="nc" id="L202">			return Double.valueOf(value);</span>
+		case LAYOUT:
+		case COLOR:
+		case SIZE:
+		case STRING:
+<span class="nc" id="L207">			return value;</span>
+		}
+
+<span class="nc" id="L210">		return value;</span>
+	}
+
+	final public void all() throws ParseException {
+<span class="nc" id="L214">		tlp();</span>
+<span class="nc" id="L215">		label_1: while (true) {</span>
+<span class="nc bnc" id="L216" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case OBRACKET:
+				;
+<span class="nc" id="L219">				break;</span>
+			default:
+<span class="nc" id="L221">				jj_la1[0] = jj_gen;</span>
+<span class="nc" id="L222">				break label_1;</span>
+			}
+<span class="nc" id="L224">			statement();</span>
+		}
+<span class="nc" id="L226">		jj_consume_token(CBRACKET);</span>
+<span class="nc" id="L227">		jj_consume_token(0);</span>
+<span class="nc" id="L228">	}</span>
+
+	final public boolean next() throws ParseException {
+<span class="nc" id="L231">		boolean hasMore = false;</span>
+<span class="nc bnc" id="L232" title="All 5 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case OBRACKET:
+<span class="nc" id="L234">			statement();</span>
+<span class="nc" id="L235">			hasMore = true;</span>
+<span class="nc" id="L236">			break;</span>
+		case 0:
+<span class="nc" id="L238">			jj_consume_token(0);</span>
+<span class="nc" id="L239">			break;</span>
+		default:
+<span class="nc" id="L241">			jj_la1[1] = jj_gen;</span>
+<span class="nc" id="L242">			jj_consume_token(-1);</span>
+<span class="nc" id="L243">			throw new ParseException();</span>
+		}
+
+<span class="nc" id="L246">		return hasMore;</span>
+	}
+
+	final public void open() throws ParseException {
+<span class="nc" id="L250">		tlp();</span>
+<span class="nc" id="L251">	}</span>
+
+	final private void tlp() throws ParseException {
+<span class="nc" id="L254">		jj_consume_token(OBRACKET);</span>
+<span class="nc" id="L255">		jj_consume_token(TLP);</span>
+<span class="nc" id="L256">		jj_consume_token(STRING);</span>
+<span class="nc" id="L257">		label_2: while (true) {</span>
+<span class="nc bnc" id="L258" title="All 2 branches missed.">			if (jj_2_1(2)) {</span>
+				;
+			} else {
+				break label_2;
+			}
+<span class="nc" id="L263">			headers();</span>
+		}
+<span class="nc" id="L265">	}</span>
+
+	final private void headers() throws ParseException {
+		String s;
+<span class="nc" id="L269">		jj_consume_token(OBRACKET);</span>
+<span class="nc bnc" id="L270" title="All 6 branches missed.">		switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+		case DATE:
+<span class="nc" id="L272">			jj_consume_token(DATE);</span>
+<span class="nc" id="L273">			s = string();</span>
+<span class="nc" id="L274">			graphAttribute(&quot;date&quot;, s);</span>
+<span class="nc" id="L275">			break;</span>
+		case AUTHOR:
+<span class="nc" id="L277">			jj_consume_token(AUTHOR);</span>
+<span class="nc" id="L278">			s = string();</span>
+<span class="nc" id="L279">			graphAttribute(&quot;author&quot;, s);</span>
+<span class="nc" id="L280">			break;</span>
+		case COMMENTS:
+<span class="nc" id="L282">			jj_consume_token(COMMENTS);</span>
+<span class="nc" id="L283">			s = string();</span>
+<span class="nc" id="L284">			graphAttribute(&quot;comments&quot;, s);</span>
+<span class="nc" id="L285">			break;</span>
+		default:
+<span class="nc" id="L287">			jj_la1[2] = jj_gen;</span>
+<span class="nc" id="L288">			jj_consume_token(-1);</span>
+<span class="nc" id="L289">			throw new ParseException();</span>
+		}
+<span class="nc" id="L291">		jj_consume_token(CBRACKET);</span>
+<span class="nc" id="L292">	}</span>
+
+	final private void statement() throws ParseException {
+<span class="nc bnc" id="L295" title="All 2 branches missed.">		if (jj_2_2(2)) {</span>
+<span class="nc" id="L296">			nodes();</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">		} else if (jj_2_3(2)) {</span>
+<span class="nc" id="L298">			edge();</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">		} else if (jj_2_4(2)) {</span>
+<span class="nc" id="L300">			cluster();</span>
+<span class="nc bnc" id="L301" title="All 2 branches missed.">		} else if (jj_2_5(2)) {</span>
+<span class="nc" id="L302">			property();</span>
+<span class="nc" id="L303">		} else {</span>
+<span class="nc" id="L304">			jj_consume_token(-1);</span>
+<span class="nc" id="L305">			throw new ParseException();</span>
+		}
+<span class="nc" id="L307">	}</span>
+
+	final private void nodes() throws ParseException {
+		Token i;
+<span class="nc" id="L311">		jj_consume_token(OBRACKET);</span>
+<span class="nc" id="L312">		jj_consume_token(NODES);</span>
+<span class="nc" id="L313">		label_3: while (true) {</span>
+<span class="nc bnc" id="L314" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case INTEGER:
+				;
+<span class="nc" id="L317">				break;</span>
+			default:
+<span class="nc" id="L319">				jj_la1[3] = jj_gen;</span>
+<span class="nc" id="L320">				break label_3;</span>
+			}
+<span class="nc" id="L322">			i = jj_consume_token(INTEGER);</span>
+<span class="nc" id="L323">			addNode(i.image);</span>
+		}
+<span class="nc" id="L325">		jj_consume_token(CBRACKET);</span>
+<span class="nc" id="L326">	}</span>
+
+	final private void edge() throws ParseException {
+		Token i, s, t;
+<span class="nc" id="L330">		jj_consume_token(OBRACKET);</span>
+<span class="nc" id="L331">		jj_consume_token(EDGE);</span>
+<span class="nc" id="L332">		i = jj_consume_token(INTEGER);</span>
+<span class="nc" id="L333">		s = jj_consume_token(INTEGER);</span>
+<span class="nc" id="L334">		t = jj_consume_token(INTEGER);</span>
+<span class="nc" id="L335">		jj_consume_token(CBRACKET);</span>
+<span class="nc" id="L336">		addEdge(i.image, s.image, t.image);</span>
+<span class="nc" id="L337">	}</span>
+
+	final private void edges() throws ParseException {
+		Token i;
+<span class="nc" id="L341">		jj_consume_token(OBRACKET);</span>
+<span class="nc" id="L342">		jj_consume_token(EDGES);</span>
+<span class="nc" id="L343">		label_4: while (true) {</span>
+<span class="nc bnc" id="L344" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case INTEGER:
+				;
+<span class="nc" id="L347">				break;</span>
+			default:
+<span class="nc" id="L349">				jj_la1[4] = jj_gen;</span>
+<span class="nc" id="L350">				break label_4;</span>
+			}
+<span class="nc" id="L352">			i = jj_consume_token(INTEGER);</span>
+<span class="nc" id="L353">			includeEdge(i.image);</span>
+		}
+<span class="nc" id="L355">		jj_consume_token(CBRACKET);</span>
+<span class="nc" id="L356">	}</span>
+
+	final private void cluster() throws ParseException {
+		Token index;
+		String name;
+<span class="nc" id="L361">		jj_consume_token(OBRACKET);</span>
+<span class="nc" id="L362">		jj_consume_token(CLUSTER);</span>
+<span class="nc" id="L363">		index = jj_consume_token(INTEGER);</span>
+<span class="nc" id="L364">		name = string();</span>
+<span class="nc" id="L365">		pushCluster(Integer.valueOf(index.image), name);</span>
+<span class="nc" id="L366">		nodes();</span>
+<span class="nc" id="L367">		edges();</span>
+<span class="nc" id="L368">		label_5: while (true) {</span>
+<span class="nc bnc" id="L369" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case OBRACKET:
+				;
+<span class="nc" id="L372">				break;</span>
+			default:
+<span class="nc" id="L374">				jj_la1[5] = jj_gen;</span>
+<span class="nc" id="L375">				break label_5;</span>
+			}
+<span class="nc" id="L377">			cluster();</span>
+		}
+<span class="nc" id="L379">		jj_consume_token(CBRACKET);</span>
+<span class="nc" id="L380">		popCluster();</span>
+<span class="nc" id="L381">	}</span>
+
+	final private void property() throws ParseException {
+		PropertyType type;
+		Integer cluster;
+		String name;
+		String nodeDefault, edgeDefault;
+		String value;
+		Token t;
+
+<span class="nc" id="L391">		HashMap&lt;String, String&gt; nodes = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L392">		HashMap&lt;String, String&gt; edges = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L393">		jj_consume_token(OBRACKET);</span>
+<span class="nc" id="L394">		jj_consume_token(PROPERTY);</span>
+<span class="nc" id="L395">		cluster = integer();</span>
+<span class="nc" id="L396">		type = type();</span>
+<span class="nc" id="L397">		name = string();</span>
+<span class="nc" id="L398">		jj_consume_token(OBRACKET);</span>
+<span class="nc" id="L399">		jj_consume_token(DEF);</span>
+<span class="nc" id="L400">		nodeDefault = string();</span>
+<span class="nc" id="L401">		edgeDefault = string();</span>
+<span class="nc" id="L402">		jj_consume_token(CBRACKET);</span>
+<span class="nc" id="L403">		label_6: while (true) {</span>
+<span class="nc bnc" id="L404" title="All 4 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case OBRACKET:
+				;
+<span class="nc" id="L407">				break;</span>
+			default:
+<span class="nc" id="L409">				jj_la1[6] = jj_gen;</span>
+<span class="nc" id="L410">				break label_6;</span>
+			}
+<span class="nc" id="L412">			jj_consume_token(OBRACKET);</span>
+<span class="nc bnc" id="L413" title="All 5 branches missed.">			switch ((jj_ntk == -1) ? jj_ntk() : jj_ntk) {</span>
+			case NODE:
+<span class="nc" id="L415">				jj_consume_token(NODE);</span>
+<span class="nc" id="L416">				t = jj_consume_token(INTEGER);</span>
+<span class="nc" id="L417">				value = string();</span>
+<span class="nc" id="L418">				nodes.put(t.image, value);</span>
+<span class="nc" id="L419">				break;</span>
+			case EDGE:
+<span class="nc" id="L421">				jj_consume_token(EDGE);</span>
+<span class="nc" id="L422">				t = jj_consume_token(INTEGER);</span>
+<span class="nc" id="L423">				value = string();</span>
+<span class="nc" id="L424">				edges.put(t.image, value);</span>
+<span class="nc" id="L425">				break;</span>
+			default:
+<span class="nc" id="L427">				jj_la1[7] = jj_gen;</span>
+<span class="nc" id="L428">				jj_consume_token(-1);</span>
+<span class="nc" id="L429">				throw new ParseException();</span>
+			}
+<span class="nc" id="L431">			jj_consume_token(CBRACKET);</span>
+		}
+<span class="nc" id="L433">		jj_consume_token(CBRACKET);</span>
+<span class="nc" id="L434">		newProperty(cluster, name, type, nodeDefault, edgeDefault, nodes, edges);</span>
+<span class="nc" id="L435">	}</span>
+
+	final private PropertyType type() throws ParseException {
+		Token t;
+<span class="nc" id="L439">		t = jj_consume_token(PTYPE);</span>
+
+<span class="nc" id="L441">		return PropertyType.valueOf(t.image.toUpperCase());</span>
+	}
+
+	final private String string() throws ParseException {
+		Token t;
+<span class="nc" id="L446">		t = jj_consume_token(STRING);</span>
+
+<span class="nc" id="L448">		return t.image.substring(1, t.image.length() - 1);</span>
+	}
+
+	final private Integer integer() throws ParseException {
+		Token t;
+<span class="nc" id="L453">		t = jj_consume_token(INTEGER);</span>
+
+<span class="nc" id="L455">		return Integer.valueOf(t.image);</span>
+	}
+
+	private boolean jj_2_1(int xla) {
+<span class="nc" id="L459">		jj_la = xla;</span>
+<span class="nc" id="L460">		jj_lastpos = jj_scanpos = token;</span>
+		try {
+<span class="nc bnc" id="L462" title="All 2 branches missed.">			return !jj_3_1();</span>
+<span class="nc" id="L463">		} catch (LookaheadSuccess ls) {</span>
+<span class="nc" id="L464">			return true;</span>
+		} finally {
+<span class="nc" id="L466">			jj_save(0, xla);</span>
+		}
+	}
+
+	private boolean jj_2_2(int xla) {
+<span class="nc" id="L471">		jj_la = xla;</span>
+<span class="nc" id="L472">		jj_lastpos = jj_scanpos = token;</span>
+		try {
+<span class="nc bnc" id="L474" title="All 2 branches missed.">			return !jj_3_2();</span>
+<span class="nc" id="L475">		} catch (LookaheadSuccess ls) {</span>
+<span class="nc" id="L476">			return true;</span>
+		} finally {
+<span class="nc" id="L478">			jj_save(1, xla);</span>
+		}
+	}
+
+	private boolean jj_2_3(int xla) {
+<span class="nc" id="L483">		jj_la = xla;</span>
+<span class="nc" id="L484">		jj_lastpos = jj_scanpos = token;</span>
+		try {
+<span class="nc bnc" id="L486" title="All 2 branches missed.">			return !jj_3_3();</span>
+<span class="nc" id="L487">		} catch (LookaheadSuccess ls) {</span>
+<span class="nc" id="L488">			return true;</span>
+		} finally {
+<span class="nc" id="L490">			jj_save(2, xla);</span>
+		}
+	}
+
+	private boolean jj_2_4(int xla) {
+<span class="nc" id="L495">		jj_la = xla;</span>
+<span class="nc" id="L496">		jj_lastpos = jj_scanpos = token;</span>
+		try {
+<span class="nc bnc" id="L498" title="All 2 branches missed.">			return !jj_3_4();</span>
+<span class="nc" id="L499">		} catch (LookaheadSuccess ls) {</span>
+<span class="nc" id="L500">			return true;</span>
+		} finally {
+<span class="nc" id="L502">			jj_save(3, xla);</span>
+		}
+	}
+
+	private boolean jj_2_5(int xla) {
+<span class="nc" id="L507">		jj_la = xla;</span>
+<span class="nc" id="L508">		jj_lastpos = jj_scanpos = token;</span>
+		try {
+<span class="nc bnc" id="L510" title="All 2 branches missed.">			return !jj_3_5();</span>
+<span class="nc" id="L511">		} catch (LookaheadSuccess ls) {</span>
+<span class="nc" id="L512">			return true;</span>
+		} finally {
+<span class="nc" id="L514">			jj_save(4, xla);</span>
+		}
+	}
+
+	private boolean jj_3_1() {
+<span class="nc bnc" id="L519" title="All 2 branches missed.">		if (jj_3R_7())</span>
+<span class="nc" id="L520">			return true;</span>
+<span class="nc" id="L521">		return false;</span>
+	}
+
+	private boolean jj_3_5() {
+<span class="nc bnc" id="L525" title="All 2 branches missed.">		if (jj_3R_11())</span>
+<span class="nc" id="L526">			return true;</span>
+<span class="nc" id="L527">		return false;</span>
+	}
+
+	private boolean jj_3R_9() {
+<span class="nc bnc" id="L531" title="All 2 branches missed.">		if (jj_scan_token(OBRACKET))</span>
+<span class="nc" id="L532">			return true;</span>
+<span class="nc bnc" id="L533" title="All 2 branches missed.">		if (jj_scan_token(EDGE))</span>
+<span class="nc" id="L534">			return true;</span>
+<span class="nc" id="L535">		return false;</span>
+	}
+
+	private boolean jj_3_4() {
+<span class="nc bnc" id="L539" title="All 2 branches missed.">		if (jj_3R_10())</span>
+<span class="nc" id="L540">			return true;</span>
+<span class="nc" id="L541">		return false;</span>
+	}
+
+	private boolean jj_3_3() {
+<span class="nc bnc" id="L545" title="All 2 branches missed.">		if (jj_3R_9())</span>
+<span class="nc" id="L546">			return true;</span>
+<span class="nc" id="L547">		return false;</span>
+	}
+
+	private boolean jj_3R_14() {
+<span class="nc bnc" id="L551" title="All 2 branches missed.">		if (jj_scan_token(COMMENTS))</span>
+<span class="nc" id="L552">			return true;</span>
+<span class="nc" id="L553">		return false;</span>
+	}
+
+	private boolean jj_3R_13() {
+<span class="nc bnc" id="L557" title="All 2 branches missed.">		if (jj_scan_token(AUTHOR))</span>
+<span class="nc" id="L558">			return true;</span>
+<span class="nc" id="L559">		return false;</span>
+	}
+
+	private boolean jj_3_2() {
+<span class="nc bnc" id="L563" title="All 2 branches missed.">		if (jj_3R_8())</span>
+<span class="nc" id="L564">			return true;</span>
+<span class="nc" id="L565">		return false;</span>
+	}
+
+	private boolean jj_3R_12() {
+<span class="nc bnc" id="L569" title="All 2 branches missed.">		if (jj_scan_token(DATE))</span>
+<span class="nc" id="L570">			return true;</span>
+<span class="nc" id="L571">		return false;</span>
+	}
+
+	private boolean jj_3R_11() {
+<span class="nc bnc" id="L575" title="All 2 branches missed.">		if (jj_scan_token(OBRACKET))</span>
+<span class="nc" id="L576">			return true;</span>
+<span class="nc bnc" id="L577" title="All 2 branches missed.">		if (jj_scan_token(PROPERTY))</span>
+<span class="nc" id="L578">			return true;</span>
+<span class="nc" id="L579">		return false;</span>
+	}
+
+	private boolean jj_3R_10() {
+<span class="nc bnc" id="L583" title="All 2 branches missed.">		if (jj_scan_token(OBRACKET))</span>
+<span class="nc" id="L584">			return true;</span>
+<span class="nc bnc" id="L585" title="All 2 branches missed.">		if (jj_scan_token(CLUSTER))</span>
+<span class="nc" id="L586">			return true;</span>
+<span class="nc" id="L587">		return false;</span>
+	}
+
+	private boolean jj_3R_7() {
+<span class="nc bnc" id="L591" title="All 2 branches missed.">		if (jj_scan_token(OBRACKET))</span>
+<span class="nc" id="L592">			return true;</span>
+		Token xsp;
+<span class="nc" id="L594">		xsp = jj_scanpos;</span>
+<span class="nc bnc" id="L595" title="All 2 branches missed.">		if (jj_3R_12()) {</span>
+<span class="nc" id="L596">			jj_scanpos = xsp;</span>
+<span class="nc bnc" id="L597" title="All 2 branches missed.">			if (jj_3R_13()) {</span>
+<span class="nc" id="L598">				jj_scanpos = xsp;</span>
+<span class="nc bnc" id="L599" title="All 2 branches missed.">				if (jj_3R_14())</span>
+<span class="nc" id="L600">					return true;</span>
+			}
+		}
+<span class="nc" id="L603">		return false;</span>
+	}
+
+	private boolean jj_3R_8() {
+<span class="nc bnc" id="L607" title="All 2 branches missed.">		if (jj_scan_token(OBRACKET))</span>
+<span class="nc" id="L608">			return true;</span>
+<span class="nc bnc" id="L609" title="All 2 branches missed.">		if (jj_scan_token(NODES))</span>
+<span class="nc" id="L610">			return true;</span>
+<span class="nc" id="L611">		return false;</span>
+	}
+
+	/** Generated Token Manager. */
+	public TLPParserTokenManager token_source;
+	SimpleCharStream jj_input_stream;
+	/** Current token. */
+	public Token token;
+	/** Next token. */
+	public Token jj_nt;
+	private int jj_ntk;
+	private Token jj_scanpos, jj_lastpos;
+	private int jj_la;
+	private int jj_gen;
+<span class="nc" id="L625">	final private int[] jj_la1 = new int[8];</span>
+	static private int[] jj_la1_0;
+	static {
+<span class="nc" id="L628">		jj_la1_init_0();</span>
+<span class="nc" id="L629">	}</span>
+
+	private static void jj_la1_init_0() {
+<span class="nc" id="L632">		jj_la1_0 = new int[] { 0x400, 0x401, 0x380000, 0x1000000, 0x1000000, 0x400, 0x400, 0x14000, };</span>
+<span class="nc" id="L633">	}</span>
+
+<span class="nc" id="L635">	final private JJCalls[] jj_2_rtns = new JJCalls[5];</span>
+<span class="nc" id="L636">	private boolean jj_rescan = false;</span>
+<span class="nc" id="L637">	private int jj_gc = 0;</span>
+
+	/** Constructor with InputStream. */
+	public TLPParser(java.io.InputStream stream) {
+<span class="nc" id="L641">		this(stream, null);</span>
+<span class="nc" id="L642">	}</span>
+
+	/** Constructor with InputStream and supplied encoding */
+<span class="nc" id="L645">	public TLPParser(java.io.InputStream stream, String encoding) {</span>
+		try {
+<span class="nc" id="L647">			jj_input_stream = new SimpleCharStream(stream, encoding, 1, 1);</span>
+<span class="nc" id="L648">		} catch (java.io.UnsupportedEncodingException e) {</span>
+<span class="nc" id="L649">			throw new RuntimeException(e);</span>
+		}
+<span class="nc" id="L651">		token_source = new TLPParserTokenManager(jj_input_stream);</span>
+<span class="nc" id="L652">		token = new Token();</span>
+<span class="nc" id="L653">		jj_ntk = -1;</span>
+<span class="nc" id="L654">		jj_gen = 0;</span>
+<span class="nc bnc" id="L655" title="All 2 branches missed.">		for (int i = 0; i &lt; 8; i++)</span>
+<span class="nc" id="L656">			jj_la1[i] = -1;</span>
+<span class="nc bnc" id="L657" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_2_rtns.length; i++)</span>
+<span class="nc" id="L658">			jj_2_rtns[i] = new JJCalls();</span>
+<span class="nc" id="L659">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.InputStream stream) {
+<span class="nc" id="L663">		ReInit(stream, null);</span>
+<span class="nc" id="L664">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.InputStream stream, String encoding) {
+		try {
+<span class="nc" id="L669">			jj_input_stream.ReInit(stream, encoding, 1, 1);</span>
+<span class="nc" id="L670">		} catch (java.io.UnsupportedEncodingException e) {</span>
+<span class="nc" id="L671">			throw new RuntimeException(e);</span>
+		}
+<span class="nc" id="L673">		token_source.ReInit(jj_input_stream);</span>
+<span class="nc" id="L674">		token = new Token();</span>
+<span class="nc" id="L675">		jj_ntk = -1;</span>
+<span class="nc" id="L676">		jj_gen = 0;</span>
+<span class="nc bnc" id="L677" title="All 2 branches missed.">		for (int i = 0; i &lt; 8; i++)</span>
+<span class="nc" id="L678">			jj_la1[i] = -1;</span>
+<span class="nc bnc" id="L679" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_2_rtns.length; i++)</span>
+<span class="nc" id="L680">			jj_2_rtns[i] = new JJCalls();</span>
+<span class="nc" id="L681">	}</span>
+
+	/** Constructor. */
+<span class="nc" id="L684">	public TLPParser(java.io.Reader stream) {</span>
+<span class="nc" id="L685">		jj_input_stream = new SimpleCharStream(stream, 1, 1);</span>
+<span class="nc" id="L686">		token_source = new TLPParserTokenManager(jj_input_stream);</span>
+<span class="nc" id="L687">		token = new Token();</span>
+<span class="nc" id="L688">		jj_ntk = -1;</span>
+<span class="nc" id="L689">		jj_gen = 0;</span>
+<span class="nc bnc" id="L690" title="All 2 branches missed.">		for (int i = 0; i &lt; 8; i++)</span>
+<span class="nc" id="L691">			jj_la1[i] = -1;</span>
+<span class="nc bnc" id="L692" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_2_rtns.length; i++)</span>
+<span class="nc" id="L693">			jj_2_rtns[i] = new JJCalls();</span>
+<span class="nc" id="L694">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(java.io.Reader stream) {
+<span class="nc" id="L698">		jj_input_stream.ReInit(stream, 1, 1);</span>
+<span class="nc" id="L699">		token_source.ReInit(jj_input_stream);</span>
+<span class="nc" id="L700">		token = new Token();</span>
+<span class="nc" id="L701">		jj_ntk = -1;</span>
+<span class="nc" id="L702">		jj_gen = 0;</span>
+<span class="nc bnc" id="L703" title="All 2 branches missed.">		for (int i = 0; i &lt; 8; i++)</span>
+<span class="nc" id="L704">			jj_la1[i] = -1;</span>
+<span class="nc bnc" id="L705" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_2_rtns.length; i++)</span>
+<span class="nc" id="L706">			jj_2_rtns[i] = new JJCalls();</span>
+<span class="nc" id="L707">	}</span>
+
+	/** Constructor with generated Token Manager. */
+<span class="nc" id="L710">	public TLPParser(TLPParserTokenManager tm) {</span>
+<span class="nc" id="L711">		token_source = tm;</span>
+<span class="nc" id="L712">		token = new Token();</span>
+<span class="nc" id="L713">		jj_ntk = -1;</span>
+<span class="nc" id="L714">		jj_gen = 0;</span>
+<span class="nc bnc" id="L715" title="All 2 branches missed.">		for (int i = 0; i &lt; 8; i++)</span>
+<span class="nc" id="L716">			jj_la1[i] = -1;</span>
+<span class="nc bnc" id="L717" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_2_rtns.length; i++)</span>
+<span class="nc" id="L718">			jj_2_rtns[i] = new JJCalls();</span>
+<span class="nc" id="L719">	}</span>
+
+	/** Reinitialise. */
+	public void ReInit(TLPParserTokenManager tm) {
+<span class="nc" id="L723">		token_source = tm;</span>
+<span class="nc" id="L724">		token = new Token();</span>
+<span class="nc" id="L725">		jj_ntk = -1;</span>
+<span class="nc" id="L726">		jj_gen = 0;</span>
+<span class="nc bnc" id="L727" title="All 2 branches missed.">		for (int i = 0; i &lt; 8; i++)</span>
+<span class="nc" id="L728">			jj_la1[i] = -1;</span>
+<span class="nc bnc" id="L729" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_2_rtns.length; i++)</span>
+<span class="nc" id="L730">			jj_2_rtns[i] = new JJCalls();</span>
+<span class="nc" id="L731">	}</span>
+
+	private Token jj_consume_token(int kind) throws ParseException {
+		Token oldToken;
+<span class="nc bnc" id="L735" title="All 2 branches missed.">		if ((oldToken = token).next != null)</span>
+<span class="nc" id="L736">			token = token.next;</span>
+		else
+<span class="nc" id="L738">			token = token.next = token_source.getNextToken();</span>
+<span class="nc" id="L739">		jj_ntk = -1;</span>
+<span class="nc bnc" id="L740" title="All 2 branches missed.">		if (token.kind == kind) {</span>
+<span class="nc" id="L741">			jj_gen++;</span>
+<span class="nc bnc" id="L742" title="All 2 branches missed.">			if (++jj_gc &gt; 100) {</span>
+<span class="nc" id="L743">				jj_gc = 0;</span>
+<span class="nc bnc" id="L744" title="All 2 branches missed.">				for (int i = 0; i &lt; jj_2_rtns.length; i++) {</span>
+<span class="nc" id="L745">					JJCalls c = jj_2_rtns[i];</span>
+<span class="nc bnc" id="L746" title="All 2 branches missed.">					while (c != null) {</span>
+<span class="nc bnc" id="L747" title="All 2 branches missed.">						if (c.gen &lt; jj_gen)</span>
+<span class="nc" id="L748">							c.first = null;</span>
+<span class="nc" id="L749">						c = c.next;</span>
+					}
+				}
+			}
+<span class="nc" id="L753">			return token;</span>
+		}
+<span class="nc" id="L755">		token = oldToken;</span>
+<span class="nc" id="L756">		jj_kind = kind;</span>
+<span class="nc" id="L757">		throw generateParseException();</span>
+	}
+
+	static private final class LookaheadSuccess extends java.lang.Error {
+		private static final long serialVersionUID = -7986896058452164869L;
+	}
+
+<span class="nc" id="L764">	final private LookaheadSuccess jj_ls = new LookaheadSuccess();</span>
+
+	private boolean jj_scan_token(int kind) {
+<span class="nc bnc" id="L767" title="All 2 branches missed.">		if (jj_scanpos == jj_lastpos) {</span>
+<span class="nc" id="L768">			jj_la--;</span>
+<span class="nc bnc" id="L769" title="All 2 branches missed.">			if (jj_scanpos.next == null) {</span>
+<span class="nc" id="L770">				jj_lastpos = jj_scanpos = jj_scanpos.next = token_source.getNextToken();</span>
+<span class="nc" id="L771">			} else {</span>
+<span class="nc" id="L772">				jj_lastpos = jj_scanpos = jj_scanpos.next;</span>
+			}
+<span class="nc" id="L774">		} else {</span>
+<span class="nc" id="L775">			jj_scanpos = jj_scanpos.next;</span>
+		}
+<span class="nc bnc" id="L777" title="All 2 branches missed.">		if (jj_rescan) {</span>
+<span class="nc" id="L778">			int i = 0;</span>
+<span class="nc" id="L779">			Token tok = token;</span>
+<span class="nc bnc" id="L780" title="All 4 branches missed.">			while (tok != null &amp;&amp; tok != jj_scanpos) {</span>
+<span class="nc" id="L781">				i++;</span>
+<span class="nc" id="L782">				tok = tok.next;</span>
+			}
+<span class="nc bnc" id="L784" title="All 2 branches missed.">			if (tok != null)</span>
+<span class="nc" id="L785">				jj_add_error_token(kind, i);</span>
+		}
+<span class="nc bnc" id="L787" title="All 2 branches missed.">		if (jj_scanpos.kind != kind)</span>
+<span class="nc" id="L788">			return true;</span>
+<span class="nc bnc" id="L789" title="All 4 branches missed.">		if (jj_la == 0 &amp;&amp; jj_scanpos == jj_lastpos)</span>
+<span class="nc" id="L790">			throw jj_ls;</span>
+<span class="nc" id="L791">		return false;</span>
+	}
+
+	/** Get the next Token. */
+	final public Token getNextToken() {
+<span class="nc bnc" id="L796" title="All 2 branches missed.">		if (token.next != null)</span>
+<span class="nc" id="L797">			token = token.next;</span>
+		else
+<span class="nc" id="L799">			token = token.next = token_source.getNextToken();</span>
+<span class="nc" id="L800">		jj_ntk = -1;</span>
+<span class="nc" id="L801">		jj_gen++;</span>
+<span class="nc" id="L802">		return token;</span>
+	}
+
+	/** Get the specific Token. */
+	final public Token getToken(int index) {
+<span class="nc" id="L807">		Token t = token;</span>
+<span class="nc bnc" id="L808" title="All 2 branches missed.">		for (int i = 0; i &lt; index; i++) {</span>
+<span class="nc bnc" id="L809" title="All 2 branches missed.">			if (t.next != null)</span>
+<span class="nc" id="L810">				t = t.next;</span>
+			else
+<span class="nc" id="L812">				t = t.next = token_source.getNextToken();</span>
+		}
+<span class="nc" id="L814">		return t;</span>
+	}
+
+	private int jj_ntk() {
+<span class="nc bnc" id="L818" title="All 2 branches missed.">		if ((jj_nt = token.next) == null)</span>
+<span class="nc" id="L819">			return (jj_ntk = (token.next = token_source.getNextToken()).kind);</span>
+		else
+<span class="nc" id="L821">			return (jj_ntk = jj_nt.kind);</span>
+	}
+
+<span class="nc" id="L824">	private java.util.List&lt;int[]&gt; jj_expentries = new java.util.ArrayList&lt;int[]&gt;();</span>
+	private int[] jj_expentry;
+<span class="nc" id="L826">	private int jj_kind = -1;</span>
+<span class="nc" id="L827">	private int[] jj_lasttokens = new int[100];</span>
+	private int jj_endpos;
+
+	private void jj_add_error_token(int kind, int pos) {
+<span class="nc bnc" id="L831" title="All 2 branches missed.">		if (pos &gt;= 100)</span>
+<span class="nc" id="L832">			return;</span>
+<span class="nc bnc" id="L833" title="All 2 branches missed.">		if (pos == jj_endpos + 1) {</span>
+<span class="nc" id="L834">			jj_lasttokens[jj_endpos++] = kind;</span>
+<span class="nc bnc" id="L835" title="All 2 branches missed.">		} else if (jj_endpos != 0) {</span>
+<span class="nc" id="L836">			jj_expentry = new int[jj_endpos];</span>
+<span class="nc bnc" id="L837" title="All 2 branches missed.">			for (int i = 0; i &lt; jj_endpos; i++) {</span>
+<span class="nc" id="L838">				jj_expentry[i] = jj_lasttokens[i];</span>
+			}
+<span class="nc bnc" id="L840" title="All 2 branches missed.">			jj_entries_loop: for (java.util.Iterator&lt;?&gt; it = jj_expentries.iterator(); it.hasNext();) {</span>
+<span class="nc" id="L841">				int[] oldentry = (int[]) (it.next());</span>
+<span class="nc bnc" id="L842" title="All 2 branches missed.">				if (oldentry.length == jj_expentry.length) {</span>
+<span class="nc bnc" id="L843" title="All 2 branches missed.">					for (int i = 0; i &lt; jj_expentry.length; i++) {</span>
+<span class="nc bnc" id="L844" title="All 2 branches missed.">						if (oldentry[i] != jj_expentry[i]) {</span>
+<span class="nc" id="L845">							continue jj_entries_loop;</span>
+						}
+					}
+<span class="nc" id="L848">					jj_expentries.add(jj_expentry);</span>
+<span class="nc" id="L849">					break jj_entries_loop;</span>
+				}
+			}
+<span class="nc bnc" id="L852" title="All 2 branches missed.">			if (pos != 0)</span>
+<span class="nc" id="L853">				jj_lasttokens[(jj_endpos = pos) - 1] = kind;</span>
+		}
+<span class="nc" id="L855">	}</span>
+
+	/** Generate ParseException. */
+	public ParseException generateParseException() {
+<span class="nc" id="L859">		jj_expentries.clear();</span>
+<span class="nc" id="L860">		boolean[] la1tokens = new boolean[28];</span>
+<span class="nc bnc" id="L861" title="All 2 branches missed.">		if (jj_kind &gt;= 0) {</span>
+<span class="nc" id="L862">			la1tokens[jj_kind] = true;</span>
+<span class="nc" id="L863">			jj_kind = -1;</span>
+		}
+<span class="nc bnc" id="L865" title="All 2 branches missed.">		for (int i = 0; i &lt; 8; i++) {</span>
+<span class="nc bnc" id="L866" title="All 2 branches missed.">			if (jj_la1[i] == jj_gen) {</span>
+<span class="nc bnc" id="L867" title="All 2 branches missed.">				for (int j = 0; j &lt; 32; j++) {</span>
+<span class="nc bnc" id="L868" title="All 2 branches missed.">					if ((jj_la1_0[i] &amp; (1 &lt;&lt; j)) != 0) {</span>
+<span class="nc" id="L869">						la1tokens[j] = true;</span>
+					}
+				}
+			}
+		}
+<span class="nc bnc" id="L874" title="All 2 branches missed.">		for (int i = 0; i &lt; 28; i++) {</span>
+<span class="nc bnc" id="L875" title="All 2 branches missed.">			if (la1tokens[i]) {</span>
+<span class="nc" id="L876">				jj_expentry = new int[1];</span>
+<span class="nc" id="L877">				jj_expentry[0] = i;</span>
+<span class="nc" id="L878">				jj_expentries.add(jj_expentry);</span>
+			}
+		}
+<span class="nc" id="L881">		jj_endpos = 0;</span>
+<span class="nc" id="L882">		jj_rescan_token();</span>
+<span class="nc" id="L883">		jj_add_error_token(0, 0);</span>
+<span class="nc" id="L884">		int[][] exptokseq = new int[jj_expentries.size()][];</span>
+<span class="nc bnc" id="L885" title="All 2 branches missed.">		for (int i = 0; i &lt; jj_expentries.size(); i++) {</span>
+<span class="nc" id="L886">			exptokseq[i] = jj_expentries.get(i);</span>
+		}
+<span class="nc" id="L888">		return new ParseException(token, exptokseq, tokenImage);</span>
+	}
+
+	/** Enable tracing. */
+	final public void enable_tracing() {
+<span class="nc" id="L893">	}</span>
+
+	/** Disable tracing. */
+	final public void disable_tracing() {
+<span class="nc" id="L897">	}</span>
+
+	private void jj_rescan_token() {
+<span class="nc" id="L900">		jj_rescan = true;</span>
+<span class="nc bnc" id="L901" title="All 2 branches missed.">		for (int i = 0; i &lt; 5; i++) {</span>
+			try {
+<span class="nc" id="L903">				JJCalls p = jj_2_rtns[i];</span>
+				do {
+<span class="nc bnc" id="L905" title="All 2 branches missed.">					if (p.gen &gt; jj_gen) {</span>
+<span class="nc" id="L906">						jj_la = p.arg;</span>
+<span class="nc" id="L907">						jj_lastpos = jj_scanpos = p.first;</span>
+<span class="nc bnc" id="L908" title="All 6 branches missed.">						switch (i) {</span>
+						case 0:
+<span class="nc" id="L910">							jj_3_1();</span>
+<span class="nc" id="L911">							break;</span>
+						case 1:
+<span class="nc" id="L913">							jj_3_2();</span>
+<span class="nc" id="L914">							break;</span>
+						case 2:
+<span class="nc" id="L916">							jj_3_3();</span>
+<span class="nc" id="L917">							break;</span>
+						case 3:
+<span class="nc" id="L919">							jj_3_4();</span>
+<span class="nc" id="L920">							break;</span>
+						case 4:
+<span class="nc" id="L922">							jj_3_5();</span>
+							break;
+<span class="nc" id="L924">						}</span>
+					}
+<span class="nc" id="L926">					p = p.next;</span>
+<span class="nc bnc" id="L927" title="All 2 branches missed.">				} while (p != null);</span>
+<span class="nc" id="L928">			} catch (LookaheadSuccess ls) {</span>
+			}
+		}
+<span class="nc" id="L931">		jj_rescan = false;</span>
+<span class="nc" id="L932">	}</span>
+
+	private void jj_save(int index, int xla) {
+<span class="nc" id="L935">		JJCalls p = jj_2_rtns[index];</span>
+<span class="nc bnc" id="L936" title="All 2 branches missed.">		while (p.gen &gt; jj_gen) {</span>
+<span class="nc bnc" id="L937" title="All 2 branches missed.">			if (p.next == null) {</span>
+<span class="nc" id="L938">				p = p.next = new JJCalls();</span>
+<span class="nc" id="L939">				break;</span>
+			}
+<span class="nc" id="L941">			p = p.next;</span>
+		}
+<span class="nc" id="L943">		p.gen = jj_gen + xla - jj_la;</span>
+<span class="nc" id="L944">		p.first = token;</span>
+<span class="nc" id="L945">		p.arg = xla;</span>
+<span class="nc" id="L946">	}</span>
+
+<span class="nc" id="L948">	static final class JJCalls {</span>
+		int gen;
+		Token first;
+		int arg;
+		JJCalls next;
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

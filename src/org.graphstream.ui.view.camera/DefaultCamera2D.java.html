@@ -1,0 +1,1103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DefaultCamera2D.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.view.camera</a> &gt; <span class="el_source">DefaultCamera2D.java</span></div><h1>DefaultCamera2D.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2018-01-18
+ * 
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.view.camera;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Node;
+import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.graphicGraph.GraphicEdge;
+import org.graphstream.ui.graphicGraph.GraphicElement;
+import org.graphstream.ui.graphicGraph.GraphicGraph;
+import org.graphstream.ui.graphicGraph.GraphicNode;
+import org.graphstream.ui.graphicGraph.GraphicSprite;
+import org.graphstream.ui.graphicGraph.stylesheet.Selector;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+import org.graphstream.ui.graphicGraph.stylesheet.Values;
+import org.graphstream.ui.view.util.GraphMetrics;
+import org.graphstream.ui.view.util.InteractiveElement;
+
+/**
+ * Define a view of the graph or a part of the graph.
+ * 
+ * The camera can be seen as an element in charge of projecting the graph
+ * elements in graph units (GU) into rendering space units, often in pixels. It
+ * defines the transformation, an affine matrix, to pass from the first to the
+ * second (in fact its the back-end that does it).
+ * 
+ * It also contains the graph metrics. This is a set of values that give the
+ * overall dimensions of the graph in graph units, as well as the view port, the
+ * area on the screen (or any rendering surface) that will receive the results
+ * in pixels (or any rendering units). The two mains methods for this operation
+ * are [[Camera.pushView(GraphicGraph)]] and [[Camera.popView()]].
+ * 
+ * The user of the camera must set both the view port and the graph bounds in
+ * order for the camera to correctly project the graph view (the Renderer does
+ * that before using the Camera, at each frame). The camera model is as follows:
+ * the camera defines a center at which it always points. It can zoom on the
+ * graph (as if the camera angle of view was changing), pan in any direction by
+ * moving its center of view and rotate along the axe going from the center to
+ * the camera position (camera can rotate around two axes in 3D, but this is a
+ * 2D camera).
+ * 
+ * There are two modes: - an &quot;auto-fit&quot; mode where the camera always show the
+ * whole graph even if it changes in size, by automatically changing the center
+ * and zoom values, - and a &quot;user&quot; mode where the camera center (looked-at
+ * point), zoom and panning are specified and will not be modified in the bounds
+ * of the graph change.
+ * 
+ * The camera is also able to answer questions like: &quot;what element is visible
+ * actually?&quot;, or &quot;on what element is the mouse cursor actually?&quot;.
+ * 
+ * The camera is also able to compute sprite positions according to their
+ * attachment, as well as maintaining a list of all elements out of the view, so
+ * that it is not needed to render them.
+ */
+public class DefaultCamera2D implements Camera {
+
+	/** Information on the graph overall dimension and position. */
+<span class="nc" id="L98">	protected GraphMetrics metrics = new GraphMetrics();</span>
+
+	/** Automatic centering of the view. */
+<span class="nc" id="L101">	protected boolean autoFit = true;</span>
+
+	/** The camera center of view. */
+<span class="nc" id="L104">	protected Point3 center = new Point3();</span>
+
+	/** The camera zoom. */
+<span class="nc" id="L107">	protected double zoom = 1;</span>
+
+	/** The rotation angle (along an axis perpendicular to the view). */
+<span class="nc" id="L110">	protected double rotation = 0;</span>
+
+	/** Padding around the graph. */
+<span class="nc" id="L113">	protected Values padding = new Values(Units.GU, 0, 0, 0);</span>
+
+	/** The rendering back-end. */
+<span class="nc" id="L116">	protected Backend bck = null;</span>
+
+	/**
+	 * Which node is visible. This allows to mark invisible nodes to fasten
+	 * visibility tests for nodes, attached sprites and edges. The visibility test
+	 * is heavy, and we often need to test for nodes visibility. This allows to do
+	 * it only once per rendering step. Hence the storage of the invisible nodes
+	 * here.
+	 */
+<span class="nc" id="L125">	protected HashSet&lt;String&gt; nodeInvisible = new HashSet&lt;&gt;();</span>
+
+	/** Which sprite is visible. */
+<span class="nc" id="L128">	protected HashSet&lt;String&gt; spriteInvisible = new HashSet&lt;&gt;();</span>
+
+	/**
+	 * The graph view port, if any. The graph view port is a view inside the graph
+	 * space. It allows to compute the view according to a specified area of the
+	 * graph space instead of the graph dimensions.
+	 */
+<span class="nc" id="L135">	protected double[] gviewport = null;</span>
+
+	protected GraphicGraph graph;
+
+<span class="nc" id="L139">	public DefaultCamera2D(GraphicGraph graph) {</span>
+<span class="nc" id="L140">		this.graph = graph;</span>
+<span class="nc" id="L141">	}</span>
+
+	@Override
+	public Point3 getViewCenter() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L146">		return center;</span>
+	}
+
+	@Override
+	public void setViewCenter(double x, double y, double z) {
+<span class="nc" id="L151">		setAutoFitView(false);</span>
+<span class="nc" id="L152">		center.set(x, y, z);</span>
+<span class="nc" id="L153">		graph.graphChanged = true;</span>
+<span class="nc" id="L154">	}</span>
+
+	public void setViewCenter(Point3 p) {
+<span class="nc" id="L157">		setViewCenter(p.x, p.y, p.z);</span>
+<span class="nc" id="L158">	}</span>
+
+	@Override
+	public double getViewPercent() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L163">		return zoom;</span>
+	}
+
+	@Override
+	public void setViewPercent(double percent) {
+<span class="nc" id="L168">		setAutoFitView(false);</span>
+<span class="nc" id="L169">		setZoom(percent);</span>
+<span class="nc" id="L170">		graph.graphChanged = true;</span>
+<span class="nc" id="L171">	}</span>
+
+	/**
+	 * Set the zoom (or percent of the graph visible), 1 means the graph is fully
+	 * visible.
+	 *
+	 * @param z
+	 *            The zoom.
+	 */
+	public void setZoom(double z) {
+<span class="nc" id="L181">		zoom = z;</span>
+<span class="nc" id="L182">		graph.graphChanged = true;</span>
+<span class="nc" id="L183">	}</span>
+
+	@Override
+	public double getViewRotation() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L188">		return rotation;</span>
+	}
+
+	@Override
+	public void setViewRotation(double theta) {
+		// TODO Auto-generated method stub
+<span class="nc" id="L194">		rotation = theta;</span>
+<span class="nc" id="L195">		graph.graphChanged = true;</span>
+<span class="nc" id="L196">	}</span>
+
+	/**
+	 * Set the output view port size in pixels.
+	 * 
+	 * @param viewportWidth
+	 *            The width in pixels of the view port.
+	 * @param viewportHeight
+	 *            The width in pixels of the view port.
+	 */
+	public void setViewport(double x, double y, double viewportWidth, double viewportHeight) {
+<span class="nc" id="L207">		metrics.setViewport(x, y, viewportWidth, viewportHeight);</span>
+<span class="nc" id="L208">	}</span>
+
+	@Override
+	public double getGraphDimension() {
+<span class="nc" id="L212">		return metrics.getDiagonal();</span>
+	}
+
+	public boolean spriteContains(GraphicElement elt, double x, double y) {
+<span class="nc" id="L216">		GraphicSprite sprite = (GraphicSprite) elt;</span>
+<span class="nc" id="L217">		Values size = getNodeOrSpriteSize(elt);</span>
+<span class="nc" id="L218">		double w2 = metrics.lengthToPx(size, 0) / 2;</span>
+<span class="nc" id="L219">		double h2 = w2;</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">		if (size.size() &gt; 1)</span>
+<span class="nc" id="L221">			h2 = metrics.lengthToPx(size, 1) / 2;</span>
+
+<span class="nc" id="L223">		Point3 dst = spritePositionPx(sprite);</span>
+
+<span class="nc" id="L225">		double x1 = dst.x - w2;</span>
+<span class="nc" id="L226">		double x2 = dst.x + w2;</span>
+<span class="nc" id="L227">		double y1 = dst.y - h2;</span>
+<span class="nc" id="L228">		double y2 = dst.y + h2;</span>
+
+<span class="nc bnc" id="L230" title="All 2 branches missed.">		if (x &lt; x1)</span>
+<span class="nc" id="L231">			return false;</span>
+<span class="nc bnc" id="L232" title="All 2 branches missed.">		else if (y &lt; y1)</span>
+<span class="nc" id="L233">			return false;</span>
+<span class="nc bnc" id="L234" title="All 2 branches missed.">		else if (x &gt; x2)</span>
+<span class="nc" id="L235">			return false;</span>
+<span class="nc bnc" id="L236" title="All 2 branches missed.">		else if (y &gt; y2)</span>
+<span class="nc" id="L237">			return false;</span>
+		else
+<span class="nc" id="L239">			return true;</span>
+	}
+
+	public Point3 spritePositionPx(GraphicSprite sprite) {
+<span class="nc" id="L243">		return getSpritePosition(sprite, new Point3(), Units.PX);</span>
+	}
+
+	/**
+	 * Compute the real position of a sprite according to its eventual attachment in
+	 * graph units.
+	 * 
+	 * @param sprite
+	 *            The sprite.
+	 * @param pos
+	 *            Receiver for the sprite 2D position, can be null.
+	 * @param units
+	 *            The units in which the position must be computed (the sprite
+	 *            already contains units).
+	 * @return The same instance as the one given by parameter pos or a new one if
+	 *         pos was null, containing the computed position in the given units.
+	 */
+	public Point3 getSpritePosition(GraphicSprite sprite, Point3 pos, Units units) {
+<span class="nc bnc" id="L261" title="All 2 branches missed.">		if (sprite.isAttachedToNode())</span>
+<span class="nc" id="L262">			return getSpritePositionNode(sprite, pos, units);</span>
+<span class="nc bnc" id="L263" title="All 2 branches missed.">		else if (sprite.isAttachedToEdge())</span>
+<span class="nc" id="L264">			return getSpritePositionEdge(sprite, pos, units);</span>
+		else
+<span class="nc" id="L266">			return getSpritePositionFree(sprite, pos, units);</span>
+	}
+
+	public Point3 getSpritePositionFree(GraphicSprite sprite, Point3 position, Units units) {
+<span class="nc" id="L270">		Point3 pos = position;</span>
+
+<span class="nc bnc" id="L272" title="All 2 branches missed.">		if (pos == null) {</span>
+<span class="nc" id="L273">			pos = new Point3();</span>
+		}
+
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		if (sprite.getUnits() == units) {</span>
+<span class="nc" id="L277">			pos.x = sprite.getX();</span>
+<span class="nc" id="L278">			pos.y = sprite.getY();</span>
+<span class="nc bnc" id="L279" title="All 4 branches missed.">		} else if (units == Units.GU &amp;&amp; sprite.getUnits() == Units.PX) {</span>
+<span class="nc" id="L280">			pos.x = sprite.getX();</span>
+<span class="nc" id="L281">			pos.y = sprite.getY();</span>
+<span class="nc" id="L282">			bck.inverseTransform(pos);</span>
+<span class="nc bnc" id="L283" title="All 4 branches missed.">		} else if (units == Units.PX &amp;&amp; sprite.getUnits() == Units.GU) {</span>
+<span class="nc" id="L284">			pos.x = sprite.getX();</span>
+<span class="nc" id="L285">			pos.y = sprite.getY();</span>
+<span class="nc" id="L286">			bck.transform(pos);</span>
+<span class="nc bnc" id="L287" title="All 4 branches missed.">		} else if (units == Units.GU &amp;&amp; sprite.getUnits() == Units.PERCENTS) {</span>
+<span class="nc" id="L288">			pos.x = metrics.lo.x + (sprite.getX() / 100f) * metrics.graphWidthGU();</span>
+<span class="nc" id="L289">			pos.y = metrics.lo.y + (sprite.getY() / 100f) * metrics.graphHeightGU();</span>
+<span class="nc bnc" id="L290" title="All 4 branches missed.">		} else if (units == Units.PX &amp;&amp; sprite.getUnits() == Units.PERCENTS) {</span>
+<span class="nc" id="L291">			pos.x = (sprite.getX() / 100f) * metrics.viewport[2];</span>
+<span class="nc" id="L292">			pos.y = (sprite.getY() / 100f) * metrics.viewport[3];</span>
+<span class="nc" id="L293">		} else {</span>
+<span class="nc" id="L294">			throw new RuntimeException(</span>
+<span class="nc" id="L295">					&quot;Unhandled yet sprite positioning convertion &quot; + sprite.getUnits() + &quot; to &quot; + units + &quot;.&quot;);</span>
+		}
+
+<span class="nc" id="L298">		return pos;</span>
+	}
+
+	public Point3 getSpritePositionEdge(GraphicSprite sprite, Point3 position, Units units) {
+<span class="nc" id="L302">		Point3 pos = position;</span>
+
+<span class="nc bnc" id="L304" title="All 2 branches missed.">		if (pos == null)</span>
+<span class="nc" id="L305">			pos = new Point3();</span>
+
+<span class="nc" id="L307">		GraphicEdge edge = sprite.getEdgeAttachment();</span>
+<span class="nc" id="L308">		ConnectorSkeleton info = (ConnectorSkeleton) edge.getAttribute(Skeleton.attributeName);</span>
+
+<span class="nc bnc" id="L310" title="All 2 branches missed.">		if (info != null) {</span>
+<span class="nc" id="L311">			double o = metrics.lengthToGu(sprite.getY(), sprite.getUnits());</span>
+<span class="nc bnc" id="L312" title="All 2 branches missed.">			if (o == 0) {</span>
+<span class="nc" id="L313">				Point3 p = info.pointOnShape(sprite.getX());</span>
+<span class="nc" id="L314">				pos.x = p.x;</span>
+<span class="nc" id="L315">				pos.y = p.y;</span>
+<span class="nc" id="L316">			} else {</span>
+<span class="nc" id="L317">				Point3 p = info.pointOnShapeAndPerpendicular(sprite.getX(), o);</span>
+<span class="nc" id="L318">				pos.x = p.x;</span>
+<span class="nc" id="L319">				pos.y = p.y;</span>
+			}
+<span class="nc" id="L321">		} else {</span>
+<span class="nc" id="L322">			double x = 0.0;</span>
+<span class="nc" id="L323">			double y = 0.0;</span>
+<span class="nc" id="L324">			double dx = 0.0;</span>
+<span class="nc" id="L325">			double dy = 0.0;</span>
+<span class="nc" id="L326">			double d = sprite.getX();</span>
+<span class="nc" id="L327">			double o = metrics.lengthToGu(sprite.getY(), sprite.getUnits());</span>
+
+<span class="nc" id="L329">			x = edge.from.x;</span>
+<span class="nc" id="L330">			y = edge.from.y;</span>
+<span class="nc" id="L331">			dx = edge.to.x - x;</span>
+<span class="nc" id="L332">			dy = edge.to.y - y;</span>
+
+<span class="nc bnc" id="L334" title="All 2 branches missed.">			if (d &gt; 1)</span>
+<span class="nc" id="L335">				d = 1;</span>
+<span class="nc bnc" id="L336" title="All 2 branches missed.">			if (d &lt; 0)</span>
+<span class="nc" id="L337">				d = 0;</span>
+
+<span class="nc" id="L339">			x += dx * d;</span>
+<span class="nc" id="L340">			x += dy * d;</span>
+
+<span class="nc bnc" id="L342" title="All 2 branches missed.">			if (o != 0) {</span>
+<span class="nc" id="L343">				d = Math.sqrt(dx * dx + dy * dy);</span>
+<span class="nc" id="L344">				dx /= d;</span>
+<span class="nc" id="L345">				dy /= d;</span>
+
+<span class="nc" id="L347">				x += -dy * o;</span>
+<span class="nc" id="L348">				y += dx * o;</span>
+			}
+
+<span class="nc" id="L351">			pos.x = x;</span>
+<span class="nc" id="L352">			pos.y = y;</span>
+		}
+
+<span class="nc bnc" id="L355" title="All 2 branches missed.">		if (units == Units.PX)</span>
+<span class="nc" id="L356">			bck.transform(pos);</span>
+
+<span class="nc" id="L358">		return pos;</span>
+	}
+
+	/**
+	 * Compute the position of a sprite if attached to a node.
+	 * 
+	 * @param sprite
+	 *            The sprite.
+	 * @param position
+	 *            Where to stored the computed position, if null, the position is
+	 *            created.
+	 * @param units
+	 *            The units the computed position must be given into.
+	 * @return The same instance as pos, or a new one if pos was null.
+	 */
+	public Point3 getSpritePositionNode(GraphicSprite sprite, Point3 position, Units units) {
+<span class="nc" id="L374">		Point3 pos = position;</span>
+
+<span class="nc bnc" id="L376" title="All 2 branches missed.">		if (pos == null)</span>
+<span class="nc" id="L377">			pos = new Point3();</span>
+
+<span class="nc" id="L379">		double spriteX = metrics.lengthToGu(sprite.getX(), sprite.getUnits());</span>
+<span class="nc" id="L380">		double spriteY = metrics.lengthToGu(sprite.getY(), sprite.getUnits());</span>
+
+<span class="nc" id="L382">		GraphicNode node = sprite.getNodeAttachment();</span>
+<span class="nc" id="L383">		pos.x = node.x + spriteX;</span>
+<span class="nc" id="L384">		pos.y = node.y + spriteY;</span>
+
+<span class="nc bnc" id="L386" title="All 2 branches missed.">		if (units == Units.PX)</span>
+<span class="nc" id="L387">			bck.transform(pos);</span>
+
+<span class="nc" id="L389">		return pos;</span>
+	}
+
+	public boolean nodeContains(GraphicElement elt, double x, double y) {
+
+<span class="nc" id="L394">		Values size = getNodeOrSpriteSize(elt);</span>
+<span class="nc" id="L395">		double w2 = metrics.lengthToPx(size, 0) / 2;</span>
+<span class="nc" id="L396">		double h2 = w2;</span>
+<span class="nc bnc" id="L397" title="All 2 branches missed.">		if (size.size() &gt; 1)</span>
+<span class="nc" id="L398">			h2 = metrics.lengthToPx(size, 1) / 2;</span>
+<span class="nc" id="L399">		Point3 dst = bck.transform(elt.getX(), elt.getY(), 0);</span>
+<span class="nc" id="L400">		double x1 = (dst.x) - w2;</span>
+<span class="nc" id="L401">		double x2 = (dst.x) + w2;</span>
+<span class="nc" id="L402">		double y1 = (dst.y) - h2;</span>
+<span class="nc" id="L403">		double y2 = (dst.y) + h2;</span>
+
+<span class="nc bnc" id="L405" title="All 2 branches missed.">		if (x &lt; x1)</span>
+<span class="nc" id="L406">			return false;</span>
+<span class="nc bnc" id="L407" title="All 2 branches missed.">		else if (y &lt; y1)</span>
+<span class="nc" id="L408">			return false;</span>
+<span class="nc bnc" id="L409" title="All 2 branches missed.">		else if (x &gt; x2)</span>
+<span class="nc" id="L410">			return false;</span>
+<span class="nc bnc" id="L411" title="All 2 branches missed.">		else if (y &gt; y2)</span>
+<span class="nc" id="L412">			return false;</span>
+		else
+<span class="nc" id="L414">			return true;</span>
+	}
+
+	public boolean edgeContains(GraphicElement elt, double x, double y) {
+
+<span class="nc" id="L419">		Values size = elt.getStyle().getSize();</span>
+<span class="nc" id="L420">		double w2 = metrics.lengthToPx(size, 0) / 2;</span>
+<span class="nc" id="L421">		double h2 = w2;</span>
+<span class="nc bnc" id="L422" title="All 2 branches missed.">		if (size.size() &gt; 1)</span>
+<span class="nc" id="L423">			h2 = metrics.lengthToPx(size, 1) / 2;</span>
+<span class="nc" id="L424">		Point3 dst = bck.transform(elt.getX(), elt.getY(), 0);</span>
+
+<span class="nc" id="L426">		double x1 = (dst.x) - w2;</span>
+<span class="nc" id="L427">		double x2 = (dst.x) + w2;</span>
+<span class="nc" id="L428">		double y1 = (dst.y) - h2;</span>
+<span class="nc" id="L429">		double y2 = (dst.y) + h2;</span>
+
+<span class="nc bnc" id="L431" title="All 2 branches missed.">		if (x &lt; x1)</span>
+<span class="nc" id="L432">			return false;</span>
+<span class="nc bnc" id="L433" title="All 2 branches missed.">		else if (y &lt; y1)</span>
+<span class="nc" id="L434">			return false;</span>
+<span class="nc bnc" id="L435" title="All 2 branches missed.">		else if (x &gt; x2)</span>
+<span class="nc" id="L436">			return false;</span>
+<span class="nc bnc" id="L437" title="All 2 branches missed.">		else if (y &gt; y2)</span>
+<span class="nc" id="L438">			return false;</span>
+		else
+<span class="nc" id="L440">			return true;</span>
+	}
+
+	public Values getNodeOrSpriteSize(GraphicElement elt) {
+<span class="nc" id="L444">		AreaSkeleton info = (AreaSkeleton) elt.getAttribute(Skeleton.attributeName);</span>
+
+<span class="nc bnc" id="L446" title="All 2 branches missed.">		if (info != null) {</span>
+<span class="nc" id="L447">			return new Values(Units.GU, info.theSize().x, info.theSize().y);</span>
+		} else {
+<span class="nc" id="L449">			return elt.getStyle().getSize();</span>
+		}
+	}
+
+	public Point3 getNodeOrSpritePositionGU(GraphicElement elt, Point3 pos) {
+<span class="nc" id="L454">		Point3 p = pos;</span>
+<span class="nc bnc" id="L455" title="All 2 branches missed.">		if (p == null)</span>
+<span class="nc" id="L456">			p = new Point3();</span>
+
+<span class="nc bnc" id="L458" title="All 2 branches missed.">		if (elt instanceof GraphicNode) {</span>
+<span class="nc" id="L459">			p.x = ((GraphicNode) elt).getX();</span>
+<span class="nc" id="L460">			p.y = ((GraphicNode) elt).getY();</span>
+<span class="nc bnc" id="L461" title="All 2 branches missed.">		} else if (elt instanceof GraphicSprite) {</span>
+<span class="nc" id="L462">			p = getSpritePosition(((GraphicSprite) elt), p, Units.GU);</span>
+		}
+
+<span class="nc" id="L465">		return p;</span>
+	}
+
+	@Override
+	public void removeGraphViewport() {
+<span class="nc" id="L470">		gviewport = null;</span>
+<span class="nc" id="L471">	}</span>
+
+	@Override
+	public void setGraphViewport(double minx, double miny, double maxx, double maxy) {
+<span class="nc" id="L475">		gviewport = new double[4];</span>
+<span class="nc" id="L476">		gviewport[0] = minx;</span>
+<span class="nc" id="L477">		gviewport[1] = miny;</span>
+<span class="nc" id="L478">		gviewport[2] = maxx;</span>
+<span class="nc" id="L479">		gviewport[3] = maxy;</span>
+<span class="nc" id="L480">	}</span>
+
+	@Override
+	public void resetView() {
+<span class="nc" id="L484">		setAutoFitView(true);</span>
+<span class="nc" id="L485">		setViewRotation(0);</span>
+<span class="nc" id="L486">	}</span>
+
+	/**
+	 * Set the camera view in the given graphics and backup the previous transform
+	 * of the graphics. Call {@link #popView()} to restore the saved transform. You
+	 * can only push one time the view.
+	 * 
+	 * @param graph
+	 *            The graphic graph (used to check element visibility).
+	 */
+	public void pushView(GraphicGraph graph) {
+<span class="nc" id="L497">		bck.pushTransform();</span>
+<span class="nc" id="L498">		setPadding(graph);</span>
+
+<span class="nc bnc" id="L500" title="All 2 branches missed.">		if (autoFit)</span>
+<span class="nc" id="L501">			autoFitView();</span>
+		else
+<span class="nc" id="L503">			userView();</span>
+
+<span class="nc" id="L505">		checkVisibility(graph);</span>
+<span class="nc" id="L506">	}</span>
+
+	/** Restore the transform that was used before {@link #pushView()} is used. */
+	public void popView() {
+<span class="nc" id="L510">		bck.popTransform();</span>
+<span class="nc" id="L511">	}</span>
+
+	public void checkVisibility(GraphicGraph graph) {
+<span class="nc" id="L514">		nodeInvisible.clear();</span>
+<span class="nc" id="L515">		spriteInvisible.clear();</span>
+
+<span class="nc bnc" id="L517" title="All 2 branches missed.">		if (!autoFit) {</span>
+			// If autoFit is on, we know the whole graph is visible anyway.
+<span class="nc" id="L519">			double X = metrics.viewport[0];</span>
+<span class="nc" id="L520">			double Y = metrics.viewport[1];</span>
+<span class="nc" id="L521">			double W = metrics.viewport[2];</span>
+<span class="nc" id="L522">			double H = metrics.viewport[3];</span>
+
+<span class="nc" id="L524">			graph.nodes().forEach(node -&gt; {</span>
+<span class="nc" id="L525">				GraphicNode n = (GraphicNode) node;</span>
+<span class="nc bnc" id="L526" title="All 6 branches missed.">				boolean visible = isNodeIn(n, X, Y, X + W, Y + H) &amp;&amp; (!n.hidden) &amp;&amp; n.positionned;</span>
+
+<span class="nc bnc" id="L528" title="All 2 branches missed.">				if (!visible) {</span>
+<span class="nc" id="L529">					nodeInvisible.add(node.getId());</span>
+				}
+<span class="nc" id="L531">			});</span>
+
+<span class="nc" id="L533">			graph.sprites().forEach(sprite -&gt; {</span>
+<span class="nc bnc" id="L534" title="All 4 branches missed.">				boolean visible = isSpriteIn(sprite, X, Y, X + W, Y + H) &amp;&amp; (!sprite.hidden);</span>
+
+<span class="nc bnc" id="L536" title="All 2 branches missed.">				if (!visible) {</span>
+<span class="nc" id="L537">					spriteInvisible.add(sprite.getId());</span>
+				}
+<span class="nc" id="L539">			});</span>
+		}
+<span class="nc" id="L541">	}</span>
+
+	/**
+	 * Is the given node visible in the given area.
+	 * 
+	 * @param node
+	 *            The node to check.
+	 * @param X1
+	 *            The min abscissa of the area.
+	 * @param Y1
+	 *            The min ordinate of the area.
+	 * @param X2
+	 *            The max abscissa of the area.
+	 * @param Y2
+	 *            The max ordinate of the area.
+	 * @return True if the node lies in the given area.
+	 */
+	public boolean isNodeIn(GraphicNode node, double X1, double Y1, double X2, double Y2) {
+<span class="nc" id="L559">		Values size = getNodeOrSpriteSize(node);// node.getStyle.getSize</span>
+<span class="nc" id="L560">		double w2 = metrics.lengthToPx(size, 0) / 2;</span>
+<span class="nc" id="L561">		double h2 = w2;</span>
+<span class="nc bnc" id="L562" title="All 2 branches missed.">		if (size.size() &gt; 1)</span>
+<span class="nc" id="L563">			h2 = metrics.lengthToPx(size, 1) / 2;</span>
+
+<span class="nc" id="L565">		Point3 src = new Point3(node.getX(), node.getY(), 0);</span>
+
+<span class="nc" id="L567">		bck.transform(src);</span>
+
+<span class="nc" id="L569">		double x1 = src.x - w2;</span>
+<span class="nc" id="L570">		double x2 = src.x + w2;</span>
+<span class="nc" id="L571">		double y1 = src.y - h2;</span>
+<span class="nc" id="L572">		double y2 = src.y + h2;</span>
+
+<span class="nc bnc" id="L574" title="All 2 branches missed.">		if (x2 &lt; X1)</span>
+<span class="nc" id="L575">			return false;</span>
+<span class="nc bnc" id="L576" title="All 2 branches missed.">		else if (y2 &lt; Y1)</span>
+<span class="nc" id="L577">			return false;</span>
+<span class="nc bnc" id="L578" title="All 2 branches missed.">		else if (x1 &gt; X2)</span>
+<span class="nc" id="L579">			return false;</span>
+<span class="nc bnc" id="L580" title="All 2 branches missed.">		else if (y1 &gt; Y2)</span>
+<span class="nc" id="L581">			return false;</span>
+		else
+<span class="nc" id="L583">			return true;</span>
+	}
+
+	public boolean isEdgeIn(GraphicEdge edge, double X1, double Y1, double X2, double Y2) {
+<span class="nc" id="L587">		Values size = edge.getStyle().getSize();</span>
+<span class="nc" id="L588">		double w2 = metrics.lengthToPx(size, 0) / 2;</span>
+<span class="nc" id="L589">		double h2 = w2;</span>
+<span class="nc bnc" id="L590" title="All 2 branches missed.">		if (size.size() &gt; 1)</span>
+<span class="nc" id="L591">			h2 = metrics.lengthToPx(size, 1) / 2;</span>
+
+<span class="nc" id="L593">		Point3 src = new Point3(edge.getX(), edge.getY(), 0);</span>
+
+<span class="nc" id="L595">		bck.transform(src);</span>
+
+<span class="nc" id="L597">		double x1 = src.x - w2;</span>
+<span class="nc" id="L598">		double x2 = src.x + w2;</span>
+<span class="nc" id="L599">		double y1 = src.y - h2;</span>
+<span class="nc" id="L600">		double y2 = src.y + h2;</span>
+
+<span class="nc bnc" id="L602" title="All 2 branches missed.">		if (x2 &lt; X1)</span>
+<span class="nc" id="L603">			return false;</span>
+<span class="nc bnc" id="L604" title="All 2 branches missed.">		else if (y2 &lt; Y1)</span>
+<span class="nc" id="L605">			return false;</span>
+<span class="nc bnc" id="L606" title="All 2 branches missed.">		else if (x1 &gt; X2)</span>
+<span class="nc" id="L607">			return false;</span>
+<span class="nc bnc" id="L608" title="All 2 branches missed.">		else if (y1 &gt; Y2)</span>
+<span class="nc" id="L609">			return false;</span>
+		else
+<span class="nc" id="L611">			return true;</span>
+	}
+
+	/**
+	 * Set the graph padding. Called in pushView.
+	 * 
+	 * @param graph
+	 *            The graphic graph.
+	 */
+	public void setPadding(GraphicGraph graph) {
+<span class="nc" id="L621">		padding.copy(graph.getStyle().getPadding());</span>
+<span class="nc" id="L622">	}</span>
+
+	/**
+	 * Compute a transformation matrix that pass from graph units (user space) to
+	 * pixel units (device space) so that the whole graph is visible.
+	 * 
+	 * @return The transformation modified.
+	 */
+	public void autoFitView() {
+<span class="nc" id="L631">		double sx = 0.0;</span>
+<span class="nc" id="L632">		double sy = 0.0;</span>
+<span class="nc" id="L633">		double tx = 0.0;</span>
+<span class="nc" id="L634">		double ty = 0.0;</span>
+<span class="nc" id="L635">		double padXgu = paddingXgu() * 2;</span>
+<span class="nc" id="L636">		double padYgu = paddingYgu() * 2;</span>
+<span class="nc" id="L637">		double padXpx = paddingXpx() * 2;</span>
+<span class="nc" id="L638">		double padYpx = paddingYpx() * 2;</span>
+
+<span class="nc bnc" id="L640" title="All 2 branches missed.">		if (padXpx &gt; metrics.viewport[2])</span>
+<span class="nc" id="L641">			padXpx = metrics.viewport[2] / 10.0;</span>
+<span class="nc bnc" id="L642" title="All 2 branches missed.">		if (padYpx &gt; metrics.viewport[3])</span>
+<span class="nc" id="L643">			padYpx = metrics.viewport[3] / 10.0;</span>
+
+<span class="nc" id="L645">		sx = (metrics.viewport[2] - padXpx) / (metrics.size.data[0] + padXgu); // Ratio along X</span>
+<span class="nc" id="L646">		sy = (metrics.viewport[3] - padYpx) / (metrics.size.data[1] + padYgu); // Ratio along Y</span>
+<span class="nc" id="L647">		tx = metrics.lo.x + (metrics.size.data[0] / 2); // Center of graph in X</span>
+<span class="nc" id="L648">		ty = metrics.lo.y + (metrics.size.data[1] / 2); // Center of graph in Y</span>
+
+<span class="nc bnc" id="L650" title="All 2 branches missed.">		if (sx &gt; sy) // The least ratio.</span>
+<span class="nc" id="L651">			sx = sy;</span>
+		else
+<span class="nc" id="L653">			sy = sx;</span>
+
+<span class="nc" id="L655">		bck.beginTransform();</span>
+<span class="nc" id="L656">		bck.setIdentity();</span>
+<span class="nc" id="L657">		bck.translate(metrics.viewport[2] / 2, metrics.viewport[3] / 2, 0); // 4. Place the whole result at the center</span>
+																			// of the view port.
+<span class="nc bnc" id="L659" title="All 2 branches missed.">		if (rotation != 0)</span>
+<span class="nc" id="L660">			bck.rotate(rotation / (180.0 / Math.PI), 0, 0, 1); // 3. Eventually apply a Z axis rotation.</span>
+<span class="nc" id="L661">		bck.scale(sx, -sy, 0); // 2. Scale the graph to pixels. Scale -y since we reverse the view (top-left to</span>
+								// bottom-left).
+<span class="nc" id="L663">		bck.translate(-tx, -ty, 0); // 1. Move the graph so that its real center is at (0,0).</span>
+<span class="nc" id="L664">		bck.endTransform();</span>
+
+<span class="nc" id="L666">		zoom = 1;</span>
+
+<span class="nc" id="L668">		center.set(tx, ty, 0);</span>
+<span class="nc" id="L669">		metrics.ratioPx2Gu = sx;</span>
+<span class="nc" id="L670">		metrics.loVisible.copy(metrics.lo);</span>
+<span class="nc" id="L671">		metrics.hiVisible.copy(metrics.hi);</span>
+<span class="nc" id="L672">	}</span>
+
+	/**
+	 * Compute a transformation that pass from graph units (user space) to a pixel
+	 * units (device space) so that the view (zoom and center) requested by the user
+	 * is produced.
+	 * 
+	 * @return The transformation modified.
+	 */
+	public void userView() {
+<span class="nc" id="L682">		double sx = 0.0;</span>
+<span class="nc" id="L683">		double sy = 0.0;</span>
+<span class="nc" id="L684">		double tx = 0.0;</span>
+<span class="nc" id="L685">		double ty = 0.0;</span>
+<span class="nc" id="L686">		double padXgu = paddingXgu() * 2;</span>
+<span class="nc" id="L687">		double padYgu = paddingYgu() * 2;</span>
+<span class="nc" id="L688">		double padXpx = paddingXpx() * 2;</span>
+<span class="nc" id="L689">		double padYpx = paddingYpx() * 2;</span>
+		double gw;
+<span class="nc bnc" id="L691" title="All 2 branches missed.">		if (gviewport != null)</span>
+<span class="nc" id="L692">			gw = gviewport[2] - gviewport[0];</span>
+		else
+<span class="nc" id="L694">			gw = metrics.size.data[0];</span>
+
+		double gh;
+<span class="nc bnc" id="L697" title="All 2 branches missed.">		if (gviewport != null)</span>
+<span class="nc" id="L698">			gh = gviewport[3] - gviewport[1];</span>
+		else
+<span class="nc" id="L700">			gh = metrics.size.data[1];</span>
+
+<span class="nc bnc" id="L702" title="All 2 branches missed.">		if (padXpx &gt; metrics.viewport[2])</span>
+<span class="nc" id="L703">			padXpx = metrics.viewport[2] / 10.0;</span>
+<span class="nc bnc" id="L704" title="All 2 branches missed.">		if (padYpx &gt; metrics.viewport[3])</span>
+<span class="nc" id="L705">			padYpx = metrics.viewport[3] / 10.0;</span>
+
+<span class="nc" id="L707">		sx = (metrics.viewport[2] - padXpx) / ((gw + padXgu) * zoom);</span>
+<span class="nc" id="L708">		sy = (metrics.viewport[3] - padYpx) / ((gh + padYgu) * zoom);</span>
+
+<span class="nc" id="L710">		tx = center.x;</span>
+<span class="nc" id="L711">		ty = center.y;</span>
+
+<span class="nc bnc" id="L713" title="All 2 branches missed.">		if (sx &gt; sy) // The least ratio.</span>
+<span class="nc" id="L714">			sx = sy;</span>
+		else
+<span class="nc" id="L716">			sy = sx;</span>
+
+<span class="nc" id="L718">		bck.beginTransform();</span>
+<span class="nc" id="L719">		bck.setIdentity();</span>
+<span class="nc" id="L720">		bck.translate(metrics.viewport[2] / 2, metrics.viewport[3] / 2, 0); // 4. Place the whole result at the center</span>
+																			// of the view port.
+<span class="nc bnc" id="L722" title="All 2 branches missed.">		if (rotation != 0)</span>
+<span class="nc" id="L723">			bck.rotate(rotation / (180.0 / Math.PI), 0, 0, 1); // 3. Eventually apply a rotation.</span>
+<span class="nc" id="L724">		bck.scale(sx, -sy, 0); // 2. Scale the graph to pixels. Scale -y since we reverse the view (top-left to</span>
+								// bottom-left).
+<span class="nc" id="L726">		bck.translate(-tx, -ty, 0); // 1. Move the graph so that the give center is at (0,0).</span>
+<span class="nc" id="L727">		bck.endTransform();</span>
+
+<span class="nc" id="L729">		metrics.ratioPx2Gu = sx;</span>
+
+<span class="nc" id="L731">		double w2 = (metrics.viewport[2] / sx) / 2f;</span>
+<span class="nc" id="L732">		double h2 = (metrics.viewport[3] / sx) / 2f;</span>
+
+<span class="nc" id="L734">		metrics.loVisible.set(center.x - w2, center.y - h2);</span>
+<span class="nc" id="L735">		metrics.hiVisible.set(center.x + w2, center.y + h2);</span>
+<span class="nc" id="L736">	}</span>
+
+	public double paddingXgu() {
+<span class="nc bnc" id="L739" title="All 4 branches missed.">		if (padding.units == Units.GU &amp;&amp; padding.size() &gt; 0)</span>
+<span class="nc" id="L740">			return padding.get(0);</span>
+		else
+<span class="nc" id="L742">			return 0;</span>
+	}
+
+	public double paddingYgu() {
+<span class="nc bnc" id="L746" title="All 4 branches missed.">		if (padding.units == Units.GU &amp;&amp; padding.size() &gt; 1)</span>
+<span class="nc" id="L747">			return padding.get(1);</span>
+		else
+<span class="nc" id="L749">			return paddingXgu();</span>
+	}
+
+	public double paddingXpx() {
+<span class="nc bnc" id="L753" title="All 4 branches missed.">		if (padding.units == Units.PX &amp;&amp; padding.size() &gt; 0)</span>
+<span class="nc" id="L754">			return padding.get(0);</span>
+		else
+<span class="nc" id="L756">			return 0;</span>
+	}
+
+	public double paddingYpx() {
+<span class="nc bnc" id="L760" title="All 4 branches missed.">		if (padding.units == Units.PX &amp;&amp; padding.size() &gt; 1)</span>
+<span class="nc" id="L761">			return padding.get(1);</span>
+		else
+<span class="nc" id="L763">			return paddingXpx();</span>
+	}
+
+	/**
+	 * Set the graphic graph bounds (the lowest and highest points).
+	 * 
+	 * @param minx
+	 *            Lowest abscissa.
+	 * @param miny
+	 *            Lowest ordinate.
+	 * @param minz
+	 *            Lowest depth.
+	 * @param maxx
+	 *            Highest abscissa.
+	 * @param maxy
+	 *            Highest ordinate.
+	 * @param maxz
+	 *            Highest depth.
+	 */
+	public void setBounds(double minx, double miny, double minz, double maxx, double maxy, double maxz) {
+<span class="nc" id="L783">		metrics.setBounds(minx, miny, minz, maxx, maxy, maxz);</span>
+<span class="nc" id="L784">	}</span>
+
+	/** Set the graphic graph bounds from the graphic graph. */
+	public void setBounds(GraphicGraph graph) {
+<span class="nc" id="L788">		setBounds(graph.getMinPos().x, graph.getMinPos().y, 0, graph.getMaxPos().x, graph.getMaxPos().y, 0);</span>
+<span class="nc" id="L789">	}</span>
+
+	@Override
+	public GraphMetrics getMetrics() {
+		// TODO Auto-generated method stub
+<span class="nc" id="L794">		return metrics;</span>
+	}
+
+	/**
+	 * Enable or disable automatic adjustment of the view to see the entire graph.
+	 * 
+	 * @param on
+	 *            If true, automatic adjustment is enabled.
+	 */
+	public void setAutoFitView(boolean on) {
+<span class="nc bnc" id="L804" title="All 4 branches missed.">		if (autoFit &amp;&amp; (!on)) {</span>
+			// We go from autoFit to user view, ensure the current center is at the
+			// middle of the graph, and the zoom is at one.
+
+<span class="nc" id="L808">			zoom = 1;</span>
+<span class="nc" id="L809">			center.set(metrics.lo.x + (metrics.size.data[0] / 2), metrics.lo.y + (metrics.size.data[1] / 2), 0);</span>
+		}
+
+<span class="nc" id="L812">		autoFit = on;</span>
+<span class="nc" id="L813">	}</span>
+
+	public void setBackend(Backend backend) {
+<span class="nc" id="L816">		this.bck = backend;</span>
+<span class="nc" id="L817">	}</span>
+
+	/**
+	 * Transform a point in graph units into pixels.
+	 * 
+	 * @return The transformed point.
+	 */
+	public Point3 transformGuToPx(double x, double y, double z) {
+<span class="nc" id="L825">		return bck.transform(x, y, 0);</span>
+	}
+
+	/**
+	 * Return the given point in pixels converted in graph units (GU) using the
+	 * inverse transformation of the current projection matrix. The inverse matrix
+	 * is computed only once each time a new projection matrix is created.
+	 * 
+	 * @param x
+	 *            The source point abscissa in pixels.
+	 * @param y
+	 *            The source point ordinate in pixels.
+	 * @return The resulting points in graph units.
+	 */
+	public Point3 transformPxToGu(double x, double y) {
+<span class="nc" id="L840">		return bck.inverseTransform(x, y, 0);</span>
+	}
+
+	protected boolean styleVisible(GraphicElement element) {
+<span class="nc" id="L844">		Values visibility = element.getStyle().getVisibility();</span>
+
+<span class="nc bnc" id="L846" title="All 7 branches missed.">		switch (element.getStyle().getVisibilityMode()) {</span>
+		case HIDDEN:
+<span class="nc" id="L848">			return false;</span>
+		case AT_ZOOM:
+<span class="nc bnc" id="L850" title="All 2 branches missed.">			return (zoom == visibility.get(0));</span>
+		case UNDER_ZOOM:
+<span class="nc bnc" id="L852" title="All 2 branches missed.">			return (zoom &lt;= visibility.get(0));</span>
+		case OVER_ZOOM:
+<span class="nc bnc" id="L854" title="All 2 branches missed.">			return (zoom &gt;= visibility.get(0));</span>
+		case ZOOM_RANGE:
+<span class="nc bnc" id="L856" title="All 2 branches missed.">			if (visibility.size() &gt; 1)</span>
+<span class="nc bnc" id="L857" title="All 4 branches missed.">				return (zoom &gt;= visibility.get(0) &amp;&amp; zoom &lt;= visibility.get(1));</span>
+			else
+<span class="nc" id="L859">				return true;</span>
+		case ZOOMS:
+<span class="nc" id="L861">			return Arrays.asList(Selector.Type.values()).contains(visibility.get(0));</span>
+		default:
+<span class="nc" id="L863">			return true;</span>
+		}
+
+	}
+
+	public boolean isTextVisible(GraphicElement element) {
+<span class="nc" id="L869">		Values visibility = element.getStyle().getTextVisibility();</span>
+
+<span class="nc bnc" id="L871" title="All 7 branches missed.">		switch (element.getStyle().getTextVisibilityMode()) {</span>
+		case HIDDEN:
+<span class="nc" id="L873">			return false;</span>
+		case AT_ZOOM:
+<span class="nc bnc" id="L875" title="All 2 branches missed.">			return (zoom == visibility.get(0));</span>
+		case UNDER_ZOOM:
+<span class="nc bnc" id="L877" title="All 2 branches missed.">			return (zoom &lt;= visibility.get(0));</span>
+		case OVER_ZOOM:
+<span class="nc bnc" id="L879" title="All 2 branches missed.">			return (zoom &gt;= visibility.get(0));</span>
+		case ZOOM_RANGE:
+<span class="nc bnc" id="L881" title="All 2 branches missed.">			if (visibility.size() &gt; 1)</span>
+<span class="nc bnc" id="L882" title="All 4 branches missed.">				return (zoom &gt;= visibility.get(0) &amp;&amp; zoom &lt;= visibility.get(1));</span>
+			else
+<span class="nc" id="L884">				return true;</span>
+		case ZOOMS:
+<span class="nc" id="L886">			return Arrays.asList(Selector.Type.values()).contains(visibility.get(0));</span>
+		default:
+<span class="nc" id="L888">			return true;</span>
+		}
+	}
+
+	/**
+	 * True if the element should be visible on screen. The method used is to
+	 * transform the center of the element (which is always in graph units) using
+	 * the camera actual transformation to put it in pixel units. Then to look in
+	 * the style sheet the size of the element and to test if its enclosing
+	 * rectangle intersects the view port. For edges, its two nodes are used. As a
+	 * speed-up by default if the camera is in automatic fitting mode, all element
+	 * should be visible, and the test always returns true.
+	 *
+	 * @param element
+	 *            The element to test.
+	 * @return True if the element is visible and therefore must be rendered.
+	 */
+	public boolean isVisible(GraphicElement element) {
+<span class="nc bnc" id="L906" title="All 2 branches missed.">		if (autoFit) {</span>
+<span class="nc bnc" id="L907" title="All 4 branches missed.">			return ((!element.hidden) &amp;&amp; (element.style.getVisibilityMode() != StyleConstants.VisibilityMode.HIDDEN));</span>
+		} else {
+<span class="nc bnc" id="L909" title="All 4 branches missed.">			switch (element.getSelectorType()) {</span>
+			case NODE:
+<span class="nc bnc" id="L911" title="All 2 branches missed.">				return !nodeInvisible.contains(element.getId());</span>
+			case EDGE:
+<span class="nc" id="L913">				return isEdgeVisible((GraphicEdge) element);</span>
+			case SPRITE:
+<span class="nc bnc" id="L915" title="All 2 branches missed.">				return !spriteInvisible.contains(element.getId());</span>
+			default:
+<span class="nc" id="L917">				return false;</span>
+			}
+		}
+	}
+
+	/**
+	 * Check if a sprite is visible in the current view port.
+	 * 
+	 * @param sprite
+	 *            The sprite to check.
+	 * @return True if visible.
+	 */
+	public boolean isSpriteVisible(GraphicSprite sprite) {
+<span class="nc" id="L930">		return isSpriteIn(sprite, 0, 0, metrics.viewport[2], metrics.viewport[3]);</span>
+	}
+
+	/**
+	 * Is the given sprite visible in the given area.
+	 * 
+	 * @param sprite
+	 *            The sprite to check.
+	 * @param X1
+	 *            The min abscissa of the area.
+	 * @param Y1
+	 *            The min ordinate of the area.
+	 * @param X2
+	 *            The max abscissa of the area.
+	 * @param Y2
+	 *            The max ordinate of the area.
+	 * @return True if the node lies in the given area.
+	 */
+	public boolean isSpriteIn(GraphicSprite sprite, double X1, double Y1, double X2, double Y2) {
+<span class="nc" id="L949">		Values size = getNodeOrSpriteSize(sprite);</span>
+<span class="nc" id="L950">		double w2 = metrics.lengthToPx(size, 0) / 2;</span>
+<span class="nc" id="L951">		double h2 = w2;</span>
+<span class="nc bnc" id="L952" title="All 2 branches missed.">		if (size.size() &gt; 1)</span>
+<span class="nc" id="L953">			h2 = metrics.lengthToPx(size, 1) / 2;</span>
+
+		// val src = new Point3()
+		// getSpritePosition(sprite, src, Units.GU)
+		// bck.transform(src)
+
+<span class="nc" id="L959">		Point3 src = spritePositionPx(sprite);</span>
+<span class="nc" id="L960">		double x1 = src.x - w2;</span>
+<span class="nc" id="L961">		double x2 = src.x + w2;</span>
+<span class="nc" id="L962">		double y1 = src.y - h2;</span>
+<span class="nc" id="L963">		double y2 = src.y + h2;</span>
+
+<span class="nc bnc" id="L965" title="All 2 branches missed.">		if (x2 &lt; X1)</span>
+<span class="nc" id="L966">			return false;</span>
+<span class="nc bnc" id="L967" title="All 2 branches missed.">		else if (y2 &lt; Y1)</span>
+<span class="nc" id="L968">			return false;</span>
+<span class="nc bnc" id="L969" title="All 2 branches missed.">		else if (x1 &gt; X2)</span>
+<span class="nc" id="L970">			return false;</span>
+<span class="nc bnc" id="L971" title="All 2 branches missed.">		else if (y1 &gt; Y2)</span>
+<span class="nc" id="L972">			return false;</span>
+		else
+<span class="nc" id="L974">			return true;</span>
+
+	}
+
+	/**
+	 * Check if an edge is visible in the current view port.
+	 * 
+	 * @param edge
+	 *            The edge to check.
+	 * @return True if visible.
+	 */
+	public boolean isEdgeVisible(GraphicEdge edge) {
+<span class="nc bnc" id="L986" title="All 4 branches missed.">		if (!((GraphicNode) edge.getNode0()).positionned || !((GraphicNode) edge.getNode1()).positionned) {</span>
+<span class="nc" id="L987">			return false;</span>
+<span class="nc bnc" id="L988" title="All 2 branches missed.">		} else if (edge.hidden) {</span>
+<span class="nc" id="L989">			return false;</span>
+		} else {
+<span class="nc" id="L991">			boolean node0Invis = nodeInvisible.contains(edge.getNode0().getId());</span>
+<span class="nc" id="L992">			boolean node1Invis = nodeInvisible.contains(edge.getNode1().getId());</span>
+
+<span class="nc bnc" id="L994" title="All 4 branches missed.">			return !(node0Invis &amp;&amp; node1Invis);</span>
+		}
+	}
+
+	/**
+	 * Search for the first GraphicElement among those specified. Multiple elements
+	 * are resolved by priority- {@link InteractiveElement.NODE} &gt;
+	 * {@link InteractiveElement.EDGE} &gt; {@link InteractiveElement.SPRITE}, (in that
+	 * order) that contains the point at coordinates (x, y).
+	 *
+	 * @param graph
+	 *            The graph to search for.
+	 * @param x
+	 *            The point abscissa.
+	 * @param y
+	 *            The point ordinate.
+	 * @return The first node or sprite at the given coordinates or null if nothing
+	 *         found.
+	 */
+	@Override
+	public GraphicElement findGraphicElementAt(GraphicGraph graph, EnumSet&lt;InteractiveElement&gt; types, double x,
+			double y) {
+<span class="nc" id="L1016">		double xT = x + metrics.viewport[0];</span>
+<span class="nc" id="L1017">		double yT = y + metrics.viewport[1];</span>
+
+<span class="nc bnc" id="L1019" title="All 2 branches missed.">		if (types.contains(InteractiveElement.NODE)) {</span>
+<span class="nc" id="L1020">			Optional&lt;Node&gt; node = graph.nodes().filter(n -&gt; nodeContains((GraphicElement) n, xT, yT)).findFirst();</span>
+<span class="nc bnc" id="L1021" title="All 2 branches missed.">			if (node.isPresent()) {</span>
+<span class="nc bnc" id="L1022" title="All 2 branches missed.">				if (isVisible((GraphicElement) node.get())) {</span>
+<span class="nc" id="L1023">					return (GraphicElement) node.get();</span>
+				}
+			}
+		}
+<span class="nc bnc" id="L1027" title="All 2 branches missed.">		if (types.contains(InteractiveElement.EDGE)) {</span>
+<span class="nc" id="L1028">			Optional&lt;Edge&gt; edge = graph.edges().filter(e -&gt; edgeContains((GraphicElement) e, xT, yT)).findFirst();</span>
+<span class="nc bnc" id="L1029" title="All 2 branches missed.">			if (edge.isPresent()) {</span>
+<span class="nc bnc" id="L1030" title="All 2 branches missed.">				if (isVisible((GraphicElement) edge.get())) {</span>
+<span class="nc" id="L1031">					return (GraphicElement) edge.get();</span>
+				}
+			}
+		}
+<span class="nc bnc" id="L1035" title="All 2 branches missed.">		if (types.contains(InteractiveElement.SPRITE)) {</span>
+<span class="nc" id="L1036">			Optional&lt;GraphicSprite&gt; sprite = graph.sprites().filter(s -&gt; spriteContains(s, xT, yT)).findFirst();</span>
+<span class="nc bnc" id="L1037" title="All 2 branches missed.">			if (sprite.isPresent()) {</span>
+<span class="nc bnc" id="L1038" title="All 2 branches missed.">				if (isVisible((GraphicElement) sprite.get())) {</span>
+<span class="nc" id="L1039">					return (GraphicElement) sprite.get();</span>
+				}
+			}
+		}
+<span class="nc" id="L1043">		return null;</span>
+	}
+
+	public double[] graphViewport() {
+<span class="nc" id="L1047">		return gviewport;</span>
+	}
+
+	@Override
+	public Collection&lt;GraphicElement&gt; allGraphicElementsIn(GraphicGraph graph, EnumSet&lt;InteractiveElement&gt; types,
+			double x1, double y1, double x2, double y2) {
+		// add offset of viewport, because find(...) is always called without offset
+		// in most cases the offset of the viewport is 0 anyway
+<span class="nc" id="L1055">		double x1T = x1 + metrics.viewport[0];</span>
+<span class="nc" id="L1056">		double y1T = y1 + metrics.viewport[1];</span>
+<span class="nc" id="L1057">		double x2T = x2 + metrics.viewport[0];</span>
+<span class="nc" id="L1058">		double y2T = y2 + metrics.viewport[1];</span>
+
+<span class="nc" id="L1060">		List&lt;GraphicElement&gt; elts = new ArrayList&lt;GraphicElement&gt;();</span>
+
+<span class="nc" id="L1062">		Stream nodeStream = null;</span>
+<span class="nc" id="L1063">		Stream edgeStream = null;</span>
+<span class="nc" id="L1064">		Stream spriteStream = null;</span>
+
+<span class="nc bnc" id="L1066" title="All 2 branches missed.">		if (types.contains(InteractiveElement.NODE)) {</span>
+
+<span class="nc" id="L1068">			nodeStream = graph.nodes().filter(n -&gt; isNodeIn((GraphicNode) n, x1T, y1T, x2T, y2T));</span>
+<span class="nc" id="L1069">		} else {</span>
+<span class="nc" id="L1070">			nodeStream = Stream.empty();</span>
+		}
+
+<span class="nc bnc" id="L1073" title="All 2 branches missed.">		if (types.contains(InteractiveElement.EDGE)) {</span>
+<span class="nc" id="L1074">			edgeStream = graph.edges().filter(e -&gt; isEdgeIn((GraphicEdge) e, x1T, y1T, x2T, y2T));</span>
+<span class="nc" id="L1075">		} else {</span>
+<span class="nc" id="L1076">			edgeStream = Stream.empty();</span>
+		}
+
+<span class="nc bnc" id="L1079" title="All 2 branches missed.">		if (types.contains(InteractiveElement.SPRITE)) {</span>
+<span class="nc" id="L1080">			spriteStream = graph.sprites().filter(e -&gt; isSpriteIn((GraphicSprite) e, x1T, y1T, x2T, y2T));</span>
+<span class="nc" id="L1081">		} else {</span>
+<span class="nc" id="L1082">			spriteStream = Stream.empty();</span>
+		}
+
+<span class="nc" id="L1085">		Stream&lt;GraphicElement&gt; s = Stream.concat(nodeStream, Stream.concat(edgeStream, spriteStream));</span>
+<span class="nc" id="L1086">		return s.collect(Collectors.toList());</span>
+	}
+
+	@Override
+	public String toString() {
+<span class="nc" id="L1091">		StringBuilder builder = new StringBuilder(String.format(&quot;Camera :%n&quot;));</span>
+
+<span class="nc" id="L1093">		builder.append(String.format(&quot;    autoFit  = %b%n&quot;, autoFit));</span>
+<span class="nc" id="L1094">		builder.append(String.format(&quot;    center   = %s%n&quot;, center));</span>
+<span class="nc" id="L1095">		builder.append(String.format(&quot;    rotation = %f%n&quot;, rotation));</span>
+<span class="nc" id="L1096">		builder.append(String.format(&quot;    zoom     = %f%n&quot;, zoom));</span>
+<span class="nc" id="L1097">		builder.append(String.format(&quot;    padding  = %s%n&quot;, padding));</span>
+<span class="nc" id="L1098">		builder.append(String.format(&quot;    metrics  = %s%n&quot;, metrics));</span>
+
+<span class="nc" id="L1100">		return builder.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

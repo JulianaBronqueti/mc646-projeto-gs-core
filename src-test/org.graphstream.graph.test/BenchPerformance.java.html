@@ -1,0 +1,508 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>BenchPerformance.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.test</a> &gt; <span class="el_source">BenchPerformance.java</span></div><h1>BenchPerformance.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-12-21
+ * 
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.test;
+
+import java.io.PrintStream;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Iterator;
+import java.util.List;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.graph.implementations.SingleGraph;
+import org.junit.Ignore;
+
+@Ignore
+public class BenchPerformance {
+	Graph g;
+	Runtime r;
+	List&lt;String&gt; nodeIds;
+	List&lt;String&gt; edgeIds;
+	long start, end;
+
+<span class="nc" id="L57">	static enum Measures {</span>
+<span class="nc" id="L58">		MEMORY, NODE_BY_ID, EDGE_BY_ID, GRAPH_NODE_IT, GRAPH_EDGE_IT, NODE_EDGE_IT, NODE_ENTERING_EDGE_IT, NODE_LEAVING_EDGE_IT, NODE_NEIGHBOR_IT, NODE_GET_EDGE, BFS_IT, DFS_IT, EDGE_BETWEEN, EDGE_FROM, EDGE_TOWARD, TRIANGLE, ADD_NODE, ADD_EDGE, REMOVE_NODE, REMOVE_EDGE</span>
+	}
+
+	EnumMap&lt;Measures, Long&gt; measureValues;
+
+	static void forceGC() {
+<span class="nc bnc" id="L64" title="All 2 branches missed.">		for (int i = 0; i &lt; 10; i++) {</span>
+<span class="nc" id="L65">			System.gc();</span>
+			try {
+<span class="nc" id="L67">				Thread.sleep(1000);</span>
+<span class="nc" id="L68">			} catch (InterruptedException e) {</span>
+<span class="nc" id="L69">				e.printStackTrace();</span>
+<span class="nc" id="L70">				System.exit(0);</span>
+			}
+		}
+<span class="nc" id="L73">	}</span>
+
+<span class="nc" id="L75">	public BenchPerformance(String fileName, Graph graph) {</span>
+<span class="nc" id="L76">		r = Runtime.getRuntime();</span>
+<span class="nc" id="L77">		forceGC();</span>
+<span class="nc" id="L78">		long used1 = r.totalMemory() - r.freeMemory();</span>
+<span class="nc" id="L79">		g = graph;</span>
+		try {
+<span class="nc" id="L81">			g.read(fileName);</span>
+<span class="nc" id="L82">		} catch (Exception e) {</span>
+<span class="nc" id="L83">			e.printStackTrace();</span>
+<span class="nc" id="L84">			System.exit(0);</span>
+		}
+<span class="nc" id="L86">		System.out.println(&quot;Graph read: &quot; + g.getNodeCount() + &quot; nodes and &quot; + g.getEdgeCount() + &quot; edges&quot;);</span>
+
+<span class="nc" id="L88">		g.nodes().forEach(Node::clearAttributes);</span>
+<span class="nc" id="L89">		g.edges().forEach(Edge::clearAttributes);</span>
+
+<span class="nc" id="L91">		forceGC();</span>
+<span class="nc" id="L92">		long used2 = r.totalMemory() - r.freeMemory();</span>
+<span class="nc" id="L93">		measureValues = new EnumMap&lt;Measures, Long&gt;(Measures.class);</span>
+<span class="nc" id="L94">		measureValues.put(Measures.MEMORY, used2 - used1);</span>
+
+<span class="nc" id="L96">		nodeIds = new ArrayList&lt;String&gt;(g.getNodeCount());</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">		for (Node n : g)</span>
+<span class="nc" id="L98">			nodeIds.add(n.getId());</span>
+		// sort them to be sure that we always work with the same nodes
+<span class="nc" id="L100">		Collections.sort(nodeIds);</span>
+
+<span class="nc" id="L102">		edgeIds = new ArrayList&lt;String&gt;(g.getEdgeCount());</span>
+<span class="nc" id="L103">		g.edges().forEach(e -&gt; edgeIds.add(e.getId()));</span>
+<span class="nc" id="L104">		Collections.sort(edgeIds);</span>
+<span class="nc" id="L105">	}</span>
+
+	public int testAccessById() {
+<span class="nc" id="L108">		int foo = 0;</span>
+
+		// access each node by id
+<span class="nc" id="L111">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">		for (String id : nodeIds) {</span>
+<span class="nc" id="L113">			Node n = g.getNode(id);</span>
+<span class="nc bnc" id="L114" title="All 2 branches missed.">			if (n.hasAttribute(&quot;foo&quot;))</span>
+<span class="nc" id="L115">				foo++;</span>
+		}
+<span class="nc" id="L117">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L118">		measureValues.put(Measures.NODE_BY_ID, end - start);</span>
+
+		// access each edge by id
+<span class="nc" id="L121">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L122" title="All 2 branches missed.">		for (String id : edgeIds) {</span>
+<span class="nc" id="L123">			Edge e = g.getEdge(id);</span>
+<span class="nc bnc" id="L124" title="All 2 branches missed.">			if (e.hasAttribute(&quot;foo&quot;))</span>
+<span class="nc" id="L125">				foo++;</span>
+		}
+<span class="nc" id="L127">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L128">		measureValues.put(Measures.EDGE_BY_ID, end - start);</span>
+<span class="nc" id="L129">		return foo;</span>
+	}
+
+	public int testGraphIterators() {
+<span class="nc" id="L133">		int foo = 0;</span>
+
+		// Iterating on all nodes
+<span class="nc" id="L136">		start = System.currentTimeMillis();</span>
+
+<span class="nc" id="L138">		foo = (int) g.nodes().filter(n -&gt; n.hasAttribute(&quot;foo&quot;)).count();</span>
+
+		//
+		// Iterator&lt;Node&gt; nodeIt = g.getNodeIterator();
+		// while (nodeIt.hasNext()) {
+		// Node n = nodeIt.next();
+		// if (n.hasAttribute(&quot;foo&quot;))
+		// foo++;
+		// }
+		//
+
+<span class="nc" id="L149">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L150">		measureValues.put(Measures.GRAPH_NODE_IT, end - start);</span>
+
+		// iterating on all edges
+<span class="nc" id="L153">		start = System.currentTimeMillis();</span>
+
+<span class="nc" id="L155">		foo += (int) g.edges().filter(e -&gt; e.hasAttribute(&quot;foo&quot;)).count();</span>
+
+		//
+		// Iterator&lt;Edge&gt; edgeIt = g.getEdgeIterator();
+		// while (edgeIt.hasNext()) {
+		// Edge e = edgeIt.next();
+		// if (e.hasAttribute(&quot;foo&quot;))
+		// foo++;
+		// }
+		//
+
+<span class="nc" id="L166">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L167">		measureValues.put(Measures.GRAPH_EDGE_IT, end - start);</span>
+
+<span class="nc" id="L169">		return foo;</span>
+	}
+
+	public int testNodeIterators() {
+<span class="nc" id="L173">		int foo = 0;</span>
+
+		// For each node n, iterating on all edges of n
+<span class="nc" id="L176">		start = System.currentTimeMillis();</span>
+
+<span class="nc" id="L178">		foo += (int) g.nodes().mapToLong(n -&gt; n.edges().filter(e -&gt; e.hasAttribute(&quot;foo&quot;)).count()).sum();</span>
+
+		// Iterator&lt;Node&gt; nodeIt = g.getNodeIterator();
+		// while (nodeIt.hasNext()) {
+		// Node n = nodeIt.next();
+		// Iterator&lt;Edge&gt; edgeIt = n.getEdgeIterator();
+		// while (edgeIt.hasNext()) {
+		// Edge e = edgeIt.next();
+		// if (e.hasAttribute(&quot;foo&quot;))
+		// foo++;
+		// }
+		// }
+<span class="nc" id="L190">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L191">		measureValues.put(Measures.NODE_EDGE_IT, end - start);</span>
+
+		// For each node n, iterating on all entering edges of n
+<span class="nc" id="L194">		start = System.currentTimeMillis();</span>
+
+<span class="nc" id="L196">		foo += (int) g.nodes().mapToLong(n -&gt; n.enteringEdges().filter(e -&gt; e.hasAttribute(&quot;foo&quot;)).count()).sum();</span>
+
+		// nodeIt = g.getNodeIterator();
+		// while (nodeIt.hasNext()) {
+		// Node n = nodeIt.next();
+		// Iterator&lt;Edge&gt; edgeIt = n.getEnteringEdgeIterator();
+		// while (edgeIt.hasNext()) {
+		// Edge e = edgeIt.next();
+		// if (e.hasAttribute(&quot;foo&quot;))
+		// foo++;
+		// }
+		// }
+<span class="nc" id="L208">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L209">		measureValues.put(Measures.NODE_ENTERING_EDGE_IT, end - start);</span>
+
+		// For each node n, iterating on all leaving edges of n
+<span class="nc" id="L212">		start = System.currentTimeMillis();</span>
+
+<span class="nc" id="L214">		foo += (int) g.nodes().mapToLong(n -&gt; n.leavingEdges().filter(e -&gt; e.hasAttribute(&quot;foo&quot;)).count()).sum();</span>
+
+		// nodeIt = g.getNodeIterator();
+		// while (nodeIt.hasNext()) {
+		// Node n = nodeIt.next();
+		// Iterator&lt;Edge&gt; edgeIt = n.getLeavingEdgeIterator();
+		// while (edgeIt.hasNext()) {
+		// Edge e = edgeIt.next();
+		// if (e.hasAttribute(&quot;foo&quot;))
+		// foo++;
+		// }
+		// }
+<span class="nc" id="L226">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L227">		measureValues.put(Measures.NODE_LEAVING_EDGE_IT, end - start);</span>
+
+		// For each node n, iterating on all neighbors of n
+<span class="nc" id="L230">		start = System.currentTimeMillis();</span>
+
+<span class="nc" id="L232">		foo += (int) g.nodes().mapToLong(n -&gt; n.neighborNodes().filter(ne -&gt; ne.hasAttribute(&quot;foo&quot;)).count()).sum();</span>
+
+		// nodeIt = g.getNodeIterator();
+		// while (nodeIt.hasNext()) {
+		// Node n = nodeIt.next();
+		// Iterator&lt;Node&gt; neighborIt = n.getNeighborNodeIterator();
+		// while (neighborIt.hasNext()) {
+		// Node neighbor = neighborIt.next();
+		// if (neighbor.hasAttribute(&quot;foo&quot;))
+		// foo++;
+		// }
+		// }
+<span class="nc" id="L244">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L245">		measureValues.put(Measures.NODE_NEIGHBOR_IT, end - start);</span>
+
+		// For each node n, iterating on all edges of n using n.getEdge(i)
+<span class="nc" id="L248">		start = System.currentTimeMillis();</span>
+
+<span class="nc" id="L250">		foo += (int) g.nodes().mapToLong(n -&gt; {</span>
+<span class="nc" id="L251">			int localFoo = 0;</span>
+
+<span class="nc bnc" id="L253" title="All 2 branches missed.">			for (int i = 0; i &lt; n.getDegree(); i++) {</span>
+<span class="nc" id="L254">				Edge e = n.getEdge(i);</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">				if (e.hasAttribute(&quot;foo&quot;))</span>
+<span class="nc" id="L256">					localFoo++;</span>
+			}
+
+<span class="nc" id="L259">			return localFoo;</span>
+<span class="nc" id="L260">		}).sum();</span>
+
+		// nodeIt = g.getNodeIterator();
+		// while (nodeIt.hasNext()) {
+		// Node n = nodeIt.next();
+		// for (int i = 0; i &lt; n.getDegree(); i++) {
+		// Edge e = n.getEdge(i);
+		// if (e.hasAttribute(&quot;foo&quot;))
+		// foo++;
+		// }
+		// }
+<span class="nc" id="L271">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L272">		measureValues.put(Measures.NODE_GET_EDGE, end - start);</span>
+
+<span class="nc" id="L274">		return foo;</span>
+	}
+
+	public int testBfsDfs() {
+<span class="nc" id="L278">		int foo = 0;</span>
+
+		// BFS from 1000 nodes
+<span class="nc" id="L281">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">		for (int i = 0; i &lt; 1000; i++) {</span>
+<span class="nc" id="L283">			Iterator&lt;Node&gt; bfsIt = g.getNode(nodeIds.get(i)).getBreadthFirstIterator();</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">			while (bfsIt.hasNext()) {</span>
+<span class="nc" id="L285">				Node node = bfsIt.next();</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">				if (node.hasAttribute(&quot;foo&quot;))</span>
+<span class="nc" id="L287">					foo++;</span>
+			}
+		}
+<span class="nc" id="L290">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L291">		measureValues.put(Measures.BFS_IT, end - start);</span>
+
+		// DFS from 1000 nodes - tested only for new implementations
+		// because of a bug in the old
+<span class="nc" id="L295">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">		if (g instanceof org.graphstream.graph.implementations.AbstractGraph) {</span>
+<span class="nc bnc" id="L297" title="All 2 branches missed.">			for (int i = 0; i &lt; 1000; i++) {</span>
+<span class="nc" id="L298">				Iterator&lt;Node&gt; dfsIt = g.getNode(nodeIds.get(i)).getDepthFirstIterator();</span>
+<span class="nc bnc" id="L299" title="All 2 branches missed.">				while (dfsIt.hasNext()) {</span>
+<span class="nc" id="L300">					Node node = dfsIt.next();</span>
+<span class="nc bnc" id="L301" title="All 2 branches missed.">					if (node.hasAttribute(&quot;foo&quot;))</span>
+<span class="nc" id="L302">						foo++;</span>
+				}
+			}
+		}
+<span class="nc" id="L306">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L307">		measureValues.put(Measures.DFS_IT, end - start);</span>
+
+<span class="nc" id="L309">		return foo;</span>
+	}
+
+	public int testTriangleCount() {
+<span class="nc" id="L313">		start = System.currentTimeMillis();</span>
+<span class="nc" id="L314">		int count = 0;</span>
+<span class="nc bnc" id="L315" title="All 2 branches missed.">		for (Node n0 : g) {</span>
+<span class="nc" id="L316">			int d = n0.getDegree();</span>
+<span class="nc bnc" id="L317" title="All 2 branches missed.">			for (int i = 0; i &lt; d; i++) {</span>
+<span class="nc" id="L318">				Node n1 = n0.getEdge(i).getOpposite(n0);</span>
+<span class="nc" id="L319">				String n1id = n1.getId();</span>
+<span class="nc bnc" id="L320" title="All 2 branches missed.">				for (int j = i + 1; j &lt; d; j++) {</span>
+<span class="nc" id="L321">					Node n2 = n0.getEdge(j).getOpposite(n0);</span>
+<span class="nc bnc" id="L322" title="All 2 branches missed.">					if (n2.hasEdgeBetween(n1id))</span>
+<span class="nc" id="L323">						count++;</span>
+				}
+			}
+		}
+<span class="nc" id="L327">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L328">		measureValues.put(Measures.TRIANGLE, end - start);</span>
+<span class="nc" id="L329">		return count / 3;</span>
+	}
+
+	public int testTriangleCountIndex() {
+<span class="nc" id="L333">		start = System.currentTimeMillis();</span>
+<span class="nc" id="L334">		int count = 0;</span>
+<span class="nc bnc" id="L335" title="All 2 branches missed.">		for (Node n0 : g) {</span>
+<span class="nc" id="L336">			int d = n0.getDegree();</span>
+<span class="nc bnc" id="L337" title="All 2 branches missed.">			for (int i = 0; i &lt; d; i++) {</span>
+<span class="nc" id="L338">				Node n1 = n0.getEdge(i).getOpposite(n0);</span>
+<span class="nc bnc" id="L339" title="All 2 branches missed.">				if (n0.getIndex() &lt; n1.getIndex()) {</span>
+<span class="nc bnc" id="L340" title="All 2 branches missed.">					for (int j = i + 1; j &lt; d; j++) {</span>
+<span class="nc" id="L341">						Node n2 = n0.getEdge(j).getOpposite(n0);</span>
+<span class="nc bnc" id="L342" title="All 4 branches missed.">						if (n1.getIndex() &lt; n2.getIndex() &amp;&amp; n2.hasEdgeBetween(n1))</span>
+<span class="nc" id="L343">							count++;</span>
+					}
+				}
+			}
+		}
+<span class="nc" id="L348">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L349">		measureValues.put(Measures.TRIANGLE, end - start);</span>
+<span class="nc" id="L350">		return count;</span>
+	}
+
+	public int testFindEdge() {
+<span class="nc" id="L354">		int foo = 0;</span>
+
+		// for each pair of nodes (n1, n2) find the edge between n1 and n2
+<span class="nc" id="L357">		long start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">		for (String id1 : nodeIds) {</span>
+<span class="nc" id="L359">			Node n1 = g.getNode(id1);</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">			for (String id2 : nodeIds) {</span>
+<span class="nc" id="L361">				Edge e = n1.getEdgeBetween(id2);</span>
+<span class="nc bnc" id="L362" title="All 4 branches missed.">				if (e != null &amp;&amp; e.hasAttribute(&quot;foo&quot;))</span>
+<span class="nc" id="L363">					foo++;</span>
+			}
+		}
+<span class="nc" id="L366">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L367">		measureValues.put(Measures.EDGE_BETWEEN, end - start);</span>
+
+		// for each pair of nodes (n1, n2) find the edge from n1 to n2
+<span class="nc" id="L370">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L371" title="All 2 branches missed.">		for (String id1 : nodeIds) {</span>
+<span class="nc" id="L372">			Node n1 = g.getNode(id1);</span>
+<span class="nc bnc" id="L373" title="All 2 branches missed.">			for (String id2 : nodeIds) {</span>
+<span class="nc" id="L374">				Edge e = n1.getEdgeToward(id2);</span>
+<span class="nc bnc" id="L375" title="All 4 branches missed.">				if (e != null &amp;&amp; e.hasAttribute(&quot;foo&quot;))</span>
+<span class="nc" id="L376">					foo++;</span>
+			}
+		}
+<span class="nc" id="L379">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L380">		measureValues.put(Measures.EDGE_TOWARD, end - start);</span>
+
+		// for each pair of nodes (n1, n2) find the edge from n2 to n1
+<span class="nc" id="L383">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L384" title="All 2 branches missed.">		for (String id1 : nodeIds) {</span>
+<span class="nc" id="L385">			Node n1 = g.getNode(id1);</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">			for (String id2 : nodeIds) {</span>
+<span class="nc" id="L387">				Edge e = n1.getEdgeFrom(id2);</span>
+<span class="nc bnc" id="L388" title="All 4 branches missed.">				if (e != null &amp;&amp; e.hasAttribute(&quot;foo&quot;))</span>
+<span class="nc" id="L389">					foo++;</span>
+			}
+		}
+<span class="nc" id="L392">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L393">		measureValues.put(Measures.EDGE_FROM, end - start);</span>
+
+<span class="nc" id="L395">		return foo;</span>
+	}
+
+	public void testAddRemove() {
+		// add 10000 new nodes
+<span class="nc" id="L400">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L401" title="All 2 branches missed.">		for (int i = 0; i &lt; 10000; i++)</span>
+<span class="nc" id="L402">			g.addNode(&quot;__newnode__&quot; + i);</span>
+<span class="nc" id="L403">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L404">		measureValues.put(Measures.ADD_NODE, end - start);</span>
+
+		// for each new node n, add 100 edges between n and old nodes
+<span class="nc" id="L407">		start = System.currentTimeMillis();</span>
+<span class="nc" id="L408">		int current = 0;</span>
+<span class="nc" id="L409">		int edgeId = 0;</span>
+<span class="nc bnc" id="L410" title="All 2 branches missed.">		for (int i = 0; i &lt; 10000; i++) {</span>
+<span class="nc" id="L411">			String id = &quot;__newnode__&quot; + i;</span>
+<span class="nc bnc" id="L412" title="All 2 branches missed.">			for (int j = 0; j &lt; 100; j++) {</span>
+<span class="nc" id="L413">				g.addEdge(&quot;__newedge__&quot; + edgeId, id, nodeIds.get(current));</span>
+<span class="nc" id="L414">				edgeId++;</span>
+<span class="nc" id="L415">				current++;</span>
+<span class="nc bnc" id="L416" title="All 2 branches missed.">				if (current == nodeIds.size())</span>
+<span class="nc" id="L417">					current = 0;</span>
+			}
+		}
+<span class="nc" id="L420">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L421">		measureValues.put(Measures.ADD_EDGE, end - start);</span>
+
+		// remove all the new nodes (and new edges)
+<span class="nc" id="L424">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L425" title="All 2 branches missed.">		for (int i = 0; i &lt; 10000; i++)</span>
+<span class="nc" id="L426">			g.removeNode(&quot;__newnode__&quot; + i);</span>
+<span class="nc" id="L427">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L428">		measureValues.put(Measures.REMOVE_NODE, end - start);</span>
+
+		// remove 10000 edges
+<span class="nc" id="L431">		start = System.currentTimeMillis();</span>
+<span class="nc bnc" id="L432" title="All 2 branches missed.">		for (int i = 0; i &lt; 10000; i++)</span>
+<span class="nc" id="L433">			g.removeEdge(edgeIds.get(i));</span>
+<span class="nc" id="L434">		end = System.currentTimeMillis();</span>
+<span class="nc" id="L435">		measureValues.put(Measures.REMOVE_EDGE, end - start);</span>
+<span class="nc" id="L436">	}</span>
+
+	public static void latexOutput(BenchPerformance[] tests, PrintStream ps) {
+<span class="nc" id="L439">		String header = &quot;\\begin{tabular}{|l|&quot;;</span>
+<span class="nc bnc" id="L440" title="All 2 branches missed.">		for (int i = 0; i &lt; tests.length; i++)</span>
+<span class="nc" id="L441">			header += &quot;r&quot;;</span>
+<span class="nc" id="L442">		header += &quot;|}&quot;;</span>
+<span class="nc" id="L443">		ps.println(header);</span>
+<span class="nc" id="L444">		ps.println(&quot;\\hline&quot;);</span>
+
+<span class="nc" id="L446">		ps.printf(&quot;%35s &quot;, &quot;measure&quot;);</span>
+<span class="nc bnc" id="L447" title="All 2 branches missed.">		for (BenchPerformance t : tests)</span>
+<span class="nc" id="L448">			ps.printf(&quot;&amp; %10s &quot;, t.g.getId());</span>
+<span class="nc" id="L449">		ps.println(&quot;\\\\&quot;);</span>
+<span class="nc" id="L450">		ps.println(&quot;\\hline&quot;);</span>
+
+<span class="nc bnc" id="L452" title="All 2 branches missed.">		for (Measures m : Measures.values()) {</span>
+			// skip if not measured
+<span class="nc bnc" id="L454" title="All 2 branches missed.">			if (!tests[0].measureValues.containsKey(m))</span>
+<span class="nc" id="L455">				continue;</span>
+<span class="nc" id="L456">			ps.printf(&quot;%35s &quot;, &quot;\\lstinline~&quot; + m.name() + &quot;~&quot;);</span>
+<span class="nc bnc" id="L457" title="All 2 branches missed.">			for (BenchPerformance t : tests) {</span>
+<span class="nc" id="L458">				double val = t.measureValues.get(m);</span>
+<span class="nc bnc" id="L459" title="All 2 branches missed.">				if (m == Measures.MEMORY)</span>
+<span class="nc" id="L460">					val /= 1 &lt;&lt; 20;</span>
+				else
+<span class="nc" id="L462">					val /= 1000;</span>
+<span class="nc" id="L463">				ps.printf(&quot;&amp; %10.3f &quot;, val);</span>
+			}
+<span class="nc" id="L465">			ps.println(&quot;\\\\&quot;);</span>
+		}
+<span class="nc" id="L467">		ps.println(&quot;\\hline&quot;);</span>
+<span class="nc" id="L468">		ps.println(&quot;\\end{tabular}&quot;);</span>
+<span class="nc" id="L469">	}</span>
+
+	public static void main(String[] args) {
+<span class="nc" id="L472">		String fileName = args[0];</span>
+		// String fileName = &quot;/home/stefan/tmp/imdb/imdb-full.dgs&quot;;
+		// String fileName = &quot;/home/stefan/tmp/yoann/test_cleaned.dgs&quot;;
+<span class="nc" id="L475">		int gCount = 2;</span>
+<span class="nc" id="L476">		Graph[] graphs = new Graph[gCount];</span>
+<span class="nc" id="L477">		graphs[0] = new SingleGraph(&quot;Single&quot;);</span>
+<span class="nc" id="L478">		graphs[2] = new AdjacencyListGraph(&quot;Adj&quot;);</span>
+
+<span class="nc" id="L480">		BenchPerformance[] tests = new BenchPerformance[gCount];</span>
+<span class="nc bnc" id="L481" title="All 2 branches missed.">		for (int i = 0; i &lt; gCount; i++) {</span>
+<span class="nc" id="L482">			System.out.println(&quot;Loading graph &quot; + graphs[i].getId());</span>
+<span class="nc" id="L483">			tests[i] = new BenchPerformance(fileName, graphs[i]);</span>
+<span class="nc" id="L484">			System.out.println(&quot;  Testing access by id&quot;);</span>
+<span class="nc" id="L485">			tests[i].testAccessById();</span>
+<span class="nc" id="L486">			System.out.println(&quot;  Testing graph iterators&quot;);</span>
+<span class="nc" id="L487">			tests[i].testGraphIterators();</span>
+<span class="nc" id="L488">			System.out.println(&quot;  Testing node iterators&quot;);</span>
+<span class="nc" id="L489">			tests[i].testNodeIterators();</span>
+<span class="nc" id="L490">			System.out.println(&quot;  Testing BFS and DFS iterators&quot;);</span>
+<span class="nc" id="L491">			tests[i].testBfsDfs();</span>
+<span class="nc" id="L492">			System.out.println(&quot;  Testing finding edges&quot;);</span>
+<span class="nc" id="L493">			tests[i].testFindEdge();</span>
+<span class="nc" id="L494">			System.out.println(&quot;  Testing triangles&quot;);</span>
+<span class="nc" id="L495">			tests[i].testTriangleCount();</span>
+<span class="nc" id="L496">			System.out.println(&quot;  Testing add / remove&quot;);</span>
+<span class="nc" id="L497">			tests[i].testAddRemove();</span>
+<span class="nc" id="L498">			tests[i].g.clear();</span>
+<span class="nc" id="L499">			tests[i].nodeIds.clear();</span>
+<span class="nc" id="L500">			tests[i].nodeIds = null;</span>
+<span class="nc" id="L501">			tests[i].edgeIds.clear();</span>
+<span class="nc" id="L502">			tests[i].edgeIds = null;</span>
+
+		}
+<span class="nc" id="L505">		latexOutput(tests, System.out);</span>
+<span class="nc" id="L506">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

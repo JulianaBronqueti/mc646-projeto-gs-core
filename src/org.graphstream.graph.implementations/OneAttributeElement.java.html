@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>OneAttributeElement.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.implementations</a> &gt; <span class="el_source">OneAttributeElement.java</span></div><h1>OneAttributeElement.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.implementations;
+
+import org.graphstream.graph.Element;
+
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Map;
+
+/**
+ * An implementation of an {@link org.graphstream.graph.Element}.
+ * 
+ * &lt;p&gt;
+ * It allows only one attribute and has no internal map structure. &lt;b&gt;It is not
+ * used and may be removed.&lt;/b&gt;
+ * &lt;/p&gt;
+ * 
+ */
+<span class="nc" id="L52">public abstract class OneAttributeElement implements Element {</span>
+	// Constants
+
+	// Attributes
+
+	/**
+	 * Tag of this element.
+	 */
+	protected String id;
+
+	/**
+	 * The only one attribute
+	 */
+<span class="nc" id="L65">	Object attribute = null;</span>
+
+	// Constructors
+
+	/**
+	 * New element.
+	 * 
+	 * @param id
+	 *            The unique identifier of this element.
+	 */
+<span class="nc" id="L75">	public OneAttributeElement(String id) {</span>
+<span class="nc bnc" id="L76" title="All 2 branches missed.">		assert id != null : &quot;Graph elements cannot have a null identifier&quot;;</span>
+<span class="nc" id="L77">		this.id = id;</span>
+<span class="nc" id="L78">	}</span>
+
+	// Accessors
+
+	public String getId() {
+<span class="nc" id="L83">		return id;</span>
+	}
+
+	public Object getAttribute(String key) {
+<span class="nc" id="L87">		return attribute;</span>
+	}
+
+	public Object getFirstAttributeOf(String... keys) {
+<span class="nc" id="L91">		return attribute;</span>
+	}
+
+	@SuppressWarnings(&quot;all&quot;)
+	public &lt;T&gt; T getAttribute(String key, Class&lt;T&gt; clazz) {
+<span class="nc" id="L96">		return (T) attribute;</span>
+	}
+
+	@SuppressWarnings(&quot;all&quot;)
+	public &lt;T&gt; T getFirstAttributeOf(Class&lt;T&gt; clazz, String... keys) {
+<span class="nc" id="L101">		return (T) attribute;</span>
+	}
+
+	public CharSequence getLabel(String key) {
+<span class="nc bnc" id="L105" title="All 4 branches missed.">		if (attribute != null &amp;&amp; attribute instanceof CharSequence)</span>
+<span class="nc" id="L106">			return (CharSequence) attribute;</span>
+<span class="nc" id="L107">		return null;</span>
+	}
+
+	public double getNumber(String key) {
+<span class="nc bnc" id="L111" title="All 4 branches missed.">		if (attribute != null &amp;&amp; attribute instanceof Number)</span>
+<span class="nc" id="L112">			return ((Number) attribute).doubleValue();</span>
+
+<span class="nc" id="L114">		return Double.NaN;</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public ArrayList&lt;? extends Number&gt; getVector(String key) {
+<span class="nc bnc" id="L119" title="All 4 branches missed.">		if (attribute != null &amp;&amp; attribute instanceof ArrayList)</span>
+<span class="nc" id="L120">			return ((ArrayList&lt;? extends Number&gt;) attribute);</span>
+
+<span class="nc" id="L122">		return null;</span>
+	}
+
+	public boolean hasAttribute(String key) {
+
+<span class="nc" id="L127">		return true;</span>
+	}
+
+	public boolean hasAttribute(String key, Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L131" title="All 2 branches missed.">		if (attribute != null)</span>
+<span class="nc" id="L132">			return (clazz.isInstance(attribute));</span>
+<span class="nc" id="L133">		return false;</span>
+	}
+
+	public boolean hasLabel(String key) {
+<span class="nc bnc" id="L137" title="All 2 branches missed.">		if (attribute != null)</span>
+<span class="nc" id="L138">			return (attribute instanceof CharSequence);</span>
+
+<span class="nc" id="L140">		return false;</span>
+	}
+
+	public boolean hasNumber(String key) {
+<span class="nc bnc" id="L144" title="All 2 branches missed.">		if (attribute != null)</span>
+<span class="nc" id="L145">			return (attribute instanceof Number);</span>
+
+<span class="nc" id="L147">		return false;</span>
+	}
+
+	public boolean hasVector(String key) {
+<span class="nc bnc" id="L151" title="All 4 branches missed.">		if (attribute != null &amp;&amp; attribute instanceof ArrayList&lt;?&gt;)</span>
+<span class="nc" id="L152">			return true;</span>
+
+<span class="nc" id="L154">		return false;</span>
+	}
+
+	public Iterator&lt;String&gt; getAttributeKeyIterator() {
+<span class="nc" id="L158">		return null;</span>
+	}
+
+	public Map&lt;String, Object&gt; getAttributeMap() {
+<span class="nc" id="L162">		return null;</span>
+	}
+
+	/**
+	 * Override the Object method
+	 */
+	@Override
+	public String toString() {
+<span class="nc" id="L170">		return id;</span>
+	}
+
+	// Commands
+
+	public void clearAttributes() {
+<span class="nc" id="L176">		attribute = null;</span>
+<span class="nc" id="L177">	}</span>
+
+	public void addAttribute(String attribute, Object value) {
+<span class="nc" id="L180">		this.attribute = value;</span>
+<span class="nc" id="L181">	}</span>
+
+	public void changeAttribute(String attribute, Object value) {
+<span class="nc" id="L184">		addAttribute(attribute, value);</span>
+<span class="nc" id="L185">	}</span>
+
+	public void setAttributes(Map&lt;String, Object&gt; attributes) {
+<span class="nc bnc" id="L188" title="All 2 branches missed.">		if (attributes.size() &gt;= 1)</span>
+<span class="nc" id="L189">			addAttribute(&quot;&quot;, attributes.get((attributes.keySet().toArray()[0])));</span>
+<span class="nc" id="L190">	}</span>
+
+	public void removeAttribute(String attribute) {
+<span class="nc" id="L193">		this.attribute = null;</span>
+<span class="nc" id="L194">	}</span>
+
+<span class="nc" id="L196">	public static enum AttributeChangeEvent {</span>
+<span class="nc" id="L197">		ADD, CHANGE, REMOVE</span>
+	};
+
+	/**
+	 * Called for each change in the attribute set. This method must be implemented
+	 * by sub-elements in order to send events to the graph listeners.
+	 * 
+	 * @param sourceId
+	 *            The source of the change.
+	 * @param timeId
+	 *            The source time of the change, for synchronization.
+	 * @param attribute
+	 *            The attribute name that changed.
+	 * @param event
+	 *            The type of event among ADD, CHANGE and REMOVE.
+	 * @param oldValue
+	 *            The old value of the attribute, null if the attribute was added.
+	 * @param newValue
+	 *            The new value of the attribute, null if the attribute is about to
+	 *            be removed.
+	 */
+	protected abstract void attributeChanged(String sourceId, long timeId, String attribute, AttributeChangeEvent event,
+			Object oldValue, Object newValue);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

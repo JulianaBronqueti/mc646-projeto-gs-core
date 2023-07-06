@@ -1,0 +1,804 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>NetStreamUtils.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.netstream</a> &gt; <span class="el_source">NetStreamUtils.java</span></div><h1>NetStreamUtils.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2016-02-01
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.netstream;
+
+import org.graphstream.stream.binary.ByteDecoder;
+import org.graphstream.stream.binary.ByteEncoder;
+import org.graphstream.stream.binary.ByteFactory;
+
+import java.lang.reflect.Array;
+import java.nio.BufferUnderflowException;
+import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
+import java.util.logging.Logger;
+
+/**
+ * @since 22/01/16.
+ */
+<span class="nc" id="L47">public class NetStreamUtils {</span>
+<span class="nc" id="L48">	private static ByteBuffer NULL_BUFFER = ByteBuffer.allocate(0);</span>
+<span class="nc" id="L49">	private static final Logger LOGGER = Logger.getLogger(NetStreamUtils.class.getName());</span>
+
+	public static ByteFactory getDefaultNetStreamFactory() {
+<span class="nc" id="L52">		return new ByteFactory() {</span>
+			@Override
+			public ByteEncoder createByteEncoder() {
+<span class="nc" id="L55">				return new NetStreamEncoder();</span>
+			}
+
+			@Override
+			public ByteDecoder createByteDecoder() {
+<span class="nc" id="L60">				return new NetStreamDecoder();</span>
+			}
+		};
+	}
+
+	public static int getType(Object value) {
+<span class="nc" id="L66">		int valueType = NetStreamConstants.TYPE_UNKNOWN;</span>
+
+<span class="nc bnc" id="L68" title="All 2 branches missed.">		if (value == null)</span>
+<span class="nc" id="L69">			return NetStreamConstants.TYPE_NULL;</span>
+
+<span class="nc" id="L71">		Class&lt;?&gt; valueClass = value.getClass();</span>
+<span class="nc" id="L72">		boolean isArray = valueClass.isArray();</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">		if (isArray) {</span>
+<span class="nc bnc" id="L74" title="All 2 branches missed.">			if (Array.getLength(value) &gt; 0) {</span>
+<span class="nc" id="L75">				valueClass = Array.get(value, 0).getClass();</span>
+<span class="nc" id="L76">			} else {</span>
+<span class="nc" id="L77">				return NetStreamConstants.TYPE_ARRAY;</span>
+			}
+		}
+<span class="nc bnc" id="L80" title="All 2 branches missed.">		if (valueClass.equals(Boolean.class)) {</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">			if (isArray) {</span>
+<span class="nc" id="L82">				valueType = NetStreamConstants.TYPE_BOOLEAN_ARRAY;</span>
+<span class="nc" id="L83">			} else {</span>
+<span class="nc" id="L84">				valueType = NetStreamConstants.TYPE_BOOLEAN;</span>
+			}
+<span class="nc bnc" id="L86" title="All 2 branches missed.">		} else if (valueClass.equals(Byte.class)) {</span>
+<span class="nc bnc" id="L87" title="All 2 branches missed.">			if (isArray) {</span>
+<span class="nc" id="L88">				valueType = NetStreamConstants.TYPE_BYTE_ARRAY;</span>
+<span class="nc" id="L89">			} else {</span>
+<span class="nc" id="L90">				valueType = NetStreamConstants.TYPE_BYTE;</span>
+			}
+<span class="nc bnc" id="L92" title="All 2 branches missed.">		} else if (valueClass.equals(Short.class)) {</span>
+<span class="nc bnc" id="L93" title="All 2 branches missed.">			if (isArray) {</span>
+<span class="nc" id="L94">				valueType = NetStreamConstants.TYPE_SHORT_ARRAY;</span>
+<span class="nc" id="L95">			} else {</span>
+<span class="nc" id="L96">				valueType = NetStreamConstants.TYPE_SHORT;</span>
+			}
+<span class="nc bnc" id="L98" title="All 2 branches missed.">		} else if (valueClass.equals(Integer.class)) {</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">			if (isArray) {</span>
+<span class="nc" id="L100">				valueType = NetStreamConstants.TYPE_INT_ARRAY;</span>
+<span class="nc" id="L101">			} else {</span>
+<span class="nc" id="L102">				valueType = NetStreamConstants.TYPE_INT;</span>
+			}
+<span class="nc bnc" id="L104" title="All 2 branches missed.">		} else if (valueClass.equals(Long.class)) {</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">			if (isArray) {</span>
+<span class="nc" id="L106">				valueType = NetStreamConstants.TYPE_LONG_ARRAY;</span>
+<span class="nc" id="L107">			} else {</span>
+<span class="nc" id="L108">				valueType = NetStreamConstants.TYPE_LONG;</span>
+			}
+<span class="nc bnc" id="L110" title="All 2 branches missed.">		} else if (valueClass.equals(Float.class)) {</span>
+<span class="nc bnc" id="L111" title="All 2 branches missed.">			if (isArray) {</span>
+<span class="nc" id="L112">				valueType = NetStreamConstants.TYPE_FLOAT_ARRAY;</span>
+<span class="nc" id="L113">			} else {</span>
+<span class="nc" id="L114">				valueType = NetStreamConstants.TYPE_FLOAT;</span>
+			}
+<span class="nc bnc" id="L116" title="All 2 branches missed.">		} else if (valueClass.equals(Double.class)) {</span>
+<span class="nc bnc" id="L117" title="All 2 branches missed.">			if (isArray) {</span>
+<span class="nc" id="L118">				valueType = NetStreamConstants.TYPE_DOUBLE_ARRAY;</span>
+<span class="nc" id="L119">			} else {</span>
+<span class="nc" id="L120">				valueType = NetStreamConstants.TYPE_DOUBLE;</span>
+			}
+<span class="nc bnc" id="L122" title="All 2 branches missed.">		} else if (valueClass.equals(String.class)) {</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">			if (isArray) {</span>
+<span class="nc" id="L124">				valueType = NetStreamConstants.TYPE_STRING_ARRAY;</span>
+<span class="nc" id="L125">			} else {</span>
+<span class="nc" id="L126">				valueType = NetStreamConstants.TYPE_STRING;</span>
+			}
+<span class="nc" id="L128">		} else</span>
+<span class="nc" id="L129">			LOGGER.warning(String.format(&quot;can not find type of %s.&quot;, valueClass));</span>
+
+<span class="nc" id="L131">		return valueType;</span>
+	}
+
+	public static int getVarintSize(long data) {
+		// 7 bits -&gt; 127
+<span class="nc bnc" id="L136" title="All 2 branches missed.">		if (data &lt; (1L &lt;&lt; 7)) {</span>
+<span class="nc" id="L137">			return 1;</span>
+		}
+
+		// 14 bits -&gt; 16383
+<span class="nc bnc" id="L141" title="All 2 branches missed.">		if (data &lt; (1L &lt;&lt; 14)) {</span>
+<span class="nc" id="L142">			return 2;</span>
+		}
+
+		// 21 bits -&gt; 2097151
+<span class="nc bnc" id="L146" title="All 2 branches missed.">		if (data &lt; (1L &lt;&lt; 21)) {</span>
+<span class="nc" id="L147">			return 3;</span>
+		}
+
+		// 28 bits -&gt; 268435455
+<span class="nc bnc" id="L151" title="All 2 branches missed.">		if (data &lt; (1L &lt;&lt; 28)) {</span>
+<span class="nc" id="L152">			return 4;</span>
+		}
+
+		// 35 bits -&gt; 34359738367
+<span class="nc bnc" id="L156" title="All 2 branches missed.">		if (data &lt; (1L &lt;&lt; 35)) {</span>
+<span class="nc" id="L157">			return 5;</span>
+		}
+
+		// 42 bits -&gt; 4398046511103
+<span class="nc bnc" id="L161" title="All 2 branches missed.">		if (data &lt; (1L &lt;&lt; 42)) {</span>
+<span class="nc" id="L162">			return 6;</span>
+		}
+
+		// 49 bits -&gt; 562949953421311
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		if (data &lt; (1L &lt;&lt; 49)) {</span>
+<span class="nc" id="L167">			return 7;</span>
+		}
+
+		// 56 bits -&gt; 72057594037927935
+<span class="nc bnc" id="L171" title="All 2 branches missed.">		if (data &lt; (1L &lt;&lt; 56)) {</span>
+<span class="nc" id="L172">			return 8;</span>
+		}
+
+<span class="nc" id="L175">		return 9;</span>
+	}
+
+	public static void putVarint(ByteBuffer buffer, long number, int byteSize) {
+<span class="nc bnc" id="L179" title="All 2 branches missed.">		for (int i = 0; i &lt; byteSize; i++) {</span>
+<span class="nc" id="L180">			int head = 128;</span>
+<span class="nc bnc" id="L181" title="All 2 branches missed.">			if (i == byteSize - 1)</span>
+<span class="nc" id="L182">				head = 0;</span>
+<span class="nc" id="L183">			long b = ((number &gt;&gt; (7 * i)) &amp; 127) ^ head;</span>
+<span class="nc" id="L184">			buffer.put((byte) (b &amp; 255));</span>
+		}
+<span class="nc" id="L186">	}</span>
+
+	//
+	// ENCODING METHODS
+	//
+
+	public static ByteBuffer encodeValue(Object in, int valueType) {
+<span class="nc bnc" id="L193" title="All 2 branches missed.">		if (NetStreamConstants.TYPE_BOOLEAN == valueType) {</span>
+<span class="nc" id="L194">			return encodeBoolean(in);</span>
+<span class="nc bnc" id="L195" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_BOOLEAN_ARRAY == valueType) {</span>
+<span class="nc" id="L196">			return encodeBooleanArray(in);</span>
+<span class="nc bnc" id="L197" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_BYTE == valueType) {</span>
+<span class="nc" id="L198">			return encodeByte(in);</span>
+<span class="nc bnc" id="L199" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_BYTE_ARRAY == valueType) {</span>
+<span class="nc" id="L200">			return encodeByteArray(in);</span>
+<span class="nc bnc" id="L201" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_SHORT == valueType) {</span>
+<span class="nc" id="L202">			return encodeShort(in);</span>
+<span class="nc bnc" id="L203" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_SHORT_ARRAY == valueType) {</span>
+<span class="nc" id="L204">			return encodeShortArray(in);</span>
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_INT == valueType) {</span>
+<span class="nc" id="L206">			return encodeInt(in);</span>
+<span class="nc bnc" id="L207" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_INT_ARRAY == valueType) {</span>
+<span class="nc" id="L208">			return encodeIntArray(in);</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_LONG == valueType) {</span>
+<span class="nc" id="L210">			return encodeLong(in);</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_LONG_ARRAY == valueType) {</span>
+<span class="nc" id="L212">			return encodeLongArray(in);</span>
+<span class="nc bnc" id="L213" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_FLOAT == valueType) {</span>
+<span class="nc" id="L214">			return encodeFloat(in);</span>
+<span class="nc bnc" id="L215" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_FLOAT_ARRAY == valueType) {</span>
+<span class="nc" id="L216">			return encodeFloatArray(in);</span>
+<span class="nc bnc" id="L217" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_DOUBLE == valueType) {</span>
+<span class="nc" id="L218">			return encodeDouble(in);</span>
+<span class="nc bnc" id="L219" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_DOUBLE_ARRAY == valueType) {</span>
+<span class="nc" id="L220">			return encodeDoubleArray(in);</span>
+<span class="nc bnc" id="L221" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_STRING == valueType) {</span>
+<span class="nc" id="L222">			return encodeString(in);</span>
+<span class="nc bnc" id="L223" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_STRING_ARRAY == valueType) {</span>
+<span class="nc" id="L224">			return encodeStringArray(in);</span>
+<span class="nc bnc" id="L225" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_ARRAY == valueType) {</span>
+<span class="nc" id="L226">			return encodeArray(in);</span>
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_NULL == valueType) {</span>
+<span class="nc" id="L228">			return NULL_BUFFER;</span>
+		}
+
+<span class="nc" id="L231">		return null;</span>
+	}
+
+	public static ByteBuffer encodeUnsignedVarint(Object in) {
+<span class="nc" id="L235">		long data = ((Number) in).longValue();</span>
+<span class="nc" id="L236">		int size = getVarintSize(data);</span>
+
+<span class="nc" id="L238">		ByteBuffer buff = ByteBuffer.allocate(size);</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">		for (int i = 0; i &lt; size; i++) {</span>
+<span class="nc" id="L240">			int head = 128;</span>
+<span class="nc bnc" id="L241" title="All 2 branches missed.">			if (i == size - 1)</span>
+<span class="nc" id="L242">				head = 0;</span>
+<span class="nc" id="L243">			long b = ((data &gt;&gt; (7 * i)) &amp; 127) ^ head;</span>
+<span class="nc" id="L244">			buff.put((byte) (b &amp; 255));</span>
+		}
+<span class="nc" id="L246">		buff.rewind();</span>
+
+<span class="nc" id="L248">		return buff;</span>
+	}
+
+	public static ByteBuffer encodeVarint(Object in) {
+<span class="nc" id="L252">		long data = ((Number) in).longValue();</span>
+
+		// signed integers encoding
+		// (n &lt;&lt; 1) ^ (n &gt;&gt; 31)
+		// OK but java's negative values are two's complements...
+
+<span class="nc bnc" id="L258" title="All 2 branches missed.">		return encodeUnsignedVarint(data &gt;= 0 ? (data &lt;&lt; 1) : ((Math.abs(data) &lt;&lt; 1) ^ 1));</span>
+	}
+
+	public static ByteBuffer encodeString(Object in) {
+<span class="nc" id="L262">		String s = (String) in;</span>
+<span class="nc" id="L263">		byte[] data = s.getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+
+<span class="nc" id="L265">		ByteBuffer lenBuff = encodeUnsignedVarint(data.length);</span>
+		// outBuffer(lenBuff);
+<span class="nc" id="L267">		ByteBuffer bb = ByteBuffer.allocate(lenBuff.capacity() + data.length);</span>
+<span class="nc" id="L268">		bb.put(lenBuff).put(data);</span>
+<span class="nc" id="L269">		bb.rewind();</span>
+		// outBuffer(bb);
+
+<span class="nc" id="L272">		return bb;</span>
+	}
+
+	public static ByteBuffer encodeArray(Object in) {
+		// TODO...
+<span class="nc" id="L277">		return null;</span>
+	}
+
+	public static ByteBuffer encodeDoubleArray(Object in) {
+<span class="nc" id="L281">		Object[] data = (Object[]) in;</span>
+
+<span class="nc" id="L283">		int ssize = getVarintSize(data.length);</span>
+
+<span class="nc" id="L285">		ByteBuffer b = ByteBuffer.allocate(ssize + data.length * 8);</span>
+
+<span class="nc" id="L287">		putVarint(b, data.length, ssize);</span>
+
+<span class="nc bnc" id="L289" title="All 2 branches missed.">		for (int i = 0; i &lt; data.length; i++) {</span>
+<span class="nc" id="L290">			b.putDouble((Double) data[i]);</span>
+		}
+<span class="nc" id="L292">		b.rewind();</span>
+<span class="nc" id="L293">		return b;</span>
+	}
+
+	public static ByteBuffer encodeStringArray(Object in) {
+<span class="nc" id="L297">		Object[] data = (Object[]) in;</span>
+
+<span class="nc" id="L299">		int ssize = getVarintSize(data.length);</span>
+
+<span class="nc" id="L301">		byte[][] dataArray = new byte[data.length][];</span>
+<span class="nc" id="L302">		ByteBuffer[] lenBuffArray = new ByteBuffer[data.length];</span>
+<span class="nc" id="L303">		int bufferSize = 0;</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">		for(int i = 0; i &lt; data.length; i++){</span>
+<span class="nc" id="L305">			byte[] bs = ((String)data[i]).getBytes(Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L306">			dataArray[i] = bs;</span>
+
+<span class="nc" id="L308">			ByteBuffer lenBuff = encodeUnsignedVarint(bs.length);</span>
+<span class="nc" id="L309">			lenBuffArray[i] = lenBuff;</span>
+
+<span class="nc" id="L311">			bufferSize += lenBuff.capacity() +bs.length;</span>
+		}
+
+
+<span class="nc" id="L315">		ByteBuffer bb = ByteBuffer.allocate(ssize + bufferSize);</span>
+
+<span class="nc" id="L317">		putVarint(bb, data.length, ssize);</span>
+
+<span class="nc bnc" id="L319" title="All 2 branches missed.">		for(int i = 0; i &lt; data.length; i++) {</span>
+<span class="nc" id="L320">			bb.put(lenBuffArray[i]).put(dataArray[i]);</span>
+		}
+<span class="nc" id="L322">		bb.rewind();</span>
+
+<span class="nc" id="L324">		return bb;</span>
+	}
+
+	/**
+	 * @param in
+	 *            The double to encode
+	 * @return ByteBuffer with encoded double in it
+	 */
+	public static ByteBuffer encodeDouble(Object in) {
+<span class="nc" id="L333">		ByteBuffer bb = ByteBuffer.allocate(8).putDouble((Double) in);</span>
+<span class="nc" id="L334">		bb.rewind();</span>
+<span class="nc" id="L335">		return bb;</span>
+	}
+
+	/**
+	 * @param in
+	 *            The float array to encode
+	 * @return ByteBuffer with encoded float array in it
+	 */
+	public static ByteBuffer encodeFloatArray(Object in) {
+<span class="nc" id="L344">		Object[] data = (Object[]) in;</span>
+
+<span class="nc" id="L346">		int ssize = getVarintSize(data.length);</span>
+
+<span class="nc" id="L348">		ByteBuffer b = ByteBuffer.allocate(ssize + data.length * 4);</span>
+
+<span class="nc" id="L350">		putVarint(b, data.length, ssize);</span>
+
+<span class="nc bnc" id="L352" title="All 2 branches missed.">		for (int i = 0; i &lt; data.length; i++) {</span>
+<span class="nc" id="L353">			b.putFloat((Float) data[i]);</span>
+		}
+<span class="nc" id="L355">		b.rewind();</span>
+<span class="nc" id="L356">		return b;</span>
+	}
+
+	/**
+	 * @param in
+	 *            The float to encode
+	 * @return ByteBuffer with encoded float in it
+	 */
+	public static ByteBuffer encodeFloat(Object in) {
+<span class="nc" id="L365">		ByteBuffer b = ByteBuffer.allocate(4);</span>
+<span class="nc" id="L366">		b.putFloat(((Float) in));</span>
+<span class="nc" id="L367">		b.rewind();</span>
+<span class="nc" id="L368">		return b;</span>
+	}
+
+	/**
+	 * @param in
+	 *            The long array to encode
+	 * @return ByteBuffer with encoded long array in it
+	 */
+	public static ByteBuffer encodeLongArray(Object in) {
+<span class="nc" id="L377">		return encodeVarintArray(in);</span>
+	}
+
+	/**
+	 * @param in
+	 *            The long to encode
+	 * @return ByteBuffer with encoded long in it
+	 */
+	public static ByteBuffer encodeLong(Object in) {
+<span class="nc" id="L386">		return encodeVarint(in);</span>
+	}
+
+	/**
+	 * @param in
+	 *            The integer array to encode
+	 * @return ByteBuffer with encoded integer array in it
+	 */
+	public static ByteBuffer encodeIntArray(Object in) {
+<span class="nc" id="L395">		return encodeVarintArray(in);</span>
+	}
+
+	/**
+	 * @param in
+	 *            The integer to encode
+	 * @return ByteBuffer with encoded integer in it
+	 */
+	public static ByteBuffer encodeInt(Object in) {
+<span class="nc" id="L404">		return encodeVarint(in);</span>
+	}
+
+	/**
+	 * @param in
+	 * @return
+	 */
+	public static ByteBuffer encodeShortArray(Object in) {
+<span class="nc" id="L412">		return encodeVarintArray(in);</span>
+	}
+
+	/**
+	 * @param in
+	 * @return
+	 */
+	public static ByteBuffer encodeShort(Object in) {
+<span class="nc" id="L420">		return encodeVarint(in);</span>
+	}
+
+	/**
+	 * @param in
+	 * @return
+	 */
+	public static ByteBuffer encodeByteArray(Object in) {
+<span class="nc" id="L428">		Object[] data = (Object[]) in;</span>
+
+<span class="nc" id="L430">		int ssize = getVarintSize(data.length);</span>
+
+<span class="nc" id="L432">		ByteBuffer b = ByteBuffer.allocate(ssize + data.length);</span>
+
+<span class="nc" id="L434">		putVarint(b, data.length, ssize);</span>
+
+<span class="nc bnc" id="L436" title="All 2 branches missed.">		for (int i = 0; i &lt; data.length; i++) {</span>
+<span class="nc" id="L437">			b.put((Byte) data[i]);</span>
+		}
+<span class="nc" id="L439">		b.rewind();</span>
+<span class="nc" id="L440">		return b;</span>
+	}
+
+	/**
+	 * @param in
+	 * @return
+	 */
+	public static ByteBuffer encodeByte(Object in) {
+<span class="nc" id="L448">		ByteBuffer b = ByteBuffer.allocate(1);</span>
+<span class="nc" id="L449">		b.put(((Byte) in));</span>
+<span class="nc" id="L450">		b.rewind();</span>
+<span class="nc" id="L451">		return b;</span>
+	}
+
+	/**
+	 * @param in
+	 * @return
+	 */
+	public static ByteBuffer encodeBooleanArray(Object in) {
+<span class="nc" id="L459">		Object[] data = (Object[]) in;</span>
+
+<span class="nc" id="L461">		int ssize = getVarintSize(data.length);</span>
+
+<span class="nc" id="L463">		ByteBuffer b = ByteBuffer.allocate(ssize + data.length);</span>
+
+<span class="nc" id="L465">		putVarint(b, data.length, ssize);</span>
+
+<span class="nc bnc" id="L467" title="All 2 branches missed.">		for (int i = 0; i &lt; data.length; i++) {</span>
+<span class="nc bnc" id="L468" title="All 2 branches missed.">			b.put((byte) ((Boolean) data[i] == false ? 0 : 1));</span>
+		}
+<span class="nc" id="L470">		b.rewind();</span>
+<span class="nc" id="L471">		return b;</span>
+	}
+
+	/**
+	 * @param in
+	 * @return
+	 */
+	public static ByteBuffer encodeBoolean(Object in) {
+<span class="nc" id="L479">		ByteBuffer b = ByteBuffer.allocate(1);</span>
+<span class="nc bnc" id="L480" title="All 2 branches missed.">		b.put((byte) (((Boolean) in) == false ? 0 : 1));</span>
+<span class="nc" id="L481">		b.rewind();</span>
+<span class="nc" id="L482">		return b;</span>
+	}
+
+	public static ByteBuffer encodeVarintArray(Object in) {
+<span class="nc" id="L486">		Object[] data = (Object[]) in;</span>
+<span class="nc" id="L487">		int[] sizes = new int[data.length];</span>
+<span class="nc" id="L488">		long[] zigzags = new long[data.length];</span>
+<span class="nc" id="L489">		int sumsizes = 0;</span>
+<span class="nc bnc" id="L490" title="All 2 branches missed.">		for (int i = 0; i &lt; data.length; i++) {</span>
+<span class="nc" id="L491">			long datum = ((Number) data[i]).longValue();</span>
+			// signed integers encoding
+			// (n &lt;&lt; 1) ^ (n &gt;&gt; 31)
+			// OK but java's negative values are two's complements...
+<span class="nc bnc" id="L495" title="All 2 branches missed.">			zigzags[i] = datum &gt; 0 ? (datum &lt;&lt; 1) : ((Math.abs(datum) &lt;&lt; 1) ^ 1);</span>
+
+<span class="nc" id="L497">			sizes[i] = getVarintSize(zigzags[i]);</span>
+<span class="nc" id="L498">			sumsizes += sizes[i];</span>
+			// System.out.printf(&quot;i=%d, zigzag=%d, size=%d\n&quot;,i, zigzags[i], sizes[i]);
+		}
+
+		// the size of the size!
+<span class="nc" id="L503">		int ssize = getVarintSize(data.length);</span>
+
+<span class="nc" id="L505">		ByteBuffer b = ByteBuffer.allocate(ssize + sumsizes);</span>
+
+<span class="nc" id="L507">		putVarint(b, data.length, ssize);</span>
+
+<span class="nc bnc" id="L509" title="All 2 branches missed.">		for (int i = 0; i &lt; data.length; i++) {</span>
+<span class="nc" id="L510">			putVarint(b, zigzags[i], sizes[i]);</span>
+		}
+<span class="nc" id="L512">		b.rewind();</span>
+		// outBuffer(b);
+<span class="nc" id="L514">		return b;</span>
+	}
+
+	//
+	// DECODING METHODS
+	//
+
+	/**
+	 * @param bb
+	 * @return
+	 */
+	public static int decodeType(ByteBuffer bb) {
+		try {
+<span class="nc" id="L527">			return bb.get();</span>
+<span class="nc" id="L528">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L529">			LOGGER.info(&quot;decodeType: could not decode type&quot;);</span>
+<span class="nc" id="L530">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L533">		return 0;</span>
+	}
+
+	public static Object decodeValue(ByteBuffer bb, int valueType) {
+<span class="nc bnc" id="L537" title="All 2 branches missed.">		if (NetStreamConstants.TYPE_BOOLEAN == valueType) {</span>
+<span class="nc" id="L538">			return decodeBoolean(bb);</span>
+<span class="nc bnc" id="L539" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_BOOLEAN_ARRAY == valueType) {</span>
+<span class="nc" id="L540">			return decodeBooleanArray(bb);</span>
+<span class="nc bnc" id="L541" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_BYTE == valueType) {</span>
+<span class="nc" id="L542">			return decodeByte(bb);</span>
+<span class="nc bnc" id="L543" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_BYTE_ARRAY == valueType) {</span>
+<span class="nc" id="L544">			return decodeByteArray(bb);</span>
+<span class="nc bnc" id="L545" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_SHORT == valueType) {</span>
+<span class="nc" id="L546">			return decodeShort(bb);</span>
+<span class="nc bnc" id="L547" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_SHORT_ARRAY == valueType) {</span>
+<span class="nc" id="L548">			return decodeShortArray(bb);</span>
+<span class="nc bnc" id="L549" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_INT == valueType) {</span>
+<span class="nc" id="L550">			return decodeInt(bb);</span>
+<span class="nc bnc" id="L551" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_INT_ARRAY == valueType) {</span>
+<span class="nc" id="L552">			return decodeIntArray(bb);</span>
+<span class="nc bnc" id="L553" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_LONG == valueType) {</span>
+<span class="nc" id="L554">			return decodeLong(bb);</span>
+<span class="nc bnc" id="L555" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_LONG_ARRAY == valueType) {</span>
+<span class="nc" id="L556">			return decodeLongArray(bb);</span>
+<span class="nc bnc" id="L557" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_FLOAT == valueType) {</span>
+<span class="nc" id="L558">			return decodeFloat(bb);</span>
+<span class="nc bnc" id="L559" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_FLOAT_ARRAY == valueType) {</span>
+<span class="nc" id="L560">			return decodeFloatArray(bb);</span>
+<span class="nc bnc" id="L561" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_DOUBLE == valueType) {</span>
+<span class="nc" id="L562">			return decodeDouble(bb);</span>
+<span class="nc bnc" id="L563" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_DOUBLE_ARRAY == valueType) {</span>
+<span class="nc" id="L564">			return decodeDoubleArray(bb);</span>
+<span class="nc bnc" id="L565" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_STRING == valueType) {</span>
+<span class="nc" id="L566">			return decodeString(bb);</span>
+<span class="nc bnc" id="L567" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_STRING_ARRAY == valueType) {</span>
+<span class="nc" id="L568">			return decodeStringArray(bb);</span>
+<span class="nc bnc" id="L569" title="All 2 branches missed.">		} else if (NetStreamConstants.TYPE_ARRAY == valueType) {</span>
+<span class="nc" id="L570">			return decodeArray(bb);</span>
+		}
+<span class="nc" id="L572">		return null;</span>
+	}
+
+	/**
+	 * @param bb
+	 * @return
+	 */
+	public static Object[] decodeArray(ByteBuffer bb) {
+
+<span class="nc" id="L581">		int len = (int) decodeUnsignedVarint(bb);</span>
+
+<span class="nc" id="L583">		Object[] array = new Object[len];</span>
+<span class="nc bnc" id="L584" title="All 2 branches missed.">		for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L585">			array[i] = decodeValue(bb, decodeType(bb));</span>
+		}
+<span class="nc" id="L587">		return array;</span>
+
+	}
+
+	public static String decodeString(ByteBuffer bb) {
+		try {
+<span class="nc" id="L593">			int len = (int) decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L594">			byte[] data = new byte[len];</span>
+
+<span class="nc" id="L596">			bb.get(data);</span>
+
+<span class="nc" id="L598">			return new String(data, Charset.forName(&quot;UTF-8&quot;));</span>
+<span class="nc" id="L599">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L600">			LOGGER.info(&quot;decodeString: could not decode string&quot;);</span>
+<span class="nc" id="L601">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L604">		return null;</span>
+	}
+
+	public static String[] decodeStringArray(ByteBuffer bb) {
+<span class="nc" id="L608">		int len = (int) decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L609">		String[] array = new String[len];</span>
+<span class="nc bnc" id="L610" title="All 2 branches missed.">		for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L611">			array[i] = decodeString(bb);</span>
+		}
+<span class="nc" id="L613">		return array;</span>
+	}
+
+	public static Boolean decodeBoolean(ByteBuffer bb) {
+<span class="nc" id="L617">		int data = 0;</span>
+
+		try {
+<span class="nc" id="L620">			data = bb.get();</span>
+<span class="nc" id="L621">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L622">			LOGGER.info(&quot;decodeByte: could not decode&quot;);</span>
+<span class="nc" id="L623">			e.printStackTrace();</span>
+		}
+
+<span class="nc bnc" id="L626" title="All 2 branches missed.">		return data != 0;</span>
+	}
+
+	public static Byte decodeByte(ByteBuffer bb) {
+<span class="nc" id="L630">		byte data = 0;</span>
+
+		try {
+<span class="nc" id="L633">			data = bb.get();</span>
+<span class="nc" id="L634">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L635">			LOGGER.info(&quot;decodeByte: could not decode&quot;);</span>
+<span class="nc" id="L636">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L639">		return data;</span>
+	}
+
+	public static long decodeUnsignedVarint(ByteBuffer bb) {
+		try {
+<span class="nc" id="L644">			int size = 0;</span>
+<span class="nc" id="L645">			long[] data = new long[9];</span>
+
+			do {
+<span class="nc" id="L648">				data[size] = bb.get();</span>
+
+<span class="nc" id="L650">				size++;</span>
+
+				// int bt =data[size-1];
+				// if (bt &lt; 0) bt = (bt &amp; 127) + (bt &amp; 128);
+				// System.out.println(&quot;test &quot;+bt+&quot; -&gt; &quot;+(data[size - 1]&amp; 128) );
+<span class="nc bnc" id="L655" title="All 2 branches missed.">			} while ((data[size - 1] &amp; 128) == 128);</span>
+<span class="nc" id="L656">			long number = 0;</span>
+
+<span class="nc bnc" id="L658" title="All 2 branches missed.">			for (int i = 0; i &lt; size; i++) {</span>
+<span class="nc" id="L659">				number ^= (data[i] &amp; 127L) &lt;&lt; (i * 7L);</span>
+			}
+
+<span class="nc" id="L662">			return number;</span>
+
+<span class="nc" id="L664">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L665">			LOGGER.info(&quot;decodeUnsignedVarintFromInteger: could not decode&quot;);</span>
+<span class="nc" id="L666">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L669">		return 0L;</span>
+	}
+
+	public static long decodeVarint(ByteBuffer bb) {
+<span class="nc" id="L673">		long number = decodeUnsignedVarint(bb);</span>
+<span class="nc bnc" id="L674" title="All 2 branches missed.">		return ((number &amp; 1) == 0) ? number &gt;&gt; 1 : -(number &gt;&gt; 1);</span>
+	}
+
+	public static Short decodeShort(ByteBuffer bb) {
+<span class="nc" id="L678">		return (short) decodeVarint(bb);</span>
+	}
+
+	public static Integer decodeInt(ByteBuffer bb) {
+<span class="nc" id="L682">		return (int) decodeVarint(bb);</span>
+	}
+
+	public static Long decodeLong(ByteBuffer bb) {
+<span class="nc" id="L686">		return decodeVarint(bb);</span>
+	}
+
+	public static Float decodeFloat(ByteBuffer bb) {
+<span class="nc" id="L690">		return bb.getFloat();</span>
+	}
+
+	public static Double decodeDouble(ByteBuffer bb) {
+<span class="nc" id="L694">		return bb.getDouble();</span>
+	}
+
+	public static Integer[] decodeIntArray(ByteBuffer bb) {
+<span class="nc" id="L698">		int len = (int) decodeUnsignedVarint(bb);</span>
+
+<span class="nc" id="L700">		Integer[] res = new Integer[len];</span>
+<span class="nc bnc" id="L701" title="All 2 branches missed.">		for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L702">			res[i] = (int) decodeVarint(bb);</span>
+			// System.out.printf(&quot;array[%d]=%d%n&quot;,i,res[i]);
+		}
+
+<span class="nc" id="L706">		return res;</span>
+	}
+
+	public static Boolean[] decodeBooleanArray(ByteBuffer bb) {
+		try {
+<span class="nc" id="L711">			int len = (int) decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L712">			Boolean[] res = new Boolean[len];</span>
+
+<span class="nc bnc" id="L714" title="All 2 branches missed.">			for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L715">				byte b = bb.get();</span>
+<span class="nc bnc" id="L716" title="All 2 branches missed.">				res[i] = b != 0;</span>
+			}
+
+<span class="nc" id="L719">			return res;</span>
+<span class="nc" id="L720">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L721">			LOGGER.info(&quot;decodeBooleanArray: could not decode array&quot;);</span>
+<span class="nc" id="L722">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L725">		return null;</span>
+	}
+
+	public static Byte[] decodeByteArray(ByteBuffer bb) {
+		try {
+<span class="nc" id="L730">			int len = (int) decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L731">			Byte[] res = new Byte[len];</span>
+
+<span class="nc bnc" id="L733" title="All 2 branches missed.">			for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L734">				res[i] = bb.get();</span>
+			}
+
+<span class="nc" id="L737">			return res;</span>
+<span class="nc" id="L738">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L739">			LOGGER.info(&quot;decodeBooleanArray: could not decode array&quot;);</span>
+<span class="nc" id="L740">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L743">		return null;</span>
+	}
+
+	public static Double[] decodeDoubleArray(ByteBuffer bb) {
+		try {
+<span class="nc" id="L748">			int len = (int) decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L749">			Double[] res = new Double[len];</span>
+
+<span class="nc bnc" id="L751" title="All 2 branches missed.">			for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L752">				res[i] = bb.getDouble();</span>
+			}
+
+<span class="nc" id="L755">			return res;</span>
+<span class="nc" id="L756">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L757">			LOGGER.info(&quot;decodeDoubleArray: could not decode array&quot;);</span>
+<span class="nc" id="L758">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L761">		return null;</span>
+	}
+
+	public static Float[] decodeFloatArray(ByteBuffer bb) {
+		try {
+<span class="nc" id="L766">			int len = (int) decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L767">			Float[] res = new Float[len];</span>
+
+<span class="nc bnc" id="L769" title="All 2 branches missed.">			for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L770">				res[i] = bb.getFloat();</span>
+			}
+
+<span class="nc" id="L773">			return res;</span>
+<span class="nc" id="L774">		} catch (BufferUnderflowException e) {</span>
+<span class="nc" id="L775">			LOGGER.info(&quot;decodeFloatArray: could not decode array&quot;);</span>
+<span class="nc" id="L776">			e.printStackTrace();</span>
+		}
+
+<span class="nc" id="L779">		return null;</span>
+	}
+
+	public static Long[] decodeLongArray(ByteBuffer bb) {
+<span class="nc" id="L783">		int len = (int) decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L784">		Long[] res = new Long[len];</span>
+
+<span class="nc bnc" id="L786" title="All 2 branches missed.">		for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L787">			res[i] = decodeVarint(bb);</span>
+		}
+
+<span class="nc" id="L790">		return res;</span>
+	}
+
+	public static Short[] decodeShortArray(ByteBuffer bb) {
+<span class="nc" id="L794">		int len = (int) decodeUnsignedVarint(bb);</span>
+<span class="nc" id="L795">		Short[] res = new Short[len];</span>
+
+<span class="nc bnc" id="L797" title="All 2 branches missed.">		for (int i = 0; i &lt; len; i++) {</span>
+<span class="nc" id="L798">			res[i] = (short) decodeVarint(bb);</span>
+		}
+
+<span class="nc" id="L801">		return res;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

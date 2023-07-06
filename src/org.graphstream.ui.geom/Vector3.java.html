@@ -1,0 +1,325 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Vector3.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.geom</a> &gt; <span class="el_source">Vector3.java</span></div><h1>Vector3.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-12-22
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.geom;
+
+/**
+ * A three component vector made of doubles.
+ * 
+ * @author Antoine Dutot
+ * @since 20000613
+ * @version 0.1
+ */
+public class Vector3 extends Vector2 {
+	// Attributes:
+
+	private static final long serialVersionUID = 8839258036865851454L;
+
+	// Constructors
+
+	/**
+	 * New zero vector.
+	 */
+<span class="nc" id="L53">	public Vector3() {</span>
+<span class="nc" id="L54">		data = new double[3];</span>
+<span class="nc" id="L55">		data[0] = 0;</span>
+<span class="nc" id="L56">		data[1] = 0;</span>
+<span class="nc" id="L57">		data[2] = 0;</span>
+<span class="nc" id="L58">	}</span>
+
+	/**
+	 * New (&lt;code&gt;x&lt;/code&gt;,&lt;code&gt;y&lt;/code&gt;,&lt;code&gt;z&lt;/code&gt;) vector.
+	 */
+<span class="nc" id="L63">	public Vector3(double x, double y, double z) {</span>
+<span class="nc" id="L64">		data = new double[3];</span>
+<span class="nc" id="L65">		data[0] = x;</span>
+<span class="nc" id="L66">		data[1] = y;</span>
+<span class="nc" id="L67">		data[2] = z;</span>
+<span class="nc" id="L68">	}</span>
+
+	/**
+	 * New vector copy of &lt;code&gt;other&lt;/code&gt;.
+	 */
+<span class="nc" id="L73">	public Vector3(Vector3 other) {</span>
+<span class="nc" id="L74">		data = new double[3];</span>
+<span class="nc" id="L75">		copy(other);</span>
+<span class="nc" id="L76">	}</span>
+
+	/**
+	 * New vector copy of &lt;code&gt;point&lt;/code&gt;.
+	 */
+<span class="nc" id="L81">	public Vector3(Point3 point) {</span>
+<span class="nc" id="L82">		data = new double[3];</span>
+<span class="nc" id="L83">		copy(point);</span>
+<span class="nc" id="L84">	}</span>
+
+	// Predicates
+
+	/**
+	 * Are all components to zero?.
+	 */
+	@Override
+	public boolean isZero() {
+<span class="nc bnc" id="L93" title="All 6 branches missed.">		return (data[0] == 0 &amp;&amp; data[1] == 0 &amp;&amp; data[2] == 0);</span>
+	}
+
+	/**
+	 * Is this equal to other ?
+	 */
+	@Override
+	public boolean equals(Object other) {
+		Vector3 v;
+
+<span class="nc bnc" id="L103" title="All 2 branches missed.">		if (!(other instanceof Vector3)) {</span>
+<span class="nc" id="L104">			return false;</span>
+		}
+
+<span class="nc" id="L107">		v = (Vector3) other;</span>
+
+<span class="nc bnc" id="L109" title="All 6 branches missed.">		return (data[0] == v.data[0] &amp;&amp; data[1] == v.data[1] &amp;&amp; data[2] == v.data[2]);</span>
+	}
+
+	/**
+	 * Is i the index of a component ?
+	 * 
+	 * In other words, is i &amp;gt;= 0 &amp;amp;&amp;amp; &amp;lt; than #count() ?
+	 */
+	@Override
+	public boolean validComponent(int i) {
+<span class="nc bnc" id="L119" title="All 4 branches missed.">		return (i &gt;= 0 &amp;&amp; i &lt; 3);</span>
+	}
+
+	// Access
+
+	@Override
+	public Object clone() {
+<span class="nc" id="L126">		return new Vector3(this);</span>
+	}
+
+	// Access
+
+	public double dotProduct(double ox, double oy, double oz) {
+<span class="nc" id="L132">		return ((data[0] * ox) + (data[1] * oy) + (data[2] * oz));</span>
+	}
+
+	/**
+	 * Dot product of this and other.
+	 */
+	public double dotProduct(Vector3 other) {
+<span class="nc" id="L139">		return ((data[0] * other.data[0]) + (data[1] * other.data[1]) + (data[2] * other.data[2]));</span>
+	}
+
+	/**
+	 * Cartesian length.
+	 */
+	@Override
+	public double length() {
+<span class="nc" id="L147">		return Math.sqrt((data[0] * data[0]) + (data[1] * data[1]) + (data[2] * data[2]));</span>
+	}
+
+	public double z() {
+<span class="nc" id="L151">		return data[2];</span>
+	}
+
+	// Commands
+
+	/**
+	 * Assign value to all elements.
+	 */
+	@Override
+	public void fill(double value) {
+<span class="nc" id="L161">		data[0] = data[1] = data[2] = value;</span>
+<span class="nc" id="L162">	}</span>
+
+	/**
+	 * Explicitly set the i-th component to value.
+	 */
+	@Override
+	public void set(int i, double value) {
+<span class="nc" id="L169">		data[i] = value;</span>
+<span class="nc" id="L170">	}</span>
+
+	/**
+	 * Explicitly set the three components.
+	 */
+	public void set(double x, double y, double z) {
+<span class="nc" id="L176">		data[0] = x;</span>
+<span class="nc" id="L177">		data[1] = y;</span>
+<span class="nc" id="L178">		data[2] = z;</span>
+<span class="nc" id="L179">	}</span>
+
+	/**
+	 * Add each element of other to the corresponding element of this.
+	 */
+	public void add(Vector3 other) {
+<span class="nc" id="L185">		data[0] += other.data[0];</span>
+<span class="nc" id="L186">		data[1] += other.data[1];</span>
+<span class="nc" id="L187">		data[2] += other.data[2];</span>
+<span class="nc" id="L188">	}</span>
+
+	/**
+	 * Substract each element of other to the corresponding element of this.
+	 */
+	public void sub(Vector3 other) {
+<span class="nc" id="L194">		data[0] -= other.data[0];</span>
+<span class="nc" id="L195">		data[1] -= other.data[1];</span>
+<span class="nc" id="L196">		data[2] -= other.data[2];</span>
+<span class="nc" id="L197">	}</span>
+
+	/**
+	 * Multiply each element of this by the corresponding element of other.
+	 */
+	public void mult(Vector3 other) {
+<span class="nc" id="L203">		data[0] *= other.data[0];</span>
+<span class="nc" id="L204">		data[1] *= other.data[1];</span>
+<span class="nc" id="L205">		data[2] *= other.data[2];</span>
+<span class="nc" id="L206">	}</span>
+
+	/**
+	 * Add value to each element.
+	 */
+	@Override
+	public void scalarAdd(double value) {
+<span class="nc" id="L213">		data[0] += value;</span>
+<span class="nc" id="L214">		data[1] += value;</span>
+<span class="nc" id="L215">		data[2] += value;</span>
+<span class="nc" id="L216">	}</span>
+
+	/**
+	 * Substract value to each element.
+	 */
+	@Override
+	public void scalarSub(double value) {
+<span class="nc" id="L223">		data[0] -= value;</span>
+<span class="nc" id="L224">		data[1] -= value;</span>
+<span class="nc" id="L225">		data[2] -= value;</span>
+<span class="nc" id="L226">	}</span>
+
+	/**
+	 * Multiply each element by value.
+	 */
+	@Override
+	public void scalarMult(double value) {
+<span class="nc" id="L233">		data[0] *= value;</span>
+<span class="nc" id="L234">		data[1] *= value;</span>
+<span class="nc" id="L235">		data[2] *= value;</span>
+<span class="nc" id="L236">	}</span>
+
+	/**
+	 * Divide each element by value.
+	 */
+	@Override
+	public void scalarDiv(double value) {
+<span class="nc" id="L243">		data[0] /= value;</span>
+<span class="nc" id="L244">		data[1] /= value;</span>
+<span class="nc" id="L245">		data[2] /= value;</span>
+<span class="nc" id="L246">	}</span>
+
+	/**
+	 * Set this to the cross product of this and other.
+	 */
+	public void crossProduct(Vector3 other) {
+		double x;
+		double y;
+
+<span class="nc" id="L255">		x = (data[1] * other.data[2]) - (data[2] * other.data[1]);</span>
+<span class="nc" id="L256">		y = (data[2] * other.data[0]) - (data[0] * other.data[2]);</span>
+<span class="nc" id="L257">		data[2] = (data[0] * other.data[1]) - (data[1] * other.data[0]);</span>
+<span class="nc" id="L258">		data[0] = x;</span>
+<span class="nc" id="L259">		data[1] = y;</span>
+<span class="nc" id="L260">	}</span>
+
+	/**
+	 * Set this to the cross product of A and B.
+	 */
+	public void crossProduct(Vector3 A, Vector3 B) {
+<span class="nc" id="L266">		data[0] = (A.data[1] * B.data[2]) - (A.data[2] * B.data[1]);</span>
+<span class="nc" id="L267">		data[1] = (A.data[2] * B.data[0]) - (A.data[0] * B.data[2]);</span>
+<span class="nc" id="L268">		data[2] = (A.data[0] * B.data[1]) - (A.data[1] * B.data[0]);</span>
+<span class="nc" id="L269">	}</span>
+
+	/**
+	 * Transform this into an unit vector.
+	 * 
+	 * @return the vector length.
+	 */
+	@Override
+	public double normalize() {
+<span class="nc" id="L278">		double len = length();</span>
+
+<span class="nc bnc" id="L280" title="All 2 branches missed.">		if (len != 0) {</span>
+<span class="nc" id="L281">			data[0] /= len;</span>
+<span class="nc" id="L282">			data[1] /= len;</span>
+<span class="nc" id="L283">			data[2] /= len;</span>
+		}
+
+<span class="nc" id="L286">		return len;</span>
+	}
+
+	// Utility
+
+	/**
+	 * Make this a copy of other.
+	 */
+	public void copy(Vector3 other) {
+<span class="nc" id="L295">		data[0] = other.data[0];</span>
+<span class="nc" id="L296">		data[1] = other.data[1];</span>
+<span class="nc" id="L297">		data[2] = other.data[2];</span>
+<span class="nc" id="L298">	}</span>
+
+	/**
+	 * Make this a copy of &lt;code&gt;point&lt;/code&gt;.
+	 */
+	public void copy(Point3 point) {
+<span class="nc" id="L304">		data[0] = point.x;</span>
+<span class="nc" id="L305">		data[1] = point.y;</span>
+<span class="nc" id="L306">		data[2] = point.z;</span>
+<span class="nc" id="L307">	}</span>
+
+	// Misc.
+
+	@Override
+	public String toString() {
+<span class="nc" id="L313">		StringBuffer sb = new StringBuffer(&quot;[&quot;);</span>
+
+<span class="nc" id="L315">		sb.append(data[0]);</span>
+<span class="nc" id="L316">		sb.append('|');</span>
+<span class="nc" id="L317">		sb.append(data[1]);</span>
+<span class="nc" id="L318">		sb.append('|');</span>
+<span class="nc" id="L319">		sb.append(data[2]);</span>
+<span class="nc" id="L320">		sb.append(']');</span>
+
+<span class="nc" id="L322">		return sb.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

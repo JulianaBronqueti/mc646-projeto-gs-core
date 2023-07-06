@@ -1,0 +1,790 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DGSParser.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.dgs</a> &gt; <span class="el_source">DGSParser.java</span></div><h1>DGSParser.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-10-04
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.dgs;
+
+import java.awt.Color;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+import org.graphstream.graph.implementations.AbstractElement.AttributeChangeEvent;
+import org.graphstream.stream.SourceBase.ElementType;
+import org.graphstream.stream.file.FileSourceDGS;
+import org.graphstream.util.parser.ParseException;
+import org.graphstream.util.parser.Parser;
+
+// import org.graphstream.util.time.ISODateIO;
+
+public class DGSParser implements Parser {
+<span class="nc" id="L50">	static enum Token {</span>
+<span class="nc" id="L51">		AN, CN, DN, AE, CE, DE, CG, ST, CL, TF, EOF</span>
+	}
+
+	protected static final int BUFFER_SIZE = 4096;
+
+	public static final int ARRAY_OPEN = '{';
+	public static final int ARRAY_CLOSE = '}';
+
+	public static final int MAP_OPEN = '[';
+	public static final int MAP_CLOSE = ']';
+
+	Reader reader;
+	int line, column;
+	int bufferCapacity, bufferPosition;
+	char[] buffer;
+	int[] pushback;
+	int pushbackOffset;
+	FileSourceDGS dgs;
+	String sourceId;
+	Token lastDirective;
+
+	// ISODateIO dateIO;
+
+<span class="nc" id="L74">	public DGSParser(FileSourceDGS dgs, Reader reader) {</span>
+<span class="nc" id="L75">		this.dgs = dgs;</span>
+<span class="nc" id="L76">		this.reader = reader;</span>
+<span class="nc" id="L77">		bufferCapacity = 0;</span>
+<span class="nc" id="L78">		buffer = new char[BUFFER_SIZE];</span>
+<span class="nc" id="L79">		pushback = new int[10];</span>
+<span class="nc" id="L80">		pushbackOffset = -1;</span>
+<span class="nc" id="L81">		this.sourceId = String.format(&quot;&lt;DGS stream %x&gt;&quot;, System.nanoTime());</span>
+
+		// try {
+		// dateIO = new ISODateIO();
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// }
+<span class="nc" id="L88">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.util.parser.Parser#close()
+	 */
+	public void close() throws IOException {
+<span class="nc" id="L96">		reader.close();</span>
+<span class="nc" id="L97">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.util.parser.Parser#open()
+	 */
+	public void open() throws IOException, ParseException {
+<span class="nc" id="L105">		header();</span>
+<span class="nc" id="L106">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.util.parser.Parser#all()
+	 */
+	public void all() throws IOException, ParseException {
+<span class="nc" id="L114">		header();</span>
+
+<span class="nc bnc" id="L116" title="All 2 branches missed.">		while (next())</span>
+			;
+<span class="nc" id="L118">	}</span>
+
+	protected int nextChar() throws IOException {
+		int c;
+
+<span class="nc bnc" id="L123" title="All 2 branches missed.">		if (pushbackOffset &gt;= 0)</span>
+<span class="nc" id="L124">			return pushback[pushbackOffset--];</span>
+
+<span class="nc bnc" id="L126" title="All 4 branches missed.">		if (bufferCapacity == 0 || bufferPosition &gt;= bufferCapacity) {</span>
+<span class="nc" id="L127">			bufferCapacity = reader.read(buffer, 0, BUFFER_SIZE);</span>
+<span class="nc" id="L128">			bufferPosition = 0;</span>
+		}
+
+<span class="nc bnc" id="L131" title="All 2 branches missed.">		if (bufferCapacity &lt;= 0)</span>
+<span class="nc" id="L132">			return -1;</span>
+
+<span class="nc" id="L134">		c = buffer[bufferPosition++];</span>
+
+		//
+		// Handle special EOL
+		// - LF
+		// - CR
+		// - CR+LF
+		//
+<span class="nc bnc" id="L142" title="All 2 branches missed.">		if (c == '\r') {</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">			if (bufferPosition &lt; bufferCapacity) {</span>
+<span class="nc bnc" id="L144" title="All 2 branches missed.">				if (buffer[bufferPosition] == '\n')</span>
+<span class="nc" id="L145">					bufferPosition++;</span>
+<span class="nc" id="L146">			} else {</span>
+<span class="nc" id="L147">				c = nextChar();</span>
+
+<span class="nc bnc" id="L149" title="All 2 branches missed.">				if (c != '\n')</span>
+<span class="nc" id="L150">					pushback(c);</span>
+			}
+
+<span class="nc" id="L153">			c = '\n';</span>
+		}
+
+<span class="nc bnc" id="L156" title="All 2 branches missed.">		if (c == '\n') {</span>
+<span class="nc" id="L157">			line++;</span>
+<span class="nc" id="L158">			column = 0;</span>
+<span class="nc" id="L159">		} else</span>
+<span class="nc" id="L160">			column++;</span>
+
+<span class="nc" id="L162">		return c;</span>
+	}
+
+	protected void pushback(int c) throws IOException {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		if (c &lt; 0)</span>
+<span class="nc" id="L167">			return;</span>
+
+<span class="nc bnc" id="L169" title="All 2 branches missed.">		if (pushbackOffset + 1 &gt;= pushback.length)</span>
+<span class="nc" id="L170">			throw new IOException(&quot;pushback buffer overflow&quot;);</span>
+
+<span class="nc" id="L172">		pushback[++pushbackOffset] = c;</span>
+<span class="nc" id="L173">	}</span>
+
+	protected void skipLine() throws IOException {
+		int c;
+
+<span class="nc bnc" id="L178" title="All 4 branches missed.">		while ((c = nextChar()) != '\n' &amp;&amp; c &gt;= 0)</span>
+			;
+<span class="nc" id="L180">	}</span>
+
+	protected void skipWhitespaces() throws IOException {
+		int c;
+
+<span class="nc bnc" id="L185" title="All 4 branches missed.">		while ((c = nextChar()) == ' ' || c == '\t')</span>
+			;
+
+<span class="nc" id="L188">		pushback(c);</span>
+<span class="nc" id="L189">	}</span>
+
+	protected void header() throws IOException, ParseException {
+<span class="nc" id="L192">		int[] dgs = new int[6];</span>
+
+<span class="nc bnc" id="L194" title="All 2 branches missed.">		for (int i = 0; i &lt; 6; i++)</span>
+<span class="nc" id="L195">			dgs[i] = nextChar();</span>
+
+<span class="nc bnc" id="L197" title="All 6 branches missed.">		if (dgs[0] != 'D' || dgs[1] != 'G' || dgs[2] != 'S')</span>
+<span class="nc" id="L198">			throw parseException(</span>
+<span class="nc" id="L199">					String.format(&quot;bad magic header, 'DGS' expected, got '%c%c%c'&quot;, dgs[0], dgs[1], dgs[2]));</span>
+
+<span class="nc bnc" id="L201" title="All 8 branches missed.">		if (dgs[3] != '0' || dgs[4] != '0' || dgs[5] &lt; '0' || dgs[5] &gt; '5')</span>
+<span class="nc" id="L202">			throw parseException(String.format(&quot;bad version \&quot;%c%c%c\&quot;&quot;, dgs[0], dgs[1], dgs[2]));</span>
+
+<span class="nc bnc" id="L204" title="All 2 branches missed.">		if (nextChar() != '\n')</span>
+<span class="nc" id="L205">			throw parseException(&quot;end-of-line is missing&quot;);</span>
+
+<span class="nc" id="L207">		skipLine();</span>
+<span class="nc" id="L208">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.util.parser.Parser#next()
+	 */
+	public boolean next() throws IOException, ParseException {
+		int c;
+		String nodeId;
+		String edgeId, source, target;
+
+<span class="nc" id="L220">		lastDirective = directive();</span>
+
+<span class="nc bnc" id="L222" title="All 12 branches missed.">		switch (lastDirective) {</span>
+		case AN:
+<span class="nc" id="L224">			nodeId = id();</span>
+<span class="nc" id="L225">			dgs.sendNodeAdded(sourceId, nodeId);</span>
+
+<span class="nc" id="L227">			attributes(ElementType.NODE, nodeId);</span>
+<span class="nc" id="L228">			break;</span>
+		case CN:
+<span class="nc" id="L230">			nodeId = id();</span>
+<span class="nc" id="L231">			attributes(ElementType.NODE, nodeId);</span>
+<span class="nc" id="L232">			break;</span>
+		case DN:
+<span class="nc" id="L234">			nodeId = id();</span>
+<span class="nc" id="L235">			dgs.sendNodeRemoved(sourceId, nodeId);</span>
+<span class="nc" id="L236">			break;</span>
+		case AE:
+<span class="nc" id="L238">			edgeId = id();</span>
+<span class="nc" id="L239">			source = id();</span>
+
+<span class="nc" id="L241">			skipWhitespaces();</span>
+<span class="nc" id="L242">			c = nextChar();</span>
+
+<span class="nc bnc" id="L244" title="All 4 branches missed.">			if (c != '&lt;' &amp;&amp; c != '&gt;')</span>
+<span class="nc" id="L245">				pushback(c);</span>
+
+<span class="nc" id="L247">			target = id();</span>
+
+<span class="nc bnc" id="L249" title="All 3 branches missed.">			switch (c) {</span>
+			case '&gt;':
+<span class="nc" id="L251">				dgs.sendEdgeAdded(sourceId, edgeId, source, target, true);</span>
+<span class="nc" id="L252">				break;</span>
+			case '&lt;':
+<span class="nc" id="L254">				dgs.sendEdgeAdded(sourceId, edgeId, target, source, true);</span>
+<span class="nc" id="L255">				break;</span>
+			default:
+<span class="nc" id="L257">				dgs.sendEdgeAdded(sourceId, edgeId, source, target, false);</span>
+				break;
+			}
+
+<span class="nc" id="L261">			attributes(ElementType.EDGE, edgeId);</span>
+<span class="nc" id="L262">			break;</span>
+		case CE:
+<span class="nc" id="L264">			edgeId = id();</span>
+<span class="nc" id="L265">			attributes(ElementType.EDGE, edgeId);</span>
+<span class="nc" id="L266">			break;</span>
+		case DE:
+<span class="nc" id="L268">			edgeId = id();</span>
+<span class="nc" id="L269">			dgs.sendEdgeRemoved(sourceId, edgeId);</span>
+<span class="nc" id="L270">			break;</span>
+		case CG:
+<span class="nc" id="L272">			attributes(ElementType.GRAPH, null);</span>
+<span class="nc" id="L273">			break;</span>
+		case ST:
+			// TODO release 1.2 : read timestamp
+			// Version for 1.2 :
+			// --------------------------------
+			// long step;
+			// step = timestamp();
+			// sendStepBegins(sourceId, ste);
+
+			double step;
+
+<span class="nc" id="L284">			step = Double.valueOf(id());</span>
+<span class="nc" id="L285">			dgs.sendStepBegins(sourceId, step);</span>
+<span class="nc" id="L286">			break;</span>
+		case CL:
+<span class="nc" id="L288">			dgs.sendGraphCleared(sourceId);</span>
+<span class="nc" id="L289">			break;</span>
+		case TF:
+			// TODO for release 1.2
+			// String tf;
+			// tf = string();
+
+			// try {
+			// dateIO.setFormat(tf);
+			// } catch (Exception e) {
+			// throw parseException(&quot;invalid time format \&quot;%s\&quot;&quot;, tf);
+			// }
+
+<span class="nc" id="L301">			break;</span>
+		case EOF:
+<span class="nc" id="L303">			return false;</span>
+		}
+
+<span class="nc" id="L306">		skipWhitespaces();</span>
+<span class="nc" id="L307">		c = nextChar();</span>
+
+<span class="nc bnc" id="L309" title="All 2 branches missed.">		if (c == '#') {</span>
+<span class="nc" id="L310">			skipLine();</span>
+<span class="nc" id="L311">			return true;</span>
+		}
+
+<span class="nc bnc" id="L314" title="All 2 branches missed.">		if (c &lt; 0)</span>
+<span class="nc" id="L315">			return false;</span>
+
+<span class="nc bnc" id="L317" title="All 2 branches missed.">		if (c != '\n')</span>
+<span class="nc" id="L318">			throw parseException(&quot;eol expected, got '%c'&quot;, c);</span>
+
+<span class="nc" id="L320">		return true;</span>
+	}
+
+	public boolean nextStep() throws IOException, ParseException {
+		boolean r;
+		Token next;
+
+		do {
+<span class="nc" id="L328">			r = next();</span>
+<span class="nc" id="L329">			next = directive();</span>
+
+<span class="nc bnc" id="L331" title="All 2 branches missed.">			if (next != Token.EOF) {</span>
+<span class="nc" id="L332">				pushback(next.name().charAt(1));</span>
+<span class="nc" id="L333">				pushback(next.name().charAt(0));</span>
+			}
+<span class="nc bnc" id="L335" title="All 4 branches missed.">		} while (next != Token.ST &amp;&amp; next != Token.EOF);</span>
+
+<span class="nc" id="L337">		return r;</span>
+	}
+
+	protected void attributes(ElementType type, String id) throws IOException, ParseException {
+		int c;
+
+<span class="nc" id="L343">		skipWhitespaces();</span>
+
+<span class="nc bnc" id="L345" title="All 6 branches missed.">		while ((c = nextChar()) != '\n' &amp;&amp; c != '#' &amp;&amp; c &gt;= 0) {</span>
+<span class="nc" id="L346">			pushback(c);</span>
+<span class="nc" id="L347">			attribute(type, id);</span>
+<span class="nc" id="L348">			skipWhitespaces();</span>
+		}
+
+<span class="nc" id="L351">		pushback(c);</span>
+<span class="nc" id="L352">	}</span>
+
+	protected void attribute(ElementType type, String elementId) throws IOException, ParseException {
+		String key;
+<span class="nc" id="L356">		Object value = null;</span>
+		int c;
+<span class="nc" id="L358">		AttributeChangeEvent ch = AttributeChangeEvent.CHANGE;</span>
+
+<span class="nc" id="L360">		skipWhitespaces();</span>
+<span class="nc" id="L361">		c = nextChar();</span>
+
+<span class="nc bnc" id="L363" title="All 2 branches missed.">		if (c == '+')</span>
+<span class="nc" id="L364">			ch = AttributeChangeEvent.ADD;</span>
+<span class="nc bnc" id="L365" title="All 2 branches missed.">		else if (c == '-')</span>
+<span class="nc" id="L366">			ch = AttributeChangeEvent.REMOVE;</span>
+		else
+<span class="nc" id="L368">			pushback(c);</span>
+
+<span class="nc" id="L370">		key = id();</span>
+
+<span class="nc bnc" id="L372" title="All 2 branches missed.">		if (key == null)</span>
+<span class="nc" id="L373">			throw parseException(&quot;attribute key expected&quot;);</span>
+
+<span class="nc bnc" id="L375" title="All 2 branches missed.">		if (ch != AttributeChangeEvent.REMOVE) {</span>
+
+<span class="nc" id="L377">			skipWhitespaces();</span>
+<span class="nc" id="L378">			c = nextChar();</span>
+
+<span class="nc bnc" id="L380" title="All 4 branches missed.">			if (c == '=' || c == ':') {</span>
+<span class="nc" id="L381">				skipWhitespaces();</span>
+<span class="nc" id="L382">				value = value(true);</span>
+<span class="nc" id="L383">			} else {</span>
+<span class="nc" id="L384">				value = Boolean.TRUE;</span>
+<span class="nc" id="L385">				pushback(c);</span>
+			}
+		}
+
+<span class="nc" id="L389">		dgs.sendAttributeChangedEvent(sourceId, elementId, type, key, ch, null, value);</span>
+<span class="nc" id="L390">	}</span>
+
+	protected Object value(boolean array) throws IOException, ParseException {
+		int c;
+<span class="nc" id="L394">		LinkedList&lt;Object&gt; l = null;</span>
+		Object o;
+
+		do {
+<span class="nc" id="L398">			skipWhitespaces();</span>
+<span class="nc" id="L399">			c = nextChar();</span>
+<span class="nc" id="L400">			pushback(c);</span>
+
+<span class="nc bnc" id="L402" title="All 5 branches missed.">			switch (c) {</span>
+			case '\'':
+			case '\&quot;':
+<span class="nc" id="L405">				o = string();</span>
+<span class="nc" id="L406">				break;</span>
+			case '#':
+<span class="nc" id="L408">				o = color();</span>
+<span class="nc" id="L409">				break;</span>
+			case ARRAY_OPEN:
+				//
+				// Skip ARRAY_OPEN
+<span class="nc" id="L413">				nextChar();</span>
+				//
+
+<span class="nc" id="L416">				skipWhitespaces();</span>
+<span class="nc" id="L417">				o = value(true);</span>
+<span class="nc" id="L418">				skipWhitespaces();</span>
+
+				//
+				// Check if next char is ARRAY_CLOSE
+<span class="nc bnc" id="L422" title="All 2 branches missed.">				if (nextChar() != ARRAY_CLOSE)</span>
+<span class="nc" id="L423">					throw parseException(&quot;'%c' expected&quot;, ARRAY_CLOSE);</span>
+				//
+
+<span class="nc bnc" id="L426" title="All 2 branches missed.">				if (!o.getClass().isArray())</span>
+<span class="nc" id="L427">					o = new Object[] { o };</span>
+
+<span class="nc" id="L429">				break;</span>
+			case MAP_OPEN:
+<span class="nc" id="L431">				o = map();</span>
+<span class="nc" id="L432">				break;</span>
+			default: {
+<span class="nc" id="L434">				String word = id();</span>
+
+<span class="nc bnc" id="L436" title="All 2 branches missed.">				if (word == null)</span>
+<span class="nc" id="L437">					throw parseException(&quot;missing value&quot;);</span>
+
+<span class="nc bnc" id="L439" title="All 6 branches missed.">				if ((c &gt;= '0' &amp;&amp; c &lt;= '9') || c == '-') {</span>
+					try {
+<span class="nc bnc" id="L441" title="All 2 branches missed.">						if (word.indexOf('.') &gt; 0)</span>
+<span class="nc" id="L442">							o = Double.valueOf(word);</span>
+						else {
+							try {
+<span class="nc" id="L445">								o = Integer.valueOf(word);</span>
+<span class="nc" id="L446">							} catch (NumberFormatException e) {</span>
+<span class="nc" id="L447">								o = Long.valueOf(word);</span>
+							}
+						}
+<span class="nc" id="L450">					} catch (NumberFormatException e) {</span>
+<span class="nc" id="L451">						throw parseException(&quot;invalid number format '%s'&quot;, word);</span>
+					}
+				} else {
+<span class="nc bnc" id="L454" title="All 2 branches missed.">					if (word.equalsIgnoreCase(&quot;true&quot;))</span>
+<span class="nc" id="L455">						o = Boolean.TRUE;</span>
+<span class="nc bnc" id="L456" title="All 2 branches missed.">					else if (word.equalsIgnoreCase(&quot;false&quot;))</span>
+<span class="nc" id="L457">						o = Boolean.FALSE;</span>
+					else
+<span class="nc" id="L459">						o = word;</span>
+				}
+
+				break;
+			}
+			}
+
+<span class="nc" id="L466">			c = nextChar();</span>
+
+<span class="nc bnc" id="L468" title="All 6 branches missed.">			if (l == null &amp;&amp; array &amp;&amp; c == ',') {</span>
+<span class="nc" id="L469">				l = new LinkedList&lt;Object&gt;();</span>
+<span class="nc" id="L470">				l.add(o);</span>
+<span class="nc bnc" id="L471" title="All 2 branches missed.">			} else if (l != null)</span>
+<span class="nc" id="L472">				l.add(o);</span>
+<span class="nc bnc" id="L473" title="All 4 branches missed.">		} while (array &amp;&amp; c == ',');</span>
+
+<span class="nc" id="L475">		pushback(c);</span>
+
+<span class="nc bnc" id="L477" title="All 2 branches missed.">		if (l == null)</span>
+<span class="nc" id="L478">			return o;</span>
+
+<span class="nc" id="L480">		return l.toArray();</span>
+	}
+
+	protected Color color() throws IOException, ParseException {
+		int c;
+		int r, g, b, a;
+<span class="nc" id="L486">		StringBuilder hexa = new StringBuilder();</span>
+
+<span class="nc" id="L488">		c = nextChar();</span>
+
+<span class="nc bnc" id="L490" title="All 2 branches missed.">		if (c != '#')</span>
+<span class="nc" id="L491">			throw parseException(&quot;'#' expected&quot;);</span>
+
+<span class="nc bnc" id="L493" title="All 2 branches missed.">		for (int i = 0; i &lt; 6; i++) {</span>
+<span class="nc" id="L494">			c = nextChar();</span>
+
+<span class="nc bnc" id="L496" title="All 12 branches missed.">			if ((c &gt;= 0 &amp;&amp; c &lt;= '9') || (c &gt;= 'a' &amp;&amp; c &lt;= 'f') || (c &gt;= 'A' &amp;&amp; c &lt;= 'F'))</span>
+<span class="nc" id="L497">				hexa.appendCodePoint(c);</span>
+			else
+<span class="nc" id="L499">				throw parseException(&quot;hexadecimal value expected&quot;);</span>
+		}
+
+<span class="nc" id="L502">		r = Integer.parseInt(hexa.substring(0, 2), 16);</span>
+<span class="nc" id="L503">		g = Integer.parseInt(hexa.substring(2, 4), 16);</span>
+<span class="nc" id="L504">		b = Integer.parseInt(hexa.substring(4, 6), 16);</span>
+
+<span class="nc" id="L506">		c = nextChar();</span>
+
+<span class="nc bnc" id="L508" title="All 12 branches missed.">		if ((c &gt;= '0' &amp;&amp; c &lt;= '9') || (c &gt;= 'a' &amp;&amp; c &lt;= 'f') || (c &gt;= 'A' &amp;&amp; c &lt;= 'F')) {</span>
+<span class="nc" id="L509">			hexa.appendCodePoint(c);</span>
+
+<span class="nc" id="L511">			c = nextChar();</span>
+
+<span class="nc bnc" id="L513" title="All 12 branches missed.">			if ((c &gt;= 0 &amp;&amp; c &lt;= '9') || (c &gt;= 'a' &amp;&amp; c &lt;= 'f') || (c &gt;= 'A' &amp;&amp; c &lt;= 'F'))</span>
+<span class="nc" id="L514">				hexa.appendCodePoint(c);</span>
+			else
+<span class="nc" id="L516">				throw parseException(&quot;hexadecimal value expected&quot;);</span>
+
+<span class="nc" id="L518">			a = Integer.parseInt(hexa.substring(6, 8), 16);</span>
+<span class="nc" id="L519">		} else {</span>
+<span class="nc" id="L520">			a = 255;</span>
+<span class="nc" id="L521">			pushback(c);</span>
+		}
+
+<span class="nc" id="L524">		return new Color(r, g, b, a);</span>
+	}
+
+	protected Object array() throws IOException, ParseException {
+		int c;
+<span class="nc" id="L529">		LinkedList&lt;Object&gt; array = new LinkedList&lt;Object&gt;();</span>
+
+<span class="nc" id="L531">		c = nextChar();</span>
+
+<span class="nc bnc" id="L533" title="All 2 branches missed.">		if (c != ARRAY_OPEN)</span>
+<span class="nc" id="L534">			throw parseException(&quot;'%c' expected&quot;, ARRAY_OPEN);</span>
+
+<span class="nc" id="L536">		skipWhitespaces();</span>
+<span class="nc" id="L537">		c = nextChar();</span>
+
+<span class="nc bnc" id="L539" title="All 2 branches missed.">		while (c != ARRAY_CLOSE) {</span>
+<span class="nc" id="L540">			pushback(c);</span>
+<span class="nc" id="L541">			array.add(value(false));</span>
+
+<span class="nc" id="L543">			skipWhitespaces();</span>
+<span class="nc" id="L544">			c = nextChar();</span>
+
+<span class="nc bnc" id="L546" title="All 4 branches missed.">			if (c != ARRAY_CLOSE &amp;&amp; c != ',')</span>
+<span class="nc" id="L547">				throw parseException(&quot;'%c' or ',' expected, got '%c'&quot;, ARRAY_CLOSE, c);</span>
+
+<span class="nc bnc" id="L549" title="All 2 branches missed.">			if (c == ',') {</span>
+<span class="nc" id="L550">				skipWhitespaces();</span>
+<span class="nc" id="L551">				c = nextChar();</span>
+			}
+		}
+
+<span class="nc bnc" id="L555" title="All 2 branches missed.">		if (c != ARRAY_CLOSE)</span>
+<span class="nc" id="L556">			throw parseException(&quot;'%c' expected&quot;, ARRAY_CLOSE);</span>
+
+<span class="nc" id="L558">		return array.toArray();</span>
+	}
+
+	protected Object map() throws IOException, ParseException {
+		int c;
+<span class="nc" id="L563">		HashMap&lt;String, Object&gt; map = new HashMap&lt;String, Object&gt;();</span>
+		String key;
+		Object value;
+
+<span class="nc" id="L567">		c = nextChar();</span>
+
+<span class="nc bnc" id="L569" title="All 2 branches missed.">		if (c != MAP_OPEN)</span>
+<span class="nc" id="L570">			throw parseException(&quot;'%c' expected&quot;, MAP_OPEN);</span>
+
+<span class="nc" id="L572">		c = nextChar();</span>
+
+<span class="nc bnc" id="L574" title="All 2 branches missed.">		while (c != MAP_CLOSE) {</span>
+<span class="nc" id="L575">			pushback(c);</span>
+<span class="nc" id="L576">			key = id();</span>
+
+<span class="nc bnc" id="L578" title="All 2 branches missed.">			if (key == null)</span>
+<span class="nc" id="L579">				throw parseException(&quot;id expected here, '%c'&quot;, c);</span>
+
+<span class="nc" id="L581">			skipWhitespaces();</span>
+<span class="nc" id="L582">			c = nextChar();</span>
+
+<span class="nc bnc" id="L584" title="All 4 branches missed.">			if (c == '=' || c == ':') {</span>
+<span class="nc" id="L585">				skipWhitespaces();</span>
+<span class="nc" id="L586">				value = value(false);</span>
+<span class="nc" id="L587">			} else {</span>
+<span class="nc" id="L588">				value = Boolean.TRUE;</span>
+<span class="nc" id="L589">				pushback(c);</span>
+			}
+
+<span class="nc" id="L592">			map.put(key, value);</span>
+
+<span class="nc" id="L594">			skipWhitespaces();</span>
+<span class="nc" id="L595">			c = nextChar();</span>
+
+<span class="nc bnc" id="L597" title="All 4 branches missed.">			if (c != MAP_CLOSE &amp;&amp; c != ',')</span>
+<span class="nc" id="L598">				throw parseException(&quot;'%c' or ',' expected, got '%c'&quot;, MAP_CLOSE, c);</span>
+
+<span class="nc bnc" id="L600" title="All 2 branches missed.">			if (c == ',') {</span>
+<span class="nc" id="L601">				skipWhitespaces();</span>
+<span class="nc" id="L602">				c = nextChar();</span>
+			}
+		}
+
+<span class="nc bnc" id="L606" title="All 2 branches missed.">		if (c != MAP_CLOSE)</span>
+<span class="nc" id="L607">			throw parseException(&quot;'%c' expected&quot;, MAP_CLOSE);</span>
+
+<span class="nc" id="L609">		return map;</span>
+	}
+
+	protected Token directive() throws IOException, ParseException {
+		int c1, c2;
+
+		//
+		// Skip comment and empty lines
+		//
+		do {
+<span class="nc" id="L619">			c1 = nextChar();</span>
+
+<span class="nc bnc" id="L621" title="All 2 branches missed.">			if (c1 == '#')</span>
+<span class="nc" id="L622">				skipLine();</span>
+
+<span class="nc bnc" id="L624" title="All 2 branches missed.">			if (c1 &lt; 0)</span>
+<span class="nc" id="L625">				return Token.EOF;</span>
+<span class="nc bnc" id="L626" title="All 4 branches missed.">		} while (c1 == '#' || c1 == '\n');</span>
+
+<span class="nc" id="L628">		c2 = nextChar();</span>
+
+<span class="nc bnc" id="L630" title="All 4 branches missed.">		if (c1 &gt;= 'A' &amp;&amp; c1 &lt;= 'Z')</span>
+<span class="nc" id="L631">			c1 -= 'A' - 'a';</span>
+
+<span class="nc bnc" id="L633" title="All 4 branches missed.">		if (c2 &gt;= 'A' &amp;&amp; c2 &lt;= 'Z')</span>
+<span class="nc" id="L634">			c2 -= 'A' - 'a';</span>
+
+<span class="nc bnc" id="L636" title="All 6 branches missed.">		switch (c1) {</span>
+		case 'a':
+<span class="nc bnc" id="L638" title="All 2 branches missed.">			if (c2 == 'n')</span>
+<span class="nc" id="L639">				return Token.AN;</span>
+<span class="nc bnc" id="L640" title="All 2 branches missed.">			else if (c2 == 'e')</span>
+<span class="nc" id="L641">				return Token.AE;</span>
+
+			break;
+		case 'c':
+<span class="nc bnc" id="L645" title="All 5 branches missed.">			switch (c2) {</span>
+			case 'n':
+<span class="nc" id="L647">				return Token.CN;</span>
+			case 'e':
+<span class="nc" id="L649">				return Token.CE;</span>
+			case 'g':
+<span class="nc" id="L651">				return Token.CG;</span>
+			case 'l':
+<span class="nc" id="L653">				return Token.CL;</span>
+			}
+
+<span class="nc" id="L656">			break;</span>
+		case 'd':
+<span class="nc bnc" id="L658" title="All 2 branches missed.">			if (c2 == 'n')</span>
+<span class="nc" id="L659">				return Token.DN;</span>
+<span class="nc bnc" id="L660" title="All 2 branches missed.">			else if (c2 == 'e')</span>
+<span class="nc" id="L661">				return Token.DE;</span>
+
+			break;
+		case 's':
+<span class="nc bnc" id="L665" title="All 2 branches missed.">			if (c2 == 't')</span>
+<span class="nc" id="L666">				return Token.ST;</span>
+
+			break;
+		case 't':
+<span class="nc bnc" id="L670" title="All 2 branches missed.">			if (c1 == 'f')</span>
+<span class="nc" id="L671">				return Token.TF;</span>
+
+			break;
+		}
+
+<span class="nc" id="L676">		throw parseException(&quot;unknown directive '%c%c'&quot;, c1, c2);</span>
+	}
+
+	protected String string() throws IOException, ParseException {
+		int c, s;
+		StringBuilder builder;
+		boolean slash;
+
+<span class="nc" id="L684">		slash = false;</span>
+<span class="nc" id="L685">		builder = new StringBuilder();</span>
+<span class="nc" id="L686">		c = nextChar();</span>
+
+<span class="nc bnc" id="L688" title="All 4 branches missed.">		if (c != '\&quot;' &amp;&amp; c != '\'')</span>
+<span class="nc" id="L689">			throw parseException(&quot;string expected&quot;);</span>
+
+<span class="nc" id="L691">		s = c;</span>
+
+<span class="nc bnc" id="L693" title="All 4 branches missed.">		while ((c = nextChar()) != s || slash) {</span>
+<span class="nc bnc" id="L694" title="All 4 branches missed.">			if (slash &amp;&amp; c != s)</span>
+<span class="nc" id="L695">				builder.append(&quot;\\&quot;);</span>
+
+<span class="nc bnc" id="L697" title="All 2 branches missed.">			slash = c == '\\';</span>
+
+<span class="nc bnc" id="L699" title="All 2 branches missed.">			if (!slash) {</span>
+<span class="nc bnc" id="L700" title="All 2 branches missed.">				if (!Character.isValidCodePoint(c))</span>
+<span class="nc" id="L701">					throw parseException(&quot;invalid code-point 0x%X&quot;, c);</span>
+
+<span class="nc" id="L703">				builder.appendCodePoint(c);</span>
+			}
+		}
+
+<span class="nc" id="L707">		return builder.toString();</span>
+	}
+
+	protected String id() throws IOException, ParseException {
+		int c;
+<span class="nc" id="L712">		StringBuilder builder = new StringBuilder();</span>
+
+<span class="nc" id="L714">		skipWhitespaces();</span>
+<span class="nc" id="L715">		c = nextChar();</span>
+<span class="nc" id="L716">		pushback(c);</span>
+
+<span class="nc bnc" id="L718" title="All 4 branches missed.">		if (c == '\&quot;' || c == '\'') {</span>
+<span class="nc" id="L719">			return string();</span>
+		} else {
+<span class="nc" id="L721">			boolean stop = false;</span>
+
+<span class="nc bnc" id="L723" title="All 2 branches missed.">			while (!stop) {</span>
+<span class="nc" id="L724">				c = nextChar();</span>
+
+<span class="nc bnc" id="L726" title="All 6 branches missed.">				switch (Character.getType(c)) {</span>
+				case Character.LOWERCASE_LETTER:
+				case Character.UPPERCASE_LETTER:
+				case Character.DECIMAL_DIGIT_NUMBER:
+<span class="nc" id="L730">					break;</span>
+				case Character.DASH_PUNCTUATION:
+<span class="nc bnc" id="L732" title="All 2 branches missed.">					if (c != '-')</span>
+<span class="nc" id="L733">						stop = true;</span>
+
+<span class="nc" id="L735">					break;</span>
+				case Character.MATH_SYMBOL:
+<span class="nc bnc" id="L737" title="All 2 branches missed.">					if (c != '+')</span>
+<span class="nc" id="L738">						stop = true;</span>
+
+<span class="nc" id="L740">					break;</span>
+				case Character.CONNECTOR_PUNCTUATION:
+<span class="nc bnc" id="L742" title="All 2 branches missed.">					if (c != '_')</span>
+<span class="nc" id="L743">						stop = true;</span>
+
+<span class="nc" id="L745">					break;</span>
+				case Character.OTHER_PUNCTUATION:
+<span class="nc bnc" id="L747" title="All 2 branches missed.">					if (c != '.')</span>
+<span class="nc" id="L748">						stop = true;</span>
+
+<span class="nc" id="L750">					break;</span>
+				default:
+<span class="nc" id="L752">					stop = true;</span>
+					break;
+				}
+
+<span class="nc bnc" id="L756" title="All 2 branches missed.">				if (!stop)</span>
+<span class="nc" id="L757">					builder.appendCodePoint(c);</span>
+			}
+
+<span class="nc" id="L760">			pushback(c);</span>
+		}
+
+<span class="nc bnc" id="L763" title="All 2 branches missed.">		if (builder.length() == 0)</span>
+<span class="nc" id="L764">			return null;</span>
+
+<span class="nc" id="L766">		return builder.toString();</span>
+	}
+
+	/*
+	 * protected long timestamp() throws IOException, ParseException { int c; String
+	 * time;
+	 * 
+	 * c = nextChar(); pushback(c);
+	 * 
+	 * switch (c) { case '&quot;': case '\'': time = string(); break; default:
+	 * StringBuilder builder = new StringBuilder();
+	 * 
+	 * while ((c = nextChar()) != '\n' &amp;&amp; c != '&quot;') builder.appendCodePoint(c);
+	 * 
+	 * pushback(c); time = builder.toString(); break; }
+	 * 
+	 * pushback(c); return dateIO.parse(time).getTimeInMillis(); }
+	 */
+
+	protected ParseException parseException(String message, Object... args) {
+<span class="nc" id="L786">		return new ParseException(</span>
+<span class="nc" id="L787">				String.format(String.format(&quot;parse error at (%d;%d) : %s&quot;, line, column, message), args));</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

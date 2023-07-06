@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GEXFNode.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.gexf</a> &gt; <span class="el_source">GEXFNode.java</span></div><h1>GEXFNode.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-09-18
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.gexf;
+
+import javax.xml.stream.XMLStreamException;
+
+public class GEXFNode implements GEXFElement {
+	GEXF root;
+
+	String id;
+	String label;
+
+	GEXFAttValues attvalues;
+	GEXFSpells spells;
+
+	//
+	// VIZ Extension
+	float x;
+	float y;
+	float z;
+	boolean position;
+
+	//
+
+<span class="nc" id="L53">	public GEXFNode(GEXF root, String id) {</span>
+<span class="nc" id="L54">		this.root = root;</span>
+
+<span class="nc" id="L56">		this.id = id;</span>
+<span class="nc" id="L57">		this.label = id;</span>
+
+<span class="nc" id="L59">		spells = new GEXFSpells(root);</span>
+<span class="nc" id="L60">		attvalues = new GEXFAttValues(root);</span>
+<span class="nc" id="L61">		position = false;</span>
+<span class="nc" id="L62">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.file.gexf.GEXFElement#export(org.graphstream.stream
+	 * .file.gexf.SmartXMLWriter)
+	 */
+	public void export(SmartXMLWriter stream) throws XMLStreamException {
+<span class="nc" id="L72">		stream.startElement(&quot;node&quot;);</span>
+
+<span class="nc" id="L74">		stream.stream.writeAttribute(&quot;id&quot;, id);</span>
+<span class="nc" id="L75">		stream.stream.writeAttribute(&quot;label&quot;, label);</span>
+
+<span class="nc bnc" id="L77" title="All 4 branches missed.">		if (position &amp;&amp; root.isExtensionEnable(Extension.VIZ)) {</span>
+<span class="nc" id="L78">			stream.startElement(&quot;viz:position&quot;);</span>
+<span class="nc" id="L79">			stream.stream.writeAttribute(&quot;x&quot;, Float.toString(x));</span>
+<span class="nc" id="L80">			stream.stream.writeAttribute(&quot;y&quot;, Float.toString(y));</span>
+<span class="nc" id="L81">			stream.stream.writeAttribute(&quot;z&quot;, Float.toString(z));</span>
+<span class="nc" id="L82">			stream.endElement(); // POSITION</span>
+		}
+
+<span class="nc" id="L85">		attvalues.export(stream);</span>
+
+<span class="nc bnc" id="L87" title="All 2 branches missed.">		if (root.isExtensionEnable(Extension.DYNAMICS))</span>
+<span class="nc" id="L88">			spells.export(stream);</span>
+
+<span class="nc" id="L90">		stream.endElement(); // SPELLS</span>
+<span class="nc" id="L91">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

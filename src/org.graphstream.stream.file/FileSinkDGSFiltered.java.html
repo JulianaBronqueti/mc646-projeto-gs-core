@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkDGSFiltered.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkDGSFiltered.java</span></div><h1>FileSinkDGSFiltered.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2014-11-03
+ * 
+ * @author Thibaut Démare &lt;fdhp_76@hotmail.com&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Locale;
+
+/**
+ * &lt;p&gt;
+ * File output for the DGS (Dynamic Graph Stream) file format. It includes also
+ * the possibility to filter dynamic events such as :
+ * &lt;ul&gt;
+ * &lt;li&gt;Addition or deletion of nodes or edges.&lt;/li&gt;
+ * &lt;li&gt;Addition/deletion/modification of attributes of nodes, edges or the graph
+ * itself.&lt;/li&gt;
+ * &lt;li&gt;A step event.&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;/p&gt;
+ *
+ * &lt;p&gt;
+ * For instance :
+ * &lt;/p&gt;
+ * 
+ * &lt;pre&gt;
+ * Graph graph = new SingleGraph(&quot;My_Graph&quot;);
+ * FileSinkDGSFiltered fileSink = new FileSinkDGSFiltered();
+ * graph.addSink(fileSink);
+ * 
+ * // No need to save the attribute &quot;attr1&quot; of any edges
+ * fileSink.addEdgeAttributeFiltered(&quot;attr1&quot;);
+ * // No need to save graph attributes
+ * fileSink.setNoFilterGraphAttributeAdded(false);
+ * 
+ * // Start to listen event
+ * fileSink.begin(&quot;./my_graph.dgs&quot;);
+ * 
+ * // Make some modifications on the graph and generate events
+ * graph.stepBegins(0); // this event will be saved
+ * graph.setAttribute(&quot;attr2&quot;, 2); // this event will not be saved
+ * Node a = graph.addNode(&quot;A&quot;); // this event will be saved
+ * a.setAttribute(&quot;attr3&quot;, 3); // this event will be saved
+ * 
+ * // and now, no more need to save modification on nodes attributes
+ * fileSink.setNoFilterNodeAttributeChanged(false);
+ * 
+ * Node b = graph.addNode(&quot;B&quot;); // this event will be saved
+ * b.setAttribute(&quot;attr4&quot;, 4); // this event will not be saved
+ * 
+ * Edge ab = graph.addEdge(&quot;AB&quot;, a, b); // this event will be saved
+ * ab.setAttribute(&quot;attr1&quot;, 1); // this event will not be saved
+ * ab.setAttribute(&quot;attr5&quot;, 5); // this event will be saved
+ * 
+ * fileSink.end();
+ * &lt;/pre&gt;
+ */
+<span class="nc" id="L88">public class FileSinkDGSFiltered extends FileSinkBaseFiltered {</span>
+
+	// Attribute
+
+	/**
+	 * A shortcut to the output.
+	 */
+	protected PrintWriter out;
+<span class="nc" id="L96">	protected String graphName = &quot;&quot;;</span>
+
+	// Command
+
+	@Override
+	protected void outputHeader() throws IOException {
+<span class="nc" id="L102">		out = (PrintWriter) output;</span>
+<span class="nc" id="L103">		out.printf(&quot;DGS004%n&quot;);</span>
+
+<span class="nc bnc" id="L105" title="All 2 branches missed.">		if (graphName.length() &lt;= 0)</span>
+<span class="nc" id="L106">			out.printf(&quot;null 0 0%n&quot;);</span>
+		else
+<span class="nc" id="L108">			out.printf(&quot;\&quot;%s\&quot; 0 0%n&quot;, FileSinkDGSUtility.formatStringForQuoting(graphName));</span>
+<span class="nc" id="L109">	}</span>
+
+	@Override
+	protected void outputEndOfFile() throws IOException {
+		// NOP
+<span class="nc" id="L114">	}</span>
+
+	public void edgeAttributeAdded(String graphId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc bnc" id="L117" title="All 4 branches missed.">		if (noFilterEdgeAttributeAdded &amp;&amp; !edgeAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L118">			edgeAttributeChanged(graphId, timeId, edgeId, attribute, null, value);</span>
+<span class="nc" id="L119">	}</span>
+
+	public void edgeAttributeChanged(String graphId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L123" title="All 4 branches missed.">		if (noFilterEdgeAttributeChanged &amp;&amp; !edgeAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L124">			out.printf(&quot;ce \&quot;%s\&quot; %s%n&quot;, FileSinkDGSUtility.formatStringForQuoting(edgeId),</span>
+<span class="nc" id="L125">					FileSinkDGSUtility.attributeString(attribute, newValue, false));</span>
+<span class="nc" id="L126">	}</span>
+
+	public void edgeAttributeRemoved(String graphId, long timeId, String edgeId, String attribute) {
+<span class="nc bnc" id="L129" title="All 4 branches missed.">		if (noFilterEdgeAttributeRemoved &amp;&amp; !edgeAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L130">			out.printf(&quot;ce \&quot;%s\&quot; %s%n&quot;, FileSinkDGSUtility.formatStringForQuoting(edgeId),</span>
+<span class="nc" id="L131">					FileSinkDGSUtility.attributeString(attribute, null, true));</span>
+<span class="nc" id="L132">	}</span>
+
+	public void graphAttributeAdded(String graphId, long timeId, String attribute, Object value) {
+<span class="nc bnc" id="L135" title="All 4 branches missed.">		if (noFilterGraphAttributeAdded &amp;&amp; !graphAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L136">			graphAttributeChanged(graphId, timeId, attribute, null, value);</span>
+<span class="nc" id="L137">	}</span>
+
+	public void graphAttributeChanged(String graphId, long timeId, String attribute, Object oldValue, Object newValue) {
+<span class="nc bnc" id="L140" title="All 4 branches missed.">		if (noFilterGraphAttributeChanged &amp;&amp; !graphAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L141">			out.printf(&quot;cg %s%n&quot;, FileSinkDGSUtility.attributeString(attribute, newValue, false));</span>
+<span class="nc" id="L142">	}</span>
+
+	public void graphAttributeRemoved(String graphId, long timeId, String attribute) {
+<span class="nc bnc" id="L145" title="All 4 branches missed.">		if (noFilterGraphAttributeRemoved &amp;&amp; !graphAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L146">			out.printf(&quot;cg %s%n&quot;, FileSinkDGSUtility.attributeString(attribute, null, true));</span>
+<span class="nc" id="L147">	}</span>
+
+	public void nodeAttributeAdded(String graphId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc bnc" id="L150" title="All 4 branches missed.">		if (noFilterNodeAttributeAdded &amp;&amp; !nodeAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L151">			nodeAttributeChanged(graphId, timeId, nodeId, attribute, null, value);</span>
+<span class="nc" id="L152">	}</span>
+
+	public void nodeAttributeChanged(String graphId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L156" title="All 4 branches missed.">		if (noFilterNodeAttributeChanged &amp;&amp; !nodeAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L157">			out.printf(&quot;cn \&quot;%s\&quot; %s%n&quot;, FileSinkDGSUtility.formatStringForQuoting(nodeId),</span>
+<span class="nc" id="L158">					FileSinkDGSUtility.attributeString(attribute, newValue, false));</span>
+<span class="nc" id="L159">	}</span>
+
+	public void nodeAttributeRemoved(String graphId, long timeId, String nodeId, String attribute) {
+<span class="nc bnc" id="L162" title="All 4 branches missed.">		if (noFilterNodeAttributeRemoved &amp;&amp; !nodeAttributesFiltered.contains(attribute))</span>
+<span class="nc" id="L163">			out.printf(&quot;cn \&quot;%s\&quot; %s%n&quot;, FileSinkDGSUtility.formatStringForQuoting(nodeId),</span>
+<span class="nc" id="L164">					FileSinkDGSUtility.attributeString(attribute, null, true));</span>
+<span class="nc" id="L165">	}</span>
+
+	public void edgeAdded(String graphId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc bnc" id="L169" title="All 2 branches missed.">		if (noFilterEdgeAdded) {</span>
+<span class="nc" id="L170">			edgeId = FileSinkDGSUtility.formatStringForQuoting(edgeId);</span>
+<span class="nc" id="L171">			fromNodeId = FileSinkDGSUtility.formatStringForQuoting(fromNodeId);</span>
+<span class="nc" id="L172">			toNodeId = FileSinkDGSUtility.formatStringForQuoting(toNodeId);</span>
+<span class="nc bnc" id="L173" title="All 2 branches missed.">			out.printf(&quot;ae \&quot;%s\&quot; \&quot;%s\&quot; %s \&quot;%s\&quot;%n&quot;, edgeId, fromNodeId, directed ? &quot;&gt;&quot; : &quot;&quot;, toNodeId);</span>
+		}
+<span class="nc" id="L175">	}</span>
+
+	public void edgeRemoved(String graphId, long timeId, String edgeId) {
+<span class="nc bnc" id="L178" title="All 2 branches missed.">		if (noFilterEdgeRemoved)</span>
+<span class="nc" id="L179">			out.printf(&quot;de \&quot;%s\&quot;%n&quot;, FileSinkDGSUtility.formatStringForQuoting(edgeId));</span>
+<span class="nc" id="L180">	}</span>
+
+	public void graphCleared(String graphId, long timeId) {
+<span class="nc bnc" id="L183" title="All 2 branches missed.">		if (noFilterGraphCleared)</span>
+<span class="nc" id="L184">			out.printf(&quot;cl%n&quot;);</span>
+<span class="nc" id="L185">	}</span>
+
+	public void nodeAdded(String graphId, long timeId, String nodeId) {
+<span class="nc bnc" id="L188" title="All 2 branches missed.">		if (noFilterNodeAdded)</span>
+<span class="nc" id="L189">			out.printf(&quot;an \&quot;%s\&quot;%n&quot;, FileSinkDGSUtility.formatStringForQuoting(nodeId));</span>
+<span class="nc" id="L190">	}</span>
+
+	public void nodeRemoved(String graphId, long timeId, String nodeId) {
+<span class="nc bnc" id="L193" title="All 2 branches missed.">		if (noFilterNodeRemoved)</span>
+<span class="nc" id="L194">			out.printf(&quot;dn \&quot;%s\&quot;%n&quot;, FileSinkDGSUtility.formatStringForQuoting(nodeId));</span>
+<span class="nc" id="L195">	}</span>
+
+	public void stepBegins(String graphId, long timeId, double step) {
+<span class="nc bnc" id="L198" title="All 2 branches missed.">		if (noFilterStepBegins)</span>
+<span class="nc" id="L199">			out.printf(Locale.US, &quot;st %f%n&quot;, step);</span>
+<span class="nc" id="L200">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

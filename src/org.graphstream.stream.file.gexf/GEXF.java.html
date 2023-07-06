@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GEXF.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.gexf</a> &gt; <span class="el_source">GEXF.java</span></div><h1>GEXF.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-09-18
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.gexf;
+
+import java.util.HashSet;
+
+import javax.xml.stream.XMLStreamException;
+
+import org.graphstream.stream.PipeBase;
+
+public class GEXF extends PipeBase implements GEXFElement {
+	public static final String XMLNS = &quot;http://www.gexf.net/1.2draft&quot;;
+	public static final String XMLNS_XSI = &quot;http://www.w3.org/2001/XMLSchema-instance&quot;;
+	public static final String XMLNS_SL = &quot;http://www.gexf.net/1.2draft http://www.gexf.net/1.2draft/gexf.xsd&quot;;
+	public static final String XMLNS_VIZ = &quot;http://www.gexf.net/1.2draft/viz&quot;;
+
+	public static final String VERSION = &quot;1.2&quot;;
+
+	GEXFMeta meta;
+	GEXFGraph graph;
+
+	int currentAttributeIndex;
+
+	double step;
+
+	HashSet&lt;Extension&gt; extensions;
+
+	TimeFormat timeFormat;
+
+<span class="nc" id="L58">	public GEXF() {</span>
+<span class="nc" id="L59">		meta = new GEXFMeta();</span>
+<span class="nc" id="L60">		currentAttributeIndex = 0;</span>
+<span class="nc" id="L61">		step = 0;</span>
+<span class="nc" id="L62">		graph = new GEXFGraph(this);</span>
+<span class="nc" id="L63">		timeFormat = TimeFormat.DOUBLE;</span>
+
+<span class="nc" id="L65">		extensions = new HashSet&lt;Extension&gt;();</span>
+<span class="nc" id="L66">		extensions.add(Extension.DATA);</span>
+<span class="nc" id="L67">		extensions.add(Extension.DYNAMICS);</span>
+<span class="nc" id="L68">		extensions.add(Extension.VIZ);</span>
+<span class="nc" id="L69">	}</span>
+
+	public TimeFormat getTimeFormat() {
+<span class="nc" id="L72">		return timeFormat;</span>
+	}
+
+	public boolean isExtensionEnable(Extension ext) {
+<span class="nc" id="L76">		return extensions.contains(ext);</span>
+	}
+
+	public void disable(Extension ext) {
+<span class="nc" id="L80">		extensions.remove(ext);</span>
+<span class="nc" id="L81">	}</span>
+
+	public void enable(Extension ext) {
+<span class="nc" id="L84">		extensions.add(ext);</span>
+<span class="nc" id="L85">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.file.gexf.GEXFElement#export(org.graphstream.stream
+	 * .file.gexf.SmartXMLWriter)
+	 */
+	public void export(SmartXMLWriter stream) throws XMLStreamException {
+<span class="nc" id="L95">		stream.startElement(&quot;gexf&quot;);</span>
+
+<span class="nc" id="L97">		stream.stream.writeAttribute(&quot;xmlns&quot;, XMLNS);</span>
+<span class="nc" id="L98">		stream.stream.writeAttribute(&quot;xmlns:xsi&quot;, XMLNS_XSI);</span>
+
+<span class="nc bnc" id="L100" title="All 2 branches missed.">		if (isExtensionEnable(Extension.VIZ))</span>
+<span class="nc" id="L101">			stream.stream.writeAttribute(&quot;xmlns:viz&quot;, XMLNS_VIZ);</span>
+
+<span class="nc" id="L103">		stream.stream.writeAttribute(&quot;xsi:schemaLocation&quot;, XMLNS_SL);</span>
+<span class="nc" id="L104">		stream.stream.writeAttribute(&quot;version&quot;, VERSION);</span>
+
+<span class="nc" id="L106">		meta.export(stream);</span>
+<span class="nc" id="L107">		graph.export(stream);</span>
+
+<span class="nc" id="L109">		stream.endElement(); // GEXF</span>
+<span class="nc" id="L110">	}</span>
+
+	int getNewAttributeIndex() {
+<span class="nc" id="L113">		return currentAttributeIndex++;</span>
+	}
+
+	GEXFAttribute getNodeAttribute(String key) {
+<span class="nc" id="L117">		return graph.nodesAttributes.attributes.get(key);</span>
+	}
+
+	GEXFAttribute getEdgeAttribute(String key) {
+<span class="nc" id="L121">		return graph.edgesAttributes.attributes.get(key);</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.PipeBase#stepBegins(java.lang.String, long,
+	 * double)
+	 */
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L131">		this.step = step;</span>
+<span class="nc" id="L132">		super.stepBegins(sourceId, timeId, step);</span>
+<span class="nc" id="L133">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,1169 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSourceGraphML.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSourceGraphML.java</span></div><h1>FileSourceGraphML.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-22
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hans Schulz &lt;hans.schulz@sap.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.Stack;
+import java.util.logging.Logger;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.Location;
+import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamConstants;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.Attribute;
+import javax.xml.stream.events.XMLEvent;
+
+import org.graphstream.stream.SourceBase;
+
+/**
+ * GraphML is a comprehensive and easy-to-use file format for graphs. It
+ * consists of a language core to describe the structural properties of a graph
+ * and a flexible extension mechanism to add application-specific data. Its main
+ * features include support of
+ * &lt;ul&gt;
+ * &lt;li&gt;directed, undirected, and mixed graphs,&lt;/li&gt;
+ * &lt;li&gt;hypergraphs,&lt;/li&gt;
+ * &lt;li&gt;hierarchical graphs,&lt;/li&gt;
+ * &lt;li&gt;graphical representations,&lt;/li&gt;
+ * &lt;li&gt;references to external data,&lt;/li&gt;
+ * &lt;li&gt;application-specific attribute data, and&lt;/li&gt;
+ * &lt;li&gt;light-weight parsers.&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;p/&gt;
+ * Unlike many other file formats for graphs, GraphML does not use a custom
+ * syntax. Instead, it is based on XML and hence ideally suited as a common
+ * denominator for all kinds of services generating, archiving, or processing
+ * graphs.
+ * &lt;p/&gt;
+ * &lt;a href=&quot;http://graphml.graphdrawing.org/index.html&quot;&gt;Source&lt;/a&gt;
+ */
+public class FileSourceGraphML extends FileSourceXML {
+<span class="nc" id="L82">	private static final Logger LOGGER = Logger.getLogger(FileSourceGraphML.class.getName());</span>
+
+	public interface GraphMLConstants {
+<span class="nc" id="L85">		enum Balise {</span>
+<span class="nc" id="L86">			GRAPHML, GRAPH, NODE, EDGE, HYPEREDGE, DESC, DATA, LOCATOR, PORT, KEY, DEFAULT</span>
+		}
+
+<span class="nc" id="L89">		enum GraphAttribute {</span>
+<span class="nc" id="L90">			ID, EDGEDEFAULT</span>
+		}
+
+<span class="nc" id="L93">		enum LocatorAttribute {</span>
+<span class="nc" id="L94">			XMLNS_XLINK, XLINK_HREF, XLINK_TYPE</span>
+		}
+
+<span class="nc" id="L97">		enum NodeAttribute {</span>
+<span class="nc" id="L98">			ID</span>
+		}
+
+<span class="nc" id="L101">		enum EdgeAttribute {</span>
+<span class="nc" id="L102">			ID, SOURCE, SOURCEPORT, TARGET, TARGETPORT, DIRECTED</span>
+		}
+
+<span class="nc" id="L105">		enum DataAttribute {</span>
+<span class="nc" id="L106">			KEY, ID</span>
+		}
+
+<span class="nc" id="L109">		enum PortAttribute {</span>
+<span class="nc" id="L110">			NAME</span>
+		}
+
+<span class="nc" id="L113">		enum EndPointAttribute {</span>
+<span class="nc" id="L114">			ID, NODE, PORT, TYPE</span>
+		}
+
+<span class="nc" id="L117">		enum EndPointType {</span>
+<span class="nc" id="L118">			IN, OUT, UNDIR</span>
+		}
+
+<span class="nc" id="L121">		enum HyperEdgeAttribute {</span>
+<span class="nc" id="L122">			ID</span>
+		}
+
+<span class="nc" id="L125">		enum KeyAttribute {</span>
+<span class="nc" id="L126">			ID, FOR, ATTR_NAME, ATTR_TYPE</span>
+		}
+
+<span class="nc" id="L129">		enum KeyDomain {</span>
+<span class="nc" id="L130">			GRAPHML, GRAPH, NODE, EDGE, HYPEREDGE, PORT, ENDPOINT, ALL</span>
+		}
+
+<span class="nc" id="L133">		enum KeyAttrType {</span>
+<span class="nc" id="L134">			BOOLEAN, INT, LONG, FLOAT, DOUBLE, STRING</span>
+		}
+
+		class Key {
+			KeyDomain domain;
+			String name;
+			KeyAttrType type;
+<span class="nc" id="L141">			String def = null;</span>
+
+<span class="nc" id="L143">			Key() {</span>
+<span class="nc" id="L144">				domain = KeyDomain.ALL;</span>
+<span class="nc" id="L145">				name = null;</span>
+<span class="nc" id="L146">				type = KeyAttrType.STRING;</span>
+<span class="nc" id="L147">			}</span>
+
+			Object getKeyValue(String value) {
+<span class="nc bnc" id="L150" title="All 2 branches missed.">				if (value == null)</span>
+<span class="nc" id="L151">					return null;</span>
+
+<span class="nc bnc" id="L153" title="All 7 branches missed.">				switch (type) {</span>
+				case STRING:
+<span class="nc" id="L155">					return value;</span>
+				case INT:
+<span class="nc" id="L157">					return Integer.valueOf(value);</span>
+				case LONG:
+<span class="nc" id="L159">					return Long.valueOf(value);</span>
+				case FLOAT:
+<span class="nc" id="L161">					return Float.valueOf(value);</span>
+				case DOUBLE:
+<span class="nc" id="L163">					return Double.valueOf(value);</span>
+				case BOOLEAN:
+<span class="nc" id="L165">					return Boolean.valueOf(value);</span>
+				}
+
+<span class="nc" id="L168">				return value;</span>
+			}
+
+			Object getDefaultValue() {
+<span class="nc" id="L172">				return getKeyValue(def);</span>
+			}
+		}
+
+<span class="nc" id="L176">		class Data {</span>
+			Key key;
+			String id;
+			String value;
+		}
+
+		class Locator {
+			String href;
+			String xlink;
+			String type;
+
+<span class="nc" id="L187">			Locator() {</span>
+<span class="nc" id="L188">				xlink = &quot;http://www.w3.org/TR/2000/PR-xlink-20001220/&quot;;</span>
+<span class="nc" id="L189">				type = &quot;simple&quot;;</span>
+<span class="nc" id="L190">				href = null;</span>
+<span class="nc" id="L191">			}</span>
+		}
+
+		class Port {
+			String name;
+			String desc;
+
+			LinkedList&lt;Data&gt; datas;
+			LinkedList&lt;Port&gt; ports;
+
+<span class="nc" id="L201">			Port() {</span>
+<span class="nc" id="L202">				name = null;</span>
+<span class="nc" id="L203">				desc = null;</span>
+
+<span class="nc" id="L205">				datas = new LinkedList&lt;Data&gt;();</span>
+<span class="nc" id="L206">				ports = new LinkedList&lt;Port&gt;();</span>
+<span class="nc" id="L207">			}</span>
+		}
+
+		class EndPoint {
+			String id;
+			String node;
+			String port;
+			String desc;
+			EndPointType type;
+
+<span class="nc" id="L217">			EndPoint() {</span>
+<span class="nc" id="L218">				id = null;</span>
+<span class="nc" id="L219">				node = null;</span>
+<span class="nc" id="L220">				port = null;</span>
+<span class="nc" id="L221">				desc = null;</span>
+<span class="nc" id="L222">				type = EndPointType.UNDIR;</span>
+<span class="nc" id="L223">			}</span>
+		}
+	}
+
+	protected GraphMLParser parser;
+
+	/**
+	 * Build a new source to parse an xml stream in GraphML format.
+	 */
+<span class="nc" id="L232">	public FileSourceGraphML() {</span>
+<span class="nc" id="L233">	}</span>
+
+	@Override
+	protected void afterStartDocument() throws IOException, XMLStreamException {
+<span class="nc" id="L237">		parser = new GraphMLParser();</span>
+<span class="nc" id="L238">		parser.__graphml();</span>
+<span class="nc" id="L239">	}</span>
+
+	@Override
+	protected void beforeEndDocument() throws IOException, XMLStreamException {
+<span class="nc" id="L243">		parser = null;</span>
+<span class="nc" id="L244">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSource#nextEvents()
+	 */
+	public boolean nextEvents() throws IOException {
+<span class="nc" id="L252">		return false;</span>
+	}
+
+	protected class GraphMLParser extends Parser implements GraphMLConstants {
+		protected HashMap&lt;String, Key&gt; keys;
+		protected Stack&lt;String&gt; graphId;
+		protected int graphCounter;
+
+<span class="nc" id="L260">		public GraphMLParser() {</span>
+<span class="nc" id="L261">			keys = new HashMap&lt;String, Key&gt;();</span>
+<span class="nc" id="L262">			graphId = new Stack&lt;String&gt;();</span>
+<span class="nc" id="L263">			graphCounter = 0;</span>
+<span class="nc" id="L264">		}</span>
+
+		private Object getValue(Data data) {
+<span class="nc" id="L267">			return getValue(data.key, data.value);</span>
+		}
+
+		private Object getValue(Key key, String value) {
+<span class="nc bnc" id="L271" title="All 7 branches missed.">			switch (key.type) {</span>
+			case BOOLEAN:
+<span class="nc" id="L273">				return Boolean.parseBoolean(value);</span>
+			case INT:
+<span class="nc" id="L275">				return Integer.parseInt(value);</span>
+			case LONG:
+<span class="nc" id="L277">				return Long.parseLong(value);</span>
+			case FLOAT:
+<span class="nc" id="L279">				return Float.parseFloat(value);</span>
+			case DOUBLE:
+<span class="nc" id="L281">				return Double.parseDouble(value);</span>
+			case STRING:
+<span class="nc" id="L283">				return value;</span>
+			}
+
+<span class="nc" id="L286">			return value;</span>
+		}
+
+		private Object getDefaultValue(Key key) {
+<span class="nc bnc" id="L290" title="All 7 branches missed.">			switch (key.type) {</span>
+			case BOOLEAN:
+<span class="nc" id="L292">				return Boolean.TRUE;</span>
+			case INT:
+<span class="nc bnc" id="L294" title="All 2 branches missed.">				if (key.def != null)</span>
+<span class="nc" id="L295">					return Integer.valueOf(key.def);</span>
+
+<span class="nc" id="L297">				return Integer.valueOf(0);</span>
+			case LONG:
+<span class="nc bnc" id="L299" title="All 2 branches missed.">				if (key.def != null)</span>
+<span class="nc" id="L300">					return Long.valueOf(key.def);</span>
+
+<span class="nc" id="L302">				return Long.valueOf(0);</span>
+			case FLOAT:
+<span class="nc bnc" id="L304" title="All 2 branches missed.">				if (key.def != null)</span>
+<span class="nc" id="L305">					return Float.valueOf(key.def);</span>
+
+<span class="nc" id="L307">				return Float.valueOf(0.0f);</span>
+			case DOUBLE:
+<span class="nc bnc" id="L309" title="All 2 branches missed.">				if (key.def != null)</span>
+<span class="nc" id="L310">					return Double.valueOf(key.def);</span>
+
+<span class="nc" id="L312">				return Double.valueOf(0.0);</span>
+			case STRING:
+<span class="nc bnc" id="L314" title="All 2 branches missed.">				if (key.def != null)</span>
+<span class="nc" id="L315">					return key.def;</span>
+
+<span class="nc" id="L317">				return &quot;&quot;;</span>
+<span class="nc" id="L318">			}</span>
+
+<span class="nc bnc" id="L320" title="All 2 branches missed.">			return key.def != null ? key.def : Boolean.TRUE;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT graphml  ((desc)?,(key)*,((data)|(graph))*)&gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __graphml() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L334">			e = getNextEvent();</span>
+<span class="nc" id="L335">			checkValid(e, XMLEvent.START_ELEMENT, &quot;graphml&quot;);</span>
+
+<span class="nc" id="L337">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L339" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L340">				pushback(e);</span>
+<span class="nc" id="L341">				__desc();</span>
+
+<span class="nc" id="L343">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L346" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;key&quot;)) {</span>
+<span class="nc" id="L347">				pushback(e);</span>
+<span class="nc" id="L348">				__key();</span>
+
+<span class="nc" id="L350">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L353" title="All 4 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;) || isEvent(e, XMLEvent.START_ELEMENT, &quot;graph&quot;)) {</span>
+<span class="nc" id="L354">				pushback(e);</span>
+
+<span class="nc bnc" id="L356" title="All 2 branches missed.">				if (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;)) {</span>
+<span class="nc" id="L357">					__data();</span>
+<span class="nc" id="L358">				} else {</span>
+<span class="nc" id="L359">					__graph();</span>
+				}
+
+<span class="nc" id="L362">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L365">			checkValid(e, XMLEvent.END_ELEMENT, &quot;graphml&quot;);</span>
+<span class="nc" id="L366">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT desc (#PCDATA)&gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @return
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private String __desc() throws IOException, XMLStreamException {
+			XMLEvent e;
+			String desc;
+
+<span class="nc" id="L381">			e = getNextEvent();</span>
+<span class="nc" id="L382">			checkValid(e, XMLEvent.START_ELEMENT, &quot;desc&quot;);</span>
+
+<span class="nc" id="L384">			desc = __characters();</span>
+
+<span class="nc" id="L386">			e = getNextEvent();</span>
+<span class="nc" id="L387">			checkValid(e, XMLEvent.END_ELEMENT, &quot;desc&quot;);</span>
+
+<span class="nc" id="L389">			return desc;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT locator EMPTY&gt;
+		 * &lt;!ATTLIST locator
+		 *           xmlns:xlink   CDATA    #FIXED    &quot;http://www.w3.org/TR/2000/PR-xlink-20001220/&quot;
+		 *           xlink:href    CDATA    #REQUIRED
+		 *           xlink:type    (simple) #FIXED    &quot;simple&quot;
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @return
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private Locator __locator() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L409">			e = getNextEvent();</span>
+<span class="nc" id="L410">			checkValid(e, XMLEvent.START_ELEMENT, &quot;locator&quot;);</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L413">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+
+<span class="nc" id="L415">			Locator loc = new Locator();</span>
+
+<span class="nc bnc" id="L417" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L418">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L421">					LocatorAttribute attribute = LocatorAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L423" title="All 4 branches missed.">					switch (attribute) {</span>
+					case XMLNS_XLINK:
+<span class="nc" id="L425">						loc.xlink = a.getValue();</span>
+<span class="nc" id="L426">						break;</span>
+					case XLINK_HREF:
+<span class="nc" id="L428">						loc.href = a.getValue();</span>
+<span class="nc" id="L429">						break;</span>
+					case XLINK_TYPE:
+<span class="nc" id="L431">						loc.type = a.getValue();</span>
+						break;
+					}
+<span class="nc" id="L434">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L435">					newParseError(e, false, &quot;invalid locator attribute '%s'&quot;, a.getName().getLocalPart());</span>
+				}
+			}
+
+<span class="nc" id="L439">			e = getNextEvent();</span>
+<span class="nc" id="L440">			checkValid(e, XMLEvent.END_ELEMENT, &quot;locator&quot;);</span>
+
+<span class="nc bnc" id="L442" title="All 2 branches missed.">			if (loc.href == null)</span>
+<span class="nc" id="L443">				newParseError(e, true, &quot;locator requires an href&quot;);</span>
+
+<span class="nc" id="L445">			return loc;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT key (#PCDATA)&gt;
+		 * &lt;!ATTLIST key
+		 *           id  ID                                            #REQUIRED
+		 *           for (graphml|graph|node|edge|hyperedge|port|endpoint|all) &quot;all&quot;
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __key() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L463">			e = getNextEvent();</span>
+<span class="nc" id="L464">			checkValid(e, XMLEvent.START_ELEMENT, &quot;key&quot;);</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L467">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+
+<span class="nc" id="L469">			String id = null;</span>
+<span class="nc" id="L470">			KeyDomain domain = KeyDomain.ALL;</span>
+<span class="nc" id="L471">			KeyAttrType type = KeyAttrType.STRING;</span>
+<span class="nc" id="L472">			String name = null;</span>
+<span class="nc" id="L473">			String def = null;</span>
+
+<span class="nc bnc" id="L475" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L476">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L479">					KeyAttribute attribute = KeyAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L481" title="All 5 branches missed.">					switch (attribute) {</span>
+					case ID:
+<span class="nc" id="L483">						id = a.getValue();</span>
+
+<span class="nc" id="L485">						break;</span>
+					case FOR:
+						try {
+<span class="nc" id="L488">							domain = KeyDomain.valueOf(toConstantName(a.getValue()));</span>
+<span class="nc" id="L489">						} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L490">							newParseError(e, false, &quot;invalid key domain '%s'&quot;, a.getValue());</span>
+						}
+
+<span class="nc" id="L493">						break;</span>
+					case ATTR_TYPE:
+						try {
+<span class="nc" id="L496">							type = KeyAttrType.valueOf(toConstantName(a.getValue()));</span>
+<span class="nc" id="L497">						} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L498">							newParseError(e, false, &quot;invalid key type '%s'&quot;, a.getValue());</span>
+						}
+
+<span class="nc" id="L501">						break;</span>
+					case ATTR_NAME:
+<span class="nc" id="L503">						name = a.getValue();</span>
+
+						break;
+					}
+<span class="nc" id="L507">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L508">					newParseError(e, false, &quot;invalid key attribute '%s'&quot;, a.getName().getLocalPart());</span>
+				}
+			}
+
+<span class="nc" id="L512">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L514" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;default&quot;)) {</span>
+<span class="nc" id="L515">				def = __characters();</span>
+
+<span class="nc" id="L517">				e = getNextEvent();</span>
+<span class="nc" id="L518">				checkValid(e, XMLEvent.END_ELEMENT, &quot;default&quot;);</span>
+
+<span class="nc" id="L520">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L523">			checkValid(e, XMLEvent.END_ELEMENT, &quot;key&quot;);</span>
+
+<span class="nc bnc" id="L525" title="All 2 branches missed.">			if (id == null)</span>
+<span class="nc" id="L526">				newParseError(e, true, &quot;key requires an id&quot;);</span>
+
+<span class="nc bnc" id="L528" title="All 2 branches missed.">			if (name == null)</span>
+<span class="nc" id="L529">				name = id;</span>
+
+<span class="nc" id="L531">			Key k = new Key();</span>
+<span class="nc" id="L532">			k.name = name;</span>
+<span class="nc" id="L533">			k.domain = domain;</span>
+<span class="nc" id="L534">			k.type = type;</span>
+<span class="nc" id="L535">			k.def = def;</span>
+
+<span class="nc" id="L537">			keys.put(id, k);</span>
+<span class="nc" id="L538">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT port ((desc)?,((data)|(port))*)&gt;
+		 * &lt;!ATTLIST port
+		 *           name    NMTOKEN  #REQUIRED
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @return
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private Port __port() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L555">			e = getNextEvent();</span>
+<span class="nc" id="L556">			checkValid(e, XMLEvent.START_ELEMENT, &quot;port&quot;);</span>
+
+<span class="nc" id="L558">			Port port = new Port();</span>
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L560">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+<span class="nc bnc" id="L561" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L562">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L565">					PortAttribute attribute = PortAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L567" title="All 2 branches missed.">					switch (attribute) {</span>
+					case NAME:
+<span class="nc" id="L569">						port.name = a.getValue();</span>
+						break;
+					}
+<span class="nc" id="L572">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L573">					newParseError(e, false, &quot;invalid attribute '%s' for '&lt;port&gt;'&quot;, a.getName().getLocalPart());</span>
+				}
+			}
+
+<span class="nc bnc" id="L577" title="All 2 branches missed.">			if (port.name == null)</span>
+<span class="nc" id="L578">				newParseError(e, true, &quot;'&lt;port&gt;' element requires a 'name' attribute&quot;);</span>
+
+<span class="nc" id="L580">			e = getNextEvent();</span>
+<span class="nc bnc" id="L581" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L582">				pushback(e);</span>
+<span class="nc" id="L583">				port.desc = __desc();</span>
+<span class="nc" id="L584">			} else {</span>
+<span class="nc bnc" id="L585" title="All 4 branches missed.">				while (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;) || isEvent(e, XMLEvent.START_ELEMENT, &quot;port&quot;)) {</span>
+<span class="nc bnc" id="L586" title="All 2 branches missed.">					if (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;)) {</span>
+						Data data;
+
+<span class="nc" id="L589">						pushback(e);</span>
+<span class="nc" id="L590">						data = __data();</span>
+
+<span class="nc" id="L592">						port.datas.add(data);</span>
+<span class="nc" id="L593">					} else {</span>
+						Port portChild;
+
+<span class="nc" id="L596">						pushback(e);</span>
+<span class="nc" id="L597">						portChild = __port();</span>
+
+<span class="nc" id="L599">						port.ports.add(portChild);</span>
+					}
+
+<span class="nc" id="L602">					e = getNextEvent();</span>
+				}
+			}
+
+<span class="nc" id="L606">			e = getNextEvent();</span>
+<span class="nc" id="L607">			checkValid(e, XMLEvent.END_ELEMENT, &quot;port&quot;);</span>
+
+<span class="nc" id="L609">			return port;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT endpoint ((desc)?)&gt;
+		 * &lt;!ATTLIST endpoint
+		 *           id    ID             #IMPLIED
+		 *           node  IDREF          #REQUIRED
+		 *           port  NMTOKEN        #IMPLIED
+		 *           type  (in|out|undir) &quot;undir&quot;
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @return
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private EndPoint __endpoint() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L630">			e = getNextEvent();</span>
+<span class="nc" id="L631">			checkValid(e, XMLEvent.START_ELEMENT, &quot;endpoint&quot;);</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L634">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+<span class="nc" id="L635">			EndPoint ep = new EndPoint();</span>
+
+<span class="nc bnc" id="L637" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L638">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L641">					EndPointAttribute attribute = EndPointAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L643" title="All 5 branches missed.">					switch (attribute) {</span>
+					case NODE:
+<span class="nc" id="L645">						ep.node = a.getValue();</span>
+<span class="nc" id="L646">						break;</span>
+					case ID:
+<span class="nc" id="L648">						ep.id = a.getValue();</span>
+<span class="nc" id="L649">						break;</span>
+					case PORT:
+<span class="nc" id="L651">						ep.port = a.getValue();</span>
+<span class="nc" id="L652">						break;</span>
+					case TYPE:
+						try {
+<span class="nc" id="L655">							ep.type = EndPointType.valueOf(toConstantName(a.getValue()));</span>
+<span class="nc" id="L656">						} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L657">							newParseError(e, false, &quot;invalid end point type '%s'&quot;, a.getValue());</span>
+						}
+
+						break;
+					}
+<span class="nc" id="L662">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L663">					newParseError(e, false, &quot;invalid attribute '%s' for '&lt;endpoint&gt;'&quot;, a.getName().getLocalPart());</span>
+				}
+			}
+
+<span class="nc bnc" id="L667" title="All 2 branches missed.">			if (ep.node == null)</span>
+<span class="nc" id="L668">				newParseError(e, true, &quot;'&lt;endpoint&gt;' element requires a 'node' attribute&quot;);</span>
+
+<span class="nc" id="L670">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L672" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L673">				pushback(e);</span>
+<span class="nc" id="L674">				ep.desc = __desc();</span>
+			}
+
+<span class="nc" id="L677">			e = getNextEvent();</span>
+<span class="nc" id="L678">			checkValid(e, XMLEvent.END_ELEMENT, &quot;endpoint&quot;);</span>
+
+<span class="nc" id="L680">			return ep;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT data  (#PCDATA)&gt;
+		 * &lt;!ATTLIST data
+		 *           key      IDREF        #REQUIRED
+		 *           id       ID           #IMPLIED
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @return
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private Data __data() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L699">			e = getNextEvent();</span>
+<span class="nc" id="L700">			checkValid(e, XMLEvent.START_ELEMENT, &quot;data&quot;);</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L703">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+<span class="nc" id="L704">			String key = null, id = null, value;</span>
+
+<span class="nc bnc" id="L706" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L707">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L710">					DataAttribute attribute = DataAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L712" title="All 3 branches missed.">					switch (attribute) {</span>
+					case KEY:
+<span class="nc" id="L714">						key = a.getValue();</span>
+<span class="nc" id="L715">						break;</span>
+					case ID:
+<span class="nc" id="L717">						id = a.getValue();</span>
+						break;
+					}
+<span class="nc" id="L720">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L721">					newParseError(e, false, &quot;invalid attribute '%s' for '&lt;data&gt;'&quot;, a.getName().getLocalPart());</span>
+				}
+			}
+
+<span class="nc bnc" id="L725" title="All 2 branches missed.">			if (key == null)</span>
+<span class="nc" id="L726">				newParseError(e, true, &quot;'&lt;data&gt;' element must have a 'key' attribute&quot;);</span>
+
+<span class="nc" id="L728">			value = __characters();</span>
+
+<span class="nc" id="L730">			e = getNextEvent();</span>
+<span class="nc" id="L731">			checkValid(e, XMLEvent.END_ELEMENT, &quot;data&quot;);</span>
+
+<span class="nc bnc" id="L733" title="All 2 branches missed.">			if (!keys.containsKey(key))</span>
+<span class="nc" id="L734">				newParseError(e, true, &quot;unknown key '%s'&quot;, key);</span>
+
+<span class="nc" id="L736">			Data d = new Data();</span>
+
+<span class="nc" id="L738">			d.key = keys.get(key);</span>
+<span class="nc" id="L739">			d.id = id;</span>
+<span class="nc" id="L740">			d.value = value;</span>
+
+<span class="nc" id="L742">			return d;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT graph    ((desc)?,((((data)|(node)|(edge)|(hyperedge))*)|(locator)))&gt;
+		 * &lt;!ATTLIST graph
+		 *     id          ID                    #IMPLIED
+		 *     edgedefault (directed|undirected) #REQUIRED
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __graph() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L760">			e = getNextEvent();</span>
+<span class="nc" id="L761">			checkValid(e, XMLEvent.START_ELEMENT, &quot;graph&quot;);</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L764">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+
+<span class="nc" id="L766">			String id = null;</span>
+<span class="nc" id="L767">			String desc = null;</span>
+<span class="nc" id="L768">			boolean directed = false;</span>
+<span class="nc" id="L769">			boolean directedSet = false;</span>
+
+<span class="nc bnc" id="L771" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L772">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L775">					GraphAttribute attribute = GraphAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L777" title="All 3 branches missed.">					switch (attribute) {</span>
+					case ID:
+<span class="nc" id="L779">						id = a.getValue();</span>
+<span class="nc" id="L780">						break;</span>
+					case EDGEDEFAULT:
+<span class="nc bnc" id="L782" title="All 2 branches missed.">						if (a.getValue().equals(&quot;directed&quot;))</span>
+<span class="nc" id="L783">							directed = true;</span>
+<span class="nc bnc" id="L784" title="All 2 branches missed.">						else if (a.getValue().equals(&quot;undirected&quot;))</span>
+<span class="nc" id="L785">							directed = false;</span>
+						else
+<span class="nc" id="L787">							newParseError(e, true, &quot;invalid 'edgedefault' value '%s'&quot;, a.getValue());</span>
+
+<span class="nc" id="L789">						directedSet = true;</span>
+
+						break;
+					}
+<span class="nc" id="L793">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L794">					newParseError(e, false, &quot;invalid node attribute '%s'&quot;, a.getName().getLocalPart());</span>
+				}
+			}
+
+<span class="nc bnc" id="L798" title="All 2 branches missed.">			if (!directedSet)</span>
+<span class="nc" id="L799">				newParseError(e, false, &quot;graph requires attribute 'edgedefault'&quot;);</span>
+
+<span class="nc" id="L801">			String gid = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L803" title="All 2 branches missed.">			if (graphId.size() &gt; 0)</span>
+<span class="nc" id="L804">				gid = graphId.peek() + &quot;:&quot;;</span>
+
+<span class="nc bnc" id="L806" title="All 2 branches missed.">			if (id != null)</span>
+<span class="nc" id="L807">				gid += id;</span>
+			else
+<span class="nc" id="L809">				gid += Integer.toString(graphCounter++);</span>
+
+<span class="nc" id="L811">			graphId.push(gid);</span>
+
+<span class="nc" id="L813">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L815" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L816">				pushback(e);</span>
+<span class="nc" id="L817">				desc = __desc();</span>
+
+<span class="nc" id="L819">				sendGraphAttributeAdded(sourceId, &quot;desc&quot;, desc);</span>
+
+<span class="nc" id="L821">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L824" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;locator&quot;)) {</span>
+<span class="nc" id="L825">				pushback(e);</span>
+<span class="nc" id="L826">				__locator();</span>
+				// TODO
+<span class="nc" id="L828">				e = getNextEvent();</span>
+<span class="nc" id="L829">			} else {</span>
+<span class="nc bnc" id="L830" title="All 4 branches missed.">				while (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;) || isEvent(e, XMLEvent.START_ELEMENT, &quot;node&quot;)</span>
+<span class="nc bnc" id="L831" title="All 2 branches missed.">						|| isEvent(e, XMLEvent.START_ELEMENT, &quot;edge&quot;)</span>
+<span class="nc bnc" id="L832" title="All 2 branches missed.">						|| isEvent(e, XMLEvent.START_ELEMENT, &quot;hyperedge&quot;)) {</span>
+<span class="nc" id="L833">					pushback(e);</span>
+
+<span class="nc bnc" id="L835" title="All 2 branches missed.">					if (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;)) {</span>
+<span class="nc" id="L836">						Data data = __data();</span>
+<span class="nc" id="L837">						sendGraphAttributeAdded(sourceId, data.key.name, getValue(data));</span>
+<span class="nc bnc" id="L838" title="All 2 branches missed.">					} else if (isEvent(e, XMLEvent.START_ELEMENT, &quot;node&quot;)) {</span>
+<span class="nc" id="L839">						__node();</span>
+<span class="nc bnc" id="L840" title="All 2 branches missed.">					} else if (isEvent(e, XMLEvent.START_ELEMENT, &quot;edge&quot;)) {</span>
+<span class="nc" id="L841">						__edge(directed);</span>
+<span class="nc" id="L842">					} else {</span>
+<span class="nc" id="L843">						__hyperedge();</span>
+					}
+
+<span class="nc" id="L846">					e = getNextEvent();</span>
+				}
+			}
+
+<span class="nc" id="L850">			graphId.pop();</span>
+<span class="nc" id="L851">			checkValid(e, XMLEvent.END_ELEMENT, &quot;graph&quot;);</span>
+<span class="nc" id="L852">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT node   (desc?,(((data|port)*,graph?)|locator))&gt;
+		 * &lt;!ATTLIST node
+		 *     		 id        ID      #REQUIRED
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __node() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L868">			e = getNextEvent();</span>
+<span class="nc" id="L869">			checkValid(e, XMLEvent.START_ELEMENT, &quot;node&quot;);</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L872">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+
+<span class="nc" id="L874">			String id = null;</span>
+<span class="nc" id="L875">			HashSet&lt;Key&gt; sentAttributes = new HashSet&lt;Key&gt;();</span>
+<span class="nc" id="L876">			HashSet&lt;Attribute&gt; unexpectedAttributes = new HashSet&lt;&gt;();</span>
+
+<span class="nc bnc" id="L878" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L879">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L882">					NodeAttribute attribute = NodeAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L884" title="All 2 branches missed.">					switch (attribute) {</span>
+					case ID:
+<span class="nc" id="L886">						id = a.getValue();</span>
+						break;
+					}
+<span class="nc" id="L889">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc bnc" id="L890" title="All 2 branches missed.">					if (strictMode)</span>
+<span class="nc" id="L891">						newParseError(e, false, &quot;invalid node attribute '%s'&quot;, a.getName().getLocalPart());</span>
+<span class="nc" id="L892">					unexpectedAttributes.add(a);</span>
+				}
+			}
+
+<span class="nc bnc" id="L896" title="All 2 branches missed.">			if (id == null)</span>
+<span class="nc" id="L897">				newParseError(e, true, &quot;node requires an id&quot;);</span>
+
+<span class="nc" id="L899">			sendNodeAdded(sourceId, id);</span>
+
+<span class="nc bnc" id="L901" title="All 4 branches missed.">			if (!strictMode &amp;&amp; unexpectedAttributes.size() &gt; 0) {</span>
+<span class="nc bnc" id="L902" title="All 2 branches missed.">				for (Attribute a : unexpectedAttributes) {</span>
+<span class="nc" id="L903">					String name = a.getName().getLocalPart();</span>
+<span class="nc" id="L904">					Key key = keys.get(name);</span>
+<span class="nc bnc" id="L905" title="All 2 branches missed.">					Object value = key == null ? a.getValue() : getValue(key, a.getValue());</span>
+
+<span class="nc" id="L907">					sendNodeAttributeAdded(sourceId, id, name, value);</span>
+
+<span class="nc bnc" id="L909" title="All 2 branches missed.">					if (key != null)</span>
+<span class="nc" id="L910">						sentAttributes.add(key);</span>
+				}
+			}
+
+<span class="nc" id="L914">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L916" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+				String desc;
+
+<span class="nc" id="L919">				pushback(e);</span>
+<span class="nc" id="L920">				desc = __desc();</span>
+
+<span class="nc" id="L922">				sendNodeAttributeAdded(sourceId, id, &quot;desc&quot;, desc);</span>
+<span class="nc bnc" id="L923" title="All 2 branches missed.">			} else if (isEvent(e, XMLEvent.START_ELEMENT, &quot;locator&quot;)) {</span>
+				// TODO
+<span class="nc" id="L925">				pushback(e);</span>
+<span class="nc" id="L926">				__locator();</span>
+<span class="nc" id="L927">			} else {</span>
+<span class="nc bnc" id="L928" title="All 4 branches missed.">				while (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;) || isEvent(e, XMLEvent.START_ELEMENT, &quot;port&quot;)) {</span>
+<span class="nc bnc" id="L929" title="All 2 branches missed.">					if (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;)) {</span>
+						Data data;
+
+<span class="nc" id="L932">						pushback(e);</span>
+<span class="nc" id="L933">						data = __data();</span>
+
+<span class="nc" id="L935">						sendNodeAttributeAdded(sourceId, id, data.key.name, getValue(data));</span>
+
+<span class="nc" id="L937">						sentAttributes.add(data.key);</span>
+<span class="nc" id="L938">					} else {</span>
+<span class="nc" id="L939">						pushback(e);</span>
+<span class="nc" id="L940">						__port();</span>
+					}
+
+<span class="nc" id="L943">					e = getNextEvent();</span>
+				}
+			}
+
+<span class="nc bnc" id="L947" title="All 2 branches missed.">			for (Key k : keys.values()) {</span>
+<span class="nc bnc" id="L948" title="All 6 branches missed.">				if ((k.domain == KeyDomain.NODE || k.domain == KeyDomain.ALL) &amp;&amp; !sentAttributes.contains(k))</span>
+<span class="nc" id="L949">					sendNodeAttributeAdded(sourceId, id, k.name, getDefaultValue(k));</span>
+			}
+
+<span class="nc bnc" id="L952" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;graph&quot;)) {</span>
+<span class="nc" id="L953">				Location loc = e.getLocation();</span>
+
+<span class="nc" id="L955">				System.err.printf(&quot;[WARNING] %d:%d graph inside node is not implemented&quot;, loc.getLineNumber(),</span>
+<span class="nc" id="L956">						loc.getColumnNumber());</span>
+
+<span class="nc" id="L958">				pushback(e);</span>
+<span class="nc" id="L959">				__graph();</span>
+
+<span class="nc" id="L961">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L964">			checkValid(e, XMLEvent.END_ELEMENT, &quot;node&quot;);</span>
+<span class="nc" id="L965">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT edge ((desc)?,(data)*,(graph)?)&gt;
+		 * &lt;!ATTLIST edge
+		 *           id         ID           #IMPLIED
+		 *           source     IDREF        #REQUIRED
+		 *           sourceport NMTOKEN      #IMPLIED
+		 *           target     IDREF        #REQUIRED
+		 *           targetport NMTOKEN      #IMPLIED
+		 *           directed   (true|false) #IMPLIED
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @param edgedefault
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __edge(boolean edgedefault) throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L987">			e = getNextEvent();</span>
+<span class="nc" id="L988">			checkValid(e, XMLEvent.START_ELEMENT, &quot;edge&quot;);</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L991">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+
+<span class="nc" id="L993">			HashSet&lt;Key&gt; sentAttributes = new HashSet&lt;Key&gt;();</span>
+<span class="nc" id="L994">			HashSet&lt;Attribute&gt; unexpectedAttributes = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L995">			String id = null;</span>
+<span class="nc" id="L996">			boolean directed = edgedefault;</span>
+<span class="nc" id="L997">			String source = null;</span>
+<span class="nc" id="L998">			String target = null;</span>
+
+<span class="nc bnc" id="L1000" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L1001">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L1004">					EdgeAttribute attribute = EdgeAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L1006" title="All 6 branches missed.">					switch (attribute) {</span>
+					case ID:
+<span class="nc" id="L1008">						id = a.getValue();</span>
+<span class="nc" id="L1009">						break;</span>
+					case DIRECTED:
+<span class="nc" id="L1011">						directed = Boolean.parseBoolean(a.getValue());</span>
+<span class="nc" id="L1012">						break;</span>
+					case SOURCE:
+<span class="nc" id="L1014">						source = a.getValue();</span>
+<span class="nc" id="L1015">						break;</span>
+					case TARGET:
+<span class="nc" id="L1017">						target = a.getValue();</span>
+<span class="nc" id="L1018">						break;</span>
+					case SOURCEPORT:
+					case TARGETPORT:
+<span class="nc" id="L1021">						newParseError(e, false, &quot;sourceport and targetport not implemented&quot;);</span>
+					}
+<span class="nc" id="L1023">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc bnc" id="L1024" title="All 2 branches missed.">					if (strictMode)</span>
+<span class="nc" id="L1025">						newParseError(e, false, &quot;invalid graph attribute '%s'&quot;, a.getName().getLocalPart());</span>
+<span class="nc" id="L1026">					unexpectedAttributes.add(a);</span>
+				}
+			}
+
+<span class="nc bnc" id="L1030" title="All 4 branches missed.">			if (source == null || target == null)</span>
+<span class="nc" id="L1031">				newParseError(e, true, &quot;edge must have a source and a target&quot;);</span>
+
+<span class="nc bnc" id="L1033" title="All 2 branches missed.">			if (id == null) {</span>
+<span class="nc" id="L1034">				id = String.format(&quot;%s--%s&quot;, source, target);</span>
+			}
+
+<span class="nc" id="L1037">			sendEdgeAdded(sourceId, id, source, target, directed);</span>
+
+<span class="nc bnc" id="L1039" title="All 4 branches missed.">			if (!strictMode &amp;&amp; unexpectedAttributes.size() &gt; 0) {</span>
+<span class="nc bnc" id="L1040" title="All 2 branches missed.">				for (Attribute a : unexpectedAttributes) {</span>
+<span class="nc" id="L1041">					String name = a.getName().getLocalPart();</span>
+<span class="nc" id="L1042">					Key key = keys.get(name);</span>
+<span class="nc bnc" id="L1043" title="All 2 branches missed.">					Object value = key == null ? a.getValue() : getValue(key, a.getValue());</span>
+
+<span class="nc" id="L1045">					sendEdgeAttributeAdded(sourceId, id, name, value);</span>
+
+<span class="nc bnc" id="L1047" title="All 2 branches missed.">					if (key != null)</span>
+<span class="nc" id="L1048">						sentAttributes.add(key);</span>
+				}
+			}
+
+<span class="nc" id="L1052">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L1054" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+				String desc;
+
+<span class="nc" id="L1057">				pushback(e);</span>
+<span class="nc" id="L1058">				desc = __desc();</span>
+
+<span class="nc" id="L1060">				sendEdgeAttributeAdded(sourceId, id, &quot;desc&quot;, desc);</span>
+<span class="nc" id="L1061">			} else {</span>
+<span class="nc bnc" id="L1062" title="All 2 branches missed.">				while (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;)) {</span>
+					Data data;
+
+<span class="nc" id="L1065">					pushback(e);</span>
+<span class="nc" id="L1066">					data = __data();</span>
+
+<span class="nc" id="L1068">					sendEdgeAttributeAdded(sourceId, id, data.key.name, getValue(data));</span>
+
+<span class="nc" id="L1070">					sentAttributes.add(data.key);</span>
+
+<span class="nc" id="L1072">					e = getNextEvent();</span>
+				}
+			}
+
+<span class="nc bnc" id="L1076" title="All 2 branches missed.">			for (Key k : keys.values()) {</span>
+<span class="nc bnc" id="L1077" title="All 6 branches missed.">				if ((k.domain == KeyDomain.EDGE || k.domain == KeyDomain.ALL) &amp;&amp; !sentAttributes.contains(k))</span>
+<span class="nc" id="L1078">					sendEdgeAttributeAdded(sourceId, id, k.name, getDefaultValue(k));</span>
+			}
+
+<span class="nc bnc" id="L1081" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;graph&quot;)) {</span>
+<span class="nc" id="L1082">				newParseError(e, false, &quot;graph inside node is not implemented&quot;);</span>
+
+<span class="nc" id="L1084">				pushback(e);</span>
+<span class="nc" id="L1085">				__graph();</span>
+
+<span class="nc" id="L1087">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L1090">			checkValid(e, XMLEvent.END_ELEMENT, &quot;edge&quot;);</span>
+<span class="nc" id="L1091">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * &lt;!ELEMENT hyperedge  ((desc)?,((data)|(endpoint))*,(graph)?)&gt;
+		 * &lt;!ATTLIST hyperedge
+		 *           id     ID      #IMPLIED
+		 * &gt;
+		 * &lt;/pre&gt;
+		 *
+		 * @throws IOException
+		 * @throws XMLStreamException
+		 */
+		private void __hyperedge() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L1107">			e = getNextEvent();</span>
+<span class="nc" id="L1108">			checkValid(e, XMLEvent.START_ELEMENT, &quot;hyperedge&quot;);</span>
+
+<span class="nc" id="L1110">			newParseError(e, false, &quot;hyperedge feature is not implemented&quot;);</span>
+
+<span class="nc" id="L1112">			String id = null;</span>
+
+			@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L1115">			Iterator&lt;? extends Attribute&gt; attributes = e.asStartElement().getAttributes();</span>
+
+<span class="nc bnc" id="L1117" title="All 2 branches missed.">			while (attributes.hasNext()) {</span>
+<span class="nc" id="L1118">				Attribute a = attributes.next();</span>
+
+				try {
+<span class="nc" id="L1121">					HyperEdgeAttribute attribute = HyperEdgeAttribute.valueOf(toConstantName(a));</span>
+
+<span class="nc bnc" id="L1123" title="All 2 branches missed.">					switch (attribute) {</span>
+					case ID:
+<span class="nc" id="L1125">						id = a.getValue();</span>
+						break;
+					}
+<span class="nc" id="L1128">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L1129">					newParseError(e, false, &quot;invalid attribute '%s' for '&lt;endpoint&gt;'&quot;, a.getName().getLocalPart());</span>
+				}
+			}
+
+<span class="nc bnc" id="L1133" title="All 2 branches missed.">			if (id == null)</span>
+<span class="nc" id="L1134">				newParseError(e, true, &quot;'&lt;hyperedge&gt;' element requires a 'node' attribute&quot;);</span>
+
+<span class="nc" id="L1136">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L1138" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;desc&quot;)) {</span>
+<span class="nc" id="L1139">				pushback(e);</span>
+<span class="nc" id="L1140">				__desc();</span>
+<span class="nc" id="L1141">			} else {</span>
+<span class="nc bnc" id="L1142" title="All 4 branches missed.">				while (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;) || isEvent(e, XMLEvent.START_ELEMENT, &quot;endpoint&quot;)) {</span>
+<span class="nc bnc" id="L1143" title="All 2 branches missed.">					if (isEvent(e, XMLEvent.START_ELEMENT, &quot;data&quot;)) {</span>
+<span class="nc" id="L1144">						pushback(e);</span>
+<span class="nc" id="L1145">						__data();</span>
+<span class="nc" id="L1146">					} else {</span>
+<span class="nc" id="L1147">						pushback(e);</span>
+<span class="nc" id="L1148">						__endpoint();</span>
+					}
+
+<span class="nc" id="L1151">					e = getNextEvent();</span>
+				}
+			}
+
+<span class="nc bnc" id="L1155" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;graph&quot;)) {</span>
+<span class="nc" id="L1156">				newParseError(e, false, &quot;graph inside node is not implemented&quot;);</span>
+
+<span class="nc" id="L1158">				pushback(e);</span>
+<span class="nc" id="L1159">				__graph();</span>
+
+<span class="nc" id="L1161">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L1164">			e = getNextEvent();</span>
+<span class="nc" id="L1165">			checkValid(e, XMLEvent.END_ELEMENT, &quot;hyperedge&quot;);</span>
+<span class="nc" id="L1166">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

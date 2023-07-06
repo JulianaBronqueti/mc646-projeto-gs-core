@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FirstClass.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">teste</a> &gt; <span class="el_source">FirstClass.java</span></div><h1>FirstClass.java</h1><pre class="source lang-java linenums">package teste;
+
+import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.ui.view.Viewer;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Node;
+
+import org.graphstream.graph.Path;
+
+<span class="nc" id="L11">public class FirstClass {</span>
+	
+<span class="nc" id="L13">	private static String styleSheet =</span>
+<span class="nc" id="L14">            &quot;node {&quot;+</span>
+            &quot;   size-mode: dyn-size;&quot;+
+            &quot;   shape: circle;&quot;+
+            &quot;   size: 20px;&quot;+
+            &quot;   fill-mode: plain;&quot;+
+            &quot;   fill-color: #CCC;&quot;+
+            &quot;   stroke-mode: plain;&quot;+
+            &quot;   stroke-color: black;&quot;+
+            &quot;   stroke-width: 1px;&quot;+
+<span class="nc" id="L23">            &quot;}&quot;;</span>
+
+	public static void main(String[] args) {
+<span class="nc" id="L26">		Graph graph = new SingleGraph(&quot;graph&quot;);</span>
+		
+		// Visualização do grafo
+//		System.setProperty(&quot;org.graphstream.ui&quot;, &quot;swing&quot;); 
+//		graph.display();
+//		graph.setAttribute(&quot;ui.stylesheet&quot;, styleSheet);
+		
+<span class="nc" id="L33">		Node A = graph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L34">		Node B = graph.addNode(&quot;B&quot;);</span>
+//		Node C = graph.addNode(&quot;C&quot;);
+//		Node D = graph.addNode(&quot;D&quot;);
+//		Node E = graph.addNode(&quot;E&quot;);
+//		Node F = graph.addNode(&quot;F&quot;);
+//
+<span class="nc" id="L40">		Edge AB = graph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+//		Edge BC = graph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);
+//		Edge CA = graph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);
+//		Edge CE = graph.addEdge(&quot;CE&quot;, &quot;C&quot;, &quot;E&quot;);		
+//		Edge AD = graph.addEdge(&quot;AD&quot;, &quot;A&quot;, &quot;D&quot;);
+//		Edge DE = graph.addEdge(&quot;DE&quot;, &quot;D&quot;, &quot;E&quot;);
+//		Edge DF = graph.addEdge(&quot;DF&quot;, &quot;D&quot;, &quot;F&quot;);
+//		Edge EF = graph.addEdge(&quot;EF&quot;, &quot;E&quot;, &quot;F&quot;);
+//		
+//		graph.setStrict(false);
+//        graph.setAutoCreate(true);
+//
+//		System.out.printf(&quot;Arestas: %s\n\n&quot;, graph.edges().toArray()[0]);
+//        
+//        for (Node node : graph) {
+//            node.setAttribute(&quot;ui.label&quot;, node.getId());
+//        }
+		
+		//////// Path
+<span class="nc" id="L59">		Path path = new Path();</span>
+		
+//		path.add(AB);
+		
+//		Node root = path.getRoot();		
+//		System.out.printf(&quot;Raiz: %s\n\n&quot;, root.toString());
+		
+//		int tamanho = path.size();
+//		System.out.printf(&quot;Tamanho: %d\n\n&quot;, tamanho);
+		
+		
+//		// Adicionando raiz
+//		path.setRoot(A);
+//		System.out.printf(&quot;Vazio? %s\n\n&quot;, path.empty());
+//		
+//		path.setRoot(B);
+//		System.out.printf(&quot;Raiz: %s\n\n&quot;, path.getRoot());
+		
+//		
+//		// Adicionando aresta 
+//		path.add(AB);
+//		path.add(BC);
+//		path.add(CA);
+//		path.add(AD);
+//		path.add(DE);
+//		path.add(EF);
+		
+		// No origem igual a no destino
+<span class="nc" id="L87">		Edge AA = graph.addEdge(&quot;AA&quot;, &quot;A&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L88">		path.add(AA);</span>
+//		
+//		// Transformar em string
+<span class="nc" id="L91">		System.out.printf(&quot;toString(): %s\n\n&quot;, path.toString());</span>
+//		
+//		// Apagar path
+//		path.clear();
+//		System.out.printf(&quot;Vazio? %s\n\n&quot;, path.empty());
+//		System.out.printf(&quot;toString(): %s\n\n&quot;, path.toString());
+//		
+//		
+//		// Verificar lista de nós
+//		System.out.printf(&quot;Contagem de nós: %d\n&quot;, path.getNodeCount());		
+//		System.out.printf(&quot;Lista de nós: %s\n\n&quot;, path.getNodePath().toString());
+//		
+//		// Verificar lista de arestas
+//		System.out.printf(&quot;Contagem de arestas: %d\n&quot;, path.getEdgeCount());
+//		System.out.printf(&quot;Lista de arestas: %s\n\n&quot;, path.getEdgePath().toString());
+//		
+//		// Verificando últimos valores da pilha
+//		Edge lastEdge = path.peekEdge();
+//		System.out.printf(&quot;Última aresta: %s\n\n&quot;, lastEdge.getId());
+//		
+//		Node lastNode = path.peekNode();
+//		System.out.printf(&quot;Último nó: %s\n\n&quot;, lastNode.getId());	
+//		
+//		// Remover
+//		Path pathCopy1 = path.getACopy();
+//		Edge removedEdge = pathCopy1.popEdge();
+//		System.out.printf(&quot;Aresta removida: %s\n\n&quot;, removedEdge.getId());	
+//		System.out.printf(&quot;Caminho removendo última aresta: %s\n\n&quot;, pathCopy1.toString());	
+//		
+//		Path pathCopy2 = path.getACopy();
+//		Node removedNode = pathCopy2.popNode();
+//		System.out.printf(&quot;Nó removido: %s\n\n&quot;, removedNode.getId());
+//		System.out.printf(&quot;Caminho removendo último nó: %s\n\n&quot;, pathCopy2.toString());
+	
+<span class="nc" id="L125">	}</span>
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

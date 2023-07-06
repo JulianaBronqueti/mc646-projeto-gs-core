@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GEXFEdges.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.gexf</a> &gt; <span class="el_source">GEXFEdges.java</span></div><h1>GEXFEdges.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-09-18
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.gexf;
+
+import java.util.HashMap;
+
+import javax.xml.stream.XMLStreamException;
+
+import org.graphstream.stream.SinkAdapter;
+
+public class GEXFEdges extends SinkAdapter implements GEXFElement {
+	GEXF root;
+	HashMap&lt;String, GEXFEdge&gt; edges;
+
+<span class="nc" id="L45">	public GEXFEdges(GEXF root) {</span>
+<span class="nc" id="L46">		this.root = root;</span>
+<span class="nc" id="L47">		this.edges = new HashMap&lt;String, GEXFEdge&gt;();</span>
+
+<span class="nc" id="L49">		root.addSink(this);</span>
+<span class="nc" id="L50">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.file.gexf.GEXFElement#export(org.graphstream.stream
+	 * .file.gexf.SmartXMLWriter)
+	 */
+	public void export(SmartXMLWriter stream) throws XMLStreamException {
+<span class="nc" id="L60">		stream.startElement(&quot;edges&quot;);</span>
+
+<span class="nc bnc" id="L62" title="All 2 branches missed.">		for (GEXFEdge edge : edges.values())</span>
+<span class="nc" id="L63">			edge.export(stream);</span>
+
+<span class="nc" id="L65">		stream.endElement(); // EDGES</span>
+<span class="nc" id="L66">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.SinkAdapter#edgeAdded(java.lang.String, long,
+	 * java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L76">		GEXFEdge edge = edges.get(edgeId);</span>
+
+<span class="nc bnc" id="L78" title="All 2 branches missed.">		if (edge == null) {</span>
+<span class="nc" id="L79">			edge = new GEXFEdge(root, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L80">			edges.put(edgeId, edge);</span>
+		}
+
+<span class="nc" id="L83">		edge.spells.start();</span>
+<span class="nc" id="L84">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.SinkAdapter#edgeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L93">		GEXFEdge edge = edges.get(edgeId);</span>
+
+<span class="nc bnc" id="L95" title="All 2 branches missed.">		if (edge == null) {</span>
+<span class="nc" id="L96">			System.err.printf(&quot;edge removed but not added\n&quot;);</span>
+<span class="nc" id="L97">			return;</span>
+		}
+
+<span class="nc" id="L100">		edge.spells.end();</span>
+<span class="nc" id="L101">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.SinkAdapter#graphCleared(java.lang.String, long)
+	 */
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc bnc" id="L109" title="All 2 branches missed.">		for (GEXFEdge edge : edges.values())</span>
+<span class="nc" id="L110">			edge.spells.end();</span>
+<span class="nc" id="L111">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.SinkAdapter#edgeAttributeAdded(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L120">		GEXFEdge edge = edges.get(edgeId);</span>
+
+<span class="nc bnc" id="L122" title="All 6 branches missed.">		if ((&quot;ui.label&quot;.equals(attribute) || &quot;label&quot;.equals(attribute)) &amp;&amp; value != null)</span>
+<span class="nc" id="L123">			edge.label = value.toString();</span>
+
+<span class="nc bnc" id="L125" title="All 6 branches missed.">		if (&quot;weight&quot;.equals(&quot;attribute&quot;) &amp;&amp; value != null &amp;&amp; value instanceof Number)</span>
+<span class="nc" id="L126">			edge.weight = ((Number) value).doubleValue();</span>
+
+<span class="nc" id="L128">		edge.attvalues.attributeUpdated(root.getEdgeAttribute(attribute), value);</span>
+<span class="nc" id="L129">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.SinkAdapter#edgeAttributeChanged(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L140">		edgeAttributeAdded(sourceId, timeId, edgeId, attribute, newValue);</span>
+<span class="nc" id="L141">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.SinkAdapter#edgeAttributeRemoved(java.lang.String,
+	 * long, java.lang.String, java.lang.String)
+	 */
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L151">		GEXFEdge edge = edges.get(edgeId);</span>
+<span class="nc" id="L152">		edge.attvalues.attributeUpdated(root.getNodeAttribute(attribute), null);</span>
+<span class="nc" id="L153">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

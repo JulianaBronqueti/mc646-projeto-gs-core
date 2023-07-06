@@ -1,0 +1,866 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>StyleSheet.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.stylesheet</a> &gt; <span class="el_source">StyleSheet.java</span></div><h1>StyleSheet.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-07-05
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Mathieu Post &lt;mathieupost@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.stylesheet;
+
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.ui.graphicGraph.GraphicSprite;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.StrokeMode;
+import org.graphstream.ui.graphicGraph.stylesheet.parser.StyleSheetParser;
+import org.graphstream.util.parser.ParseException;
+
+/**
+ * Implementation of the style sheets that can be stored in the graphic graph.
+ * 
+ * @author Antoine Dutot
+ */
+public class StyleSheet {
+	// Attributes
+
+	/**
+	 * The top-level default rule.
+	 */
+	public Rule defaultRule;
+
+	/**
+	 * The default, id and class rules for graphs.
+	 */
+<span class="nc" id="L73">	public NameSpace graphRules = new NameSpace(Selector.Type.GRAPH);</span>
+
+	/**
+	 * The default, id and class rules for nodes.
+	 */
+<span class="nc" id="L78">	public NameSpace nodeRules = new NameSpace(Selector.Type.NODE);</span>
+
+	/**
+	 * The default, id and class rules for edges.
+	 */
+<span class="nc" id="L83">	public NameSpace edgeRules = new NameSpace(Selector.Type.EDGE);</span>
+
+	/**
+	 * The default, id and class rules for sprites.
+	 */
+<span class="nc" id="L88">	public NameSpace spriteRules = new NameSpace(Selector.Type.SPRITE);</span>
+
+	/**
+	 * Set of listeners.
+	 */
+<span class="nc" id="L93">	public ArrayList&lt;StyleSheetListener&gt; listeners = new ArrayList&lt;StyleSheetListener&gt;();</span>
+
+	// Constructors
+
+	/**
+	 * New style sheet initialised to defaults.
+	 */
+<span class="nc" id="L100">	public StyleSheet() {</span>
+<span class="nc" id="L101">		initRules();</span>
+<span class="nc" id="L102">	}</span>
+
+	// Access
+
+	/**
+	 * The default rule for graphs.
+	 * 
+	 * @return A rule.
+	 */
+	public Rule getDefaultGraphRule() {
+<span class="nc" id="L112">		return graphRules.defaultRule;</span>
+	}
+
+	/**
+	 * The default rule for nodes.
+	 * 
+	 * @return A rule.
+	 */
+	public Rule getDefaultNodeRule() {
+<span class="nc" id="L121">		return nodeRules.defaultRule;</span>
+	}
+
+	/**
+	 * The default rule for edges.
+	 * 
+	 * @return A rule.
+	 */
+	public Rule getDefaultEdgeRule() {
+<span class="nc" id="L130">		return edgeRules.defaultRule;</span>
+	}
+
+	/**
+	 * The default rule for sprites.
+	 * 
+	 * @return A rule.
+	 */
+	public Rule getDefaultSpriteRule() {
+<span class="nc" id="L139">		return spriteRules.defaultRule;</span>
+	}
+
+	/**
+	 * The default style for graphs.
+	 * 
+	 * @return A style.
+	 */
+	public Style getDefaultGraphStyle() {
+<span class="nc" id="L148">		return getDefaultGraphRule().getStyle();</span>
+	}
+
+	/**
+	 * The default style for nodes.
+	 * 
+	 * @return A style.
+	 */
+	public Style getDefaultNodeStyle() {
+<span class="nc" id="L157">		return getDefaultNodeRule().getStyle();</span>
+	}
+
+	/**
+	 * The default style for edges.
+	 * 
+	 * @return A style.
+	 */
+	public Style getDefaultEdgeStyle() {
+<span class="nc" id="L166">		return getDefaultEdgeRule().getStyle();</span>
+	}
+
+	/**
+	 * The default style for sprites.
+	 * 
+	 * @return A style.
+	 */
+	public Style getDefaultSpriteStyle() {
+<span class="nc" id="L175">		return getDefaultSpriteRule().getStyle();</span>
+	}
+
+	/**
+	 * All the rules (default, specific and class) that apply to graphs.
+	 * 
+	 * @return The set of rules for graphs.
+	 */
+	public NameSpace getGraphStyleNameSpace() {
+<span class="nc" id="L184">		return graphRules;</span>
+	}
+
+	/**
+	 * All the rules (default, specific and class) that apply to nodes.
+	 * 
+	 * @return The set of rules for nodes.
+	 */
+	public NameSpace getNodeStyleNameSpace() {
+<span class="nc" id="L193">		return nodeRules;</span>
+	}
+
+	/**
+	 * All the rules (default, specific and class) that apply to edges.
+	 * 
+	 * @return The set of rules for edges.
+	 */
+	public NameSpace getEdgeStyleNameSpace() {
+<span class="nc" id="L202">		return edgeRules;</span>
+	}
+
+	/**
+	 * All the rules (default, specific and class) that apply to sprites.
+	 * 
+	 * @return The set of rules for sprites.
+	 */
+	public NameSpace getSpriteStyleNameSpace() {
+<span class="nc" id="L211">		return spriteRules;</span>
+	}
+
+	/**
+	 * Get the rules that match a given element.
+	 * 
+	 * First a rule for the identifier of the element is looked for. It is looked
+	 * for in its name space (nodes for Node element, etc.) If it is not found, the
+	 * default rule for this kind of element is used. This rule is pushed at start
+	 * of the returned array of rules.
+	 * 
+	 * After a rule for the element is found, then the various classes the element
+	 * pertains to are looked at and each class rule found is added in order in the
+	 * returned array.
+	 * 
+	 * @param element
+	 *            The element a rules are searched for.
+	 * @return A set of rules matching the element, with the main rule at index 0.
+	 */
+	public ArrayList&lt;Rule&gt; getRulesFor(Element element) {
+<span class="nc" id="L231">		ArrayList&lt;Rule&gt; rules = null;</span>
+
+<span class="nc bnc" id="L233" title="All 2 branches missed.">		if (element instanceof Graph) {</span>
+<span class="nc" id="L234">			rules = graphRules.getRulesFor(element);</span>
+<span class="nc bnc" id="L235" title="All 2 branches missed.">		} else if (element instanceof Node) {</span>
+<span class="nc" id="L236">			rules = nodeRules.getRulesFor(element);</span>
+<span class="nc bnc" id="L237" title="All 2 branches missed.">		} else if (element instanceof Edge) {</span>
+<span class="nc" id="L238">			rules = edgeRules.getRulesFor(element);</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">		} else if (element instanceof GraphicSprite) {</span>
+<span class="nc" id="L240">			rules = spriteRules.getRulesFor(element);</span>
+<span class="nc" id="L241">		} else {</span>
+<span class="nc" id="L242">			rules = new ArrayList&lt;Rule&gt;();</span>
+<span class="nc" id="L243">			rules.add(defaultRule);</span>
+		}
+
+<span class="nc" id="L246">		return rules;</span>
+	}
+
+	/**
+	 * Compute the name of the style group and element will pertain to knowing its
+	 * styling rules.
+	 * 
+	 * @param element
+	 *            The element.
+	 * @param rules
+	 *            The styling rules.
+	 * @return The unique identifier of the style group for the element.
+	 * @see #getRulesFor(Element)
+	 */
+	public String getStyleGroupIdFor(Element element, ArrayList&lt;Rule&gt; rules) {
+<span class="nc" id="L261">		StringBuilder builder = new StringBuilder();</span>
+
+<span class="nc bnc" id="L263" title="All 2 branches missed.">		if (element instanceof Graph) {</span>
+<span class="nc" id="L264">			builder.append(&quot;g&quot;);</span>
+<span class="nc bnc" id="L265" title="All 2 branches missed.">		} else if (element instanceof Node) {</span>
+<span class="nc" id="L266">			builder.append(&quot;n&quot;);</span>
+<span class="nc bnc" id="L267" title="All 2 branches missed.">		} else if (element instanceof Edge) {</span>
+<span class="nc" id="L268">			builder.append(&quot;e&quot;);</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">		} else if (element instanceof GraphicSprite) {</span>
+<span class="nc" id="L270">			builder.append(&quot;s&quot;);</span>
+<span class="nc" id="L271">		} else {</span>
+<span class="nc" id="L272">			throw new RuntimeException(&quot;What ?&quot;);</span>
+		}
+
+<span class="nc bnc" id="L275" title="All 2 branches missed.">		if (rules.get(0).selector.getId() != null) {</span>
+<span class="nc" id="L276">			builder.append('_');</span>
+<span class="nc" id="L277">			builder.append(rules.get(0).selector.getId());</span>
+		}
+
+<span class="nc" id="L280">		int n = rules.size();</span>
+
+<span class="nc bnc" id="L282" title="All 2 branches missed.">		if (n &gt; 1) {</span>
+<span class="nc" id="L283">			builder.append('(');</span>
+<span class="nc" id="L284">			builder.append(rules.get(1).selector.getClazz());</span>
+<span class="nc bnc" id="L285" title="All 2 branches missed.">			for (int i = 2; i &lt; n; i++) {</span>
+<span class="nc" id="L286">				builder.append(',');</span>
+<span class="nc" id="L287">				builder.append(rules.get(i).selector.getClazz());</span>
+			}
+<span class="nc" id="L289">			builder.append(')');</span>
+		}
+
+<span class="nc" id="L292">		return builder.toString();</span>
+	}
+
+	// Commands
+
+	/**
+	 * Create the default rules. This method is the place to set defaults for
+	 * specific element types. This is here that the edge width is reset to one,
+	 * since the default width is larger. The default z index that is different for
+	 * every class of element is also set here.
+	 */
+	protected void initRules() {
+<span class="nc" id="L304">		defaultRule = new Rule(new Selector(Selector.Type.ANY), null);</span>
+
+<span class="nc" id="L306">		defaultRule.getStyle().setDefaults();</span>
+
+<span class="nc" id="L308">		graphRules.defaultRule = new Rule(new Selector(Selector.Type.GRAPH), defaultRule);</span>
+<span class="nc" id="L309">		nodeRules.defaultRule = new Rule(new Selector(Selector.Type.NODE), defaultRule);</span>
+<span class="nc" id="L310">		edgeRules.defaultRule = new Rule(new Selector(Selector.Type.EDGE), defaultRule);</span>
+<span class="nc" id="L311">		spriteRules.defaultRule = new Rule(new Selector(Selector.Type.SPRITE), defaultRule);</span>
+
+<span class="nc" id="L313">		graphRules.defaultRule.getStyle().setValue(&quot;padding&quot;, new Values(Style.Units.PX, 30));</span>
+<span class="nc" id="L314">		edgeRules.defaultRule.getStyle().setValue(&quot;shape&quot;, StyleConstants.Shape.LINE);</span>
+<span class="nc" id="L315">		edgeRules.defaultRule.getStyle().setValue(&quot;size&quot;, new Values(Style.Units.PX, 1));</span>
+<span class="nc" id="L316">		edgeRules.defaultRule.getStyle().setValue(&quot;z-index&quot;, new Integer(1));</span>
+<span class="nc" id="L317">		nodeRules.defaultRule.getStyle().setValue(&quot;z-index&quot;, new Integer(2));</span>
+<span class="nc" id="L318">		spriteRules.defaultRule.getStyle().setValue(&quot;z-index&quot;, new Integer(3));</span>
+
+<span class="nc" id="L320">		Colors colors = new Colors();</span>
+<span class="nc" id="L321">		colors.add(Color.WHITE);</span>
+
+<span class="nc" id="L323">		graphRules.defaultRule.getStyle().setValue(&quot;fill-color&quot;, colors);</span>
+<span class="nc" id="L324">		graphRules.defaultRule.getStyle().setValue(&quot;stroke-mode&quot;, StrokeMode.NONE);</span>
+
+<span class="nc bnc" id="L326" title="All 2 branches missed.">		for (StyleSheetListener listener : listeners) {</span>
+<span class="nc" id="L327">			listener.styleAdded(defaultRule, defaultRule);</span>
+<span class="nc" id="L328">			listener.styleAdded(graphRules.defaultRule, graphRules.defaultRule);</span>
+<span class="nc" id="L329">			listener.styleAdded(nodeRules.defaultRule, nodeRules.defaultRule);</span>
+<span class="nc" id="L330">			listener.styleAdded(edgeRules.defaultRule, edgeRules.defaultRule);</span>
+<span class="nc" id="L331">			listener.styleAdded(spriteRules.defaultRule, spriteRules.defaultRule);</span>
+		}
+
+		// for( StyleSheetListener listener: listeners )
+		// listener.styleAdded( defaultRule, defaultRule );
+		// for( StyleSheetListener listener: listeners )
+		// listener.styleAdded( graphRules.defaultRule, graphRules.defaultRule
+		// );
+		// for( StyleSheetListener listener: listeners )
+		// listener.styleAdded( nodeRules.defaultRule, nodeRules.defaultRule );
+		// for( StyleSheetListener listener: listeners )
+		// listener.styleAdded( edgeRules.defaultRule, edgeRules.defaultRule );
+		// for( StyleSheetListener listener: listeners )
+		// listener.styleAdded( spriteRules.defaultRule, spriteRules.defaultRule
+		// );
+<span class="nc" id="L346">	}</span>
+
+	/**
+	 * Add a listener for style events. You never receive events for default rules
+	 * and styles. You receive events only for the rules and styles that are added
+	 * after this listener is registered.
+	 * 
+	 * @param listener
+	 *            The new listener.
+	 */
+	public void addListener(StyleSheetListener listener) {
+<span class="nc" id="L357">		listeners.add(listener);</span>
+<span class="nc" id="L358">	}</span>
+
+	/**
+	 * Remove a previously registered listener.
+	 * 
+	 * @param listener
+	 *            The listener to remove.
+	 */
+	public void removeListener(StyleSheetListener listener) {
+<span class="nc" id="L367">		int index = listeners.indexOf(listener);</span>
+
+<span class="nc bnc" id="L369" title="All 2 branches missed.">		if (index &gt;= 0)</span>
+<span class="nc" id="L370">			listeners.remove(index);</span>
+<span class="nc" id="L371">	}</span>
+
+	/**
+	 * Clear all specific rules and initialise the default rules. The listeners are
+	 * not changed.
+	 */
+	public void clear() {
+<span class="nc" id="L378">		graphRules.clear();</span>
+<span class="nc" id="L379">		nodeRules.clear();</span>
+<span class="nc" id="L380">		edgeRules.clear();</span>
+<span class="nc" id="L381">		spriteRules.clear();</span>
+<span class="nc" id="L382">		initRules();</span>
+
+<span class="nc bnc" id="L384" title="All 2 branches missed.">		for (StyleSheetListener listener : listeners)</span>
+<span class="nc" id="L385">			listener.styleSheetCleared();</span>
+<span class="nc" id="L386">	}</span>
+
+	/**
+	 * Parse a style sheet from a file. The style sheet will complete the previously
+	 * parsed style sheets.
+	 * 
+	 * @param fileName
+	 *            Name of the file containing the style sheet.
+	 * @throws IOException
+	 *             For any kind of I/O error or parse error.
+	 */
+	public void parseFromFile(String fileName) throws IOException {
+<span class="nc" id="L398">		parse(new InputStreamReader(new BufferedInputStream(new FileInputStream(fileName))));</span>
+<span class="nc" id="L399">	}</span>
+
+	/**
+	 * Parse a style sheet from an URL. The style sheet will complete the previously
+	 * parsed style sheets. First, this method will search the URL as
+	 * SystemRessource, then as a file and if there is no match, just try to create
+	 * an URL object giving the URL as constructor's parameter.
+	 * 
+	 * @param url
+	 *            Name of the file containing the style sheet.
+	 * @throws IOException
+	 *             For any kind of I/O error or parse error.
+	 */
+	public void parseFromURL(String url) throws IOException {
+<span class="nc" id="L413">		URL u = StyleSheet.class.getClassLoader().getResource(url);</span>
+<span class="nc bnc" id="L414" title="All 2 branches missed.">		if (u == null) {</span>
+<span class="nc" id="L415">			String fileUrl = url.replace(&quot;file://&quot;, &quot;&quot;);</span>
+<span class="nc" id="L416">			File f = new File(fileUrl);</span>
+
+<span class="nc bnc" id="L418" title="All 2 branches missed.">			if (f.exists())</span>
+<span class="nc" id="L419">				u = f.toURI().toURL();</span>
+			else
+<span class="nc" id="L421">				u = new URL(url);</span>
+		}
+
+<span class="nc" id="L424">		parse(new InputStreamReader(u.openStream()));</span>
+<span class="nc" id="L425">	}</span>
+
+	/**
+	 * Parse a style sheet from a string. The style sheet will complete the
+	 * previously parsed style sheets.
+	 * 
+	 * @param styleSheet
+	 *            The string containing the whole style sheet.
+	 * @throws IOException
+	 *             For any kind of I/O error or parse error.
+	 */
+	public void parseFromString(String styleSheet) throws IOException {
+<span class="nc" id="L437">		parse(new StringReader(styleSheet));</span>
+<span class="nc" id="L438">	}</span>
+
+	/**
+	 * Parse only one style, create a rule with the given selector, and add this
+	 * rule.
+	 * 
+	 * @param select
+	 *            The elements for which this style must apply.
+	 * @param styleString
+	 *            The style string to parse.
+	 */
+	public void parseStyleFromString(Selector select, String styleString) throws IOException {
+<span class="nc" id="L450">		StyleSheetParser parser = new StyleSheetParser(this, new StringReader(styleString));</span>
+
+<span class="nc" id="L452">		Style style = new Style();</span>
+
+		try {
+<span class="nc" id="L455">			parser.stylesStart(style);</span>
+<span class="nc" id="L456">		} catch (ParseException e) {</span>
+<span class="nc" id="L457">			throw new IOException(e.getMessage());</span>
+		}
+
+<span class="nc" id="L460">		Rule rule = new Rule(select);</span>
+
+<span class="nc" id="L462">		rule.setStyle(style);</span>
+<span class="nc" id="L463">		addRule(rule);</span>
+<span class="nc" id="L464">	}</span>
+
+	/**
+	 * Load a style sheet from an attribute value, the value can either be the
+	 * contents of the whole style sheet, or begin by &quot;url&quot;. If it starts with
+	 * &quot;url&quot;, it must then contain between parenthesis the string of the URL to
+	 * load. For example:
+	 * 
+	 * &lt;pre&gt;
+	 * 		url('file:///some/path/on/the/file/system')
+	 * &lt;/pre&gt;
+	 * 
+	 * Or
+	 * 
+	 * &lt;pre&gt;
+	 * 		url('http://some/web/url')
+	 * &lt;/pre&gt;
+	 * 
+	 * The loaded style sheet will be merged with the styles already present in the
+	 * style sheet.
+	 * 
+	 * @param styleSheetValue
+	 *            The style sheet name of content.
+	 * @throws IOException
+	 *             If the loading or parsing of the style sheet failed.
+	 */
+	public void load(String styleSheetValue) throws IOException {
+<span class="nc bnc" id="L491" title="All 2 branches missed.">		if (styleSheetValue.startsWith(&quot;url&quot;)) {</span>
+			// Extract the part between '(' and ')'.
+
+<span class="nc" id="L494">			int beg = styleSheetValue.indexOf('(');</span>
+<span class="nc" id="L495">			int end = styleSheetValue.lastIndexOf(')');</span>
+
+<span class="nc bnc" id="L497" title="All 4 branches missed.">			if (beg &gt;= 0 &amp;&amp; end &gt; beg)</span>
+<span class="nc" id="L498">				styleSheetValue = styleSheetValue.substring(beg + 1, end);</span>
+
+<span class="nc" id="L500">			styleSheetValue = styleSheetValue.trim();</span>
+
+			// Remove the quotes (') or (&quot;).
+
+<span class="nc bnc" id="L504" title="All 2 branches missed.">			if (styleSheetValue.startsWith(&quot;'&quot;)) {</span>
+<span class="nc" id="L505">				beg = 0;</span>
+<span class="nc" id="L506">				end = styleSheetValue.lastIndexOf('\'');</span>
+
+<span class="nc bnc" id="L508" title="All 4 branches missed.">				if (beg &gt;= 0 &amp;&amp; end &gt; beg)</span>
+<span class="nc" id="L509">					styleSheetValue = styleSheetValue.substring(beg + 1, end);</span>
+			}
+
+<span class="nc" id="L512">			styleSheetValue = styleSheetValue.trim();</span>
+
+<span class="nc bnc" id="L514" title="All 2 branches missed.">			if (styleSheetValue.startsWith(&quot;\&quot;&quot;)) {</span>
+<span class="nc" id="L515">				beg = 0;</span>
+<span class="nc" id="L516">				end = styleSheetValue.lastIndexOf('&quot;');</span>
+
+<span class="nc bnc" id="L518" title="All 4 branches missed.">				if (beg &gt;= 0 &amp;&amp; end &gt; beg)</span>
+<span class="nc" id="L519">					styleSheetValue = styleSheetValue.substring(beg + 1, end);</span>
+			}
+
+			// That's it.
+
+<span class="nc" id="L524">			parseFromURL(styleSheetValue);</span>
+<span class="nc" id="L525">		} else // Parse from string, the value is considered to be the style</span>
+				// sheet contents.
+		{
+<span class="nc" id="L528">			parseFromString(styleSheetValue);</span>
+		}
+<span class="nc" id="L530">	}</span>
+
+	/**
+	 * Parse the style sheet from the given reader.
+	 * 
+	 * @param reader
+	 *            The reader pointing at the style sheet.
+	 * @throws IOException
+	 *             For any kind of I/O error or parse error.
+	 */
+	protected void parse(Reader reader) throws IOException {
+<span class="nc" id="L541">		StyleSheetParser parser = new StyleSheetParser(this, reader);</span>
+
+		try {
+<span class="nc" id="L544">			parser.start();</span>
+<span class="nc" id="L545">		} catch (ParseException e) {</span>
+<span class="nc" id="L546">			throw new IOException(e.getMessage());</span>
+		}
+<span class="nc" id="L548">	}</span>
+
+	/**
+	 * Add a new rule with its style. If the rule selector is just GRAPH, NODE, EDGE
+	 * or SPRITE, the default corresponding rules make a copy (or augmentation) of
+	 * its style. Else if an id or class is specified the rules are added (or
+	 * changed/augmented if the id or class was already set) and their parent is set
+	 * to the default graph, node, edge or sprite rules. If this is an event rule
+	 * (or meta-class rule), its sibling rule (the same rule without the meta-class)
+	 * is searched and created if not found and the event rule is added as an
+	 * alternative to it.
+	 * 
+	 * @param newRule
+	 *            The new rule.
+	 */
+	public void addRule(Rule newRule) {
+<span class="nc" id="L564">		Rule oldRule = null;</span>
+
+<span class="nc bnc" id="L566" title="All 6 branches missed.">		switch (newRule.selector.getType()) {</span>
+		case ANY:
+<span class="nc" id="L568">			throw new RuntimeException(&quot;The ANY selector should never be used, it is created automatically.&quot;);</span>
+		case GRAPH:
+<span class="nc" id="L570">			oldRule = graphRules.addRule(newRule);</span>
+<span class="nc" id="L571">			break;</span>
+		case NODE:
+<span class="nc" id="L573">			oldRule = nodeRules.addRule(newRule);</span>
+<span class="nc" id="L574">			break;</span>
+		case EDGE:
+<span class="nc" id="L576">			oldRule = edgeRules.addRule(newRule);</span>
+<span class="nc" id="L577">			break;</span>
+		case SPRITE:
+<span class="nc" id="L579">			oldRule = spriteRules.addRule(newRule);</span>
+<span class="nc" id="L580">			break;</span>
+		default:
+<span class="nc" id="L582">			throw new RuntimeException(&quot;Ho ho ho ?&quot;);</span>
+		}
+
+<span class="nc bnc" id="L585" title="All 2 branches missed.">		for (StyleSheetListener listener : listeners)</span>
+<span class="nc" id="L586">			listener.styleAdded(oldRule, newRule);</span>
+<span class="nc" id="L587">	}</span>
+
+	@Override
+	public String toString() {
+<span class="nc" id="L591">		StringBuilder builder = new StringBuilder();</span>
+
+<span class="nc" id="L593">		builder.append(&quot;StyleSheet : {\n&quot;);</span>
+<span class="nc" id="L594">		builder.append(&quot;  default styles:\n&quot;);</span>
+<span class="nc" id="L595">		builder.append(defaultRule.toString(1));</span>
+<span class="nc" id="L596">		builder.append(graphRules.toString(1));</span>
+<span class="nc" id="L597">		builder.append(nodeRules.toString(1));</span>
+<span class="nc" id="L598">		builder.append(edgeRules.toString(1));</span>
+<span class="nc" id="L599">		builder.append(spriteRules.toString(1));</span>
+
+<span class="nc" id="L601">		return builder.toString();</span>
+	}
+
+	// Nested classes
+
+	/**
+	 * A name space is a tuple (default rule, id rule set, class rule set).
+	 * 
+	 * &lt;p&gt;
+	 * The name space defines a default rule for a kind of elements, a set of rules
+	 * for this kind of elements with a given identifier, and a set or rules for
+	 * this kind of elements with a given class.
+	 * &lt;/p&gt;
+	 */
+	public class NameSpace {
+		// Attribute
+
+		/**
+		 * The kind of elements in this name space.
+		 */
+		public Selector.Type type;
+
+		/**
+		 * The default rule for this kind of elements.
+		 */
+		public Rule defaultRule;
+
+		/**
+		 * The set of rules for this kind of elements with a given identifier.
+		 */
+<span class="nc" id="L631">		public HashMap&lt;String, Rule&gt; byId = new HashMap&lt;String, Rule&gt;();</span>
+
+		/**
+		 * The set of rules for this kind of elements with a given class.
+		 */
+<span class="nc" id="L636">		public HashMap&lt;String, Rule&gt; byClass = new HashMap&lt;String, Rule&gt;();</span>
+
+		// Constructor
+
+<span class="nc" id="L640">		public NameSpace(Selector.Type type) {</span>
+<span class="nc" id="L641">			this.type = type;</span>
+<span class="nc" id="L642">		}</span>
+
+		// Access
+
+		/**
+		 * The kind of elements this name space applies rules to.
+		 * 
+		 * @return A type of element (node, edge, sprite, graph).
+		 */
+		public Selector.Type getGraphElementType() {
+<span class="nc" id="L652">			return type;</span>
+		}
+
+		/**
+		 * Number of specific (id) rules.
+		 * 
+		 * @return The number of rules that apply to elements by their identifiers.
+		 */
+		public int getIdRulesCount() {
+<span class="nc" id="L661">			return byId.size();</span>
+		}
+
+		/**
+		 * Number of specific (class) rules.
+		 * 
+		 * @return The number of rules that apply to elements by their classes.
+		 */
+		public int getClassRulesCount() {
+<span class="nc" id="L670">			return byClass.size();</span>
+		}
+
+		/**
+		 * Get the rules that match a given element. The rules are returned in a given
+		 * order. The array always contain the &quot;main&quot; rule that matches the element.
+		 * This rule is either a default rule for the kind of element given or the rule
+		 * that matches its identifier if there is one. Then class rules the element has
+		 * can be appended to this array in order.
+		 * 
+		 * @return an array of rules that match the element, with the main rule at index
+		 *         0.
+		 */
+		protected ArrayList&lt;Rule&gt; getRulesFor(Element element) {
+<span class="nc" id="L684">			Rule rule = byId.get(element.getId());</span>
+<span class="nc" id="L685">			ArrayList&lt;Rule&gt; rules = new ArrayList&lt;Rule&gt;();</span>
+
+<span class="nc bnc" id="L687" title="All 2 branches missed.">			if (rule != null)</span>
+<span class="nc" id="L688">				rules.add(rule);</span>
+			else
+<span class="nc" id="L690">				rules.add(defaultRule);</span>
+
+<span class="nc" id="L692">			getClassRules(element, rules);</span>
+
+<span class="nc bnc" id="L694" title="All 2 branches missed.">			if (rules.isEmpty())</span>
+<span class="nc" id="L695">				rules.add(defaultRule);</span>
+
+<span class="nc" id="L697">			return rules;</span>
+		}
+
+		/**
+		 * Search if the given element has classes attributes and fill the given array
+		 * with the set of rules that match these classes.
+		 * 
+		 * @param element
+		 *            The element for which classes must be found.
+		 * @param rules
+		 *            The rule array to fill.
+		 */
+		protected void getClassRules(Element element, ArrayList&lt;Rule&gt; rules) {
+<span class="nc" id="L710">			Object o = element.getAttribute(&quot;ui.class&quot;);</span>
+
+<span class="nc bnc" id="L712" title="All 2 branches missed.">			if (o != null) {</span>
+<span class="nc bnc" id="L713" title="All 2 branches missed.">				if (o instanceof Object[]) {</span>
+<span class="nc bnc" id="L714" title="All 2 branches missed.">					for (Object s : (Object[]) o) {</span>
+<span class="nc bnc" id="L715" title="All 2 branches missed.">						if (s instanceof CharSequence) {</span>
+<span class="nc" id="L716">							Rule rule = byClass.get((CharSequence) s);</span>
+
+<span class="nc bnc" id="L718" title="All 2 branches missed.">							if (rule != null)</span>
+<span class="nc" id="L719">								rules.add(rule);</span>
+						}
+					}
+<span class="nc bnc" id="L722" title="All 2 branches missed.">				} else if (o instanceof CharSequence) {</span>
+<span class="nc" id="L723">					String classList = ((CharSequence) o).toString().trim();</span>
+<span class="nc" id="L724">					String[] classes = classList.split(&quot;\\s*,\\s*&quot;);</span>
+
+<span class="nc bnc" id="L726" title="All 2 branches missed.">					for (String c : classes) {</span>
+<span class="nc" id="L727">						Rule rule = byClass.get(c);</span>
+
+<span class="nc bnc" id="L729" title="All 2 branches missed.">						if (rule != null)</span>
+<span class="nc" id="L730">							rules.add(rule);</span>
+					}
+<span class="nc" id="L732">				} else {</span>
+<span class="nc" id="L733">					throw new RuntimeException(&quot;Oups ! class attribute is of type &quot; + o.getClass().getName());</span>
+				}
+			}
+<span class="nc" id="L736">		}</span>
+
+		// Command
+
+		/**
+		 * Remove all styles.
+		 */
+		protected void clear() {
+<span class="nc" id="L744">			defaultRule = null;</span>
+<span class="nc" id="L745">			byId.clear();</span>
+<span class="nc" id="L746">			byClass.clear();</span>
+<span class="nc" id="L747">		}</span>
+
+		/**
+		 * Add a new rule.
+		 * 
+		 * &lt;p&gt;
+		 * Several cases can occur :
+		 * &lt;/p&gt;
+		 * 
+		 * &lt;ul&gt;
+		 * &lt;li&gt;The rule to add has an ID or class and the rule does not yet exists and
+		 * is not an event rule : add it directly.&lt;/li&gt;
+		 * &lt;li&gt;If the rule has an ID or class but the rule already exists, augment to
+		 * already existing rule.&lt;/li&gt;
+		 * &lt;li&gt;If the rule has no ID or class and is not an event, augment the default
+		 * style.&lt;/li&gt;
+		 * &lt;li&gt;If the rule is an event, the corresponding normal rule is searched, if it
+		 * does not exists, it is created then or else, the event is added to the found
+		 * rule.&lt;/li&gt;
+		 * &lt;/ul&gt;
+		 * 
+		 * @param newRule
+		 *            The rule to add or copy.
+		 * @return It the rule added augments an existing rule, this existing rule is
+		 *         returned, else null is returned.
+		 */
+		protected Rule addRule(Rule newRule) {
+<span class="nc" id="L774">			Rule oldRule = null;</span>
+
+<span class="nc bnc" id="L776" title="All 2 branches missed.">			if (newRule.selector.getPseudoClass() != null) {</span>
+<span class="nc" id="L777">				oldRule = addEventRule(newRule);</span>
+<span class="nc bnc" id="L778" title="All 2 branches missed.">			} else if (newRule.selector.getId() != null) {</span>
+<span class="nc" id="L779">				oldRule = byId.get(newRule.selector.getId());</span>
+
+<span class="nc bnc" id="L781" title="All 2 branches missed.">				if (oldRule != null) {</span>
+<span class="nc" id="L782">					oldRule.getStyle().augment(newRule.getStyle());</span>
+<span class="nc" id="L783">				} else {</span>
+<span class="nc" id="L784">					byId.put(newRule.selector.getId(), newRule);</span>
+<span class="nc" id="L785">					newRule.getStyle().reparent(defaultRule);</span>
+				}
+<span class="nc bnc" id="L787" title="All 2 branches missed.">			} else if (newRule.selector.getClazz() != null) {</span>
+<span class="nc" id="L788">				oldRule = byClass.get(newRule.selector.getClazz());</span>
+
+<span class="nc bnc" id="L790" title="All 2 branches missed.">				if (oldRule != null) {</span>
+<span class="nc" id="L791">					oldRule.getStyle().augment(newRule.getStyle());</span>
+<span class="nc" id="L792">				} else {</span>
+<span class="nc" id="L793">					byClass.put(newRule.selector.getClazz(), newRule);</span>
+<span class="nc" id="L794">					newRule.getStyle().reparent(defaultRule);</span>
+				}
+<span class="nc" id="L796">			} else {</span>
+<span class="nc" id="L797">				oldRule = defaultRule;</span>
+<span class="nc" id="L798">				defaultRule.getStyle().augment(newRule.getStyle());</span>
+<span class="nc" id="L799">				newRule = defaultRule;</span>
+			}
+
+			// That's it.
+
+<span class="nc" id="L804">			return oldRule;</span>
+		}
+
+		protected Rule addEventRule(Rule newRule) {
+<span class="nc" id="L808">			Rule parentRule = null;</span>
+
+<span class="nc bnc" id="L810" title="All 2 branches missed.">			if (newRule.selector.getId() != null) {</span>
+<span class="nc" id="L811">				parentRule = byId.get(newRule.selector.getId());</span>
+
+<span class="nc bnc" id="L813" title="All 2 branches missed.">				if (parentRule == null) {</span>
+<span class="nc" id="L814">					parentRule = addRule(new Rule(new Selector(newRule.selector.getType(), newRule.selector.getId(),</span>
+<span class="nc" id="L815">							newRule.selector.getClazz())));</span>
+				}
+<span class="nc bnc" id="L817" title="All 2 branches missed.">			} else if (newRule.selector.getClazz() != null) {</span>
+<span class="nc" id="L818">				parentRule = byClass.get(newRule.selector.getClazz());</span>
+
+<span class="nc bnc" id="L820" title="All 2 branches missed.">				if (parentRule == null) {</span>
+<span class="nc" id="L821">					parentRule = addRule(new Rule(new Selector(newRule.selector.getType(), newRule.selector.getId(),</span>
+<span class="nc" id="L822">							newRule.selector.getClazz())));</span>
+				}
+<span class="nc" id="L824">			} else {</span>
+<span class="nc" id="L825">				parentRule = defaultRule;</span>
+			}
+
+<span class="nc" id="L828">			newRule.getStyle().reparent(parentRule);</span>
+<span class="nc" id="L829">			parentRule.getStyle().addAlternateStyle(newRule.selector.getPseudoClass(), newRule);</span>
+
+<span class="nc" id="L831">			return parentRule;</span>
+		}
+
+		@Override
+		public String toString() {
+<span class="nc" id="L836">			return toString(-1);</span>
+		}
+
+		public String toString(int level) {
+<span class="nc" id="L840">			String prefix = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L842" title="All 2 branches missed.">			if (level &gt; 0) {</span>
+<span class="nc bnc" id="L843" title="All 2 branches missed.">				for (int i = 0; i &lt; level; i++)</span>
+<span class="nc" id="L844">					prefix += &quot;    &quot;;</span>
+			}
+
+<span class="nc" id="L847">			StringBuilder builder = new StringBuilder();</span>
+
+<span class="nc" id="L849">			builder.append(String.format(&quot;%s%s default style :%n&quot;, prefix, type));</span>
+<span class="nc" id="L850">			builder.append(defaultRule.toString(level + 1));</span>
+<span class="nc" id="L851">			toStringRules(level, builder, byId, String.format(&quot;%s%s id styles&quot;, prefix, type));</span>
+<span class="nc" id="L852">			toStringRules(level, builder, byClass, String.format(&quot;%s%s class styles&quot;, prefix, type));</span>
+
+<span class="nc" id="L854">			return builder.toString();</span>
+		}
+
+		protected void toStringRules(int level, StringBuilder builder, HashMap&lt;String, Rule&gt; rules, String title) {
+<span class="nc" id="L858">			builder.append(title);</span>
+<span class="nc" id="L859">			builder.append(String.format(&quot; :%n&quot;));</span>
+
+<span class="nc bnc" id="L861" title="All 2 branches missed.">			for (Rule rule : rules.values())</span>
+<span class="nc" id="L862">				builder.append(rule.toString(level + 1));</span>
+<span class="nc" id="L863">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

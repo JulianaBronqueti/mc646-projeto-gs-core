@@ -1,0 +1,682 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Node.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph</a> &gt; <span class="el_source">Node.java</span></div><h1>Node.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph;
+
+import java.util.Iterator;
+import java.util.stream.Stream;
+
+/**
+ * An Interface that advises general purpose methods for handling nodes as
+ * elements of a graph.
+ * 
+ * &lt;h3&gt;Important&lt;/h3&gt;
+ * &lt;p&gt;
+ * Implementing classes should indicate the complexity of their implementation
+ * for each method.
+ * &lt;/p&gt;
+ * 
+ * @since July 12 2007
+ */
+public interface Node extends Element, Iterable&lt;Edge&gt; {
+	/**
+	 * Parent graph. Some elements are not able to give their parent graph.
+	 * 
+	 * @return The graph containing this node or null if unknown.
+	 */
+	Graph getGraph();
+
+	/**
+	 * Total number of relations with other nodes or this node.
+	 * 
+	 * @return The number of edges/relations/links.
+	 */
+	int getDegree();
+
+	/**
+	 * Number of leaving edges.
+	 * 
+	 * @return the count of edges that only leave this node plus all undirected
+	 *         edges.
+	 */
+	int getOutDegree();
+
+	/**
+	 * Number of entering edges.
+	 * 
+	 * @return the count of edges that only enter this node plus all undirected
+	 *         edges.
+	 */
+	int getInDegree();
+
+	/**
+	 * Retrieve an edge that leaves this node toward 'id'.
+	 * &lt;p&gt;
+	 * This method selects only edges leaving this node an pointing at node 'id'
+	 * (this also selects undirected edges).
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeToward(&amp;quot;...&amp;quot;);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param id
+	 *            Identifier of the target node.
+	 * @return Directed edge going from this node to 'id', or undirected edge if it
+	 *         exists, else null.
+	 */
+	Edge getEdgeToward(String id);
+
+	/**
+	 * Retrieve an edge that leaves node 'id' toward this node.
+	 * &lt;p&gt;
+	 * This method selects only edges leaving node 'id' an pointing at this node
+	 * (this also selects undirected edges).
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeFrom(&amp;quot;...&amp;quot;);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param id
+	 *            Identifier of the source node.
+	 * @return Directed edge going from node 'id' to this node, or undirected edge
+	 *         if it exists, else null.
+	 */
+	Edge getEdgeFrom(String id);
+
+	/**
+	 * Retrieve an edge between this node and the node 'id', if it exits.
+	 * &lt;p&gt;
+	 * This method selects directed or undirected edges. If the edge is directed,
+	 * its direction is not important and leaving or entering edges will be
+	 * selected.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeBetween(&amp;quot;...&amp;quot;);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param id
+	 *            Identifier of the opposite node.
+	 * @return Edge between node 'id' and this node if it exists, else null.
+	 */
+	Edge getEdgeBetween(String id);
+
+	/**
+	 * Stream over neighbor nodes connected to this node via one or more edges. This
+	 * iterator iterates across any leaving, entering and non directed edges (nodes
+	 * are neighbors even if they only have a directed edge from them toward this
+	 * node). If there are multiple edges connecting the same node, it might be
+	 * iterated several times.
+	 * 
+	 * @return The stream, neighbors are streamed in arbitrary order.
+	 */
+	default Stream&lt;Node&gt; neighborNodes() {
+<span class="nc" id="L171">		return edges().map(edge -&gt; {</span>
+<span class="nc" id="L172">			return edge.getOpposite(Node.this);</span>
+		});
+	}
+
+	/**
+	 * I-th edge. Edges are stored in no given order.
+	 * &lt;p&gt;
+	 * However this method allows to iterate very quickly on all edges, or to choose
+	 * a given edge with direct access.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdge(i);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param i
+	 *            Index of the edge.
+	 * @return The i-th edge.
+	 * @throws IndexOutOfBoundsException
+	 *             if &lt;code&gt;i&lt;/code&gt; is negative or greater than or equal to the
+	 *             degree
+	 */
+	Edge getEdge(int i);
+
+	/**
+	 * I-th entering edge. Edges are stored in no given order.
+	 * &lt;p&gt;
+	 * However this method allows to iterate very quickly on all entering edges, or
+	 * to choose a given entering edge with direct access.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEnteringEdge(i);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param i
+	 *            Index of the edge.
+	 * @return The i-th entering edge.
+	 * @throws IndexOutOfBoundsException
+	 *             if &lt;code&gt;i&lt;/code&gt; is negative or greater than or equal to the
+	 *             in-degree
+	 */
+	Edge getEnteringEdge(int i);
+
+	/**
+	 * I-th leaving edge. Edges are stored in no given order.
+	 * &lt;p&gt;
+	 * However this method allows to iterate very quickly on all leaving edges, or
+	 * to choose a given leaving edge with direct access.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getLeavingEdge(i);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param i
+	 *            Index of the edge.
+	 * @return The i-th leaving edge.
+	 * @throws IndexOutOfBoundException
+	 *             if &lt;code&gt;i&lt;/code&gt; is negative or greater than or equal to the
+	 *             out-degree
+	 */
+	Edge getLeavingEdge(int i);
+
+	/**
+	 * Iterator for breadth first exploration of the graph, starting at this node.
+	 * &lt;p&gt;
+	 * If the graph is not connected, only a part of it will be explored. By
+	 * default, this iterator will respect edge orientation.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return an Iterator over something which
+	 * extends Node. The return type is the one of the left part of the assignment.
+	 * For example, in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * Iterator&amp;lt;ExtendedNode&amp;gt; ite = node.getBreadthFirstIterator();
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an Iterator&amp;lt;ExtendedNode&amp;gt;. If no left part
+	 * exists, method will just return an Iterator&amp;lt;Node&amp;gt;.
+	 * &lt;/p&gt;
+	 * 
+	 * @return An iterator able to explore the graph in a breadth first way starting
+	 *         at this node.
+	 */
+	Iterator&lt;Node&gt; getBreadthFirstIterator();
+
+	/**
+	 * Iterator for breadth first exploration of the graph, starting at this node.
+	 * &lt;p&gt;
+	 * If the graph is not connected, only a part of it will be explored.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return an Iterator over something which
+	 * extends Node. The return type is the one of the left part of the assignment.
+	 * For example, in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * Iterator&amp;lt;ExtendedNode&amp;gt; ite = node.getBreadthFirstIterator(true);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an Iterator&amp;lt;ExtendedNode&amp;gt;. If no left part
+	 * exists, method will just return an Iterator&amp;lt;Node&amp;gt;.
+	 * &lt;/p&gt;
+	 * 
+	 * @param directed
+	 *            If false, the iterator will ignore edge orientation (the default
+	 *            is &quot;True&quot;).
+	 * @return An iterator able to explore the graph in a breadth first way starting
+	 *         at this node.
+	 */
+	Iterator&lt;Node&gt; getBreadthFirstIterator(boolean directed);
+
+	/**
+	 * Iterator for depth first exploration of the graph, starting at this node.
+	 * &lt;p&gt;
+	 * If the graph is not connected, only a part of it will be explored. By
+	 * default, this iterator will respect edge orientation.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return an Iterator over something which
+	 * extends Node. The return type is the one of the left part of the assignment.
+	 * For example, in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * Iterator&amp;lt;ExtendedNode&amp;gt; ite = node.getDepthFirstIterator();
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an Iterator&amp;lt;ExtendedNode&amp;gt;. If no left part
+	 * exists, method will just return an Iterator&amp;lt;Node&amp;gt;.
+	 * &lt;/p&gt;
+	 * 
+	 * @return An iterator able to explore the graph in a depth first way starting
+	 *         at this node.
+	 * @complexity of the depth first iterator O(n+m) with n the number of nodes and
+	 *             m the number of edges.
+	 */
+	Iterator&lt;Node&gt; getDepthFirstIterator();
+
+	/**
+	 * Iterator for depth first exploration of the graph, starting at this node.
+	 * &lt;p&gt;
+	 * If the graph is not connected, only a part of it will be explored.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return an Iterator over something which
+	 * extends Node. The return type is the one of the left part of the assignment.
+	 * For example, in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * Iterator&amp;lt;ExtendedNode&amp;gt; ite = node.getDepthFirstIterator(true);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an Iterator&amp;lt;ExtendedNode&amp;gt;. If no left part
+	 * exists, method will just return an Iterator&amp;lt;Node&amp;gt;.
+	 * &lt;/p&gt;
+	 * 
+	 * @param directed
+	 *            If false, the iterator will ignore edge orientation (the default
+	 *            is &quot;True&quot;).
+	 * @return An iterator able to explore the graph in a depth first way starting
+	 *         at this node.
+	 */
+	Iterator&lt;Node&gt; getDepthFirstIterator(boolean directed);
+
+	/**
+	 * Stream over all entering and leaving edges.
+	 * 
+	 * @return A stream over all directed and undirected edges, leaving or entering.
+	 */
+	Stream&lt;Edge&gt; edges();
+
+	/**
+	 * Stream over all leaving edges.
+	 * 
+	 * @return A stream over only edges that leave this node plus all undirected
+	 *         edges.
+	 */
+	default Stream&lt;Edge&gt; leavingEdges() {
+<span class="nc bnc" id="L376" title="All 2 branches missed.">		return edges().filter(e -&gt; (e.getSourceNode() == this));</span>
+	}
+
+	/**
+	 * Stream over all entering edges.
+	 *
+	 * @return A stream over only edges that enter this node plus all undirected
+	 *         edges.
+	 */
+	default Stream&lt;Edge&gt; enteringEdges() {
+<span class="nc bnc" id="L386" title="All 2 branches missed.">		return edges().filter(e -&gt; (e.getTargetNode() == this));</span>
+	}
+
+	@Override
+	default Iterator&lt;Edge&gt; iterator() {
+<span class="nc" id="L391">		return edges().iterator();</span>
+	}
+
+	/**
+	 * Override the Object.toString() method.
+	 */
+	String toString();
+
+	// New methods
+
+	/**
+	 * True if an edge leaves this node toward node 'id'.
+	 *
+	 * @param id
+	 *            Identifier of the target node.
+	 * @return True if a directed edge goes from this node to 'id' or if an
+	 *         undirected edge exists.
+	 */
+	default boolean hasEdgeToward(String id) {
+<span class="nc bnc" id="L410" title="All 2 branches missed.">		return getEdgeToward(id) != null;</span>
+	}
+
+	/**
+	 * True if an edge leaves this node toward a given node.
+	 * 
+	 * @param node
+	 *            The target node.
+	 * @return True if a directed edge goes from this node to the other node or if
+	 *         an undirected edge exists.
+	 */
+	default boolean hasEdgeToward(Node node) {
+<span class="nc bnc" id="L422" title="All 2 branches missed.">		return getEdgeToward(node) != null;</span>
+	}
+
+	/**
+	 * True if an edge leaves this node toward a node with given index.
+	 * 
+	 * @param index
+	 *            Index of the target node.
+	 * @return True if a directed edge goes from this node to the other node or if
+	 *         an undirected edge exists.
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is negative or greater than {@code
+	 *             getNodeCount() - 1}.
+	 */
+	default boolean hasEdgeToward(int index) throws IndexOutOfBoundsException {
+<span class="nc bnc" id="L437" title="All 2 branches missed.">		return getEdgeToward(index) != null;</span>
+	}
+
+	/**
+	 * True if an edge enters this node from node 'id'.
+	 *
+	 * @param id
+	 *            Identifier of the source node.
+	 * @return True if a directed edge goes from this node to 'id' or if an
+	 *         undirected edge exists.
+	 */
+	default boolean hasEdgeFrom(String id) {
+<span class="nc bnc" id="L449" title="All 2 branches missed.">		return getEdgeFrom(id) != null;</span>
+	}
+
+	/**
+	 * True if an edge enters this node from a given node.
+	 * 
+	 * @param node
+	 *            The source node.
+	 * @return True if a directed edge goes from the other node to this node or if
+	 *         an undirected edge exists.
+	 */
+	default boolean hasEdgeFrom(Node node) {
+<span class="nc bnc" id="L461" title="All 2 branches missed.">		return getEdgeFrom(node) != null;</span>
+	}
+
+	/**
+	 * True if an edge enters this node from a node with given index.
+	 * 
+	 * @param index
+	 *            Index of the source node.
+	 * @return True if a directed edge goes from the other node to this node or if
+	 *         an undirected edge exists.
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is negative or greater than {@code
+	 *             getNodeCount() - 1}.
+	 */
+	default boolean hasEdgeFrom(int index) throws IndexOutOfBoundsException {
+<span class="nc bnc" id="L476" title="All 2 branches missed.">		return getEdgeFrom(index) != null;</span>
+	}
+
+	/**
+	 * True if an edge exists between this node and node 'id'.
+	 *
+	 * @param id
+	 *            Identifier of another node.
+	 * @return True if a edge exists between this node and node 'id'.
+	 */
+	default boolean hasEdgeBetween(String id) {
+<span class="nc bnc" id="L487" title="All 2 branches missed.">		return getEdgeBetween(id) != null;</span>
+	}
+
+	/**
+	 * True if an edge exists between this node and another node.
+	 * 
+	 * @param node
+	 *            Another node.
+	 * @return True if an edge exists between this node and the other node.
+	 */
+	default boolean hasEdgeBetween(Node node) {
+<span class="nc bnc" id="L498" title="All 2 branches missed.">		return getEdgeBetween(node) != null;</span>
+	}
+
+	/**
+	 * True if an edge exists between this node and a node with given index.
+	 * 
+	 * @param index
+	 *            Index of another node.
+	 * @return True if an edge exists between this node and the other node.
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is negative or greater than {@code
+	 *             getNodeCount() - 1}.
+	 */
+	default boolean hasEdgeBetween(int index) throws IndexOutOfBoundsException {
+<span class="nc bnc" id="L512" title="All 2 branches missed.">		return getEdgeBetween(index) != null;</span>
+	}
+
+	/**
+	 * Retrieves an edge that leaves this node toward another node.
+	 * &lt;p&gt;
+	 * This method selects only edges leaving this node an pointing at the parameter
+	 * node (this also selects undirected edges).
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and returns something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeToward(...);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param node
+	 *            The target node.
+	 * @return Directed edge going from this node to the parameter node, or
+	 *         undirected edge if it exists, else null.
+	 */
+	Edge getEdgeToward(Node node);
+
+	/**
+	 * Retrieves an edge that leaves this node toward the node with given index.
+	 * &lt;p&gt;
+	 * This method selects only edges leaving this node an pointing at the parameter
+	 * node (this also selects undirected edges).
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and returns something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeToward(...);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param index
+	 *            Index of the target node.
+	 * @return Directed edge going from this node to the parameter node, or
+	 *         undirected edge if it exists, else null.
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is negative or greater than {@code
+	 *             getNodeCount() - 1}.
+	 */
+	Edge getEdgeToward(int index) throws IndexOutOfBoundsException;
+
+	/**
+	 * Retrieves an edge that leaves given node toward this node.
+	 * &lt;p&gt;
+	 * This method selects only edges leaving the other node an pointing at this
+	 * node (this also selects undirected edges).
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and returns something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeFrom(...);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param node
+	 *            The source node.
+	 * @return Directed edge going from the parameter node to this node, or
+	 *         undirected edge if it exists, else null.
+	 */
+	Edge getEdgeFrom(Node node);
+
+	/**
+	 * Retrieves an edge that leaves node with given index toward this node.
+	 * &lt;p&gt;
+	 * This method selects only edges leaving the other node an pointing at this
+	 * node (this also selects undirected edges).
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and returns something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeFrom(&amp;quot;...&amp;quot;);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param index
+	 *            Index of the source node.
+	 * @return Directed edge going from the parameter node to this node, or
+	 *         undirected edge if it exists, else null.
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is negative or greater than {@code
+	 *             getNodeCount() - 1}.
+	 */
+	Edge getEdgeFrom(int index) throws IndexOutOfBoundsException;
+
+	/**
+	 * Retrieves an edge between this node and and another node if one exists.
+	 * &lt;p&gt;
+	 * This method selects directed or undirected edges. If the edge is directed,
+	 * its direction is not important and leaving or entering edges will be
+	 * selected.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeBetween(...);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param node
+	 *            The opposite node.
+	 * @return Edge between this node and the parameter node if it exists, else
+	 *         null.
+	 */
+	Edge getEdgeBetween(Node node);
+
+	/**
+	 * Retrieves an edge between this node and the node with index i if one exists.
+	 * &lt;p&gt;
+	 * This method selects directed or undirected edges. If the edge is directed,
+	 * its direction is not important and leaving or entering edges will be
+	 * selected.
+	 * &lt;/p&gt;
+	 * &lt;p&gt;
+	 * This method is implicitly generic and return something which extends Edge.
+	 * The return type is the one of the left part of the assignment. For example,
+	 * in the following call :
+	 * 
+	 * &lt;pre&gt;
+	 * ExtendedEdge e = node.getEdgeBetween(...);
+	 * &lt;/pre&gt;
+	 * 
+	 * the method will return an ExtendedEdge. If no left part exists, method will
+	 * just return an Edge.
+	 * &lt;/p&gt;
+	 * 
+	 * @param index
+	 *            The index of the opposite node.
+	 * @return Edge between node with index i and this node if it exists, else null.
+	 * @throws IndexOutOfBoundsException
+	 *             if the index is negative or greater than {@code
+	 *             getNodeCount() - 1}.
+	 */
+	Edge getEdgeBetween(int index) throws IndexOutOfBoundsException;
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

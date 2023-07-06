@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>RMISource.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.rmi</a> &gt; <span class="el_source">RMISource.java</span></div><h1>RMISource.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-05-14
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.rmi;
+
+import java.rmi.Naming;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.graphstream.stream.AttributeSink;
+import org.graphstream.stream.ElementSink;
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.Source;
+
+public class RMISource extends UnicastRemoteObject implements RMIAdapterIn, Source {
+	private static final long serialVersionUID = 6635146473737922832L;
+
+	ConcurrentLinkedQueue&lt;AttributeSink&gt; attributesListeners;
+	ConcurrentLinkedQueue&lt;ElementSink&gt; elementsListeners;
+
+	public RMISource() throws RemoteException {
+<span class="nc" id="L53">		super();</span>
+
+<span class="nc" id="L55">		attributesListeners = new ConcurrentLinkedQueue&lt;AttributeSink&gt;();</span>
+<span class="nc" id="L56">		elementsListeners = new ConcurrentLinkedQueue&lt;ElementSink&gt;();</span>
+<span class="nc" id="L57">	}</span>
+
+	public RMISource(String name) throws RemoteException {
+<span class="nc" id="L60">		this();</span>
+<span class="nc" id="L61">		bind(name);</span>
+<span class="nc" id="L62">	}</span>
+
+	public void bind(String name) {
+		try {
+<span class="nc" id="L66">			Naming.rebind(String.format(&quot;//localhost/%s&quot;, name), this);</span>
+<span class="nc" id="L67">		} catch (Exception e) {</span>
+<span class="nc" id="L68">			e.printStackTrace();</span>
+		}
+<span class="nc" id="L70">	}</span>
+
+	public void edgeAdded(String graphId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) throws RemoteException {
+<span class="nc bnc" id="L74" title="All 2 branches missed.">		for (ElementSink gel : elementsListeners)</span>
+<span class="nc" id="L75">			gel.edgeAdded(graphId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L76">	}</span>
+
+	public void edgeAttributeAdded(String graphId, long timeId, String edgeId, String attribute, Object value)
+			throws RemoteException {
+<span class="nc bnc" id="L80" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L81">			gal.edgeAttributeAdded(graphId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L82">	}</span>
+
+	public void edgeAttributeChanged(String graphId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) throws RemoteException {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L87">			gal.edgeAttributeChanged(graphId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L88">	}</span>
+
+	public void edgeAttributeRemoved(String graphId, long timeId, String edgeId, String attribute)
+			throws RemoteException {
+<span class="nc bnc" id="L92" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L93">			gal.edgeAttributeRemoved(graphId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L94">	}</span>
+
+	public void edgeRemoved(String graphId, long timeId, String edgeId) throws RemoteException {
+<span class="nc bnc" id="L97" title="All 2 branches missed.">		for (ElementSink gel : elementsListeners)</span>
+<span class="nc" id="L98">			gel.edgeRemoved(graphId, timeId, edgeId);</span>
+<span class="nc" id="L99">	}</span>
+
+	public void graphAttributeAdded(String graphId, long timeId, String attribute, Object value)
+			throws RemoteException {
+<span class="nc bnc" id="L103" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L104">			gal.graphAttributeAdded(graphId, timeId, attribute, value);</span>
+<span class="nc" id="L105">	}</span>
+
+	public void graphAttributeChanged(String graphId, long timeId, String attribute, Object oldValue, Object newValue)
+			throws RemoteException {
+<span class="nc bnc" id="L109" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L110">			gal.graphAttributeChanged(graphId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L111">	}</span>
+
+	public void graphAttributeRemoved(String graphId, long timeId, String attribute) throws RemoteException {
+<span class="nc bnc" id="L114" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L115">			gal.graphAttributeRemoved(graphId, timeId, attribute);</span>
+<span class="nc" id="L116">	}</span>
+
+	public void graphCleared(String graphId, long timeId) throws RemoteException {
+<span class="nc bnc" id="L119" title="All 2 branches missed.">		for (ElementSink gel : elementsListeners)</span>
+<span class="nc" id="L120">			gel.graphCleared(graphId, timeId);</span>
+<span class="nc" id="L121">	}</span>
+
+	public void nodeAdded(String graphId, long timeId, String nodeId) throws RemoteException {
+<span class="nc bnc" id="L124" title="All 2 branches missed.">		for (ElementSink gel : elementsListeners)</span>
+<span class="nc" id="L125">			gel.nodeAdded(graphId, timeId, nodeId);</span>
+<span class="nc" id="L126">	}</span>
+
+	public void nodeAttributeAdded(String graphId, long timeId, String nodeId, String attribute, Object value)
+			throws RemoteException {
+<span class="nc bnc" id="L130" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L131">			gal.nodeAttributeAdded(graphId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L132">	}</span>
+
+	public void nodeAttributeChanged(String graphId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) throws RemoteException {
+<span class="nc bnc" id="L136" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L137">			gal.nodeAttributeChanged(graphId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L138">	}</span>
+
+	public void nodeAttributeRemoved(String graphId, long timeId, String nodeId, String attribute)
+			throws RemoteException {
+<span class="nc bnc" id="L142" title="All 2 branches missed.">		for (AttributeSink gal : attributesListeners)</span>
+<span class="nc" id="L143">			gal.nodeAttributeRemoved(graphId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L144">	}</span>
+
+	public void nodeRemoved(String graphId, long timeId, String nodeId) throws RemoteException {
+<span class="nc bnc" id="L147" title="All 2 branches missed.">		for (ElementSink gel : elementsListeners)</span>
+<span class="nc" id="L148">			gel.nodeRemoved(graphId, timeId, nodeId);</span>
+<span class="nc" id="L149">	}</span>
+
+	public void stepBegins(String graphId, long timeId, double step) throws RemoteException {
+<span class="nc bnc" id="L152" title="All 2 branches missed.">		for (ElementSink gel : elementsListeners)</span>
+<span class="nc" id="L153">			gel.stepBegins(graphId, timeId, step);</span>
+<span class="nc" id="L154">	}</span>
+
+	public void addAttributeSink(AttributeSink listener) {
+<span class="nc" id="L157">		attributesListeners.add(listener);</span>
+<span class="nc" id="L158">	}</span>
+
+	public void addElementSink(ElementSink listener) {
+<span class="nc" id="L161">		elementsListeners.add(listener);</span>
+<span class="nc" id="L162">	}</span>
+
+	public void addSink(Sink listener) {
+<span class="nc" id="L165">		attributesListeners.add(listener);</span>
+<span class="nc" id="L166">		elementsListeners.add(listener);</span>
+<span class="nc" id="L167">	}</span>
+
+	public void removeAttributeSink(AttributeSink listener) {
+<span class="nc" id="L170">		attributesListeners.remove(listener);</span>
+<span class="nc" id="L171">	}</span>
+
+	public void removeElementSink(ElementSink listener) {
+<span class="nc" id="L174">		elementsListeners.remove(listener);</span>
+<span class="nc" id="L175">	}</span>
+
+	public void removeSink(Sink listener) {
+<span class="nc" id="L178">		attributesListeners.remove(listener);</span>
+<span class="nc" id="L179">		elementsListeners.remove(listener);</span>
+<span class="nc" id="L180">	}</span>
+
+	public void clearAttributeSinks() {
+<span class="nc" id="L183">		attributesListeners.clear();</span>
+<span class="nc" id="L184">		elementsListeners.clear();</span>
+<span class="nc" id="L185">	}</span>
+
+	public void clearElementSinks() {
+<span class="nc" id="L188">		elementsListeners.clear();</span>
+<span class="nc" id="L189">	}</span>
+
+	public void clearSinks() {
+<span class="nc" id="L192">		attributesListeners.clear();</span>
+<span class="nc" id="L193">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

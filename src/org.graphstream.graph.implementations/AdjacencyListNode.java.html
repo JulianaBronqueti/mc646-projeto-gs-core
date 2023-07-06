@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AdjacencyListNode.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.implementations</a> &gt; <span class="el_source">AdjacencyListNode.java</span></div><h1>AdjacencyListNode.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.implementations;
+
+import java.security.AccessControlException;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.stream.Stream;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Node;
+
+/**
+ * Nodes used with {@link AdjacencyListGraph}
+ * 
+ */
+public class AdjacencyListNode extends AbstractNode {
+	protected static final int INITIAL_EDGE_CAPACITY;
+	protected static final double GROWTH_FACTOR = 1.1;
+
+	static {
+<span class="fc" id="L55">		String p = &quot;org.graphstream.graph.node.initialEdgeCapacity&quot;;</span>
+<span class="fc" id="L56">		int initialEdgeCapacity = 16;</span>
+		try {
+<span class="fc" id="L58">			initialEdgeCapacity = Integer.valueOf(System.getProperty(p, &quot;16&quot;));</span>
+<span class="pc" id="L59">		} catch (AccessControlException e) {</span>
+		}
+<span class="fc" id="L61">		INITIAL_EDGE_CAPACITY = initialEdgeCapacity;</span>
+	}
+
+	protected static final char I_EDGE = 0;
+	protected static final char IO_EDGE = 1;
+<span class="fc" id="L66">	protected static final char O_EDGE = 2;</span>
+
+	protected AbstractEdge[] edges;
+	protected int ioStart, oStart, degree;
+
+	// *** Constructor ***
+
+	protected AdjacencyListNode(AbstractGraph graph, String id) {
+<span class="fc" id="L74">		super(graph, id);</span>
+<span class="fc" id="L75">		edges = new AbstractEdge[INITIAL_EDGE_CAPACITY];</span>
+<span class="fc" id="L76">		ioStart = oStart = degree = 0;</span>
+<span class="fc" id="L77">	}</span>
+
+	// *** Helpers ***
+
+	protected char edgeType(AbstractEdge e) {
+<span class="pc bpc" id="L82" title="3 of 4 branches missed.">		if (!e.directed || e.source == e.target)</span>
+<span class="fc" id="L83">			return IO_EDGE;</span>
+<span class="nc bnc" id="L84" title="All 2 branches missed.">		return e.source == this ? O_EDGE : I_EDGE;</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	protected &lt;T extends Edge&gt; T locateEdge(Node opposite, char type) {
+		// where to search ?
+<span class="nc" id="L90">		int start = 0;</span>
+<span class="nc" id="L91">		int end = degree;</span>
+<span class="nc bnc" id="L92" title="All 2 branches missed.">		if (type == I_EDGE)</span>
+<span class="nc" id="L93">			end = oStart;</span>
+<span class="nc bnc" id="L94" title="All 2 branches missed.">		else if (type == O_EDGE)</span>
+<span class="nc" id="L95">			start = ioStart;</span>
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">		for (int i = start; i &lt; end; i++)</span>
+<span class="nc bnc" id="L98" title="All 2 branches missed.">			if (edges[i].getOpposite(this) == opposite)</span>
+<span class="nc" id="L99">				return (T) edges[i];</span>
+<span class="nc" id="L100">		return null;</span>
+	}
+
+	protected void removeEdge(int i) {
+<span class="nc bnc" id="L104" title="All 2 branches missed.">		if (i &gt;= oStart) {</span>
+<span class="nc" id="L105">			edges[i] = edges[--degree];</span>
+<span class="nc" id="L106">			edges[degree] = null;</span>
+<span class="nc" id="L107">			return;</span>
+		}
+
+<span class="nc bnc" id="L110" title="All 2 branches missed.">		if (i &gt;= ioStart) {</span>
+<span class="nc" id="L111">			edges[i] = edges[--oStart];</span>
+<span class="nc" id="L112">			edges[oStart] = edges[--degree];</span>
+<span class="nc" id="L113">			edges[degree] = null;</span>
+<span class="nc" id="L114">			return;</span>
+		}
+
+<span class="nc" id="L117">		edges[i] = edges[--ioStart];</span>
+<span class="nc" id="L118">		edges[ioStart] = edges[--oStart];</span>
+<span class="nc" id="L119">		edges[oStart] = edges[--degree];</span>
+<span class="nc" id="L120">		edges[degree] = null;</span>
+
+<span class="nc" id="L122">	}</span>
+
+	// *** Callbacks ***
+
+	@Override
+	protected boolean addEdgeCallback(AbstractEdge edge) {
+		// resize edges if necessary
+<span class="pc bpc" id="L129" title="1 of 2 branches missed.">		if (edges.length == degree) {</span>
+<span class="nc" id="L130">			AbstractEdge[] tmp = new AbstractEdge[(int) (GROWTH_FACTOR * edges.length) + 1];</span>
+<span class="nc" id="L131">			System.arraycopy(edges, 0, tmp, 0, edges.length);</span>
+<span class="nc" id="L132">			Arrays.fill(edges, null);</span>
+<span class="nc" id="L133">			edges = tmp;</span>
+		}
+
+<span class="fc" id="L136">		char type = edgeType(edge);</span>
+
+<span class="pc bpc" id="L138" title="1 of 2 branches missed.">		if (type == O_EDGE) {</span>
+<span class="nc" id="L139">			edges[degree++] = edge;</span>
+<span class="nc" id="L140">			return true;</span>
+		}
+
+<span class="pc bpc" id="L143" title="1 of 2 branches missed.">		if (type == IO_EDGE) {</span>
+<span class="fc" id="L144">			edges[degree++] = edges[oStart];</span>
+<span class="fc" id="L145">			edges[oStart++] = edge;</span>
+<span class="fc" id="L146">			return true;</span>
+		}
+
+<span class="nc" id="L149">		edges[degree++] = edges[oStart];</span>
+<span class="nc" id="L150">		edges[oStart++] = edges[ioStart];</span>
+<span class="nc" id="L151">		edges[ioStart++] = edge;</span>
+<span class="nc" id="L152">		return true;</span>
+	}
+
+	@Override
+	protected void removeEdgeCallback(AbstractEdge edge) {
+		// locate the edge first
+<span class="nc" id="L158">		char type = edgeType(edge);</span>
+<span class="nc" id="L159">		int i = 0;</span>
+<span class="nc bnc" id="L160" title="All 2 branches missed.">		if (type == IO_EDGE)</span>
+<span class="nc" id="L161">			i = ioStart;</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">		else if (type == O_EDGE)</span>
+<span class="nc" id="L163">			i = oStart;</span>
+<span class="nc bnc" id="L164" title="All 2 branches missed.">		while (edges[i] != edge)</span>
+<span class="nc" id="L165">			i++;</span>
+
+<span class="nc" id="L167">		removeEdge(i);</span>
+<span class="nc" id="L168">	}</span>
+
+	@Override
+	protected void clearCallback() {
+<span class="fc" id="L172">		Arrays.fill(edges, 0, degree, null);</span>
+<span class="fc" id="L173">		ioStart = oStart = degree = 0;</span>
+<span class="fc" id="L174">	}</span>
+
+	// *** Access methods ***
+
+	@Override
+	public int getDegree() {
+<span class="nc" id="L180">		return degree;</span>
+	}
+
+	@Override
+	public int getInDegree() {
+<span class="nc" id="L185">		return oStart;</span>
+	}
+
+	@Override
+	public int getOutDegree() {
+<span class="nc" id="L190">		return degree - ioStart;</span>
+	}
+
+	@Override
+	public Edge getEdge(int i) {
+<span class="nc bnc" id="L195" title="All 4 branches missed.">		if (i &lt; 0 || i &gt;= degree)</span>
+<span class="nc" id="L196">			throw new IndexOutOfBoundsException(&quot;Node \&quot;&quot; + this + &quot;\&quot;&quot; + &quot; has no edge &quot; + i);</span>
+<span class="nc" id="L197">		return edges[i];</span>
+	}
+
+	@Override
+	public Edge getEnteringEdge(int i) {
+<span class="nc bnc" id="L202" title="All 4 branches missed.">		if (i &lt; 0 || i &gt;= getInDegree())</span>
+<span class="nc" id="L203">			throw new IndexOutOfBoundsException(&quot;Node \&quot;&quot; + this + &quot;\&quot;&quot; + &quot; has no entering edge &quot; + i);</span>
+<span class="nc" id="L204">		return edges[i];</span>
+	}
+
+	@Override
+	public Edge getLeavingEdge(int i) {
+<span class="nc bnc" id="L209" title="All 4 branches missed.">		if (i &lt; 0 || i &gt;= getOutDegree())</span>
+<span class="nc" id="L210">			throw new IndexOutOfBoundsException(&quot;Node \&quot;&quot; + this + &quot;\&quot;&quot; + &quot; has no edge &quot; + i);</span>
+<span class="nc" id="L211">		return edges[ioStart + i];</span>
+	}
+
+	@Override
+	public Edge getEdgeBetween(Node node) {
+<span class="nc" id="L216">		return locateEdge(node, IO_EDGE);</span>
+	}
+
+	@Override
+	public Edge getEdgeFrom(Node node) {
+<span class="nc" id="L221">		return locateEdge(node, I_EDGE);</span>
+	}
+
+	@Override
+	public Edge getEdgeToward(Node node) {
+<span class="nc" id="L226">		return locateEdge(node, O_EDGE);</span>
+	}
+
+	// *** Iterators ***
+
+	@Override
+	public Stream&lt;Edge&gt; edges() {
+<span class="fc" id="L233">		return Arrays.stream(edges, 0, degree);</span>
+	}
+
+	@Override
+	public Stream&lt;Edge&gt; enteringEdges() {
+<span class="nc" id="L238">		return Arrays.stream(edges, 0, oStart);</span>
+	}
+
+	@Override
+	public Stream&lt;Edge&gt; leavingEdges() {
+<span class="nc" id="L243">		return Arrays.stream(edges, ioStart, degree);</span>
+	}
+
+	protected class EdgeIterator&lt;T extends Edge&gt; implements Iterator&lt;T&gt; {
+		protected int iPrev, iNext, iEnd;
+
+<span class="nc" id="L249">		protected EdgeIterator(char type) {</span>
+<span class="nc" id="L250">			iPrev = -1;</span>
+<span class="nc" id="L251">			iNext = 0;</span>
+<span class="nc" id="L252">			iEnd = degree;</span>
+<span class="nc bnc" id="L253" title="All 2 branches missed.">			if (type == I_EDGE)</span>
+<span class="nc" id="L254">				iEnd = oStart;</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">			else if (type == O_EDGE)</span>
+<span class="nc" id="L256">				iNext = ioStart;</span>
+<span class="nc" id="L257">		}</span>
+
+		public boolean hasNext() {
+<span class="nc bnc" id="L260" title="All 2 branches missed.">			return iNext &lt; iEnd;</span>
+		}
+
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public T next() {
+<span class="nc bnc" id="L265" title="All 2 branches missed.">			if (iNext &gt;= iEnd)</span>
+<span class="nc" id="L266">				throw new NoSuchElementException();</span>
+<span class="nc" id="L267">			iPrev = iNext++;</span>
+<span class="nc" id="L268">			return (T) edges[iPrev];</span>
+		}
+
+		public void remove() {
+<span class="nc bnc" id="L272" title="All 2 branches missed.">			if (iPrev == -1)</span>
+<span class="nc" id="L273">				throw new IllegalStateException();</span>
+<span class="nc" id="L274">			AbstractEdge e = edges[iPrev];</span>
+			// do not call the callback because we already know the index
+<span class="nc bnc" id="L276" title="All 4 branches missed.">			graph.removeEdge(e, true, e.source != AdjacencyListNode.this, e.target != AdjacencyListNode.this);</span>
+<span class="nc" id="L277">			removeEdge(iPrev);</span>
+<span class="nc" id="L278">			iNext = iPrev;</span>
+<span class="nc" id="L279">			iPrev = -1;</span>
+<span class="nc" id="L280">			iEnd--;</span>
+<span class="nc" id="L281">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

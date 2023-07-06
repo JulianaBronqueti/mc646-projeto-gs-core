@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TokenMgrError.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util.parser</a> &gt; <span class="el_source">TokenMgrError.java</span></div><h1>TokenMgrError.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.util.parser;
+
+/** Token Manager Error. */
+public class TokenMgrError extends Error {
+
+	/**
+	 * The version identifier for this Serializable class. Increment only if the
+	 * &lt;i&gt;serialized&lt;/i&gt; form of the class changes.
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/*
+	 * Ordinals for various reasons why an Error of this type can be thrown.
+	 */
+
+	/**
+	 * Lexical error occurred.
+	 */
+	public static final int LEXICAL_ERROR = 0;
+
+	/**
+	 * An attempt was made to create a second instance of a static token manager.
+	 */
+	public static final int STATIC_LEXER_ERROR = 1;
+
+	/**
+	 * Tried to change to an invalid lexical state.
+	 */
+	public static final int INVALID_LEXICAL_STATE = 2;
+
+	/**
+	 * Detected (and bailed out of) an infinite loop in the token manager.
+	 */
+	public static final int LOOP_DETECTED = 3;
+
+	/**
+	 * Indicates the reason why the exception is thrown. It will have one of the
+	 * above 4 values.
+	 */
+	int errorCode;
+
+	/**
+	 * Replaces unprintable characters by their escaped (or unicode escaped)
+	 * equivalents in the given string
+	 */
+	protected static final String addEscapes(String str) {
+<span class="nc" id="L78">		StringBuffer retval = new StringBuffer();</span>
+		char ch;
+<span class="nc bnc" id="L80" title="All 2 branches missed.">		for (int i = 0; i &lt; str.length(); i++) {</span>
+<span class="nc bnc" id="L81" title="All 10 branches missed.">			switch (str.charAt(i)) {</span>
+			case 0:
+<span class="nc" id="L83">				continue;</span>
+			case '\b':
+<span class="nc" id="L85">				retval.append(&quot;\\b&quot;);</span>
+<span class="nc" id="L86">				continue;</span>
+			case '\t':
+<span class="nc" id="L88">				retval.append(&quot;\\t&quot;);</span>
+<span class="nc" id="L89">				continue;</span>
+			case '\n':
+<span class="nc" id="L91">				retval.append(&quot;\\n&quot;);</span>
+<span class="nc" id="L92">				continue;</span>
+			case '\f':
+<span class="nc" id="L94">				retval.append(&quot;\\f&quot;);</span>
+<span class="nc" id="L95">				continue;</span>
+			case '\r':
+<span class="nc" id="L97">				retval.append(&quot;\\r&quot;);</span>
+<span class="nc" id="L98">				continue;</span>
+			case '\&quot;':
+<span class="nc" id="L100">				retval.append(&quot;\\\&quot;&quot;);</span>
+<span class="nc" id="L101">				continue;</span>
+			case '\'':
+<span class="nc" id="L103">				retval.append(&quot;\\\'&quot;);</span>
+<span class="nc" id="L104">				continue;</span>
+			case '\\':
+<span class="nc" id="L106">				retval.append(&quot;\\\\&quot;);</span>
+<span class="nc" id="L107">				continue;</span>
+			default:
+<span class="nc bnc" id="L109" title="All 4 branches missed.">				if ((ch = str.charAt(i)) &lt; 0x20 || ch &gt; 0x7e) {</span>
+<span class="nc" id="L110">					String s = &quot;0000&quot; + Integer.toString(ch, 16);</span>
+<span class="nc" id="L111">					retval.append(&quot;\\u&quot; + s.substring(s.length() - 4, s.length()));</span>
+<span class="nc" id="L112">				} else {</span>
+<span class="nc" id="L113">					retval.append(ch);</span>
+				}
+				continue;
+			}
+		}
+<span class="nc" id="L118">		return retval.toString();</span>
+	}
+
+	/**
+	 * Returns a detailed message for the Error when it is thrown by the token
+	 * manager to indicate a lexical error. Parameters : EOFSeen : indicates if EOF
+	 * caused the lexical error curLexState : lexical state in which this error
+	 * occurred errorLine : line number when the error occurred errorColumn : column
+	 * number when the error occurred errorAfter : prefix that was seen before this
+	 * error occurred curchar : the offending character Note: You can customize the
+	 * lexical error message by modifying this method.
+	 */
+	protected static String LexicalError(boolean EOFSeen, int lexState, int errorLine, int errorColumn,
+			String errorAfter, char curChar) {
+<span class="nc" id="L132">		return (&quot;Lexical error at line &quot; + errorLine + &quot;, column &quot; + errorColumn + &quot;.  Encountered: &quot;</span>
+<span class="nc bnc" id="L133" title="All 2 branches missed.">				+ (EOFSeen ? &quot;&lt;EOF&gt; &quot;</span>
+<span class="nc" id="L134">						: (&quot;\&quot;&quot; + addEscapes(String.valueOf(curChar)) + &quot;\&quot;&quot;) + &quot; (&quot; + (int) curChar + &quot;), &quot;)</span>
+<span class="nc" id="L135">				+ &quot;after : \&quot;&quot; + addEscapes(errorAfter) + &quot;\&quot;&quot;);</span>
+	}
+
+	/**
+	 * You can also modify the body of this method to customize your error messages.
+	 * For example, cases like LOOP_DETECTED and INVALID_LEXICAL_STATE are not of
+	 * end-users concern, so you can return something like :
+	 * 
+	 * &quot;Internal Error : Please file a bug report .... &quot;
+	 * 
+	 * from this method for such cases in the release version of your parser.
+	 */
+	public String getMessage() {
+<span class="nc" id="L148">		return super.getMessage();</span>
+	}
+
+	/*
+	 * Constructors of various flavors follow.
+	 */
+
+	/** No arg constructor. */
+<span class="nc" id="L156">	public TokenMgrError() {</span>
+<span class="nc" id="L157">	}</span>
+
+	/** Constructor with message and reason. */
+	public TokenMgrError(String message, int reason) {
+<span class="nc" id="L161">		super(message);</span>
+<span class="nc" id="L162">		errorCode = reason;</span>
+<span class="nc" id="L163">	}</span>
+
+	/** Full Constructor. */
+	public TokenMgrError(boolean EOFSeen, int lexState, int errorLine, int errorColumn, String errorAfter, char curChar,
+			int reason) {
+<span class="nc" id="L168">		this(LexicalError(EOFSeen, lexState, errorLine, errorColumn, errorAfter, curChar), reason);</span>
+<span class="nc" id="L169">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

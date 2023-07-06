@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkDGS.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkDGS.java</span></div><h1>FileSinkDGS.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-05-07
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Thibaut Démare &lt;fdhp_76@hotmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Locale;
+
+/**
+ * File output for the DGS (Dynamic Graph Stream) file format.
+ */
+<span class="nc" id="L45">public class FileSinkDGS extends FileSinkBase {</span>
+	// Attribute
+
+	/**
+	 * A shortcut to the output.
+	 */
+	protected PrintWriter out;
+
+<span class="nc" id="L53">	protected String graphName = &quot;&quot;;</span>
+
+	// Command
+
+	@Override
+	protected void outputHeader() throws IOException {
+<span class="nc" id="L59">		out = (PrintWriter) output;</span>
+
+<span class="nc" id="L61">		out.printf(&quot;DGS004%n&quot;);</span>
+
+<span class="nc bnc" id="L63" title="All 2 branches missed.">		if (graphName.length() &lt;= 0)</span>
+<span class="nc" id="L64">			out.printf(&quot;null 0 0%n&quot;);</span>
+		else
+<span class="nc" id="L66">			out.printf(&quot;\&quot;%s\&quot; 0 0%n&quot;, FileSinkDGSUtility.formatStringForQuoting(graphName));</span>
+<span class="nc" id="L67">	}</span>
+
+	@Override
+	protected void outputEndOfFile() throws IOException {
+		// NOP
+<span class="nc" id="L72">	}</span>
+
+	public void edgeAttributeAdded(String graphId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L75">		edgeAttributeChanged(graphId, timeId, edgeId, attribute, null, value);</span>
+<span class="nc" id="L76">	}</span>
+
+	public void edgeAttributeChanged(String graphId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L80">		out.printf(&quot;ce \&quot;%s\&quot; %s%n&quot;, FileSinkDGSUtility.formatStringForQuoting(edgeId),</span>
+<span class="nc" id="L81">				FileSinkDGSUtility.attributeString(attribute, newValue, false));</span>
+<span class="nc" id="L82">	}</span>
+
+	public void edgeAttributeRemoved(String graphId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L85">		out.printf(&quot;ce \&quot;%s\&quot; %s%n&quot;, FileSinkDGSUtility.formatStringForQuoting(edgeId),</span>
+<span class="nc" id="L86">				FileSinkDGSUtility.attributeString(attribute, null, true));</span>
+<span class="nc" id="L87">	}</span>
+
+	public void graphAttributeAdded(String graphId, long timeId, String attribute, Object value) {
+<span class="nc" id="L90">		graphAttributeChanged(graphId, timeId, attribute, null, value);</span>
+<span class="nc" id="L91">	}</span>
+
+	public void graphAttributeChanged(String graphId, long timeId, String attribute, Object oldValue, Object newValue) {
+<span class="nc" id="L94">		out.printf(&quot;cg %s%n&quot;, FileSinkDGSUtility.attributeString(attribute, newValue, false));</span>
+<span class="nc" id="L95">	}</span>
+
+	public void graphAttributeRemoved(String graphId, long timeId, String attribute) {
+<span class="nc" id="L98">		out.printf(&quot;cg %s%n&quot;, FileSinkDGSUtility.attributeString(attribute, null, true));</span>
+<span class="nc" id="L99">	}</span>
+
+	public void nodeAttributeAdded(String graphId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L102">		nodeAttributeChanged(graphId, timeId, nodeId, attribute, null, value);</span>
+<span class="nc" id="L103">	}</span>
+
+	public void nodeAttributeChanged(String graphId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L107">		out.printf(&quot;cn \&quot;%s\&quot; %s%n&quot;, FileSinkDGSUtility.formatStringForQuoting(nodeId),</span>
+<span class="nc" id="L108">				FileSinkDGSUtility.attributeString(attribute, newValue, false));</span>
+<span class="nc" id="L109">	}</span>
+
+	public void nodeAttributeRemoved(String graphId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L112">		out.printf(&quot;cn \&quot;%s\&quot; %s%n&quot;, FileSinkDGSUtility.formatStringForQuoting(nodeId),</span>
+<span class="nc" id="L113">				FileSinkDGSUtility.attributeString(attribute, null, true));</span>
+<span class="nc" id="L114">	}</span>
+
+	public void edgeAdded(String graphId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L118">		edgeId = FileSinkDGSUtility.formatStringForQuoting(edgeId);</span>
+<span class="nc" id="L119">		fromNodeId = FileSinkDGSUtility.formatStringForQuoting(fromNodeId);</span>
+<span class="nc" id="L120">		toNodeId = FileSinkDGSUtility.formatStringForQuoting(toNodeId);</span>
+
+<span class="nc bnc" id="L122" title="All 2 branches missed.">		out.printf(&quot;ae \&quot;%s\&quot; \&quot;%s\&quot; %s \&quot;%s\&quot;%n&quot;, edgeId, fromNodeId, directed ? &quot;&gt;&quot; : &quot;&quot;, toNodeId);</span>
+<span class="nc" id="L123">	}</span>
+
+	public void edgeRemoved(String graphId, long timeId, String edgeId) {
+<span class="nc" id="L126">		out.printf(&quot;de \&quot;%s\&quot;%n&quot;, FileSinkDGSUtility.formatStringForQuoting(edgeId));</span>
+<span class="nc" id="L127">	}</span>
+
+	public void graphCleared(String graphId, long timeId) {
+<span class="nc" id="L130">		out.printf(&quot;cl%n&quot;);</span>
+<span class="nc" id="L131">	}</span>
+
+	public void nodeAdded(String graphId, long timeId, String nodeId) {
+<span class="nc" id="L134">		out.printf(&quot;an \&quot;%s\&quot;%n&quot;, FileSinkDGSUtility.formatStringForQuoting(nodeId));</span>
+<span class="nc" id="L135">	}</span>
+
+	public void nodeRemoved(String graphId, long timeId, String nodeId) {
+<span class="nc" id="L138">		out.printf(&quot;dn \&quot;%s\&quot;%n&quot;, FileSinkDGSUtility.formatStringForQuoting(nodeId));</span>
+<span class="nc" id="L139">	}</span>
+
+	public void stepBegins(String graphId, long timeId, double step) {
+<span class="nc" id="L142">		out.printf(Locale.US, &quot;st %f%n&quot;, step);</span>
+<span class="nc" id="L143">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

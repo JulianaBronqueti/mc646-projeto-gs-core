@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SmartXMLWriter.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.gexf</a> &gt; <span class="el_source">SmartXMLWriter.java</span></div><h1>SmartXMLWriter.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-09-18
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.gexf;
+
+import java.io.Writer;
+import java.util.LinkedList;
+
+import javax.xml.stream.FactoryConfigurationError;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+
+public class SmartXMLWriter {
+	public final XMLStreamWriter stream;
+
+	boolean smart;
+	int depth;
+	LinkedList&lt;Integer&gt; childrenCount;
+
+<span class="nc" id="L49">	public SmartXMLWriter(Writer output, boolean smart) throws XMLStreamException, FactoryConfigurationError {</span>
+<span class="nc" id="L50">		stream = XMLOutputFactory.newFactory().createXMLStreamWriter(output);</span>
+<span class="nc" id="L51">		stream.writeStartDocument(&quot;UTF-8&quot;, &quot;1.0&quot;);</span>
+
+<span class="nc" id="L53">		this.smart = smart;</span>
+<span class="nc" id="L54">		this.depth = 0;</span>
+<span class="nc" id="L55">		this.childrenCount = new LinkedList&lt;Integer&gt;();</span>
+<span class="nc" id="L56">		this.childrenCount.add(0);</span>
+<span class="nc" id="L57">	}</span>
+
+	public void startElement(String name) throws XMLStreamException {
+<span class="nc bnc" id="L60" title="All 2 branches missed.">		if (smart) {</span>
+<span class="nc" id="L61">			stream.writeCharacters(&quot;\n&quot;);</span>
+
+<span class="nc bnc" id="L63" title="All 2 branches missed.">			for (int i = 0; i &lt; depth; i++)</span>
+<span class="nc" id="L64">				stream.writeCharacters(&quot; &quot;);</span>
+		}
+
+<span class="nc" id="L67">		childrenCount.set(0, childrenCount.get(0) + 1);</span>
+<span class="nc" id="L68">		childrenCount.addFirst(0);</span>
+
+<span class="nc" id="L70">		stream.writeStartElement(name);</span>
+<span class="nc" id="L71">		depth++;</span>
+<span class="nc" id="L72">	}</span>
+
+	public void endElement() throws XMLStreamException {
+<span class="nc" id="L75">		depth--;</span>
+
+<span class="nc bnc" id="L77" title="All 2 branches missed.">		boolean leaf = (childrenCount.pop() == 0);</span>
+
+<span class="nc bnc" id="L79" title="All 4 branches missed.">		if (smart &amp;&amp; !leaf) {</span>
+<span class="nc" id="L80">			stream.writeCharacters(&quot;\n&quot;);</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">			for (int i = 0; i &lt; depth; i++)</span>
+<span class="nc" id="L83">				stream.writeCharacters(&quot; &quot;);</span>
+		}
+
+<span class="nc" id="L86">		stream.writeEndElement();</span>
+<span class="nc" id="L87">	}</span>
+
+	public void leafWithText(String name, String content) throws XMLStreamException {
+<span class="nc" id="L90">		startElement(name);</span>
+<span class="nc" id="L91">		stream.writeCharacters(content);</span>
+<span class="nc" id="L92">		endElement();</span>
+<span class="nc" id="L93">	}</span>
+
+	public void flush() {
+		try {
+<span class="nc" id="L97">			stream.flush();</span>
+<span class="nc" id="L98">		} catch (XMLStreamException e) {</span>
+			// Ignored
+		}
+<span class="nc" id="L101">	}</span>
+
+	public void close() throws XMLStreamException {
+<span class="nc" id="L104">		stream.writeEndDocument();</span>
+<span class="nc" id="L105">		stream.flush();</span>
+
+<span class="nc" id="L107">		stream.close();</span>
+<span class="nc" id="L108">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

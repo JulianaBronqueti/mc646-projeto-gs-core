@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ISODateIO.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util.time</a> &gt; <span class="el_source">ISODateIO.java</span></div><h1>ISODateIO.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-10-04
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.util.time;
+
+import java.text.ParseException;
+import java.util.Calendar;
+import java.util.LinkedList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import org.graphstream.util.time.ISODateComponent.TextComponent;
+
+/**
+ * Scanner for date in ISO/IEC 9899:1999 format. The scanner takes a format and
+ * then is able to parse timestamp in the given format.
+ * 
+ * The &lt;i&gt;parse()&lt;/i&gt; return a {@link java.util.Calendar} for convenience.
+ * 
+ * Format of the scanner can be composed of %? directive which define components
+ * of the time. These directives are listed below. For example, the format &quot;%F
+ * %T&quot;, which is equivalent to &quot;%Y-%m-%d %H:%M:%S&quot; can parse the following
+ * timestamp: &quot;2010-12-09 03:45:39&quot;;
+ * 
+ * &lt;dl&gt;
+ * &lt;dt&gt;%a&lt;/dt&gt;
+ * &lt;dd&gt;locale's abbreviated weekday name&lt;/dd&gt;
+ * &lt;dt&gt;%A&lt;/dt&gt;
+ * &lt;dd&gt;locale's weekday name&lt;/dd&gt;
+ * &lt;dt&gt;%b&lt;/dt&gt;
+ * &lt;dd&gt;locale's abbreviated month name&lt;/dd&gt;
+ * &lt;dt&gt;%B&lt;/dt&gt;
+ * &lt;dd&gt;locale's month name&lt;/dd&gt;
+ * &lt;dt&gt;%c&lt;/dt&gt;
+ * &lt;dd&gt;locale's date and time representation&lt;/dd&gt;
+ * &lt;dt&gt;%C&lt;/dt&gt;
+ * &lt;dd&gt;two first digits of full year as an integer (00-99)&lt;/dd&gt;
+ * &lt;dt&gt;%d&lt;/dt&gt;
+ * &lt;dd&gt;day of the month (01-31)&lt;/dd&gt;
+ * &lt;dt&gt;%D&lt;/dt&gt;
+ * &lt;dd&gt;%m/%d/%y&lt;/dd&gt;
+ * &lt;dt&gt;%e&lt;/dt&gt;
+ * &lt;dd&gt;day of the month (1-31)&lt;/dd&gt;
+ * &lt;dt&gt;%F&lt;/dt&gt;
+ * &lt;dd&gt;%Y-%m-%d&lt;/dd&gt;
+ * &lt;dt&gt;%g&lt;/dt&gt;
+ * &lt;dd&gt;last 2 digits of the week-based year (00-99)&lt;/dd&gt;
+ * &lt;dt&gt;%G&lt;/dt&gt;
+ * &lt;dd&gt;&quot;week-based year as a decimal number&lt;/dd&gt;
+ * &lt;dt&gt;%h&lt;/dt&gt;
+ * &lt;dd&gt;%b&lt;/dd&gt;
+ * &lt;dt&gt;%H&lt;/dt&gt;
+ * &lt;dd&gt;hour (24-hour clock) as a decimal number (00-23)&lt;/dd&gt;
+ * &lt;dt&gt;%I&lt;/dt&gt;
+ * &lt;dd&gt;hour (12-hour clock) as a decimal number (01-12)&lt;/dd&gt;
+ * &lt;dt&gt;%j&lt;/dt&gt;
+ * &lt;dd&gt;day of the year as a decimal number (001-366)&lt;/dd&gt;
+ * &lt;dt&gt;%k&lt;/dt&gt;
+ * &lt;dd&gt;milliseconds as a decimal number (001-999)&lt;/dd&gt;
+ * &lt;dt&gt;%K&lt;/dt&gt;
+ * &lt;dd&gt;milliseconds since the epoch&lt;/dd&gt;
+ * &lt;dt&gt;%m&lt;/dt&gt;
+ * &lt;dd&gt;month as a decimal number (01-12)&lt;/dd&gt;
+ * &lt;dt&gt;%M&lt;/dt&gt;
+ * &lt;dd&gt;minute as a decimal number (00-59)&lt;/dd&gt;
+ * &lt;dt&gt;%n&lt;/dt&gt;
+ * &lt;dd&gt;\n&lt;/dd&gt;
+ * &lt;dt&gt;%p&lt;/dt&gt;
+ * &lt;dd&gt;locale-s equivalent of the AM/PM&lt;/dd&gt;
+ * &lt;dt&gt;%r&lt;/dt&gt;
+ * &lt;dd&gt;locale's 12-hour clock time&lt;/dd&gt;
+ * &lt;dt&gt;%R&lt;/dt&gt;
+ * &lt;dd&gt;%H:%M&lt;/dd&gt;
+ * &lt;dt&gt;%S&lt;/dt&gt;
+ * &lt;dd&gt;second as a decimal number (00-60)&lt;/dd&gt;
+ * &lt;dt&gt;%t&lt;/dt&gt;
+ * &lt;dd&gt;\t&lt;/dd&gt;
+ * &lt;dt&gt;%T&lt;/dt&gt;
+ * &lt;dd&gt;%H:%M:%S&lt;/dd&gt;
+ * &lt;dt&gt;%u&lt;/dt&gt;
+ * &lt;dd&gt;ISO 8601 weekday as a decimal number (1-7)&lt;/dd&gt;
+ * &lt;dt&gt;%U&lt;/dt&gt;
+ * &lt;dd&gt;week number of the year as a decimal number (00-53)&lt;/dd&gt;
+ * &lt;dt&gt;%V&lt;/dt&gt;
+ * &lt;dd&gt;ISO 8601 week number as a decimal number (01-53)&lt;/dd&gt;
+ * &lt;dt&gt;%w&lt;/dt&gt;
+ * &lt;dd&gt;weekday as a decimal number (0-6)&lt;/dd&gt;
+ * &lt;dt&gt;%W&lt;/dt&gt;
+ * &lt;dd&gt;week number of the year as a decimal number (00-53)&lt;/dd&gt;
+ * &lt;dt&gt;%x&lt;/dt&gt;
+ * &lt;dd&gt;locale's date representation&lt;/dd&gt;
+ * &lt;dt&gt;%X&lt;/dt&gt;
+ * &lt;dd&gt;locale's time representation&lt;/dd&gt;
+ * &lt;dt&gt;%y&lt;/dt&gt;
+ * &lt;dd&gt;last 2 digits of the year as a decimal number (00-99)&lt;/dd&gt;
+ * &lt;dt&gt;%Y&lt;/dt&gt;
+ * &lt;dd&gt;year as a decimal number&lt;/dd&gt;
+ * &lt;dt&gt;%z&lt;/dt&gt;
+ * &lt;dd&gt;offset from UTC in the ISO 8601 format&lt;/dd&gt;
+ * &lt;dt&gt;%Z&lt;/dt&gt;
+ * &lt;dd&gt;locale's time zone name of abbreviation or empty&lt;/dd&gt;
+ * &lt;/dl&gt;
+ * 
+ * @author Guilhelm Savin
+ */
+public class ISODateIO {
+
+<span class="nc" id="L136">	private static final ISODateComponent[] KNOWN_COMPONENTS = { ISODateComponent.ABBREVIATED_WEEKDAY_NAME,</span>
+<span class="nc" id="L137">			ISODateComponent.FULL_WEEKDAY_NAME, ISODateComponent.ABBREVIATED_MONTH_NAME,</span>
+<span class="nc" id="L138">			ISODateComponent.FULL_MONTH_NAME, ISODateComponent.LOCALE_DATE_AND_TIME, ISODateComponent.CENTURY,</span>
+<span class="nc" id="L139">			ISODateComponent.DAY_OF_MONTH_2_DIGITS, ISODateComponent.DATE, ISODateComponent.DAY_OF_MONTH,</span>
+<span class="nc" id="L140">			ISODateComponent.DATE_ISO8601, ISODateComponent.WEEK_BASED_YEAR_2_DIGITS,</span>
+<span class="nc" id="L141">			ISODateComponent.WEEK_BASED_YEAR_4_DIGITS, ISODateComponent.ABBREVIATED_MONTH_NAME_ALIAS,</span>
+<span class="nc" id="L142">			ISODateComponent.HOUR_OF_DAY, ISODateComponent.HOUR, ISODateComponent.DAY_OF_YEAR,</span>
+<span class="nc" id="L143">			ISODateComponent.MILLISECOND, ISODateComponent.EPOCH, ISODateComponent.MONTH, ISODateComponent.MINUTE,</span>
+<span class="nc" id="L144">			ISODateComponent.NEW_LINE, ISODateComponent.AM_PM, ISODateComponent.LOCALE_CLOCK_TIME_12_HOUR,</span>
+<span class="nc" id="L145">			ISODateComponent.HOUR_AND_MINUTE, ISODateComponent.SECOND, ISODateComponent.TABULATION,</span>
+<span class="nc" id="L146">			ISODateComponent.TIME_ISO8601, ISODateComponent.DAY_OF_WEEK_1_7, ISODateComponent.WEEK_OF_YEAR_FROM_SUNDAY,</span>
+<span class="nc" id="L147">			ISODateComponent.WEEK_NUMBER_ISO8601, ISODateComponent.DAY_OF_WEEK_0_6,</span>
+<span class="nc" id="L148">			ISODateComponent.WEEK_OF_YEAR_FROM_MONDAY, ISODateComponent.LOCALE_DATE_REPRESENTATION,</span>
+<span class="nc" id="L149">			ISODateComponent.LOCALE_TIME_REPRESENTATION, ISODateComponent.YEAR_2_DIGITS, ISODateComponent.YEAR_4_DIGITS,</span>
+<span class="nc" id="L150">			ISODateComponent.UTC_OFFSET, ISODateComponent.LOCALE_TIME_ZONE_NAME, ISODateComponent.PERCENT };</span>
+
+	/**
+	 * List of components, build from a string format. Some of these components can
+	 * just be text.
+	 */
+	protected LinkedList&lt;ISODateComponent&gt; components;
+	/**
+	 * The regular expression builds from the components.
+	 */
+	protected Pattern pattern;
+
+	/**
+	 * Create a scanner with default format &quot;%K&quot;.
+	 * 
+	 * @throws ParseException
+	 */
+	public ISODateIO() throws ParseException {
+<span class="nc" id="L168">		this(&quot;%K&quot;);</span>
+<span class="nc" id="L169">	}</span>
+
+	/**
+	 * Create a new scanner with a given format.
+	 * 
+	 * @param format
+	 *            format of the scanner.
+	 * @throws ParseException
+	 *             if bad directives found
+	 */
+<span class="nc" id="L179">	public ISODateIO(String format) throws ParseException {</span>
+<span class="nc" id="L180">		setFormat(format);</span>
+<span class="nc" id="L181">	}</span>
+
+	/**
+	 * Get the current pattern used to parse timestamp.
+	 * 
+	 * @return a regular expression as a string
+	 */
+	public Pattern getPattern() {
+<span class="nc" id="L189">		return pattern;</span>
+	}
+
+	/**
+	 * Build a list of component from a string.
+	 * 
+	 * @param format
+	 *            format of the scanner
+	 * @return a list of components found in the string format
+	 * @throws ParseException
+	 *             if invalid component found
+	 */
+	protected LinkedList&lt;ISODateComponent&gt; findComponents(String format) throws ParseException {
+<span class="nc" id="L202">		LinkedList&lt;ISODateComponent&gt; components = new LinkedList&lt;ISODateComponent&gt;();</span>
+<span class="nc" id="L203">		int offset = 0;</span>
+
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		while (offset &lt; format.length()) {</span>
+<span class="nc bnc" id="L206" title="All 2 branches missed.">			if (format.charAt(offset) == '%') {</span>
+<span class="nc" id="L207">				boolean found = false;</span>
+<span class="nc bnc" id="L208" title="All 4 branches missed.">				for (int i = 0; !found &amp;&amp; i &lt; KNOWN_COMPONENTS.length; i++) {</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">					if (format.startsWith(KNOWN_COMPONENTS[i].getDirective(), offset)) {</span>
+<span class="nc" id="L210">						found = true;</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">						if (KNOWN_COMPONENTS[i].isAlias()) {</span>
+<span class="nc" id="L212">							LinkedList&lt;ISODateComponent&gt; sub = findComponents(KNOWN_COMPONENTS[i].getReplacement());</span>
+<span class="nc" id="L213">							components.addAll(sub);</span>
+<span class="nc" id="L214">						} else</span>
+<span class="nc" id="L215">							components.addLast(KNOWN_COMPONENTS[i]);</span>
+
+<span class="nc" id="L217">						offset += KNOWN_COMPONENTS[i].getDirective().length();</span>
+					}
+				}
+<span class="nc bnc" id="L220" title="All 2 branches missed.">				if (!found)</span>
+<span class="nc" id="L221">					throw new ParseException(&quot;unknown identifier&quot;, offset);</span>
+			} else {
+<span class="nc" id="L223">				int from = offset;</span>
+<span class="nc bnc" id="L224" title="All 4 branches missed.">				while (offset &lt; format.length() &amp;&amp; format.charAt(offset) != '%')</span>
+<span class="nc" id="L225">					offset++;</span>
+<span class="nc" id="L226">				components.addLast(new TextComponent(format.substring(from, offset)));</span>
+			}
+		}
+
+<span class="nc" id="L230">		return components;</span>
+	}
+
+	/**
+	 * Build a regular expression from the components of the scanner.
+	 */
+	protected void buildRegularExpression() {
+<span class="nc" id="L237">		String pattern = &quot;&quot;;</span>
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">		for (int i = 0; i &lt; components.size(); i++) {</span>
+<span class="nc" id="L240">			Object c = components.get(i);</span>
+			String regexValue;
+<span class="nc bnc" id="L242" title="All 2 branches missed.">			if (c instanceof ISODateComponent)</span>
+<span class="nc" id="L243">				regexValue = ((ISODateComponent) c).getReplacement();</span>
+			else
+<span class="nc" id="L245">				regexValue = c.toString();</span>
+
+<span class="nc" id="L247">			pattern += &quot;(&quot; + regexValue + &quot;)&quot;;</span>
+		}
+
+<span class="nc" id="L250">		this.pattern = Pattern.compile(pattern);</span>
+<span class="nc" id="L251">	}</span>
+
+	/**
+	 * Set the format of this scanner.
+	 * 
+	 * @param format
+	 *            new format of the scanner
+	 * @throws ParseException
+	 *             if an error is found in the new format
+	 */
+	public void setFormat(String format) throws ParseException {
+<span class="nc" id="L262">		components = findComponents(format);</span>
+<span class="nc" id="L263">		buildRegularExpression();</span>
+<span class="nc" id="L264">	}</span>
+
+	/**
+	 * Parse a string which should be in the scanner format. If not, null is
+	 * returned.
+	 * 
+	 * @param time
+	 *            timestamp in the scanner format
+	 * @return a calendar modeling the time value or null if invalid format
+	 */
+	public Calendar parse(String time) {
+<span class="nc" id="L275">		Calendar cal = Calendar.getInstance();</span>
+<span class="nc" id="L276">		Matcher match = pattern.matcher(time);</span>
+
+<span class="nc bnc" id="L278" title="All 2 branches missed.">		if (match.matches()) {</span>
+<span class="nc bnc" id="L279" title="All 2 branches missed.">			for (int i = 0; i &lt; components.size(); i++)</span>
+<span class="nc" id="L280">				components.get(i).set(match.group(i + 1), cal);</span>
+<span class="nc" id="L281">		} else</span>
+<span class="nc" id="L282">			return null;</span>
+
+<span class="nc" id="L284">		return cal;</span>
+	}
+
+	/**
+	 * Convert a calendar into a string according to the format of this object.
+	 * 
+	 * @param calendar
+	 *            the calendar to convert
+	 * @return a string modeling the calendar.
+	 */
+	public String toString(Calendar calendar) {
+<span class="nc" id="L295">		StringBuffer buffer = new StringBuffer();</span>
+
+<span class="nc bnc" id="L297" title="All 2 branches missed.">		for (int i = 0; i &lt; components.size(); i++)</span>
+<span class="nc" id="L298">			buffer.append(components.get(i).get(calendar));</span>
+
+<span class="nc" id="L300">		return buffer.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AttributePipe.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream</a> &gt; <span class="el_source">AttributePipe.java</span></div><h1>AttributePipe.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-04-17
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream;
+
+/**
+ * Allows to filter the attribute event stream.
+ * 
+ * &lt;p&gt;
+ * The filtering is based on attribute predicates. An attribute predicate is an
+ * object that you provide and that only defines one method
+ * {@link AttributePredicate#matches(String, Object)}. If the &quot;matches()&quot; method
+ * return false, the attribute is discarded from the event stream, else it is
+ * passed to the listeners of this filter.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * You can setup a predicate from all attributes (graph, node and edge
+ * attributes) and specific predicates for graph, node and edge attributes.
+ * &lt;/p&gt;
+ */
+<span class="nc" id="L52">public class AttributePipe extends PipeBase {</span>
+<span class="nc" id="L53">	protected AttributePredicate globalPredicate = new FalsePredicate();</span>
+
+<span class="nc" id="L55">	protected AttributePredicate graphPredicate = new FalsePredicate();</span>
+
+<span class="nc" id="L57">	protected AttributePredicate nodePredicate = new FalsePredicate();</span>
+
+<span class="nc" id="L59">	protected AttributePredicate edgePredicate = new FalsePredicate();</span>
+
+	/**
+	 * Set an attribute filter for graph, node and edge attributes. If the filter is
+	 * null, attributes will not be filtered globally.
+	 * 
+	 * @param filter
+	 *            The filter to use, it can be null to disable global attribute
+	 *            filtering.
+	 */
+	public void setGlobalAttributeFilter(AttributePredicate filter) {
+<span class="nc bnc" id="L70" title="All 2 branches missed.">		if (filter == null)</span>
+<span class="nc" id="L71">			globalPredicate = new FalsePredicate();</span>
+		else
+<span class="nc" id="L73">			globalPredicate = filter;</span>
+<span class="nc" id="L74">	}</span>
+
+	/**
+	 * Set an attribute filter for graph attributes only (node an edge attributes
+	 * are not filtered by this filter). If the filter is null, graph attributes
+	 * will not be filtered.
+	 * 
+	 * @param filter
+	 *            The filter to use, it can be null to disable graph attribute
+	 *            filtering.
+	 */
+	public void setGraphAttributeFilter(AttributePredicate filter) {
+<span class="nc bnc" id="L86" title="All 2 branches missed.">		if (filter == null)</span>
+<span class="nc" id="L87">			graphPredicate = new FalsePredicate();</span>
+		else
+<span class="nc" id="L89">			graphPredicate = filter;</span>
+<span class="nc" id="L90">	}</span>
+
+	/**
+	 * Set an attribute filter for node attributes only (graph an edge attributes
+	 * are not filtered by this filter). If the filter is null, node attributes will
+	 * not be filtered.
+	 * 
+	 * @param filter
+	 *            The filter to use, it can be null to disable node attribute
+	 *            filtering.
+	 */
+	public void setNodeAttributeFilter(AttributePredicate filter) {
+<span class="nc bnc" id="L102" title="All 2 branches missed.">		if (filter == null)</span>
+<span class="nc" id="L103">			nodePredicate = new FalsePredicate();</span>
+		else
+<span class="nc" id="L105">			nodePredicate = filter;</span>
+<span class="nc" id="L106">	}</span>
+
+	/**
+	 * Set an attribute filter for edge attributes only (graph an node attributes
+	 * are not filtered by this filter). If the filter is null, edge attributes will
+	 * not be filtered.
+	 * 
+	 * @param filter
+	 *            The filter to use, it can be null to disable edge attribute
+	 *            filtering.
+	 */
+	public void setEdgeAttributeFilter(AttributePredicate filter) {
+<span class="nc bnc" id="L118" title="All 2 branches missed.">		if (filter == null)</span>
+<span class="nc" id="L119">			edgePredicate = new FalsePredicate();</span>
+		else
+<span class="nc" id="L121">			edgePredicate = filter;</span>
+<span class="nc" id="L122">	}</span>
+
+	/**
+	 * The filter for all graph, node and edge attributes. This filter can be null.
+	 * 
+	 * @return The global attribute filter or null if there is no global filter.
+	 */
+	public AttributePredicate getGlobalAttributeFilter() {
+<span class="nc" id="L130">		return globalPredicate;</span>
+	}
+
+	/**
+	 * The filter for all graph attributes. This filter can be null.
+	 * 
+	 * @return The graph attribute filter or null if there is no graph filter.
+	 */
+	public AttributePredicate getGraphAttributeFilter() {
+<span class="nc" id="L139">		return graphPredicate;</span>
+	}
+
+	/**
+	 * The filter for all node attributes. This filter can be null.
+	 * 
+	 * @return The node global attribute filter or null if there is no node filter.
+	 */
+	public AttributePredicate getNodeAttributeFilter() {
+<span class="nc" id="L148">		return nodePredicate;</span>
+	}
+
+	/**
+	 * The filter for all edge attributes. This filter can be null.
+	 * 
+	 * @return The edge attribute filter or null of there is no edge filter.
+	 */
+	public AttributePredicate getEdgeAttributeFilter() {
+<span class="nc" id="L157">		return edgePredicate;</span>
+	}
+
+	// GraphListener
+
+	@Override
+	public void edgeAttributeAdded(String graphId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc bnc" id="L164" title="All 2 branches missed.">		if (!edgePredicate.matches(attribute, value)) {</span>
+<span class="nc bnc" id="L165" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, value)) {</span>
+<span class="nc" id="L166">				sendEdgeAttributeAdded(graphId, timeId, edgeId, attribute, value);</span>
+			}
+		}
+<span class="nc" id="L169">	}</span>
+
+	@Override
+	public void edgeAttributeChanged(String graphId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L174" title="All 2 branches missed.">		if (!edgePredicate.matches(attribute, newValue)) {</span>
+<span class="nc bnc" id="L175" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, newValue)) {</span>
+<span class="nc" id="L176">				sendEdgeAttributeChanged(graphId, timeId, edgeId, attribute, oldValue, newValue);</span>
+			}
+		}
+<span class="nc" id="L179">	}</span>
+
+	@Override
+	public void edgeAttributeRemoved(String graphId, long timeId, String edgeId, String attribute) {
+<span class="nc bnc" id="L183" title="All 2 branches missed.">		if (!edgePredicate.matches(attribute, null)) {</span>
+<span class="nc bnc" id="L184" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, null)) {</span>
+<span class="nc" id="L185">				sendEdgeAttributeRemoved(graphId, timeId, edgeId, attribute);</span>
+			}
+		}
+<span class="nc" id="L188">	}</span>
+
+	@Override
+	public void graphAttributeAdded(String graphId, long timeId, String attribute, Object value) {
+<span class="nc bnc" id="L192" title="All 2 branches missed.">		if (!graphPredicate.matches(attribute, value)) {</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, value)) {</span>
+<span class="nc" id="L194">				sendGraphAttributeAdded(graphId, timeId, attribute, value);</span>
+			}
+		}
+<span class="nc" id="L197">	}</span>
+
+	@Override
+	public void graphAttributeChanged(String graphId, long timeId, String attribute, Object oldValue, Object newValue) {
+<span class="nc bnc" id="L201" title="All 2 branches missed.">		if (!graphPredicate.matches(attribute, newValue)) {</span>
+<span class="nc bnc" id="L202" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, newValue)) {</span>
+<span class="nc" id="L203">				sendGraphAttributeChanged(graphId, timeId, attribute, oldValue, newValue);</span>
+			}
+		}
+<span class="nc" id="L206">	}</span>
+
+	@Override
+	public void graphAttributeRemoved(String graphId, long timeId, String attribute) {
+<span class="nc bnc" id="L210" title="All 2 branches missed.">		if (!graphPredicate.matches(attribute, null)) {</span>
+<span class="nc bnc" id="L211" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, null)) {</span>
+<span class="nc" id="L212">				sendGraphAttributeRemoved(graphId, timeId, attribute);</span>
+			}
+		}
+<span class="nc" id="L215">	}</span>
+
+	@Override
+	public void nodeAttributeAdded(String graphId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc bnc" id="L219" title="All 2 branches missed.">		if (!nodePredicate.matches(attribute, value)) {</span>
+<span class="nc bnc" id="L220" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, value)) {</span>
+<span class="nc" id="L221">				sendNodeAttributeAdded(graphId, timeId, nodeId, attribute, value);</span>
+			}
+		}
+<span class="nc" id="L224">	}</span>
+
+	@Override
+	public void nodeAttributeChanged(String graphId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L229" title="All 2 branches missed.">		if (!nodePredicate.matches(attribute, newValue)) {</span>
+<span class="nc bnc" id="L230" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, newValue)) {</span>
+<span class="nc" id="L231">				sendNodeAttributeChanged(graphId, timeId, nodeId, attribute, oldValue, newValue);</span>
+			}
+		}
+<span class="nc" id="L234">	}</span>
+
+	@Override
+	public void nodeAttributeRemoved(String graphId, long timeId, String nodeId, String attribute) {
+<span class="nc bnc" id="L238" title="All 2 branches missed.">		if (!nodePredicate.matches(attribute, null)) {</span>
+<span class="nc bnc" id="L239" title="All 2 branches missed.">			if (!globalPredicate.matches(attribute, null)) {</span>
+<span class="nc" id="L240">				sendNodeAttributeRemoved(graphId, timeId, nodeId, attribute);</span>
+			}
+		}
+<span class="nc" id="L243">	}</span>
+
+<span class="nc" id="L245">	protected class FalsePredicate implements AttributePredicate {</span>
+		public boolean matches(String attributeName, Object attributeValue) {
+<span class="nc" id="L247">			return false;</span>
+		}
+
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

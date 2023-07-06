@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestFileSinkGraphML.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.test</a> &gt; <span class="el_source">TestFileSinkGraphML.java</span></div><h1>TestFileSinkGraphML.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2015-12-10
+ * 
+ * @author Hans Schulz &lt;hans.schulz@sap.com&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Node;
+import org.graphstream.stream.file.FileSinkGraphML;
+import org.graphstream.stream.file.FileSourceGraphML;
+import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+
+<span class="nc" id="L50">public class TestFileSinkGraphML extends TestFileSinkBase {</span>
+	@Override
+	protected String graphFileExtension() {
+<span class="nc" id="L53">		return &quot;.graphml&quot;;</span>
+	}
+
+	@Before
+	@Override
+	public void setup() {
+<span class="nc" id="L59">		input = new FileSourceGraphML();</span>
+<span class="nc" id="L60">		output = new FileSinkGraphML();</span>
+<span class="nc" id="L61">	}</span>
+
+	@Test
+	public void test_XmlContent() {
+<span class="nc" id="L65">		createXmlContent();</span>
+
+		try {
+<span class="nc" id="L68">			output.writeAll(outGraph, new FileOutputStream(theFile.getAbsolutePath()));</span>
+<span class="nc" id="L69">			input.addSink(inGraph);</span>
+<span class="nc" id="L70">			input.readAll(theFile.getAbsolutePath());</span>
+<span class="nc" id="L71">		} catch (IOException e) {</span>
+<span class="nc" id="L72">			e.printStackTrace();</span>
+<span class="nc" id="L73">			assertTrue(&quot;Should not happen !&quot;, false);</span>
+		}
+
+<span class="nc" id="L76">		assertXmlContent();</span>
+<span class="nc" id="L77">	}</span>
+
+	protected void createXmlContent() {
+<span class="nc" id="L80">		Node x = outGraph.addNode(&quot;X&quot;);</span>
+<span class="nc" id="L81">		Node y = outGraph.addNode(&quot;Y&quot;);</span>
+<span class="nc" id="L82">		Edge xy = outGraph.addEdge(&quot;XY&quot;, &quot;X&quot;, &quot;Y&quot;, true);</span>
+
+<span class="nc" id="L84">		x.setAttribute(&quot;&lt;this&gt;&quot;, &quot;&lt;should&gt;&quot;);</span>
+<span class="nc" id="L85">		y.setAttribute(&quot;&lt;break&gt;&quot;, &quot;&lt;xml&gt;&quot;);</span>
+<span class="nc" id="L86">		xy.setAttribute(&quot;&amp;lt; also &amp;gt;&quot;, &quot;&amp;lt; there is already escaped stuff &amp;gt;&quot;);</span>
+<span class="nc" id="L87">	}</span>
+
+	protected void assertXmlContent() {
+<span class="nc" id="L90">		Node x = inGraph.getNode(&quot;X&quot;);</span>
+<span class="nc" id="L91">		Node y = inGraph.getNode(&quot;Y&quot;);</span>
+<span class="nc" id="L92">		Edge xy = inGraph.getEdge(&quot;XY&quot;);</span>
+
+<span class="nc" id="L94">		assertEquals(&quot;&lt;should&gt;&quot;, x.getAttribute(&quot;&lt;this&gt;&quot;));</span>
+<span class="nc" id="L95">		assertEquals(&quot;&lt;xml&gt;&quot;, y.getAttribute(&quot;&lt;break&gt;&quot;));</span>
+<span class="nc" id="L96">		assertEquals(&quot;&amp;lt; there is already escaped stuff &amp;gt;&quot;, xy.getAttribute(&quot;&amp;lt; also &amp;gt;&quot;));</span>
+<span class="nc" id="L97">	}</span>
+
+	@Test
+	@Ignore
+	@Override
+	public void test_UndirectedTriangle_ByEvent() { // Not supported
+<span class="nc" id="L103">		super.test_UndirectedTriangle_ByEvent();</span>
+<span class="nc" id="L104">	}</span>
+
+	@Test
+	@Ignore
+	@Override
+	public void test_Dynamic() { // Not supported
+<span class="nc" id="L110">		super.test_Dynamic();</span>
+<span class="nc" id="L111">	}</span>
+
+	@Override
+	protected void testAttributedTriangle() {
+<span class="nc" id="L115">		assertEquals(3, inGraph.getNodeCount());</span>
+<span class="nc" id="L116">		assertEquals(3, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L118">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L119">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L120">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L122">		assertNotNull(A);</span>
+<span class="nc" id="L123">		assertNotNull(B);</span>
+<span class="nc" id="L124">		assertNotNull(C);</span>
+
+		// assertEquals(1.0, ((Number) inGraph.getAttribute(&quot;a&quot;)).doubleValue(), 1E-12);
+		// Not supported by this format
+		// assertEquals(&quot;foo&quot;, inGraph.getAttribute(&quot;b&quot;));
+
+<span class="nc" id="L130">		assertEquals(1.0, ((Number) A.getAttribute(&quot;a&quot;)).doubleValue(), 1E-12);</span>
+<span class="nc" id="L131">		assertEquals(&quot;foo&quot;, B.getAttribute(&quot;b&quot;));</span>
+<span class="nc" id="L132">		assertEquals(&quot;bar&quot;, C.getAttribute(&quot;c&quot;));</span>
+<span class="nc" id="L133">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

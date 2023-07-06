@@ -1,0 +1,277 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkDOT.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkDOT.java</span></div><h1>FileSinkDOT.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-05-11
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+
+/**
+ * Graph writer for the GraphViz DOT format.
+ */
+public class FileSinkDOT extends FileSinkBase {
+	// Attribute
+
+	/**
+	 * The output.
+	 */
+	protected PrintWriter out;
+
+	/**
+	 * The graph name (set as soon as known).
+	 */
+<span class="nc" id="L60">	protected String graphName = &quot;&quot;;</span>
+
+	/**
+	 * Is the graph directed ?
+	 */
+	protected boolean digraph;
+
+	/**
+	 * What element ?.
+	 */
+<span class="nc" id="L70">	protected enum What {</span>
+<span class="nc" id="L71">		NODE, EDGE, OTHER</span>
+	};
+
+	/**
+	 * Build a new DOT sink to export undirected graph.
+	 */
+	public FileSinkDOT() {
+<span class="nc" id="L78">		this(false);</span>
+<span class="nc" id="L79">	}</span>
+
+	/**
+	 * Build a new DOT sink specifying if the graph is directed or not.
+	 * 
+	 * @param digraph
+	 *            true if the graph is directed
+	 */
+<span class="nc" id="L87">	public FileSinkDOT(boolean digraph) {</span>
+<span class="nc" id="L88">		this.digraph = digraph;</span>
+<span class="nc" id="L89">	}</span>
+
+	// Command
+
+	/**
+	 * Set flag indicating if exported graph is directed or not.
+	 * 
+	 * @param digraph
+	 *            true is exported graph is directed
+	 */
+	public void setDirected(boolean digraph) {
+<span class="nc" id="L100">		this.digraph = digraph;</span>
+<span class="nc" id="L101">	}</span>
+
+	/**
+	 * Get the flag indicating if exported graph is directed or not.
+	 * 
+	 * @return true if exported graph is directed
+	 */
+	public boolean isDirected() {
+<span class="nc" id="L109">		return digraph;</span>
+	}
+
+	@Override
+	protected void exportGraph(Graph graph) {
+<span class="nc" id="L114">		String graphId = graph.getId();</span>
+<span class="nc" id="L115">		AtomicLong timeId = new AtomicLong(0);</span>
+
+<span class="nc" id="L117">		graph.attributeKeys()</span>
+<span class="nc" id="L118">				.forEach(key -&gt; graphAttributeAdded(graphId, timeId.getAndIncrement(), key, graph.getAttribute(key)));</span>
+
+<span class="nc bnc" id="L120" title="All 2 branches missed.">		for (Node node : graph) {</span>
+<span class="nc" id="L121">			String nodeId = node.getId();</span>
+<span class="nc" id="L122">			out.printf(&quot;\t\&quot;%s\&quot; %s;%n&quot;, nodeId, outputAttributes(node));</span>
+		}
+
+<span class="nc" id="L125">		graph.edges().forEach(edge -&gt; {</span>
+<span class="nc" id="L126">			String fromNodeId = edge.getNode0().getId();</span>
+<span class="nc" id="L127">			String toNodeId = edge.getNode1().getId();</span>
+<span class="nc" id="L128">			String attr = outputAttributes(edge);</span>
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">			if (digraph) {</span>
+<span class="nc" id="L131">				out.printf(&quot;\t\&quot;%s\&quot; -&gt; \&quot;%s\&quot;&quot;, fromNodeId, toNodeId);</span>
+
+<span class="nc bnc" id="L133" title="All 2 branches missed.">				if (!edge.isDirected())</span>
+<span class="nc" id="L134">					out.printf(&quot; -&gt; \&quot;%s\&quot;&quot;, fromNodeId);</span>
+<span class="nc" id="L135">			} else</span>
+<span class="nc" id="L136">				out.printf(&quot;\t\&quot;%s\&quot; -- \&quot;%s\&quot;&quot;, fromNodeId, toNodeId);</span>
+
+<span class="nc" id="L138">			out.printf(&quot; %s;%n&quot;, attr);</span>
+<span class="nc" id="L139">		});</span>
+<span class="nc" id="L140">	}</span>
+
+	@Override
+	protected void outputHeader() throws IOException {
+<span class="nc" id="L144">		out = (PrintWriter) output;</span>
+<span class="nc bnc" id="L145" title="All 2 branches missed.">		out.printf(&quot;%s {%n&quot;, digraph ? &quot;digraph&quot; : &quot;graph&quot;);</span>
+
+<span class="nc bnc" id="L147" title="All 2 branches missed.">		if (graphName.length() &gt; 0)</span>
+<span class="nc" id="L148">			out.printf(&quot;\tgraph [label=%s];%n&quot;, graphName);</span>
+<span class="nc" id="L149">	}</span>
+
+	@Override
+	protected void outputEndOfFile() throws IOException {
+<span class="nc" id="L153">		out.printf(&quot;}%n&quot;);</span>
+<span class="nc" id="L154">	}</span>
+
+	public void edgeAttributeAdded(String graphId, long timeId, String edgeId, String attribute, Object value) {
+		// NOP
+<span class="nc" id="L158">	}</span>
+
+	public void edgeAttributeChanged(String graphId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+		// NOP
+<span class="nc" id="L163">	}</span>
+
+	public void edgeAttributeRemoved(String graphId, long timeId, String edgeId, String attribute) {
+		// NOP
+<span class="nc" id="L167">	}</span>
+
+	public void graphAttributeAdded(String graphId, long timeId, String attribute, Object value) {
+<span class="nc" id="L170">		out.printf(&quot;\tgraph [ %s ];%n&quot;, outputAttribute(attribute, value, true));</span>
+<span class="nc" id="L171">	}</span>
+
+	public void graphAttributeChanged(String graphId, long timeId, String attribute, Object oldValue, Object newValue) {
+<span class="nc" id="L174">		out.printf(&quot;\tgraph [ %s ];%n&quot;, outputAttribute(attribute, newValue, true));</span>
+<span class="nc" id="L175">	}</span>
+
+	public void graphAttributeRemoved(String graphId, long timeId, String attribute) {
+		// NOP
+<span class="nc" id="L179">	}</span>
+
+	public void nodeAttributeAdded(String graphId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L182">		out.printf(&quot;\t\&quot;%s\&quot; [ %s ];%n&quot;, nodeId, outputAttribute(attribute, value, true));</span>
+<span class="nc" id="L183">	}</span>
+
+	public void nodeAttributeChanged(String graphId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L187">		out.printf(&quot;\t\&quot;%s\&quot; [ %s ];%n&quot;, nodeId, outputAttribute(attribute, newValue, true));</span>
+<span class="nc" id="L188">	}</span>
+
+	public void nodeAttributeRemoved(String graphId, long timeId, String nodeId, String attribute) {
+		// NOP
+<span class="nc" id="L192">	}</span>
+
+	public void edgeAdded(String graphId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc bnc" id="L196" title="All 2 branches missed.">		if (digraph) {</span>
+<span class="nc" id="L197">			out.printf(&quot;\t\&quot;%s\&quot; -&gt; \&quot;%s\&quot;&quot;, fromNodeId, toNodeId);</span>
+
+<span class="nc bnc" id="L199" title="All 2 branches missed.">			if (!directed)</span>
+<span class="nc" id="L200">				out.printf(&quot; -&gt; \&quot;%s\&quot;&quot;, fromNodeId);</span>
+
+<span class="nc" id="L202">			out.printf(&quot;;%n&quot;);</span>
+<span class="nc" id="L203">		} else</span>
+<span class="nc" id="L204">			out.printf(&quot;\t\&quot;%s\&quot; -- \&quot;%s\&quot;;%n&quot;, fromNodeId, toNodeId);</span>
+<span class="nc" id="L205">	}</span>
+
+	public void edgeRemoved(String graphId, long timeId, String edgeId) {
+		// NOP
+<span class="nc" id="L209">	}</span>
+
+	public void graphCleared(String graphId, long timeId) {
+		// NOP
+<span class="nc" id="L213">	}</span>
+
+	public void nodeAdded(String graphId, long timeId, String nodeId) {
+<span class="nc" id="L216">		out.printf(&quot;\t\&quot;%s\&quot;;%n&quot;, nodeId);</span>
+<span class="nc" id="L217">	}</span>
+
+	public void nodeRemoved(String graphId, long timeId, String nodeId) {
+		// NOP
+<span class="nc" id="L221">	}</span>
+
+	public void stepBegins(String graphId, long timeId, double step) {
+		// NOP
+<span class="nc" id="L225">	}</span>
+
+	// Utility
+	/*
+	 * protected void outputAttributes(Map&lt;String, Object&gt; attributes, What what)
+	 * throws IOException { out.printf(&quot; [&quot;);
+	 * 
+	 * boolean first = true;
+	 * 
+	 * for (String key : attributes.keySet()) { Object value = attributes.get(key);
+	 * 
+	 * if (what == What.NODE) { // if( ! nodeForbiddenAttrs.contains( key ) ) {
+	 * first = outputAttribute(key, value, first); } } else if (what == What.EDGE) {
+	 * // if( ! edgeForbiddenAttrs.contains( key ) ) { first = outputAttribute(key,
+	 * value, first); } } else { first = outputAttribute(key, value, first); }
+	 * 
+	 * }
+	 * 
+	 * out.printf(&quot;]&quot;); }
+	 */
+	protected String outputAttribute(String key, Object value, boolean first) {
+<span class="nc" id="L246">		boolean quote = true;</span>
+
+<span class="nc bnc" id="L248" title="All 2 branches missed.">		if (value instanceof Number)</span>
+<span class="nc" id="L249">			quote = false;</span>
+
+<span class="nc bnc" id="L251" title="All 6 branches missed.">		return String.format(&quot;%s\&quot;%s\&quot;=%s%s%s&quot;, first ? &quot;&quot; : &quot;,&quot;, key, quote ? &quot;\&quot;&quot; : &quot;&quot;, value, quote ? &quot;\&quot;&quot; : &quot;&quot;);</span>
+	}
+
+	protected String outputAttributes(Element e) {
+<span class="nc bnc" id="L255" title="All 2 branches missed.">		if (e.getAttributeCount() == 0)</span>
+<span class="nc" id="L256">			return &quot;&quot;;</span>
+
+<span class="nc" id="L258">		StringBuilder buffer = new StringBuilder(&quot;[&quot;);</span>
+<span class="nc" id="L259">		AtomicBoolean first = new AtomicBoolean(true);</span>
+
+<span class="nc" id="L261">		e.attributeKeys().forEach(key -&gt; {</span>
+<span class="nc" id="L262">			boolean quote = true;</span>
+<span class="nc" id="L263">			Object value = e.getAttribute(key);</span>
+
+<span class="nc bnc" id="L265" title="All 2 branches missed.">			if (value instanceof Number)</span>
+<span class="nc" id="L266">				quote = false;</span>
+
+<span class="nc bnc" id="L268" title="All 4 branches missed.">			buffer.append(String.format(&quot;%s\&quot;%s\&quot;=%s%s%s&quot;, first.get() ? &quot;&quot; : &quot;,&quot;, key, quote ? &quot;\&quot;&quot; : &quot;&quot;, value,</span>
+<span class="nc bnc" id="L269" title="All 2 branches missed.">					quote ? &quot;\&quot;&quot; : &quot;&quot;));</span>
+
+<span class="nc" id="L271">			first.set(false);</span>
+<span class="nc" id="L272">		});</span>
+
+<span class="nc" id="L274">		return buffer.append(']').toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

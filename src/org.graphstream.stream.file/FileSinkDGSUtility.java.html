@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkDGSUtility.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkDGSUtility.java</span></div><h1>FileSinkDGSUtility.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2014-11-03
+ * 
+ * @author Thibaut Démare &lt;fdhp_76@hotmail.com&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.awt.Color;
+import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.Locale;
+
+<span class="nc" id="L42">public class FileSinkDGSUtility {</span>
+	protected static String formatStringForQuoting(String str) {
+<span class="nc" id="L44">		return str.replaceAll(&quot;(^|[^\\\\])\&quot;&quot;, &quot;$1\\\\\&quot;&quot;);</span>
+	}
+
+	protected static String attributeString(String key, Object value, boolean remove) {
+<span class="nc bnc" id="L48" title="All 4 branches missed.">		if (key == null || key.length() == 0)</span>
+<span class="nc" id="L49">			return null;</span>
+
+<span class="nc bnc" id="L51" title="All 2 branches missed.">		if (remove) {</span>
+<span class="nc" id="L52">			return String.format(&quot; -\&quot;%s\&quot;&quot;, key);</span>
+		} else {
+<span class="nc bnc" id="L54" title="All 4 branches missed.">			if (value != null &amp;&amp; value.getClass().isArray())</span>
+<span class="nc" id="L55">				return String.format(&quot; \&quot;%s\&quot;:%s&quot;, key, arrayString(value));</span>
+			else
+<span class="nc" id="L57">				return String.format(&quot; \&quot;%s\&quot;:%s&quot;, key, valueString(value));</span>
+		}
+	}
+
+	protected static String arrayString(Object value) {
+<span class="nc bnc" id="L62" title="All 4 branches missed.">		if (value != null &amp;&amp; value.getClass().isArray()) {</span>
+<span class="nc" id="L63">			StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L64">			sb.append(&quot;{&quot;);</span>
+
+<span class="nc bnc" id="L66" title="All 2 branches missed.">			if (Array.getLength(value) == 0)</span>
+<span class="nc" id="L67">				sb.append(&quot;\&quot;\&quot;&quot;);</span>
+			else
+<span class="nc" id="L69">				sb.append(arrayString(Array.get(value, 0)));</span>
+
+<span class="nc bnc" id="L71" title="All 2 branches missed.">			for (int i = 1; i &lt; Array.getLength(value); ++i)</span>
+<span class="nc" id="L72">				sb.append(String.format(&quot;,%s&quot;, arrayString(Array.get(value, i))));</span>
+
+<span class="nc" id="L74">			sb.append(&quot;}&quot;);</span>
+<span class="nc" id="L75">			return sb.toString();</span>
+		} else {
+<span class="nc" id="L77">			return valueString(value);</span>
+		}
+	}
+
+	protected static String valueString(Object value) {
+<span class="nc bnc" id="L82" title="All 2 branches missed.">		if (value == null)</span>
+<span class="nc" id="L83">			return &quot;\&quot;\&quot;&quot;;</span>
+
+<span class="nc bnc" id="L85" title="All 2 branches missed.">		if (value instanceof CharSequence) {</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">			if (value instanceof String)</span>
+<span class="nc" id="L87">				return String.format(&quot;\&quot;%s\&quot;&quot;, formatStringForQuoting((String) value));</span>
+			else
+<span class="nc" id="L89">				return String.format(&quot;\&quot;%s\&quot;&quot;, (CharSequence) value);</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">		} else if (value instanceof Number) {</span>
+<span class="nc" id="L91">			Number nval = (Number) value;</span>
+
+<span class="nc bnc" id="L93" title="All 8 branches missed.">			if (value instanceof Integer || value instanceof Short || value instanceof Byte || value instanceof Long)</span>
+<span class="nc" id="L94">				return String.format(Locale.US, &quot;%d&quot;, nval.longValue());</span>
+			else
+<span class="nc" id="L96">				return String.format(Locale.US, &quot;%f&quot;, nval.doubleValue());</span>
+<span class="nc bnc" id="L97" title="All 2 branches missed.">		} else if (value instanceof Boolean) {</span>
+<span class="nc" id="L98">			return String.format(Locale.US, &quot;%b&quot;, ((Boolean) value));</span>
+<span class="nc bnc" id="L99" title="All 2 branches missed.">		} else if (value instanceof Character) {</span>
+<span class="nc" id="L100">			return String.format(&quot;\&quot;%c\&quot;&quot;, ((Character) value).charValue());</span>
+<span class="nc bnc" id="L101" title="All 2 branches missed.">		} else if (value instanceof Object[]) {</span>
+<span class="nc" id="L102">			Object array[] = (Object[]) value;</span>
+<span class="nc" id="L103">			int n = array.length;</span>
+<span class="nc" id="L104">			StringBuffer sb = new StringBuffer();</span>
+
+<span class="nc bnc" id="L106" title="All 2 branches missed.">			if (array.length &gt; 0)</span>
+<span class="nc" id="L107">				sb.append(valueString(array[0]));</span>
+
+<span class="nc bnc" id="L109" title="All 2 branches missed.">			for (int i = 1; i &lt; n; i++) {</span>
+<span class="nc" id="L110">				sb.append(&quot;,&quot;);</span>
+<span class="nc" id="L111">				sb.append(valueString(array[i]));</span>
+			}
+
+<span class="nc" id="L114">			return sb.toString();</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">		} else if (value instanceof HashMap&lt;?, ?&gt;) {</span>
+<span class="nc" id="L116">			HashMap&lt;?, ?&gt; hash = (HashMap&lt;?, ?&gt;) value;</span>
+
+<span class="nc" id="L118">			return hashToString(hash);</span>
+<span class="nc bnc" id="L119" title="All 2 branches missed.">		} else if (value instanceof Color) {</span>
+<span class="nc" id="L120">			Color c = (Color) value;</span>
+<span class="nc" id="L121">			return String.format(&quot;#%02X%02X%02X%02X&quot;, c.getRed(), c.getGreen(), c.getBlue(), c.getAlpha());</span>
+		} else {
+<span class="nc" id="L123">			return String.format(&quot;\&quot;%s\&quot;&quot;, value.toString());</span>
+		}
+	}
+
+	protected static String hashToString(HashMap&lt;?, ?&gt; hash) {
+<span class="nc" id="L128">		StringBuilder sb = new StringBuilder();</span>
+
+<span class="nc" id="L130">		sb.append(&quot;[ &quot;);</span>
+
+<span class="nc bnc" id="L132" title="All 2 branches missed.">		for (Object key : hash.keySet()) {</span>
+<span class="nc" id="L133">			sb.append(attributeString(key.toString(), hash.get(key), false));</span>
+<span class="nc" id="L134">			sb.append(&quot;,&quot;);</span>
+		}
+
+<span class="nc" id="L137">		sb.append(']');</span>
+
+<span class="nc" id="L139">		return sb.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

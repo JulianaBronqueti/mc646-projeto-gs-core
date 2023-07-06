@@ -1,0 +1,1825 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Graphs.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.implementations</a> &gt; <span class="el_source">Graphs.java</span></div><h1>Graphs.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-08-23
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.implementations;
+
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Spliterator;
+import java.util.Vector;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.EdgeFactory;
+import org.graphstream.graph.EdgeRejectedException;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.ElementNotFoundException;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.IdAlreadyInUseException;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.NodeFactory;
+import org.graphstream.stream.AttributeSink;
+import org.graphstream.stream.ElementSink;
+import org.graphstream.stream.GraphParseException;
+import org.graphstream.stream.GraphReplay;
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.file.FileSink;
+import org.graphstream.stream.file.FileSource;
+import org.graphstream.ui.view.Viewer;
+
+<span class="nc" id="L69">public class Graphs {</span>
+
+<span class="nc" id="L71">	private static final Logger logger = Logger.getLogger(Graphs.class.getSimpleName());</span>
+
+	public static Graph unmutableGraph(Graph g) {
+<span class="nc" id="L74">		return null;</span>
+	}
+
+	/**
+	 * Synchronizes a graph. The returned graph can be accessed and modified by
+	 * several threads. You lose genericity in methods returning edge or node
+	 * because each element (graph, nodes and edges) is wrapped into a synchronized
+	 * wrapper which breaks original elements class.
+	 *
+	 * @param g
+	 *            the graph to synchronize
+	 * @return a synchronized wrapper for g
+	 */
+	public static Graph synchronizedGraph(Graph g) {
+<span class="nc" id="L88">		return new SynchronizedGraph(g);</span>
+	}
+
+	/**
+	 * Merge several graphs in one. A new graph is created, that will contain the
+	 * result. The method will try to create a graph of the same class that the
+	 * first graph to merge (it needs to have a constructor with a String). Else, a
+	 * MultiGraph is used.
+	 *
+	 * @param graphs
+	 *            graphs to merge
+	 * @return merge result
+	 */
+	public static Graph merge(Graph... graphs) {
+<span class="nc bnc" id="L102" title="All 2 branches missed.">		if (graphs == null)</span>
+<span class="nc" id="L103">			return new DefaultGraph(&quot;void-merge&quot;);</span>
+
+<span class="nc" id="L105">		String id = &quot;merge&quot;;</span>
+
+<span class="nc bnc" id="L107" title="All 2 branches missed.">		for (Graph g : graphs)</span>
+<span class="nc" id="L108">			id += &quot;-&quot; + g.getId();</span>
+
+		Graph result;
+
+		try {
+<span class="nc" id="L113">			Class&lt;? extends Graph&gt; cls = graphs[0].getClass();</span>
+<span class="nc" id="L114">			result = cls.getConstructor(String.class).newInstance(id);</span>
+<span class="nc" id="L115">		} catch (Exception e) {</span>
+<span class="nc" id="L116">			logger.warning(String.format(&quot;Cannot create a graph of %s.&quot;, graphs[0].getClass().getName()));</span>
+<span class="nc" id="L117">			result = new MultiGraph(id);</span>
+		}
+
+<span class="nc" id="L120">		mergeIn(result, graphs);</span>
+
+<span class="nc" id="L122">		return result;</span>
+	}
+
+	/**
+	 * Merge several graphs in one. The first parameter is the graph in which the
+	 * other graphs will be merged.
+	 *
+	 * @param result
+	 *            destination graph.
+	 * @param graphs
+	 *            all graphs that will be merged in result.
+	 */
+	public static void mergeIn(Graph result, Graph... graphs) {
+<span class="nc" id="L135">		boolean strict = result.isStrict();</span>
+<span class="nc" id="L136">		GraphReplay replay = new GraphReplay(String.format(&quot;replay-%x&quot;, System.nanoTime()));</span>
+
+<span class="nc" id="L138">		replay.addSink(result);</span>
+<span class="nc" id="L139">		result.setStrict(false);</span>
+
+<span class="nc bnc" id="L141" title="All 2 branches missed.">		if (graphs != null)</span>
+<span class="nc bnc" id="L142" title="All 2 branches missed.">			for (Graph g : graphs)</span>
+<span class="nc" id="L143">				replay.replay(g);</span>
+
+<span class="nc" id="L145">		replay.removeSink(result);</span>
+<span class="nc" id="L146">		result.setStrict(strict);</span>
+<span class="nc" id="L147">	}</span>
+
+	/**
+	 * Clone a given graph with same node/edge structure and same attributes.
+	 *
+	 * @param g
+	 *            the graph to clone
+	 * @return a copy of g
+	 */
+	public static Graph clone(Graph g) {
+		Graph copy;
+
+		try {
+<span class="nc" id="L160">			Class&lt;? extends Graph&gt; cls = g.getClass();</span>
+<span class="nc" id="L161">			copy = cls.getConstructor(String.class).newInstance(g.getId());</span>
+<span class="nc" id="L162">		} catch (Exception e) {</span>
+<span class="nc" id="L163">			logger.warning(String.format(&quot;Cannot create a graph of %s.&quot;, g.getClass().getName()));</span>
+<span class="nc" id="L164">			copy = new AdjacencyListGraph(g.getId());</span>
+		}
+
+<span class="nc" id="L167">		copyAttributes(g, copy);</span>
+
+<span class="nc bnc" id="L169" title="All 2 branches missed.">		for (int i = 0; i &lt; g.getNodeCount(); i++) {</span>
+<span class="nc" id="L170">			Node source = g.getNode(i);</span>
+<span class="nc" id="L171">			Node target = copy.addNode(source.getId());</span>
+
+<span class="nc" id="L173">			copyAttributes(source, target);</span>
+		}
+
+<span class="nc bnc" id="L176" title="All 2 branches missed.">		for (int i = 0; i &lt; g.getEdgeCount(); i++) {</span>
+<span class="nc" id="L177">			Edge source = g.getEdge(i);</span>
+<span class="nc" id="L178">			Edge target = copy.addEdge(source.getId(), source.getSourceNode().getId(), source.getTargetNode().getId(),</span>
+<span class="nc" id="L179">					source.isDirected());</span>
+
+<span class="nc" id="L181">			copyAttributes(source, target);</span>
+		}
+
+<span class="nc" id="L184">		return copy;</span>
+	}
+
+	/**
+	 * @param source
+	 * @param target
+	 */
+	public static void copyAttributes(Element source, Element target) {
+<span class="nc" id="L192">		source.attributeKeys().forEach(key -&gt; {</span>
+<span class="nc" id="L193">			Object value = source.getAttribute(key);</span>
+<span class="nc" id="L194">			value = checkedArrayOrCollectionCopy(value);</span>
+
+<span class="nc" id="L196">			target.setAttribute(key, value);</span>
+<span class="nc" id="L197">		});</span>
+<span class="nc" id="L198">	}</span>
+
+	@SuppressWarnings({ &quot;unchecked&quot;, &quot;rawtypes&quot; })
+	private static Object checkedArrayOrCollectionCopy(Object o) {
+<span class="nc bnc" id="L202" title="All 2 branches missed.">		if (o == null)</span>
+<span class="nc" id="L203">			return null;</span>
+
+<span class="nc bnc" id="L205" title="All 2 branches missed.">		if (o.getClass().isArray()) {</span>
+
+<span class="nc" id="L207">			Object c = Array.newInstance(o.getClass().getComponentType(), Array.getLength(o));</span>
+
+<span class="nc bnc" id="L209" title="All 2 branches missed.">			for (int i = 0; i &lt; Array.getLength(o); i++) {</span>
+<span class="nc" id="L210">				Object t = checkedArrayOrCollectionCopy(Array.get(o, i));</span>
+<span class="nc" id="L211">				Array.set(c, i, t);</span>
+			}
+
+<span class="nc" id="L214">			return c;</span>
+		}
+
+<span class="nc bnc" id="L217" title="All 2 branches missed.">		if (Collection.class.isAssignableFrom(o.getClass())) {</span>
+			Collection&lt;?&gt; t;
+
+			try {
+<span class="nc" id="L221">				t = (Collection&lt;?&gt;) o.getClass().newInstance();</span>
+<span class="nc" id="L222">				t.addAll((Collection) o);</span>
+
+<span class="nc" id="L224">				return t;</span>
+<span class="nc" id="L225">			} catch (Exception e) {</span>
+<span class="nc" id="L226">				e.printStackTrace();</span>
+			}
+		}
+
+<span class="nc" id="L230">		return o;</span>
+	}
+
+	static class SynchronizedElement&lt;U extends Element&gt; implements Element {
+
+<span class="nc" id="L235">		private static final ReentrantLock attributeLock = new ReentrantLock();  // Static to lock the attributes from different sources (graph/node/edge). Fix issue #293</span>
+		protected final U wrappedElement;
+
+<span class="nc" id="L238">		SynchronizedElement(U e) {</span>
+<span class="nc" id="L239">			this.wrappedElement = e;</span>
+<span class="nc" id="L240">		}</span>
+
+		public void setAttribute(String attribute, Object... values) {
+<span class="nc" id="L243">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L246">				wrappedElement.setAttribute(attribute, values);</span>
+<span class="nc" id="L247">			} finally {</span>
+<span class="nc" id="L248">				attributeLock.unlock();</span>
+			}
+<span class="nc" id="L250">		}</span>
+
+		public void setAttributes(Map&lt;String, Object&gt; attributes) {
+<span class="nc" id="L253">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L256">				wrappedElement.setAttributes(attributes);</span>
+<span class="nc" id="L257">			} finally {</span>
+<span class="nc" id="L258">				attributeLock.unlock();</span>
+			}
+<span class="nc" id="L260">		}</span>
+
+		public void clearAttributes() {
+<span class="nc" id="L263">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L266">				wrappedElement.clearAttributes();</span>
+<span class="nc" id="L267">			} finally {</span>
+<span class="nc" id="L268">				attributeLock.unlock();</span>
+			}
+<span class="nc" id="L270">		}</span>
+
+		public Object[] getArray(String key) {
+			Object[] o;
+
+<span class="nc" id="L275">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L278">				o = wrappedElement.getArray(key);</span>
+<span class="nc" id="L279">			} finally {</span>
+<span class="nc" id="L280">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L283">			return o;</span>
+		}
+
+		public Object getAttribute(String key) {
+			Object o;
+
+<span class="nc" id="L289">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L292">				o = wrappedElement.getAttribute(key);</span>
+<span class="nc" id="L293">			} finally {</span>
+<span class="nc" id="L294">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L297">			return o;</span>
+		}
+
+		public &lt;T&gt; T getAttribute(String key, Class&lt;T&gt; clazz) {
+			T o;
+
+<span class="nc" id="L303">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L306">				o = wrappedElement.getAttribute(key, clazz);</span>
+<span class="nc" id="L307">			} finally {</span>
+<span class="nc" id="L308">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L311">			return o;</span>
+		}
+
+		public int getAttributeCount() {
+			int c;
+
+<span class="nc" id="L317">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L320">				c = wrappedElement.getAttributeCount();</span>
+<span class="nc" id="L321">			} finally {</span>
+<span class="nc" id="L322">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L325">			return c;</span>
+		}
+
+		@Override
+		public Stream&lt;String&gt; attributeKeys() {
+<span class="nc" id="L330">			Stream&lt;String&gt; s = null;</span>
+
+<span class="nc" id="L332">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L335">				s = wrappedElement.attributeKeys();</span>
+
+<span class="nc bnc" id="L337" title="All 2 branches missed.">				if (!s.spliterator().hasCharacteristics(Spliterator.CONCURRENT))</span>
+<span class="nc" id="L338">					s = s.collect(Collectors.toList()).stream();</span>
+<span class="nc" id="L339">			} finally {</span>
+<span class="nc" id="L340">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L343">			return s;</span>
+		}
+
+		public Object getFirstAttributeOf(String... keys) {
+			Object o;
+
+<span class="nc" id="L349">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L352">				o = wrappedElement.getFirstAttributeOf(keys);</span>
+<span class="nc" id="L353">			} finally {</span>
+<span class="nc" id="L354">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L357">			return o;</span>
+		}
+
+		public &lt;T&gt; T getFirstAttributeOf(Class&lt;T&gt; clazz, String... keys) {
+			T o;
+
+<span class="nc" id="L363">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L366">				o = wrappedElement.getFirstAttributeOf(clazz, keys);</span>
+<span class="nc" id="L367">			} finally {</span>
+<span class="nc" id="L368">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L371">			return o;</span>
+		}
+
+		public Map&lt;?, ?&gt; getMap(String key) {
+			Map&lt;?, ?&gt; o;
+
+<span class="nc" id="L377">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L380">				o = wrappedElement.getMap(key);</span>
+<span class="nc" id="L381">			} finally {</span>
+<span class="nc" id="L382">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L385">			return o;</span>
+		}
+
+		public String getId() {
+<span class="nc" id="L389">			return wrappedElement.getId();</span>
+		}
+
+		public int getIndex() {
+<span class="nc" id="L393">			return wrappedElement.getIndex();</span>
+		}
+
+		public CharSequence getLabel(String key) {
+			CharSequence o;
+
+<span class="nc" id="L399">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L402">				o = wrappedElement.getLabel(key);</span>
+<span class="nc" id="L403">			} finally {</span>
+<span class="nc" id="L404">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L407">			return o;</span>
+		}
+
+		public double getNumber(String key) {
+			double o;
+
+<span class="nc" id="L413">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L416">				o = wrappedElement.getNumber(key);</span>
+<span class="nc" id="L417">			} finally {</span>
+<span class="nc" id="L418">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L421">			return o;</span>
+		}
+
+		public List&lt;? extends Number&gt; getVector(String key) {
+			List&lt;? extends Number&gt; o;
+
+<span class="nc" id="L427">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L430">				o = wrappedElement.getVector(key);</span>
+<span class="nc" id="L431">			} finally {</span>
+<span class="nc" id="L432">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L435">			return o;</span>
+		}
+
+		public boolean hasArray(String key) {
+			boolean b;
+
+<span class="nc" id="L441">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L444">				b = wrappedElement.hasArray(key);</span>
+<span class="nc" id="L445">			} finally {</span>
+<span class="nc" id="L446">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L449">			return b;</span>
+		}
+
+		public boolean hasAttribute(String key) {
+			boolean b;
+
+<span class="nc" id="L455">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L458">				b = wrappedElement.hasAttribute(key);</span>
+<span class="nc" id="L459">			} finally {</span>
+<span class="nc" id="L460">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L463">			return b;</span>
+		}
+
+		public boolean hasAttribute(String key, Class&lt;?&gt; clazz) {
+			boolean b;
+
+<span class="nc" id="L469">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L472">				b = wrappedElement.hasAttribute(key, clazz);</span>
+<span class="nc" id="L473">			} finally {</span>
+<span class="nc" id="L474">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L477">			return b;</span>
+		}
+
+		public boolean hasMap(String key) {
+			boolean b;
+
+<span class="nc" id="L483">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L486">				b = wrappedElement.hasMap(key);</span>
+<span class="nc" id="L487">			} finally {</span>
+<span class="nc" id="L488">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L491">			return b;</span>
+		}
+
+		public boolean hasLabel(String key) {
+			boolean b;
+
+<span class="nc" id="L497">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L500">				b = wrappedElement.hasLabel(key);</span>
+<span class="nc" id="L501">			} finally {</span>
+<span class="nc" id="L502">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L505">			return b;</span>
+		}
+
+		public boolean hasNumber(String key) {
+			boolean b;
+
+<span class="nc" id="L511">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L514">				b = wrappedElement.hasNumber(key);</span>
+<span class="nc" id="L515">			} finally {</span>
+<span class="nc" id="L516">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L519">			return b;</span>
+		}
+
+		public boolean hasVector(String key) {
+			boolean b;
+
+<span class="nc" id="L525">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L528">				b = wrappedElement.hasVector(key);</span>
+<span class="nc" id="L529">			} finally {</span>
+<span class="nc" id="L530">				attributeLock.unlock();</span>
+			}
+
+<span class="nc" id="L533">			return b;</span>
+		}
+
+		public void removeAttribute(String attribute) {
+<span class="nc" id="L537">			attributeLock.lock();</span>
+
+			try {
+<span class="nc" id="L540">				wrappedElement.removeAttribute(attribute);</span>
+<span class="nc" id="L541">			} finally {</span>
+<span class="nc" id="L542">				attributeLock.unlock();</span>
+			}
+<span class="nc" id="L544">		}</span>
+	}
+
+	static class SynchronizedGraph extends SynchronizedElement&lt;Graph&gt; implements Graph {
+
+		final ReentrantLock elementLock;
+		final Map&lt;String, Node&gt; synchronizedNodes;
+		final Map&lt;String, Edge&gt; synchronizedEdges;
+
+		SynchronizedGraph(Graph g) {
+<span class="nc" id="L554">			super(g);</span>
+
+<span class="nc" id="L556">			elementLock = new ReentrantLock();</span>
+
+<span class="nc" id="L558">			synchronizedNodes = g.nodes().collect(Collectors.toMap(Node::getId, n -&gt; new SynchronizedNode(this, n)));</span>
+<span class="nc" id="L559">			synchronizedEdges = g.edges().collect(Collectors.toMap(Edge::getId, e -&gt; new SynchronizedEdge(this, e)));</span>
+<span class="nc" id="L560">		}</span>
+
+		@Override
+		public Stream&lt;Node&gt; nodes() {
+			Collection&lt;Node&gt; nodes;
+
+<span class="nc" id="L566">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L569">				nodes = new Vector&lt;&gt;(synchronizedNodes.values());</span>
+<span class="nc" id="L570">			} finally {</span>
+<span class="nc" id="L571">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L574">			return nodes.stream();</span>
+		}
+
+		@Override
+		public Stream&lt;Edge&gt; edges() {
+			Collection&lt;Edge&gt; edges;
+
+<span class="nc" id="L581">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L584">				edges = new Vector&lt;&gt;(synchronizedEdges.values());</span>
+<span class="nc" id="L585">			} finally {</span>
+<span class="nc" id="L586">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L589">			return edges.stream();</span>
+		}
+
+		@Override
+		public Edge addEdge(String id, String node1, String node2)
+				throws IdAlreadyInUseException, ElementNotFoundException, EdgeRejectedException {
+			Edge e;
+			Edge se;
+
+<span class="nc" id="L598">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L601">				e = wrappedElement.addEdge(id, node1, node2);</span>
+<span class="nc" id="L602">				se = new SynchronizedEdge(this, e);</span>
+<span class="nc" id="L603">				synchronizedEdges.put(id, se);</span>
+<span class="nc" id="L604">			} finally {</span>
+<span class="nc" id="L605">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L608">			return se;</span>
+		}
+
+		@Override
+		public Edge addEdge(String id, String from, String to, boolean directed)
+				throws IdAlreadyInUseException, ElementNotFoundException {
+			Edge e;
+			Edge se;
+
+<span class="nc" id="L617">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L620">				e = wrappedElement.addEdge(id, from, to, directed);</span>
+<span class="nc" id="L621">				se = new SynchronizedEdge(this, e);</span>
+<span class="nc" id="L622">				synchronizedEdges.put(id, se);</span>
+<span class="nc" id="L623">			} finally {</span>
+<span class="nc" id="L624">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L627">			return se;</span>
+		}
+
+		@Override
+		public Edge addEdge(String id, int index1, int index2) {
+			Edge e;
+			Edge se;
+
+<span class="nc" id="L635">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L638">				e = wrappedElement.addEdge(id, index1, index2);</span>
+<span class="nc" id="L639">				se = new SynchronizedEdge(this, e);</span>
+<span class="nc" id="L640">				synchronizedEdges.put(id, se);</span>
+<span class="nc" id="L641">			} finally {</span>
+<span class="nc" id="L642">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L645">			return se;</span>
+		}
+
+		@Override
+		public Edge addEdge(String id, int fromIndex, int toIndex, boolean directed) {
+			Edge e;
+			Edge se;
+
+<span class="nc" id="L653">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L656">				e = wrappedElement.addEdge(id, fromIndex, toIndex, directed);</span>
+<span class="nc" id="L657">				se = new SynchronizedEdge(this, e);</span>
+<span class="nc" id="L658">				synchronizedEdges.put(id, se);</span>
+<span class="nc" id="L659">			} finally {</span>
+<span class="nc" id="L660">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L663">			return se;</span>
+		}
+
+		@SuppressWarnings(&quot;unchecked&quot;)
+		@Override
+		public Edge addEdge(String id, Node node1, Node node2) {
+			Edge e;
+			Edge se;
+			final Node unsyncNode1, unsyncNode2;
+
+<span class="nc" id="L673">			unsyncNode1 = ((SynchronizedElement&lt;Node&gt;) node1).wrappedElement;</span>
+<span class="nc" id="L674">			unsyncNode2 = ((SynchronizedElement&lt;Node&gt;) node2).wrappedElement;</span>
+
+<span class="nc" id="L676">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L679">				e = wrappedElement.addEdge(id, unsyncNode1, unsyncNode2);</span>
+<span class="nc" id="L680">				se = new SynchronizedEdge(this, e);</span>
+<span class="nc" id="L681">				synchronizedEdges.put(id, se);</span>
+<span class="nc" id="L682">			} finally {</span>
+<span class="nc" id="L683">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L686">			return se;</span>
+		}
+
+		@SuppressWarnings(&quot;unchecked&quot;)
+		@Override
+		public Edge addEdge(String id, Node from, Node to, boolean directed) {
+			Edge e;
+			Edge se;
+			final Node unsyncFrom, unsyncTo;
+
+<span class="nc" id="L696">			unsyncFrom = ((SynchronizedElement&lt;Node&gt;) from).wrappedElement;</span>
+<span class="nc" id="L697">			unsyncTo = ((SynchronizedElement&lt;Node&gt;) to).wrappedElement;</span>
+
+<span class="nc" id="L699">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L702">				e = wrappedElement.addEdge(id, unsyncFrom, unsyncTo, directed);</span>
+<span class="nc" id="L703">				se = new SynchronizedEdge(this, e);</span>
+<span class="nc" id="L704">				synchronizedEdges.put(id, se);</span>
+<span class="nc" id="L705">			} finally {</span>
+<span class="nc" id="L706">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L709">			return se;</span>
+		}
+
+		@Override
+		public Node addNode(String id) throws IdAlreadyInUseException {
+			Node n;
+			Node sn;
+
+<span class="nc" id="L717">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L720">				n = wrappedElement.addNode(id);</span>
+<span class="nc" id="L721">				sn = new SynchronizedNode(this, n);</span>
+<span class="nc" id="L722">				synchronizedNodes.put(id, sn);</span>
+<span class="nc" id="L723">			} finally {</span>
+<span class="nc" id="L724">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L727">			return sn;</span>
+		}
+
+		@Override
+		public Iterable&lt;AttributeSink&gt; attributeSinks() {
+<span class="nc" id="L732">			LinkedList&lt;AttributeSink&gt; sinks = new LinkedList&lt;AttributeSink&gt;();</span>
+
+<span class="nc" id="L734">			elementLock.lock();</span>
+
+			try {
+<span class="nc bnc" id="L737" title="All 2 branches missed.">				for (AttributeSink as : wrappedElement.attributeSinks())</span>
+<span class="nc" id="L738">					sinks.add(as);</span>
+<span class="nc" id="L739">			} finally {</span>
+<span class="nc" id="L740">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L743">			return sinks;</span>
+		}
+
+		@Override
+		public void clear() {
+<span class="nc" id="L748">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L751">				wrappedElement.clear();</span>
+<span class="nc" id="L752">			} finally {</span>
+<span class="nc" id="L753">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L755">		}</span>
+
+		@Override
+		public EdgeFactory&lt;? extends Edge&gt; edgeFactory() {
+<span class="nc" id="L759">			return wrappedElement.edgeFactory();</span>
+		}
+
+		@Override
+		public Iterable&lt;ElementSink&gt; elementSinks() {
+<span class="nc" id="L764">			LinkedList&lt;ElementSink&gt; sinks = new LinkedList&lt;ElementSink&gt;();</span>
+
+<span class="nc" id="L766">			elementLock.lock();</span>
+
+			try {
+<span class="nc bnc" id="L769" title="All 2 branches missed.">				for (ElementSink es : wrappedElement.elementSinks())</span>
+<span class="nc" id="L770">					sinks.add(es);</span>
+<span class="nc" id="L771">			} finally {</span>
+<span class="nc" id="L772">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L775">			return sinks;</span>
+		}
+
+		@Override
+		public Edge getEdge(String id) {
+			Edge e;
+
+<span class="nc" id="L782">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L785">				e = synchronizedEdges.get(id);</span>
+<span class="nc" id="L786">			} finally {</span>
+<span class="nc" id="L787">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L790">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdge(int index) throws IndexOutOfBoundsException {
+			Edge e;
+
+<span class="nc" id="L797">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L800">				e = wrappedElement.getEdge(index);</span>
+<span class="nc" id="L801">			} finally {</span>
+<span class="nc" id="L802">				elementLock.unlock();</span>
+			}
+
+<span class="nc bnc" id="L805" title="All 2 branches missed.">			return e == null ? null : getEdge(e.getId());</span>
+		}
+
+		@Override
+		public int getEdgeCount() {
+			int c;
+
+<span class="nc" id="L812">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L815">				c = synchronizedEdges.size();</span>
+<span class="nc" id="L816">			} finally {</span>
+<span class="nc" id="L817">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L820">			return c;</span>
+		}
+
+		@Override
+		public Node getNode(String id) {
+			Node n;
+
+<span class="nc" id="L827">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L830">				n = synchronizedNodes.get(id);</span>
+<span class="nc" id="L831">			} finally {</span>
+<span class="nc" id="L832">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L835">			return n;</span>
+		}
+
+		@Override
+		public Node getNode(int index) throws IndexOutOfBoundsException {
+			Node n;
+
+<span class="nc" id="L842">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L845">				n = wrappedElement.getNode(index);</span>
+<span class="nc" id="L846">			} finally {</span>
+<span class="nc" id="L847">				elementLock.unlock();</span>
+			}
+
+<span class="nc bnc" id="L850" title="All 2 branches missed.">			return n == null ? null : getNode(n.getId());</span>
+		}
+
+		@Override
+		public int getNodeCount() {
+			int c;
+
+<span class="nc" id="L857">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L860">				c = synchronizedNodes.size();</span>
+<span class="nc" id="L861">			} finally {</span>
+<span class="nc" id="L862">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L865">			return c;</span>
+		}
+
+		@Override
+		public double getStep() {
+			double s;
+
+<span class="nc" id="L872">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L875">				s = wrappedElement.getStep();</span>
+<span class="nc" id="L876">			} finally {</span>
+<span class="nc" id="L877">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L880">			return s;</span>
+		}
+
+		@Override
+		public boolean isAutoCreationEnabled() {
+<span class="nc" id="L885">			return wrappedElement.isAutoCreationEnabled();</span>
+		}
+
+		public Viewer display() {
+<span class="nc" id="L889">			return wrappedElement.display();</span>
+		}
+
+		public Viewer display(boolean autoLayout) {
+<span class="nc" id="L893">			return wrappedElement.display(autoLayout);</span>
+		}
+
+		@Override
+		public boolean isStrict() {
+<span class="nc" id="L898">			return wrappedElement.isStrict();</span>
+		}
+
+		@Override
+		public NodeFactory&lt;? extends Node&gt; nodeFactory() {
+<span class="nc" id="L903">			return wrappedElement.nodeFactory();</span>
+		}
+
+		@Override
+		public void read(String filename) throws IOException, GraphParseException, ElementNotFoundException {
+<span class="nc" id="L908">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L911">				wrappedElement.read(filename);</span>
+<span class="nc" id="L912">			} finally {</span>
+<span class="nc" id="L913">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L915">		}</span>
+
+		@Override
+		public void read(FileSource input, String filename) throws IOException, GraphParseException {
+<span class="nc" id="L919">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L922">				wrappedElement.read(input, filename);</span>
+<span class="nc" id="L923">			} finally {</span>
+<span class="nc" id="L924">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L926">		}</span>
+
+		@Override
+		public Edge removeEdge(String from, String to) throws ElementNotFoundException {
+			Edge e;
+			Edge se;
+
+<span class="nc" id="L933">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L936">				e = wrappedElement.removeEdge(from, to);</span>
+<span class="nc" id="L937">				se = synchronizedEdges.remove(e.getId());</span>
+<span class="nc" id="L938">			} finally {</span>
+<span class="nc" id="L939">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L942">			return se;</span>
+		}
+
+		@Override
+		public Edge removeEdge(String id) throws ElementNotFoundException {
+			Edge e;
+			Edge se;
+
+<span class="nc" id="L950">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L953">				e = wrappedElement.removeEdge(id);</span>
+<span class="nc" id="L954">				se = synchronizedEdges.remove(e.getId());</span>
+<span class="nc" id="L955">			} finally {</span>
+<span class="nc" id="L956">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L959">			return se;</span>
+		}
+
+		@Override
+		public Edge removeEdge(int index) {
+			Edge e;
+			Edge se;
+
+<span class="nc" id="L967">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L970">				e = wrappedElement.removeEdge(index);</span>
+<span class="nc" id="L971">				se = synchronizedEdges.remove(e.getId());</span>
+<span class="nc" id="L972">			} finally {</span>
+<span class="nc" id="L973">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L976">			return se;</span>
+		}
+
+		@Override
+		public Edge removeEdge(int fromIndex, int toIndex) {
+			Edge e;
+			Edge se;
+
+<span class="nc" id="L984">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L987">				e = wrappedElement.removeEdge(fromIndex, toIndex);</span>
+<span class="nc" id="L988">				se = synchronizedEdges.remove(e.getId());</span>
+<span class="nc" id="L989">			} finally {</span>
+<span class="nc" id="L990">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L993">			return se;</span>
+		}
+
+		@Override
+		public Edge removeEdge(Node node1, Node node2) {
+			Edge e;
+			Edge se;
+
+<span class="nc bnc" id="L1001" title="All 2 branches missed.">			if (node1 instanceof SynchronizedNode)</span>
+<span class="nc" id="L1002">				node1 = ((SynchronizedNode) node1).wrappedElement;</span>
+
+<span class="nc bnc" id="L1004" title="All 2 branches missed.">			if (node2 instanceof SynchronizedNode)</span>
+<span class="nc" id="L1005">				node2 = ((SynchronizedNode) node1).wrappedElement;</span>
+
+<span class="nc" id="L1007">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1010">				e = wrappedElement.removeEdge(node1, node2);</span>
+<span class="nc" id="L1011">				se = synchronizedEdges.remove(e.getId());</span>
+<span class="nc" id="L1012">			} finally {</span>
+<span class="nc" id="L1013">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1016">			return se;</span>
+		}
+
+		@Override
+		public Edge removeEdge(Edge edge) {
+			Edge e;
+			Edge se;
+
+<span class="nc bnc" id="L1024" title="All 2 branches missed.">			if (edge instanceof SynchronizedEdge)</span>
+<span class="nc" id="L1025">				edge = ((SynchronizedEdge) edge).wrappedElement;</span>
+
+<span class="nc" id="L1027">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1030">				e = wrappedElement.removeEdge(edge);</span>
+<span class="nc" id="L1031">				se = synchronizedEdges.remove(e.getId());</span>
+<span class="nc" id="L1032">			} finally {</span>
+<span class="nc" id="L1033">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1036">			return se;</span>
+		}
+
+		@Override
+		public Node removeNode(String id) throws ElementNotFoundException {
+			Node n;
+			Node sn;
+
+<span class="nc" id="L1044">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1047">				n = wrappedElement.removeNode(id);</span>
+<span class="nc" id="L1048">				sn = synchronizedNodes.remove(n.getId());</span>
+<span class="nc" id="L1049">			} finally {</span>
+<span class="nc" id="L1050">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1053">			return sn;</span>
+		}
+
+		@Override
+		public Node removeNode(int index) {
+			Node n;
+			Node sn;
+
+<span class="nc" id="L1061">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1064">				n = wrappedElement.removeNode(index);</span>
+<span class="nc" id="L1065">				sn = synchronizedNodes.remove(n.getId());</span>
+<span class="nc" id="L1066">			} finally {</span>
+<span class="nc" id="L1067">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1070">			return sn;</span>
+		}
+
+		@Override
+		public Node removeNode(Node node) {
+			Node n;
+			Node sn;
+
+<span class="nc bnc" id="L1078" title="All 2 branches missed.">			if (node instanceof SynchronizedNode)</span>
+<span class="nc" id="L1079">				node = ((SynchronizedNode) node).wrappedElement;</span>
+
+<span class="nc" id="L1081">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1084">				n = wrappedElement.removeNode(node);</span>
+<span class="nc" id="L1085">				sn = synchronizedNodes.remove(n.getId());</span>
+<span class="nc" id="L1086">			} finally {</span>
+<span class="nc" id="L1087">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1090">			return sn;</span>
+		}
+
+		@Override
+		public void setAutoCreate(boolean on) {
+<span class="nc" id="L1095">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1098">				wrappedElement.setAutoCreate(on);</span>
+<span class="nc" id="L1099">			} finally {</span>
+<span class="nc" id="L1100">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1102">		}</span>
+
+		@Override
+		public void setEdgeFactory(EdgeFactory&lt;? extends Edge&gt; ef) {
+<span class="nc" id="L1106">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1109">				wrappedElement.setEdgeFactory(ef);</span>
+<span class="nc" id="L1110">			} finally {</span>
+<span class="nc" id="L1111">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1113">		}</span>
+
+		@Override
+		public void setNodeFactory(NodeFactory&lt;? extends Node&gt; nf) {
+<span class="nc" id="L1117">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1120">				wrappedElement.setNodeFactory(nf);</span>
+<span class="nc" id="L1121">			} finally {</span>
+<span class="nc" id="L1122">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1124">		}</span>
+
+		@Override
+		public void setStrict(boolean on) {
+<span class="nc" id="L1128">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1131">				wrappedElement.setStrict(on);</span>
+<span class="nc" id="L1132">			} finally {</span>
+<span class="nc" id="L1133">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1135">		}</span>
+
+		@Override
+		public void stepBegins(double time) {
+<span class="nc" id="L1139">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1142">				wrappedElement.stepBegins(time);</span>
+<span class="nc" id="L1143">			} finally {</span>
+<span class="nc" id="L1144">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1146">		}</span>
+
+		@Override
+		public void write(String filename) throws IOException {
+<span class="nc" id="L1150">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1153">				wrappedElement.write(filename);</span>
+<span class="nc" id="L1154">			} finally {</span>
+<span class="nc" id="L1155">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1157">		}</span>
+
+		@Override
+		public void write(FileSink output, String filename) throws IOException {
+<span class="nc" id="L1161">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1164">				wrappedElement.write(output, filename);</span>
+<span class="nc" id="L1165">			} finally {</span>
+<span class="nc" id="L1166">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1168">		}</span>
+
+		@Override
+		public void addAttributeSink(AttributeSink sink) {
+<span class="nc" id="L1172">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1175">				wrappedElement.addAttributeSink(sink);</span>
+<span class="nc" id="L1176">			} finally {</span>
+<span class="nc" id="L1177">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1179">		}</span>
+
+		@Override
+		public void addElementSink(ElementSink sink) {
+<span class="nc" id="L1183">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1186">				wrappedElement.addElementSink(sink);</span>
+<span class="nc" id="L1187">			} finally {</span>
+<span class="nc" id="L1188">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1190">		}</span>
+
+		@Override
+		public void addSink(Sink sink) {
+<span class="nc" id="L1194">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1197">				wrappedElement.addSink(sink);</span>
+<span class="nc" id="L1198">			} finally {</span>
+<span class="nc" id="L1199">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1201">		}</span>
+
+		@Override
+		public void clearAttributeSinks() {
+<span class="nc" id="L1205">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1208">				wrappedElement.clearAttributeSinks();</span>
+<span class="nc" id="L1209">			} finally {</span>
+<span class="nc" id="L1210">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1212">		}</span>
+
+		@Override
+		public void clearElementSinks() {
+<span class="nc" id="L1216">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1219">				wrappedElement.clearElementSinks();</span>
+<span class="nc" id="L1220">			} finally {</span>
+<span class="nc" id="L1221">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1223">		}</span>
+
+		@Override
+		public void clearSinks() {
+<span class="nc" id="L1227">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1230">				wrappedElement.clearSinks();</span>
+<span class="nc" id="L1231">			} finally {</span>
+<span class="nc" id="L1232">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1234">		}</span>
+
+		@Override
+		public void removeAttributeSink(AttributeSink sink) {
+<span class="nc" id="L1238">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1241">				wrappedElement.removeAttributeSink(sink);</span>
+<span class="nc" id="L1242">			} finally {</span>
+<span class="nc" id="L1243">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1245">		}</span>
+
+		@Override
+		public void removeElementSink(ElementSink sink) {
+<span class="nc" id="L1249">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1252">				wrappedElement.removeElementSink(sink);</span>
+<span class="nc" id="L1253">			} finally {</span>
+<span class="nc" id="L1254">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1256">		}</span>
+
+		@Override
+		public void removeSink(Sink sink) {
+<span class="nc" id="L1260">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1263">				wrappedElement.removeSink(sink);</span>
+<span class="nc" id="L1264">			} finally {</span>
+<span class="nc" id="L1265">				elementLock.unlock();</span>
+			}
+<span class="nc" id="L1267">		}</span>
+
+		@Override
+		public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L1271">			wrappedElement.edgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L1272">		}</span>
+
+		@Override
+		public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L1277">			wrappedElement.edgeAttributeChanged(sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L1278">		}</span>
+
+		@Override
+		public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L1282">			wrappedElement.edgeAttributeRemoved(sourceId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L1283">		}</span>
+
+		@Override
+		public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L1287">			wrappedElement.graphAttributeAdded(sourceId, timeId, attribute, value);</span>
+<span class="nc" id="L1288">		}</span>
+
+		@Override
+		public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L1293">			wrappedElement.graphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L1294">		}</span>
+
+		@Override
+		public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L1298">			wrappedElement.graphAttributeRemoved(sourceId, timeId, attribute);</span>
+<span class="nc" id="L1299">		}</span>
+
+		@Override
+		public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L1303">			wrappedElement.nodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L1304">		}</span>
+
+		@Override
+		public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L1309">			wrappedElement.nodeAttributeChanged(sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L1310">		}</span>
+
+		@Override
+		public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L1314">			wrappedElement.nodeAttributeRemoved(sourceId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L1315">		}</span>
+
+		@Override
+		public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+				boolean directed) {
+<span class="nc" id="L1320">			wrappedElement.edgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L1321">		}</span>
+
+		@Override
+		public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L1325">			wrappedElement.edgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L1326">		}</span>
+
+		@Override
+		public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L1330">			wrappedElement.graphCleared(sourceId, timeId);</span>
+<span class="nc" id="L1331">		}</span>
+
+		@Override
+		public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L1335">			wrappedElement.nodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L1336">		}</span>
+
+		@Override
+		public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L1340">			wrappedElement.nodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L1341">		}</span>
+
+		@Override
+		public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L1345">			wrappedElement.stepBegins(sourceId, timeId, step);</span>
+<span class="nc" id="L1346">		}</span>
+
+		@Override
+		public Iterator&lt;Node&gt; iterator() {
+<span class="nc" id="L1350">			return nodes().iterator();</span>
+		}
+
+	}
+
+	static class SynchronizedNode extends SynchronizedElement&lt;Node&gt; implements Node {
+
+		private final SynchronizedGraph sg;
+		private final ReentrantLock elementLock;
+
+		SynchronizedNode(SynchronizedGraph sg, Node n) {
+<span class="nc" id="L1361">			super(n);</span>
+
+<span class="nc" id="L1363">			this.sg = sg;</span>
+<span class="nc" id="L1364">			this.elementLock = new ReentrantLock();</span>
+<span class="nc" id="L1365">		}</span>
+
+		@Override
+		public Stream&lt;Node&gt; neighborNodes() {
+			List&lt;Node&gt; nodes;
+
+<span class="nc" id="L1371">			elementLock.lock();</span>
+<span class="nc" id="L1372">			sg.elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1375">				nodes = wrappedElement.neighborNodes().map(n -&gt; sg.getNode(n.getIndex())).collect(Collectors.toList());</span>
+<span class="nc" id="L1376">			} finally {</span>
+<span class="nc" id="L1377">				sg.elementLock.unlock();</span>
+<span class="nc" id="L1378">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1381">			return nodes.stream();</span>
+		}
+
+		@Override
+		public Stream&lt;Edge&gt; edges() {
+			List&lt;Edge&gt; edges;
+
+<span class="nc" id="L1388">			elementLock.lock();</span>
+<span class="nc" id="L1389">			sg.elementLock.lock();</span>
+
+			try {
+
+<span class="nc" id="L1393">				edges = wrappedElement.edges().map(e -&gt; sg.getEdge(e.getIndex())).collect(Collectors.toList());</span>
+<span class="nc" id="L1394">			} finally {</span>
+<span class="nc" id="L1395">				sg.elementLock.unlock();</span>
+<span class="nc" id="L1396">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1399">			return edges.stream();</span>
+		}
+
+		@Override
+		public Stream&lt;Edge&gt; leavingEdges() {
+			List&lt;Edge&gt; edges;
+
+<span class="nc" id="L1406">			elementLock.lock();</span>
+<span class="nc" id="L1407">			sg.elementLock.lock();</span>
+
+			try {
+
+<span class="nc" id="L1411">				edges = wrappedElement.leavingEdges().map(e -&gt; sg.getEdge(e.getIndex())).collect(Collectors.toList());</span>
+<span class="nc" id="L1412">			} finally {</span>
+<span class="nc" id="L1413">				sg.elementLock.unlock();</span>
+<span class="nc" id="L1414">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1417">			return edges.stream();</span>
+		}
+
+		@Override
+		public Stream&lt;Edge&gt; enteringEdges() {
+			List&lt;Edge&gt; edges;
+
+<span class="nc" id="L1424">			elementLock.lock();</span>
+<span class="nc" id="L1425">			sg.elementLock.lock();</span>
+
+			try {
+
+<span class="nc" id="L1429">				edges = wrappedElement.enteringEdges().map(e -&gt; sg.getEdge(e.getIndex())).collect(Collectors.toList());</span>
+<span class="nc" id="L1430">			} finally {</span>
+<span class="nc" id="L1431">				sg.elementLock.unlock();</span>
+<span class="nc" id="L1432">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1435">			return edges.stream();</span>
+		}
+
+		@Override
+		public Iterator&lt;Node&gt; getBreadthFirstIterator() {
+<span class="nc" id="L1440">			return getBreadthFirstIterator(false);</span>
+		}
+
+		@Override
+		public Iterator&lt;Node&gt; getBreadthFirstIterator(boolean directed) {
+<span class="nc" id="L1445">			LinkedList&lt;Node&gt; l = new LinkedList&lt;Node&gt;();</span>
+			Iterator&lt;Node&gt; it;
+
+<span class="nc" id="L1448">			elementLock.lock();</span>
+<span class="nc" id="L1449">			sg.elementLock.lock();</span>
+
+			try {
+
+<span class="nc" id="L1453">				it = wrappedElement.getBreadthFirstIterator(directed);</span>
+
+<span class="nc bnc" id="L1455" title="All 2 branches missed.">				while (it.hasNext())</span>
+<span class="nc" id="L1456">					l.add(sg.getNode(it.next().getIndex()));</span>
+<span class="nc" id="L1457">			} finally {</span>
+<span class="nc" id="L1458">				sg.elementLock.unlock();</span>
+<span class="nc" id="L1459">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1462">			return l.iterator();</span>
+		}
+
+		@Override
+		public int getDegree() {
+			int d;
+
+<span class="nc" id="L1469">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1472">				d = wrappedElement.getDegree();</span>
+<span class="nc" id="L1473">			} finally {</span>
+<span class="nc" id="L1474">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1477">			return d;</span>
+		}
+
+		@Override
+		public Iterator&lt;Node&gt; getDepthFirstIterator() {
+<span class="nc" id="L1482">			return getDepthFirstIterator(false);</span>
+		}
+
+		@Override
+		public Iterator&lt;Node&gt; getDepthFirstIterator(boolean directed) {
+<span class="nc" id="L1487">			LinkedList&lt;Node&gt; l = new LinkedList&lt;Node&gt;();</span>
+			Iterator&lt;Node&gt; it;
+
+<span class="nc" id="L1490">			elementLock.lock();</span>
+<span class="nc" id="L1491">			sg.elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1494">				it = wrappedElement.getDepthFirstIterator();</span>
+
+<span class="nc bnc" id="L1496" title="All 2 branches missed.">				while (it.hasNext())</span>
+<span class="nc" id="L1497">					l.add(sg.getNode(it.next().getIndex()));</span>
+<span class="nc" id="L1498">			} finally {</span>
+<span class="nc" id="L1499">				sg.elementLock.unlock();</span>
+<span class="nc" id="L1500">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1503">			return l.iterator();</span>
+		}
+
+		@Override
+		public Edge getEdge(int i) {
+			Edge e;
+
+<span class="nc" id="L1510">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1513">				e = sg.getEdge(wrappedElement.getEdge(i).getIndex());</span>
+<span class="nc" id="L1514">			} finally {</span>
+<span class="nc" id="L1515">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1518">			return e;</span>
+		}
+
+		@Override
+		public Edge getEnteringEdge(int i) {
+			Edge e;
+
+<span class="nc" id="L1525">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1528">				e = sg.getEdge(wrappedElement.getEnteringEdge(i).getIndex());</span>
+<span class="nc" id="L1529">			} finally {</span>
+<span class="nc" id="L1530">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1533">			return e;</span>
+		}
+
+		@Override
+		public Edge getLeavingEdge(int i) {
+			Edge e;
+
+<span class="nc" id="L1540">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1543">				e = sg.getEdge(wrappedElement.getLeavingEdge(i).getIndex());</span>
+<span class="nc" id="L1544">			} finally {</span>
+<span class="nc" id="L1545">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1548">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeBetween(String id) {
+			Edge e;
+
+<span class="nc" id="L1555">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1558">				e = sg.getEdge(wrappedElement.getEdgeBetween(id).getIndex());</span>
+<span class="nc" id="L1559">			} finally {</span>
+<span class="nc" id="L1560">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1563">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeBetween(Node n) {
+			Edge e;
+
+<span class="nc" id="L1570">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1573">				e = sg.getEdge(wrappedElement.getEdgeBetween(n).getIndex());</span>
+<span class="nc" id="L1574">			} finally {</span>
+<span class="nc" id="L1575">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1578">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeBetween(int index) {
+			Edge e;
+
+<span class="nc" id="L1585">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1588">				e = sg.getEdge(wrappedElement.getEdgeBetween(index).getIndex());</span>
+<span class="nc" id="L1589">			} finally {</span>
+<span class="nc" id="L1590">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1593">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeFrom(String id) {
+			Edge e;
+
+<span class="nc" id="L1600">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1603">				e = sg.getEdge(wrappedElement.getEdgeFrom(id).getIndex());</span>
+<span class="nc" id="L1604">			} finally {</span>
+<span class="nc" id="L1605">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1608">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeFrom(Node n) {
+			Edge e;
+
+<span class="nc" id="L1615">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1618">				e = sg.getEdge(wrappedElement.getEdgeFrom(n).getIndex());</span>
+<span class="nc" id="L1619">			} finally {</span>
+<span class="nc" id="L1620">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1623">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeFrom(int index) {
+			Edge e;
+
+<span class="nc" id="L1630">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1633">				e = sg.getEdge(wrappedElement.getEdgeFrom(index).getIndex());</span>
+<span class="nc" id="L1634">			} finally {</span>
+<span class="nc" id="L1635">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1638">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeToward(String id) {
+			Edge e;
+
+<span class="nc" id="L1645">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1648">				e = sg.getEdge(wrappedElement.getEdgeToward(id).getIndex());</span>
+<span class="nc" id="L1649">			} finally {</span>
+<span class="nc" id="L1650">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1653">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeToward(Node n) {
+			Edge e;
+
+<span class="nc" id="L1660">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1663">				e = sg.getEdge(wrappedElement.getEdgeToward(n).getIndex());</span>
+<span class="nc" id="L1664">			} finally {</span>
+<span class="nc" id="L1665">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1668">			return e;</span>
+		}
+
+		@Override
+		public Edge getEdgeToward(int index) {
+			Edge e;
+
+<span class="nc" id="L1675">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1678">				e = sg.getEdge(wrappedElement.getEdgeToward(index).getIndex());</span>
+<span class="nc" id="L1679">			} finally {</span>
+<span class="nc" id="L1680">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1683">			return e;</span>
+		}
+
+		@Override
+		public Graph getGraph() {
+<span class="nc" id="L1688">			return sg;</span>
+		}
+
+		@Override
+		public int getInDegree() {
+			int d;
+
+<span class="nc" id="L1695">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1698">				d = wrappedElement.getInDegree();</span>
+<span class="nc" id="L1699">			} finally {</span>
+<span class="nc" id="L1700">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1703">			return d;</span>
+		}
+
+		@Override
+		public int getOutDegree() {
+			int d;
+
+<span class="nc" id="L1710">			elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1713">				d = wrappedElement.getOutDegree();</span>
+<span class="nc" id="L1714">			} finally {</span>
+<span class="nc" id="L1715">				elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1718">			return d;</span>
+		}
+
+		@Override
+		public Iterator&lt;Edge&gt; iterator() {
+<span class="nc" id="L1723">			return edges().iterator();</span>
+		}
+	}
+
+	static class SynchronizedEdge extends SynchronizedElement&lt;Edge&gt; implements Edge {
+
+		final SynchronizedGraph sg;
+
+		SynchronizedEdge(SynchronizedGraph sg, Edge e) {
+<span class="nc" id="L1732">			super(e);</span>
+<span class="nc" id="L1733">			this.sg = sg;</span>
+<span class="nc" id="L1734">		}</span>
+
+		@Override
+		public Node getNode0() {
+			Node n;
+
+<span class="nc" id="L1740">			sg.elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1743">				n = sg.getNode(wrappedElement.getNode0().getIndex());</span>
+<span class="nc" id="L1744">			} finally {</span>
+<span class="nc" id="L1745">				sg.elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1748">			return n;</span>
+		}
+
+		@Override
+		public Node getNode1() {
+			Node n;
+
+<span class="nc" id="L1755">			sg.elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1758">				n = sg.getNode(wrappedElement.getNode1().getIndex());</span>
+<span class="nc" id="L1759">			} finally {</span>
+<span class="nc" id="L1760">				sg.elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1763">			return n;</span>
+		}
+
+		@Override
+		public Node getOpposite(Node node) {
+			Node n;
+
+<span class="nc bnc" id="L1770" title="All 2 branches missed.">			if (node instanceof SynchronizedNode)</span>
+<span class="nc" id="L1771">				node = ((SynchronizedNode) node).wrappedElement;</span>
+
+<span class="nc" id="L1773">			sg.elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1776">				n = sg.getNode(wrappedElement.getOpposite(node).getIndex());</span>
+<span class="nc" id="L1777">			} finally {</span>
+<span class="nc" id="L1778">				sg.elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1781">			return n;</span>
+		}
+
+		@Override
+		public Node getSourceNode() {
+			Node n;
+
+<span class="nc" id="L1788">			sg.elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1791">				n = sg.getNode(wrappedElement.getSourceNode().getIndex());</span>
+<span class="nc" id="L1792">			} finally {</span>
+<span class="nc" id="L1793">				sg.elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1796">			return n;</span>
+		}
+
+		@Override
+		public Node getTargetNode() {
+			Node n;
+
+<span class="nc" id="L1803">			sg.elementLock.lock();</span>
+
+			try {
+<span class="nc" id="L1806">				n = sg.getNode(wrappedElement.getTargetNode().getIndex());</span>
+<span class="nc" id="L1807">			} finally {</span>
+<span class="nc" id="L1808">				sg.elementLock.unlock();</span>
+			}
+
+<span class="nc" id="L1811">			return n;</span>
+		}
+
+		@Override
+		public boolean isDirected() {
+<span class="nc" id="L1816">			return wrappedElement.isDirected();</span>
+		}
+
+		@Override
+		public boolean isLoop() {
+<span class="nc" id="L1821">			return wrappedElement.isLoop();</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

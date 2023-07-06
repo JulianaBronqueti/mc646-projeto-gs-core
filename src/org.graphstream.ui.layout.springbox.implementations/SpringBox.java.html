@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SpringBox.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.layout.springbox.implementations</a> &gt; <span class="el_source">SpringBox.java</span></div><h1>SpringBox.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2012-06-19
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.layout.springbox.implementations;
+
+import java.util.Random;
+
+import org.graphstream.ui.layout.LayoutRunner;
+import org.graphstream.ui.layout.springbox.BarnesHutLayout;
+import org.graphstream.ui.layout.springbox.NodeParticle;
+
+/**
+ * The GraphStream Spring-Box layout.
+ * 
+ * &lt;p&gt;
+ * This layout is the default GraphStream layout that handles dynamic graphs. It
+ * can constantly evolve according to the changes in the graph. And works well
+ * with the {@link LayoutRunner} class so that the computations stops when the
+ * layout is stable enougth.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * This algorithm is based on the Frutcherman-Reingold force layout algorithm
+ * modified on the attraction (the degree of nodes is taken into account to
+ * stabilize the layout as we are not only interested in the result, but also in
+ * the steps in between).
+ * &lt;/p&gt;
+ */
+public class SpringBox extends BarnesHutLayout {
+	/**
+	 * The optimal distance between nodes.
+	 */
+<span class="nc" id="L62">	protected double k = 1f;</span>
+
+	/**
+	 * Default attraction.
+	 */
+<span class="nc" id="L67">	protected double K1 = 0.06f; // 0.3 ??</span>
+
+	/**
+	 * Default repulsion.
+	 */
+<span class="nc" id="L72">	protected double K2 = 0.024f; // 0.12 ??</span>
+
+	/**
+	 * New &quot;Spring-Box&quot; 2D Barnes-Hut simulation.
+	 */
+	public SpringBox() {
+<span class="nc" id="L78">		this(false);</span>
+<span class="nc" id="L79">	}</span>
+
+	/**
+	 * New &quot;Spring-Box&quot; Barnes-Hut simulation.
+	 * 
+	 * @param is3D
+	 *            If true the simulation dimensions count is 3 else 2.
+	 */
+	public SpringBox(boolean is3D) {
+<span class="nc" id="L88">		this(is3D, new Random(System.currentTimeMillis()));</span>
+<span class="nc" id="L89">	}</span>
+
+	/**
+	 * New &quot;Spring-Box&quot; Barnes-Hut simulation.
+	 * 
+	 * @param is3D
+	 *            If true the simulation dimensions count is 3 else 2.
+	 * @param randomNumberGenerator
+	 *            The random number generator to use.
+	 */
+	public SpringBox(boolean is3D, Random randomNumberGenerator) {
+<span class="nc" id="L100">		super(is3D, randomNumberGenerator);</span>
+<span class="nc" id="L101">		setQuality(0.1);</span>
+<span class="nc" id="L102">	}</span>
+
+	@Override
+	public String getLayoutAlgorithmName() {
+<span class="nc" id="L106">		return &quot;SpringBox&quot;;</span>
+	}
+
+	@Override
+	public void setQuality(double qualityLevel) {
+<span class="nc" id="L111">		super.setQuality(qualityLevel);</span>
+
+<span class="nc bnc" id="L113" title="All 2 branches missed.">		if (quality &gt;= 1) {</span>
+<span class="nc" id="L114">			viewZone = -1;</span>
+<span class="nc bnc" id="L115" title="All 2 branches missed.">		} else if (quality &lt;= 0) {</span>
+<span class="nc" id="L116">			viewZone = k;</span>
+<span class="nc" id="L117">		} else {</span>
+<span class="nc" id="L118">			viewZone = k + (k * 10 * quality);</span>
+		}
+<span class="nc" id="L120">	}</span>
+
+	@Override
+	protected void chooseNodePosition(NodeParticle n0, NodeParticle n1) {
+<span class="nc bnc" id="L124" title="All 4 branches missed.">		if (n0.frozen || n1.frozen)</span>
+<span class="nc" id="L125">			return;</span>
+
+<span class="nc" id="L127">		double delta = random.nextDouble(); // k * 0.1;</span>
+<span class="nc bnc" id="L128" title="All 4 branches missed.">		if (n0.getEdges().size() == 1 &amp;&amp; n1.getEdges().size() &gt; 1) {</span>
+<span class="nc" id="L129">			org.miv.pherd.geom.Point3 pos = n1.getPosition();</span>
+<span class="nc" id="L130">			n0.moveTo(pos.x + delta, pos.y + delta, pos.z + delta);</span>
+<span class="nc bnc" id="L131" title="All 4 branches missed.">		} else if (n1.getEdges().size() == 1 &amp;&amp; n0.getEdges().size() &gt; 1) {</span>
+<span class="nc" id="L132">			org.miv.pherd.geom.Point3 pos = n0.getPosition();</span>
+<span class="nc" id="L133">			n1.moveTo(pos.x + delta, pos.y + delta, pos.z + delta);</span>
+		}
+<span class="nc" id="L135">	}</span>
+
+	@Override
+	public NodeParticle newNodeParticle(String id) {
+<span class="nc" id="L139">		return new SpringBoxNodeParticle(this, id);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AdjacencyListGraph.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.implementations</a> &gt; <span class="el_source">AdjacencyListGraph.java</span></div><h1>AdjacencyListGraph.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.implementations;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.stream.Stream;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.EdgeFactory;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.NodeFactory;
+
+/**
+ * &lt;p&gt;
+ * A lightweight graph class intended to allow the construction of big graphs
+ * (millions of elements).
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * The main purpose here is to minimize memory consumption even if the
+ * management of such a graph implies more CPU consuming. See the
+ * &lt;code&gt;complexity&lt;/code&gt; tags on each method so as to figure out the impact on
+ * the CPU.
+ * &lt;/p&gt;
+ */
+public class AdjacencyListGraph extends AbstractGraph {
+
+	public static final double GROW_FACTOR = 1.1;
+	public static final int DEFAULT_NODE_CAPACITY = 128;
+	public static final int DEFAULT_EDGE_CAPACITY = 1024;
+
+	protected HashMap&lt;String, AbstractNode&gt; nodeMap;
+	protected HashMap&lt;String, AbstractEdge&gt; edgeMap;
+
+	protected AbstractNode[] nodeArray;
+	protected AbstractEdge[] edgeArray;
+
+	protected int nodeCount;
+	protected int edgeCount;
+
+	// *** Constructors ***
+
+	/**
+	 * Creates an empty graph.
+	 * 
+	 * @param id
+	 *            Unique identifier of the graph.
+	 * @param strictChecking
+	 *            If true any non-fatal error throws an exception.
+	 * @param autoCreate
+	 *            If true (and strict checking is false), nodes are automatically
+	 *            created when referenced when creating a edge, even if not yet
+	 *            inserted in the graph.
+	 * @param initialNodeCapacity
+	 *            Initial capacity of the node storage data structures. Use this if
+	 *            you know the approximate maximum number of nodes of the graph. The
+	 *            graph can grow beyond this limit, but storage reallocation is
+	 *            expensive operation.
+	 * @param initialEdgeCapacity
+	 *            Initial capacity of the edge storage data structures. Use this if
+	 *            you know the approximate maximum number of edges of the graph. The
+	 *            graph can grow beyond this limit, but storage reallocation is
+	 *            expensive operation.
+	 */
+	public AdjacencyListGraph(String id, boolean strictChecking, boolean autoCreate, int initialNodeCapacity,
+			int initialEdgeCapacity) {
+<span class="fc" id="L103">		super(id, strictChecking, autoCreate);</span>
+
+<span class="fc" id="L105">		setNodeFactory(new NodeFactory&lt;AdjacencyListNode&gt;() {</span>
+			public AdjacencyListNode newInstance(String id, Graph graph) {
+<span class="nc" id="L107">				return new AdjacencyListNode((AbstractGraph) graph, id);</span>
+			}
+		});
+
+<span class="fc" id="L111">		setEdgeFactory(new EdgeFactory&lt;AbstractEdge&gt;() {</span>
+			public AbstractEdge newInstance(String id, Node src, Node dst, boolean directed) {
+<span class="fc" id="L113">				return new AbstractEdge(id, (AbstractNode) src, (AbstractNode) dst, directed);</span>
+			}
+		});
+
+<span class="fc bfc" id="L117" title="All 2 branches covered.">		if (initialNodeCapacity &lt; DEFAULT_NODE_CAPACITY)</span>
+<span class="fc" id="L118">			initialNodeCapacity = DEFAULT_NODE_CAPACITY;</span>
+<span class="fc bfc" id="L119" title="All 2 branches covered.">		if (initialEdgeCapacity &lt; DEFAULT_EDGE_CAPACITY)</span>
+<span class="fc" id="L120">			initialEdgeCapacity = DEFAULT_EDGE_CAPACITY;</span>
+
+<span class="fc" id="L122">		nodeMap = new HashMap&lt;String, AbstractNode&gt;(4 * initialNodeCapacity / 3 + 1);</span>
+<span class="fc" id="L123">		edgeMap = new HashMap&lt;String, AbstractEdge&gt;(4 * initialEdgeCapacity / 3 + 1);</span>
+<span class="fc" id="L124">		nodeArray = new AbstractNode[initialNodeCapacity];</span>
+<span class="fc" id="L125">		edgeArray = new AbstractEdge[initialEdgeCapacity];</span>
+<span class="fc" id="L126">		nodeCount = edgeCount = 0;</span>
+<span class="fc" id="L127">	}</span>
+
+	/**
+	 * Creates an empty graph with default edge and node capacity.
+	 * 
+	 * @param id
+	 *            Unique identifier of the graph.
+	 * @param strictChecking
+	 *            If true any non-fatal error throws an exception.
+	 * @param autoCreate
+	 *            If true (and strict checking is false), nodes are automatically
+	 *            created when referenced when creating a edge, even if not yet
+	 *            inserted in the graph.
+	 */
+	public AdjacencyListGraph(String id, boolean strictChecking, boolean autoCreate) {
+<span class="nc" id="L142">		this(id, strictChecking, autoCreate, DEFAULT_NODE_CAPACITY, DEFAULT_EDGE_CAPACITY);</span>
+<span class="nc" id="L143">	}</span>
+
+	/**
+	 * Creates an empty graph with strict checking and without auto-creation.
+	 * 
+	 * @param id
+	 *            Unique identifier of the graph.
+	 */
+	public AdjacencyListGraph(String id) {
+<span class="nc" id="L152">		this(id, true, false);</span>
+<span class="nc" id="L153">	}</span>
+
+	// *** Callbacks ***
+
+	@Override
+	protected void addEdgeCallback(AbstractEdge edge) {
+<span class="fc" id="L159">		edgeMap.put(edge.getId(), edge);</span>
+<span class="pc bpc" id="L160" title="1 of 2 branches missed.">		if (edgeCount == edgeArray.length) {</span>
+<span class="nc" id="L161">			AbstractEdge[] tmp = new AbstractEdge[(int) (edgeArray.length * GROW_FACTOR) + 1];</span>
+<span class="nc" id="L162">			System.arraycopy(edgeArray, 0, tmp, 0, edgeArray.length);</span>
+<span class="nc" id="L163">			Arrays.fill(edgeArray, null);</span>
+<span class="nc" id="L164">			edgeArray = tmp;</span>
+		}
+<span class="fc" id="L166">		edgeArray[edgeCount] = edge;</span>
+<span class="fc" id="L167">		edge.setIndex(edgeCount++);</span>
+<span class="fc" id="L168">	}</span>
+
+	@Override
+	protected void addNodeCallback(AbstractNode node) {
+<span class="fc" id="L172">		nodeMap.put(node.getId(), node);</span>
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">		if (nodeCount == nodeArray.length) {</span>
+<span class="nc" id="L174">			AbstractNode[] tmp = new AbstractNode[(int) (nodeArray.length * GROW_FACTOR) + 1];</span>
+<span class="nc" id="L175">			System.arraycopy(nodeArray, 0, tmp, 0, nodeArray.length);</span>
+<span class="nc" id="L176">			Arrays.fill(nodeArray, null);</span>
+<span class="nc" id="L177">			nodeArray = tmp;</span>
+		}
+<span class="fc" id="L179">		nodeArray[nodeCount] = node;</span>
+<span class="fc" id="L180">		node.setIndex(nodeCount++);</span>
+<span class="fc" id="L181">	}</span>
+
+	@Override
+	protected void removeEdgeCallback(AbstractEdge edge) {
+<span class="nc" id="L185">		edgeMap.remove(edge.getId());</span>
+<span class="nc" id="L186">		int i = edge.getIndex();</span>
+<span class="nc" id="L187">		edgeArray[i] = edgeArray[--edgeCount];</span>
+<span class="nc" id="L188">		edgeArray[i].setIndex(i);</span>
+<span class="nc" id="L189">		edgeArray[edgeCount] = null;</span>
+	
+<span class="nc" id="L191">	}</span>
+
+	@Override
+	protected void removeNodeCallback(AbstractNode node) {
+<span class="fc" id="L195">		nodeMap.remove(node.getId());</span>
+<span class="fc" id="L196">		int i = node.getIndex();</span>
+<span class="fc" id="L197">		nodeArray[i] = nodeArray[--nodeCount];</span>
+<span class="fc" id="L198">		nodeArray[i].setIndex(i);</span>
+<span class="fc" id="L199">		nodeArray[nodeCount] = null;</span>
+	
+<span class="fc" id="L201">	}</span>
+
+	@Override
+	protected void clearCallback() {
+<span class="fc" id="L205">		nodeMap.clear();</span>
+<span class="fc" id="L206">		edgeMap.clear();</span>
+<span class="fc" id="L207">		Arrays.fill(nodeArray, 0, nodeCount, null);</span>
+<span class="fc" id="L208">		Arrays.fill(edgeArray, 0, edgeCount, null);</span>
+<span class="fc" id="L209">		nodeCount = edgeCount = 0;</span>
+<span class="fc" id="L210">	}</span>
+
+	@Override
+	public Stream&lt;Node&gt; nodes() {
+<span class="fc" id="L214">		return Arrays.stream(nodeArray, 0, nodeCount);</span>
+	}
+
+	@Override
+	public Stream&lt;Edge&gt; edges() {
+<span class="fc" id="L219">		return Arrays.stream(edgeArray, 0, edgeCount);</span>
+	}
+
+	@Override
+	public Edge getEdge(String id) {
+<span class="fc" id="L224">		return edgeMap.get(id);</span>
+	}
+
+	@Override
+	public Edge getEdge(int index) {
+<span class="pc bpc" id="L229" title="2 of 4 branches missed.">		if (index &lt; 0 || index &gt;= edgeCount)</span>
+<span class="nc" id="L230">			throw new IndexOutOfBoundsException(&quot;Edge &quot; + index + &quot; does not exist&quot;);</span>
+<span class="fc" id="L231">		return edgeArray[index];</span>
+	}
+
+	@Override
+	public int getEdgeCount() {
+<span class="fc" id="L236">		return edgeCount;</span>
+	}
+
+	@Override
+	public Node getNode(String id) {
+<span class="fc" id="L241">		return nodeMap.get(id);</span>
+	}
+
+	@Override
+	public Node getNode(int index) {
+<span class="pc bpc" id="L246" title="1 of 4 branches missed.">		if (index &lt; 0 || index &gt; nodeCount)</span>
+<span class="fc" id="L247">			throw new IndexOutOfBoundsException(&quot;Node &quot; + index + &quot; does not exist&quot;);</span>
+<span class="fc" id="L248">		return nodeArray[index];</span>
+	}
+
+	@Override
+	public int getNodeCount() {
+<span class="fc" id="L253">		return nodeCount;</span>
+	}
+
+	// *** Iterators ***
+
+<span class="nc" id="L258">	protected class EdgeIterator&lt;T extends Edge&gt; implements Iterator&lt;T&gt; {</span>
+<span class="nc" id="L259">		int iNext = 0;</span>
+<span class="nc" id="L260">		int iPrev = -1;</span>
+
+		public boolean hasNext() {
+<span class="nc bnc" id="L263" title="All 2 branches missed.">			return iNext &lt; edgeCount;</span>
+		}
+
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public T next() {
+<span class="nc bnc" id="L268" title="All 2 branches missed.">			if (iNext &gt;= edgeCount)</span>
+<span class="nc" id="L269">				throw new NoSuchElementException();</span>
+<span class="nc" id="L270">			iPrev = iNext++;</span>
+<span class="nc" id="L271">			return (T) edgeArray[iPrev];</span>
+		}
+
+		public void remove() {
+<span class="nc bnc" id="L275" title="All 2 branches missed.">			if (iPrev == -1)</span>
+<span class="nc" id="L276">				throw new IllegalStateException();</span>
+<span class="nc" id="L277">			removeEdge(edgeArray[iPrev], true, true, true);</span>
+<span class="nc" id="L278">			iNext = iPrev;</span>
+<span class="nc" id="L279">			iPrev = -1;</span>
+<span class="nc" id="L280">		}</span>
+	}
+
+<span class="nc" id="L283">	protected class NodeIterator&lt;T extends Node&gt; implements Iterator&lt;T&gt; {</span>
+<span class="nc" id="L284">		int iNext = 0;</span>
+<span class="nc" id="L285">		int iPrev = -1;</span>
+
+		public boolean hasNext() {
+<span class="nc bnc" id="L288" title="All 2 branches missed.">			return iNext &lt; nodeCount;</span>
+		}
+
+		@SuppressWarnings(&quot;unchecked&quot;)
+		public T next() {
+<span class="nc bnc" id="L293" title="All 2 branches missed.">			if (iNext &gt;= nodeCount)</span>
+<span class="nc" id="L294">				throw new NoSuchElementException();</span>
+<span class="nc" id="L295">			iPrev = iNext++;</span>
+<span class="nc" id="L296">			return (T) nodeArray[iPrev];</span>
+		}
+
+		public void remove() {
+<span class="nc bnc" id="L300" title="All 2 branches missed.">			if (iPrev == -1)</span>
+<span class="nc" id="L301">				throw new IllegalStateException();</span>
+<span class="nc" id="L302">			removeNode(nodeArray[iPrev], true);</span>
+<span class="nc" id="L303">			iNext = iPrev;</span>
+<span class="nc" id="L304">			iPrev = -1;</span>
+<span class="nc" id="L305">		}</span>
+	}
+
+	/*
+	 * For performance tuning
+	 * 
+	 * @return the number of allocated but unused array elements public int
+	 * getUnusedArrayElements() { int count = 0; count += edgeArray.length -
+	 * edgeCount; count += nodeArray.length - nodeCount; for (ALNode n :
+	 * this.&lt;ALNode&gt; getEachNode()) count += n.edges.length - n.degree; return
+	 * count; }
+	 */
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

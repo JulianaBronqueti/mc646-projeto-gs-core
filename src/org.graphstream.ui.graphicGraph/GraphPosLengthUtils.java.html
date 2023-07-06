@@ -1,0 +1,463 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GraphPosLengthUtils.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph</a> &gt; <span class="el_source">GraphPosLengthUtils.java</span></div><h1>GraphPosLengthUtils.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-07-14
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.ui.geom.Point2;
+import org.graphstream.ui.geom.Point3;
+
+import java.util.logging.Logger;
+
+/**
+ * Lots of small often used measuring algorithms on graphs.
+ * 
+ * &lt;p&gt;
+ * Use this class with a static import.
+ * &lt;/p&gt;
+ */
+<span class="nc" id="L52">public class GraphPosLengthUtils {</span>
+
+	/**
+	 * class level logger
+	 */
+<span class="nc" id="L57">	private static final Logger logger = Logger.getLogger(GraphPosLengthUtils.class.getSimpleName());</span>
+
+	/**
+	 * Retrieve a node position from its attributes (&quot;x&quot;, &quot;y&quot;, &quot;z&quot;, or &quot;xy&quot;, or
+	 * &quot;xyz&quot;).
+	 * 
+	 * @param id
+	 *            The node identifier.
+	 * @return A newly allocated array of three floats containing the (x,y,z)
+	 *         position of the node, or null if the node is not part of the graph.
+	 */
+	public static double[] nodePosition(Graph graph, String id) {
+<span class="nc" id="L69">		Node node = graph.getNode(id);</span>
+
+<span class="nc bnc" id="L71" title="All 2 branches missed.">		if (node != null)</span>
+<span class="nc" id="L72">			return nodePosition(node);</span>
+
+<span class="nc" id="L74">		return null;</span>
+	}
+
+	/**
+	 * Retrieve a node position from its attributes (&quot;x&quot;, &quot;y&quot;, &quot;z&quot;, or &quot;xy&quot;, or
+	 * &quot;xyz&quot;).
+	 * 
+	 * @param id
+	 *            The node identifier.
+	 * @return A newly allocated point containing the (x,y,z) position of the node,
+	 *         or null if the node is not part of the graph.
+	 */
+	public static Point3 nodePointPosition(Graph graph, String id) {
+<span class="nc" id="L87">		Node node = graph.getNode(id);</span>
+
+<span class="nc bnc" id="L89" title="All 2 branches missed.">		if (node != null)</span>
+<span class="nc" id="L90">			return nodePointPosition(node);</span>
+
+<span class="nc" id="L92">		return null;</span>
+	}
+
+	/**
+	 * Like {@link #nodePosition(Graph,String)} but use an existing node as
+	 * argument.
+	 * 
+	 * @param node
+	 *            The node to consider.
+	 * @return A newly allocated array of three floats containing the (x,y,z)
+	 *         position of the node.
+	 */
+	public static double[] nodePosition(Node node) {
+<span class="nc" id="L105">		double xyz[] = new double[3];</span>
+
+<span class="nc" id="L107">		nodePosition(node, xyz);</span>
+
+<span class="nc" id="L109">		return xyz;</span>
+	}
+
+	/**
+	 * Like {@link #nodePointPosition(Graph,String)} but use an existing node as
+	 * argument.
+	 * 
+	 * @param node
+	 *            The node to consider.
+	 * @return A newly allocated point containing the (x,y,z) position of the node.
+	 */
+	public static Point3 nodePointPosition(Node node) {
+<span class="nc" id="L121">		return nodePosition(node, new Point3());</span>
+	}
+
+	/**
+	 * Like {@link #nodePosition(Graph,String)}, but instead of returning a newly
+	 * allocated array, fill up the array given as parameter. This array must have
+	 * at least three cells.
+	 * 
+	 * @param id
+	 *            The node identifier.
+	 * @param xyz
+	 *            An array of at least three cells.
+	 * @throws RuntimeException
+	 *             If the node with the given identifier does not exist.
+	 */
+	public static void nodePosition(Graph graph, String id, double xyz[]) {
+<span class="nc" id="L137">		Node node = graph.getNode(id);</span>
+
+<span class="nc bnc" id="L139" title="All 2 branches missed.">		if (node != null)</span>
+<span class="nc" id="L140">			nodePosition(node, xyz);</span>
+
+<span class="nc" id="L142">		throw new RuntimeException(&quot;node '&quot; + id + &quot;' does not exist&quot;);</span>
+	}
+
+	/**
+	 * Like {@link #nodePointPosition(Graph,String)}, but instead of returning a
+	 * newly allocated array, fill up the array given as parameter. This array must
+	 * have at least three cells.
+	 * 
+	 * @param id
+	 *            The node identifier.
+	 * @param pos
+	 *            A point that will receive the node position.
+	 * @throws RuntimeException
+	 *             If the node with the given identifier does not exist.
+	 */
+	public static Point3 nodePosition(Graph graph, String id, Point3 pos) {
+<span class="nc" id="L158">		Node node = graph.getNode(id);</span>
+
+<span class="nc bnc" id="L160" title="All 2 branches missed.">		if (node != null)</span>
+<span class="nc" id="L161">			return nodePosition(node, pos);</span>
+
+<span class="nc" id="L163">		throw new RuntimeException(&quot;node '&quot; + id + &quot;' does not exist&quot;);</span>
+	}
+
+	/**
+	 * Like {@link #nodePosition(Graph,String,double[])} but use an existing node as
+	 * argument.
+	 * 
+	 * @param node
+	 *            The node to consider.
+	 * @param xyz
+	 *            An array of at least three cells.
+	 */
+	public static void nodePosition(Node node, double xyz[]) {
+<span class="nc bnc" id="L176" title="All 2 branches missed.">		if (xyz.length &lt; 3)</span>
+<span class="nc" id="L177">			return;</span>
+
+<span class="nc bnc" id="L179" title="All 4 branches missed.">		if (node.hasAttribute(&quot;xyz&quot;) || node.hasAttribute(&quot;xy&quot;)) {</span>
+<span class="nc" id="L180">			Object o = node.getAttribute(&quot;xyz&quot;);</span>
+
+<span class="nc bnc" id="L182" title="All 2 branches missed.">			if (o == null)</span>
+<span class="nc" id="L183">				o = node.getAttribute(&quot;xy&quot;);</span>
+
+<span class="nc bnc" id="L185" title="All 2 branches missed.">			if (o != null) {</span>
+<span class="nc" id="L186">				positionFromObject(o, xyz);</span>
+			}
+
+<span class="nc bnc" id="L189" title="All 2 branches missed.">		} else if (node.hasAttribute(&quot;x&quot;)) {</span>
+<span class="nc" id="L190">			xyz[0] = (double) node.getNumber(&quot;x&quot;);</span>
+
+<span class="nc bnc" id="L192" title="All 2 branches missed.">			if (node.hasAttribute(&quot;y&quot;))</span>
+<span class="nc" id="L193">				xyz[1] = (double) node.getNumber(&quot;y&quot;);</span>
+
+<span class="nc bnc" id="L195" title="All 2 branches missed.">			if (node.hasAttribute(&quot;z&quot;))</span>
+<span class="nc" id="L196">				xyz[2] = (double) node.getNumber(&quot;z&quot;);</span>
+		}
+<span class="nc" id="L198">	}</span>
+
+	/**
+	 * Like {@link #nodePosition(Graph,String,Point3)} but use an existing node as
+	 * argument.
+	 * 
+	 * @param node
+	 *            The node to consider.
+	 * @param pos
+	 *            A point that will serve as the default position if node doesn't
+	 *            have position
+	 */
+	public static Point3 nodePosition(Node node, Point3 pos) {
+<span class="nc bnc" id="L211" title="All 4 branches missed.">		if (node.hasAttribute(&quot;xyz&quot;) || node.hasAttribute(&quot;xy&quot;)) {</span>
+<span class="nc" id="L212">			Object o = node.getAttribute(&quot;xyz&quot;);</span>
+
+<span class="nc bnc" id="L214" title="All 2 branches missed.">			if (o == null)</span>
+<span class="nc" id="L215">				o = node.getAttribute(&quot;xy&quot;);</span>
+
+<span class="nc bnc" id="L217" title="All 2 branches missed.">			if (o != null) {</span>
+<span class="nc" id="L218">				return positionFromObject(o, pos);</span>
+			}
+<span class="nc bnc" id="L220" title="All 2 branches missed.">		} else if (node.hasAttribute(&quot;x&quot;)) {</span>
+<span class="nc" id="L221">			double x = node.getNumber(&quot;x&quot;);</span>
+			double y;
+			double z;
+
+<span class="nc bnc" id="L225" title="All 2 branches missed.">			if (node.hasAttribute(&quot;y&quot;))</span>
+<span class="nc" id="L226">				y = node.getNumber(&quot;y&quot;);</span>
+			else
+<span class="nc" id="L228">				y = pos.y;</span>
+
+<span class="nc bnc" id="L230" title="All 2 branches missed.">			if (node.hasAttribute(&quot;z&quot;))</span>
+<span class="nc" id="L231">				z = node.getNumber(&quot;z&quot;);</span>
+			else
+<span class="nc" id="L233">				z = pos.z;</span>
+
+<span class="nc" id="L235">			return new Point3(x, y, z);</span>
+		}
+<span class="nc" id="L237">		return pos;</span>
+	}
+
+	/**
+	 * Try to convert an object to a position. The object can be an array of
+	 * numbers, an array of base numeric types or their object counterparts.
+	 * 
+	 * @param o
+	 *            The object to try to convert.
+	 * @param xyz
+	 *            The result.
+	 */
+	public static void positionFromObject(Object o, double xyz[]) {
+<span class="nc bnc" id="L250" title="All 2 branches missed.">		if (o instanceof Object[]) {</span>
+<span class="nc" id="L251">			Object oo[] = (Object[]) o;</span>
+
+<span class="nc bnc" id="L253" title="All 4 branches missed.">			if (oo.length &gt; 0 &amp;&amp; oo[0] instanceof Number) {</span>
+<span class="nc" id="L254">				xyz[0] = ((Number) oo[0]).doubleValue();</span>
+<span class="nc bnc" id="L255" title="All 2 branches missed.">				if (oo.length &gt; 1)</span>
+<span class="nc" id="L256">					xyz[1] = ((Number) oo[1]).doubleValue();</span>
+<span class="nc bnc" id="L257" title="All 2 branches missed.">				if (oo.length &gt; 2)</span>
+<span class="nc" id="L258">					xyz[2] = ((Number) oo[2]).doubleValue();</span>
+			}
+<span class="nc bnc" id="L260" title="All 2 branches missed.">		} else if (o instanceof Double[]) {</span>
+<span class="nc" id="L261">			Double oo[] = (Double[]) o;</span>
+<span class="nc bnc" id="L262" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L263">				xyz[0] = oo[0];</span>
+<span class="nc bnc" id="L264" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L265">				xyz[1] = oo[1];</span>
+<span class="nc bnc" id="L266" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L267">				xyz[2] = oo[2];</span>
+<span class="nc bnc" id="L268" title="All 2 branches missed.">		} else if (o instanceof Float[]) {</span>
+<span class="nc" id="L269">			Float oo[] = (Float[]) o;</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L271">				xyz[0] = oo[0];</span>
+<span class="nc bnc" id="L272" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L273">				xyz[1] = oo[1];</span>
+<span class="nc bnc" id="L274" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L275">				xyz[2] = oo[2];</span>
+<span class="nc bnc" id="L276" title="All 2 branches missed.">		} else if (o instanceof Integer[]) {</span>
+<span class="nc" id="L277">			Integer oo[] = (Integer[]) o;</span>
+<span class="nc bnc" id="L278" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L279">				xyz[0] = oo[0];</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L281">				xyz[1] = oo[1];</span>
+<span class="nc bnc" id="L282" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L283">				xyz[2] = oo[2];</span>
+<span class="nc bnc" id="L284" title="All 2 branches missed.">		} else if (o instanceof double[]) {</span>
+<span class="nc" id="L285">			double oo[] = (double[]) o;</span>
+<span class="nc bnc" id="L286" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L287">				xyz[0] = oo[0];</span>
+<span class="nc bnc" id="L288" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L289">				xyz[1] = oo[1];</span>
+<span class="nc bnc" id="L290" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L291">				xyz[2] = oo[2];</span>
+<span class="nc bnc" id="L292" title="All 2 branches missed.">		} else if (o instanceof float[]) {</span>
+<span class="nc" id="L293">			float oo[] = (float[]) o;</span>
+<span class="nc bnc" id="L294" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L295">				xyz[0] = oo[0];</span>
+<span class="nc bnc" id="L296" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L297">				xyz[1] = oo[1];</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L299">				xyz[2] = oo[2];</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">		} else if (o instanceof int[]) {</span>
+<span class="nc" id="L301">			int oo[] = (int[]) o;</span>
+<span class="nc bnc" id="L302" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L303">				xyz[0] = oo[0];</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L305">				xyz[1] = oo[1];</span>
+<span class="nc bnc" id="L306" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L307">				xyz[2] = oo[2];</span>
+<span class="nc bnc" id="L308" title="All 2 branches missed.">		} else if (o instanceof Number[]) {</span>
+<span class="nc" id="L309">			Number oo[] = (Number[]) o;</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L311">				xyz[0] = oo[0].doubleValue();</span>
+<span class="nc bnc" id="L312" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L313">				xyz[1] = oo[1].doubleValue();</span>
+<span class="nc bnc" id="L314" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L315">				xyz[2] = oo[2].doubleValue();</span>
+<span class="nc bnc" id="L316" title="All 2 branches missed.">		} else if (o instanceof Point3) {</span>
+<span class="nc" id="L317">			Point3 oo = (Point3) o;</span>
+<span class="nc" id="L318">			xyz[0] = oo.x;</span>
+<span class="nc" id="L319">			xyz[1] = oo.y;</span>
+<span class="nc" id="L320">			xyz[2] = oo.z;</span>
+<span class="nc bnc" id="L321" title="All 2 branches missed.">		} else if (o instanceof Point2) {</span>
+<span class="nc" id="L322">			Point2 oo = (Point2) o;</span>
+<span class="nc" id="L323">			xyz[0] = oo.x;</span>
+<span class="nc" id="L324">			xyz[1] = oo.y;</span>
+<span class="nc" id="L325">			xyz[2] = 0;</span>
+<span class="nc" id="L326">		} else {</span>
+<span class="nc" id="L327">			logger.warning(String.format(&quot;Do not know how to handle xyz attribute %s.&quot;, o.getClass().getName()));</span>
+		}
+<span class="nc" id="L329">	}</span>
+
+	/**
+	 * Try to convert an object to a position. The object can be an array of
+	 * numbers, an array of base numeric types or their object counterparts.
+	 * 
+	 * @param o
+	 *            The object to try to convert.
+	 * @param pos
+	 *            The default position if object doesn't have position data.
+	 */
+	public static Point3 positionFromObject(Object o, Point3 pos) {
+<span class="nc" id="L341">		double x = pos.x, y = pos.y, z = pos.z;</span>
+<span class="nc bnc" id="L342" title="All 2 branches missed.">		if (o instanceof Object[]) {</span>
+<span class="nc" id="L343">			Object oo[] = (Object[]) o;</span>
+
+<span class="nc bnc" id="L345" title="All 4 branches missed.">			if (oo.length &gt; 0 &amp;&amp; oo[0] instanceof Number) {</span>
+<span class="nc" id="L346">				x = ((Number) oo[0]).doubleValue();</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">				if (oo.length &gt; 1)</span>
+<span class="nc" id="L348">					y = ((Number) oo[1]).doubleValue();</span>
+<span class="nc bnc" id="L349" title="All 2 branches missed.">				if (oo.length &gt; 2)</span>
+<span class="nc" id="L350">					z = ((Number) oo[2]).doubleValue();</span>
+			}
+<span class="nc bnc" id="L352" title="All 2 branches missed.">		} else if (o instanceof Double[]) {</span>
+<span class="nc" id="L353">			Double oo[] = (Double[]) o;</span>
+<span class="nc bnc" id="L354" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L355">				x = oo[0];</span>
+<span class="nc bnc" id="L356" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L357">				y = oo[1];</span>
+<span class="nc bnc" id="L358" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L359">				z = oo[2];</span>
+<span class="nc bnc" id="L360" title="All 2 branches missed.">		} else if (o instanceof Float[]) {</span>
+<span class="nc" id="L361">			Float oo[] = (Float[]) o;</span>
+<span class="nc bnc" id="L362" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L363">				x = oo[0];</span>
+<span class="nc bnc" id="L364" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L365">				y = oo[1];</span>
+<span class="nc bnc" id="L366" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L367">				z = oo[2];</span>
+<span class="nc bnc" id="L368" title="All 2 branches missed.">		} else if (o instanceof Integer[]) {</span>
+<span class="nc" id="L369">			Integer oo[] = (Integer[]) o;</span>
+<span class="nc bnc" id="L370" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L371">				x = oo[0];</span>
+<span class="nc bnc" id="L372" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L373">				y = oo[1];</span>
+<span class="nc bnc" id="L374" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L375">				z = oo[2];</span>
+<span class="nc bnc" id="L376" title="All 2 branches missed.">		} else if (o instanceof double[]) {</span>
+<span class="nc" id="L377">			double oo[] = (double[]) o;</span>
+<span class="nc bnc" id="L378" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L379">				x = oo[0];</span>
+<span class="nc bnc" id="L380" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L381">				y = oo[1];</span>
+<span class="nc bnc" id="L382" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L383">				z = oo[2];</span>
+<span class="nc bnc" id="L384" title="All 2 branches missed.">		} else if (o instanceof float[]) {</span>
+<span class="nc" id="L385">			float oo[] = (float[]) o;</span>
+<span class="nc bnc" id="L386" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L387">				x = oo[0];</span>
+<span class="nc bnc" id="L388" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L389">				y = oo[1];</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L391">				z = oo[2];</span>
+<span class="nc bnc" id="L392" title="All 2 branches missed.">		} else if (o instanceof int[]) {</span>
+<span class="nc" id="L393">			int oo[] = (int[]) o;</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L395">				x = oo[0];</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L397">				y = oo[1];</span>
+<span class="nc bnc" id="L398" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L399">				z = oo[2];</span>
+<span class="nc bnc" id="L400" title="All 2 branches missed.">		} else if (o instanceof Number[]) {</span>
+<span class="nc" id="L401">			Number oo[] = (Number[]) o;</span>
+<span class="nc bnc" id="L402" title="All 2 branches missed.">			if (oo.length &gt; 0)</span>
+<span class="nc" id="L403">				x = oo[0].doubleValue();</span>
+<span class="nc bnc" id="L404" title="All 2 branches missed.">			if (oo.length &gt; 1)</span>
+<span class="nc" id="L405">				y = oo[1].doubleValue();</span>
+<span class="nc bnc" id="L406" title="All 2 branches missed.">			if (oo.length &gt; 2)</span>
+<span class="nc" id="L407">				z = oo[2].doubleValue();</span>
+<span class="nc bnc" id="L408" title="All 2 branches missed.">		} else if (o instanceof Point3) {</span>
+<span class="nc" id="L409">			Point3 oo = (Point3) o;</span>
+<span class="nc" id="L410">			x = oo.x;</span>
+<span class="nc" id="L411">			y = oo.y;</span>
+<span class="nc" id="L412">			z = oo.z;</span>
+<span class="nc bnc" id="L413" title="All 2 branches missed.">		} else if (o instanceof Point2) {</span>
+<span class="nc" id="L414">			Point2 oo = (Point2) o;</span>
+<span class="nc" id="L415">			x = oo.x;</span>
+<span class="nc" id="L416">			y = oo.y;</span>
+<span class="nc" id="L417">			z = 0;</span>
+<span class="nc" id="L418">		} else {</span>
+<span class="nc" id="L419">			logger.warning(String.format(&quot;Do not know how to handle xyz attribute %s%n&quot;, o.getClass().getName()));</span>
+		}
+<span class="nc" id="L421">		return new Point3(x, y, z);</span>
+	}
+
+	/**
+	 * Compute the edge length of the given edge according to its two nodes
+	 * positions.
+	 * 
+	 * @param id
+	 *            The identifier of the edge.
+	 * @return The edge length or -1 if the nodes of the edge have no positions.
+	 * @throws RuntimeException
+	 *             If the edge cannot be found.
+	 */
+	public static double edgeLength(Graph graph, String id) {
+<span class="nc" id="L435">		Edge edge = graph.getEdge(id);</span>
+
+<span class="nc bnc" id="L437" title="All 2 branches missed.">		if (edge != null)</span>
+<span class="nc" id="L438">			return edgeLength(edge);</span>
+
+<span class="nc" id="L440">		throw new RuntimeException(&quot;edge '&quot; + id + &quot;' cannot be found&quot;);</span>
+	}
+
+	/**
+	 * Like {@link #edgeLength(Graph,String)} but use an existing edge as argument.
+	 * 
+	 * @param edge
+	 * @return The edge length or -1 if the nodes of the edge have no positions.
+	 */
+	public static double edgeLength(Edge edge) {
+<span class="nc" id="L450">		double xyz0[] = nodePosition(edge.getNode0());</span>
+<span class="nc" id="L451">		double xyz1[] = nodePosition(edge.getNode1());</span>
+
+<span class="nc bnc" id="L453" title="All 4 branches missed.">		if (xyz0 == null || xyz1 == null)</span>
+<span class="nc" id="L454">			return -1;</span>
+
+<span class="nc" id="L456">		xyz0[0] = xyz1[0] - xyz0[0];</span>
+<span class="nc" id="L457">		xyz0[1] = xyz1[1] - xyz0[1];</span>
+<span class="nc" id="L458">		xyz0[2] = xyz1[2] - xyz0[2];</span>
+
+<span class="nc" id="L460">		return Math.sqrt(xyz0[0] * xyz0[0] + xyz0[1] * xyz0[1] + xyz0[2] * xyz0[2]);</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

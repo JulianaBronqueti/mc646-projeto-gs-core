@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>MainExecution.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">main</a> &gt; <span class="el_source">MainExecution.java</span></div><h1>MainExecution.java</h1><pre class="source lang-java linenums"><span class="nc" id="L1">package main;</span>
+
+import java.util.Random;
+import java.util.HashSet;
+import java.util.Set;
+
+import org.graphstream.graph.*;
+import org.graphstream.graph.implementations.*;
+
+<span class="nc" id="L10">public class MainExecution {</span>
+	
+	public static void addNodesToGraph(Graph graph, int n) {
+<span class="nc bnc" id="L13" title="All 2 branches missed.">	    for (int i = 0; i &lt; n; i++) {</span>
+<span class="nc" id="L14">	        Node node = graph.addNode(&quot;Node &quot; + (i + 1));</span>
+	        // Faça o que for necessário com o nó adicionado
+	    }
+<span class="nc" id="L17">	}</span>
+	
+    public static void addEdgesToGraph(Graph graph, int numEdges) {
+<span class="nc" id="L20">        Node[] nodes = graph.nodes().toArray(Node[]::new);</span>
+<span class="nc" id="L21">        int numNodes = nodes.length;</span>
+
+<span class="nc bnc" id="L23" title="All 2 branches missed.">        if (numNodes &lt; 2) {</span>
+<span class="nc" id="L24">            System.out.println(&quot;The graph must have at least two nodes to add edges.&quot;);</span>
+<span class="nc" id="L25">            return;</span>
+        }
+
+<span class="nc" id="L28">        Set&lt;String&gt; usedPairs = new HashSet&lt;&gt;();</span>
+<span class="nc" id="L29">        int pairCount = 0;</span>
+
+<span class="nc bnc" id="L31" title="All 2 branches missed.">        for (int indexA = 0; indexA &lt; numNodes; indexA++) {</span>
+<span class="nc bnc" id="L32" title="All 2 branches missed.">            for (int indexB = 0; indexB &lt; numNodes; indexB++) {</span>
+<span class="nc bnc" id="L33" title="All 2 branches missed.">                if (pairCount &gt;= numEdges) {</span>
+<span class="nc" id="L34">                	System.out.println(pairCount);</span>
+<span class="nc" id="L35">                	System.out.println(&quot;retornando&quot;);</span>
+<span class="nc" id="L36">                    return;</span>
+                }
+
+<span class="nc" id="L39">                String pair1 = indexA + &quot;-&quot; + indexB;</span>
+<span class="nc" id="L40">                String pair2 = indexB + &quot;-&quot; + indexA;</span>
+<span class="nc" id="L41">                System.out.println(&quot;tentando aresta entre&quot;);</span>
+<span class="nc" id="L42">                System.out.println(pair1);</span>
+<span class="nc" id="L43">                System.out.println(pair2);</span>
+
+                // Ensure that both pairs are unique and haven't been used before
+<span class="nc bnc" id="L46" title="All 4 branches missed.">                if (!usedPairs.contains(pair1) &amp;&amp; !usedPairs.contains(pair2)) {</span>
+<span class="nc" id="L47">                    usedPairs.add(pair1);</span>
+
+<span class="nc" id="L49">                    Node nodeA = nodes[indexA];</span>
+<span class="nc" id="L50">                    Node nodeB = nodes[indexB];</span>
+
+<span class="nc" id="L52">                    String edgeName = &quot;edge&quot; + pairCount;</span>
+<span class="nc" id="L53">                    graph.addEdge(edgeName, nodeA, nodeB);</span>
+<span class="nc" id="L54">                    System.out.println(&quot;aresta entre&quot;);</span>
+<span class="nc" id="L55">                    System.out.println(nodeA);</span>
+<span class="nc" id="L56">                    System.out.println(nodeB);</span>
+
+<span class="nc" id="L58">                    pairCount++;</span>
+                }
+                
+<span class="nc" id="L61">                System.out.println(indexB);</span>
+            }
+<span class="nc" id="L63">            System.out.println(indexA);</span>
+        }
+        
+<span class="nc bnc" id="L66" title="All 2 branches missed.">        if (numEdges &gt; pairCount) {</span>
+<span class="nc" id="L67">        	System.out.println(&quot;numero de arestas eh impossivel sem quebrar o grafo&quot;);</span>
+        }
+<span class="nc" id="L69">    }</span>
+
+    public static void addEdgesToNode(Graph graph, Node node, int numEdges) {
+<span class="nc" id="L72">        Node[] nodes = graph.nodes().toArray(Node[]::new);</span>
+<span class="nc" id="L73">        int numNodes = nodes.length;</span>
+
+<span class="nc bnc" id="L75" title="All 2 branches missed.">        if (numNodes &lt; 2) {</span>
+<span class="nc" id="L76">            System.out.println(&quot;The graph must have at least two nodes to add edges.&quot;);</span>
+<span class="nc" id="L77">            return;</span>
+        }
+
+<span class="nc" id="L80">        Random random = new Random();</span>
+
+<span class="nc bnc" id="L82" title="All 2 branches missed.">        for (int i = 0; i &lt; numEdges; i++) {</span>
+<span class="nc" id="L83">            String edgeName = &quot;edge&quot; + i;</span>
+<span class="nc" id="L84">            int randomIndex = random.nextInt(numNodes);</span>
+<span class="nc" id="L85">            Node randomNode = nodes[randomIndex];</span>
+<span class="nc" id="L86">            graph.addEdge(edgeName, node, randomNode);</span>
+        }
+<span class="nc" id="L88">    }</span>
+	
+	public static void main(String args[]) {
+<span class="nc" id="L91">		System.setProperty(&quot;org.graphstream.ui&quot;, &quot;swing&quot;);</span>
+		
+<span class="nc" id="L93">		Graph graph = new SingleGraph(&quot;Tutorial 1&quot;, true, false, 5, 10);</span>
+<span class="nc" id="L94">		Node A = graph.addNode(&quot;oi&quot;);</span>
+<span class="nc" id="L95">		Node B = graph.addNode(&quot;B&quot;);</span>
+		
+<span class="nc" id="L97">		Edge AB = graph.addEdge(&quot;edgeAB&quot;, A, B);</span>
+<span class="nc" id="L98">		Edge CD = graph.addEdge(&quot;edgeAB&quot;, A, B);</span>
+		
+<span class="nc" id="L100">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

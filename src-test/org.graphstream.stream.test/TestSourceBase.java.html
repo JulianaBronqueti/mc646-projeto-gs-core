@@ -1,0 +1,313 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestSourceBase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.test</a> &gt; <span class="el_source">TestSourceBase.java</span></div><h1>TestSourceBase.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2012-01-14
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.test;
+
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+import java.util.LinkedList;
+import java.util.Random;
+
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.SourceBase;
+import org.junit.Test;
+
+<span class="nc" id="L45">public class TestSourceBase {</span>
+
+	protected static String getRandomString(int size) {
+<span class="nc" id="L48">		final String chars = &quot;abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-%=+/:&quot;;</span>
+<span class="nc" id="L49">		StringBuilder sb = new StringBuilder();</span>
+<span class="nc" id="L50">		Random r = new Random();</span>
+
+<span class="nc bnc" id="L52" title="All 2 branches missed.">		while (size-- &gt; 0)</span>
+<span class="nc" id="L53">			sb.append(chars.charAt(r.nextInt(chars.length())));</span>
+
+<span class="nc" id="L55">		return sb.toString();</span>
+	}
+
+	protected LinkedList&lt;Event&gt; generateEventList(int size) {
+<span class="nc" id="L59">		Random r = new Random();</span>
+<span class="nc" id="L60">		LinkedList&lt;Event&gt; events = new LinkedList&lt;Event&gt;();</span>
+<span class="nc" id="L61">		EventType[] types = EventType.values();</span>
+
+<span class="nc bnc" id="L63" title="All 2 branches missed.">		while (size-- &gt; 0) {</span>
+<span class="nc" id="L64">			String sourceId = getRandomString(10);</span>
+<span class="nc" id="L65">			long timeId = r.nextLong();</span>
+<span class="nc" id="L66">			EventType type = types[r.nextInt(types.length)];</span>
+<span class="nc" id="L67">			Object[] args = null;</span>
+
+<span class="nc bnc" id="L69" title="All 15 branches missed.">			switch (type) {</span>
+			case AN:
+<span class="nc" id="L71">				args = new Object[] { getRandomString(10) };</span>
+<span class="nc" id="L72">				break;</span>
+			case DN:
+<span class="nc" id="L74">				args = new Object[] { getRandomString(10) };</span>
+<span class="nc" id="L75">				break;</span>
+			case CNA:
+<span class="nc" id="L77">				args = new Object[] { getRandomString(10), getRandomString(10), getRandomString(10) };</span>
+<span class="nc" id="L78">				break;</span>
+			case CNC:
+<span class="nc" id="L80">				args = new Object[] { getRandomString(10), getRandomString(10), getRandomString(10),</span>
+<span class="nc" id="L81">						getRandomString(10) };</span>
+<span class="nc" id="L82">				break;</span>
+			case CNR:
+<span class="nc" id="L84">				args = new Object[] { getRandomString(10), getRandomString(10) };</span>
+<span class="nc" id="L85">				break;</span>
+			case AE:
+<span class="nc" id="L87">				args = new Object[] { getRandomString(10), getRandomString(10), getRandomString(10), r.nextBoolean() };</span>
+<span class="nc" id="L88">				break;</span>
+			case DE:
+<span class="nc" id="L90">				args = new Object[] { getRandomString(10) };</span>
+<span class="nc" id="L91">				break;</span>
+			case CEA:
+<span class="nc" id="L93">				args = new Object[] { getRandomString(10), getRandomString(10), getRandomString(10) };</span>
+<span class="nc" id="L94">				break;</span>
+			case CEC:
+<span class="nc" id="L96">				args = new Object[] { getRandomString(10), getRandomString(10), getRandomString(10),</span>
+<span class="nc" id="L97">						getRandomString(10) };</span>
+<span class="nc" id="L98">				break;</span>
+			case CER:
+<span class="nc" id="L100">				args = new Object[] { getRandomString(10), getRandomString(10) };</span>
+<span class="nc" id="L101">				break;</span>
+			case CGA:
+<span class="nc" id="L103">				args = new Object[] { getRandomString(10), getRandomString(10) };</span>
+<span class="nc" id="L104">				break;</span>
+			case CGC:
+<span class="nc" id="L106">				args = new Object[] { getRandomString(10), getRandomString(10), getRandomString(10) };</span>
+<span class="nc" id="L107">				break;</span>
+			case CGR:
+<span class="nc" id="L109">				args = new Object[] { getRandomString(10) };</span>
+<span class="nc" id="L110">				break;</span>
+			case ST:
+<span class="nc" id="L112">				args = new Object[] { r.nextDouble() };</span>
+<span class="nc" id="L113">				break;</span>
+			default:
+				break;
+			}
+
+<span class="nc bnc" id="L118" title="All 2 branches missed.">			if (args == null)</span>
+<span class="nc" id="L119">				events.add(new Event(type, sourceId, timeId));</span>
+			else
+<span class="nc" id="L121">				events.add(new Event(type, sourceId, timeId, args));</span>
+		}
+
+<span class="nc" id="L124">		return events;</span>
+	}
+
+	@Test
+	public void testSentEvents() {
+<span class="nc" id="L129">		LinkedList&lt;Event&gt; events = generateEventList(10000);</span>
+<span class="nc" id="L130">		SourceBase source = new TestSource();</span>
+<span class="nc" id="L131">		EventStack stack = new EventStack();</span>
+
+<span class="nc" id="L133">		source.addSink(stack);</span>
+
+<span class="nc bnc" id="L135" title="All 2 branches missed.">		for (Event e : events)</span>
+<span class="nc" id="L136">			send(source, e);</span>
+
+<span class="nc" id="L138">		assertEquals(events.size(), stack.size());</span>
+
+<span class="nc bnc" id="L140" title="All 2 branches missed.">		for (int i = 0; i &lt; events.size(); i++)</span>
+<span class="nc" id="L141">			events.get(i).assertEventEquals(stack.get(i));</span>
+<span class="nc" id="L142">	}</span>
+
+	protected void send(SourceBase base, Event e) {
+<span class="nc bnc" id="L145" title="All 16 branches missed.">		switch (e.type) {</span>
+		case AN:
+<span class="nc" id="L147">			base.sendNodeAdded(e.sourceId, e.timeId, (String) e.args[0]);</span>
+<span class="nc" id="L148">			break;</span>
+		case DN:
+<span class="nc" id="L150">			base.sendNodeRemoved(e.sourceId, e.timeId, (String) e.args[0]);</span>
+<span class="nc" id="L151">			break;</span>
+		case CNA:
+<span class="nc" id="L153">			base.sendNodeAttributeAdded(e.sourceId, e.timeId, (String) e.args[0], (String) e.args[1], e.args[2]);</span>
+<span class="nc" id="L154">			break;</span>
+		case CNC:
+<span class="nc" id="L156">			base.sendNodeAttributeChanged(e.sourceId, e.timeId, (String) e.args[0], (String) e.args[1], e.args[2],</span>
+<span class="nc" id="L157">					e.args[3]);</span>
+<span class="nc" id="L158">			break;</span>
+		case CNR:
+<span class="nc" id="L160">			base.sendNodeAttributeRemoved(e.sourceId, e.timeId, (String) e.args[0], (String) e.args[1]);</span>
+<span class="nc" id="L161">			break;</span>
+		case AE:
+<span class="nc" id="L163">			base.sendEdgeAdded(e.sourceId, e.timeId, (String) e.args[0], (String) e.args[1], (String) e.args[2],</span>
+<span class="nc" id="L164">					(Boolean) e.args[3]);</span>
+<span class="nc" id="L165">			break;</span>
+		case DE:
+<span class="nc" id="L167">			base.sendEdgeRemoved(e.sourceId, e.timeId, (String) e.args[0]);</span>
+<span class="nc" id="L168">			break;</span>
+		case CEA:
+<span class="nc" id="L170">			base.sendEdgeAttributeAdded(e.sourceId, e.timeId, (String) e.args[0], (String) e.args[1], e.args[2]);</span>
+<span class="nc" id="L171">			break;</span>
+		case CEC:
+<span class="nc" id="L173">			base.sendEdgeAttributeChanged(e.sourceId, e.timeId, (String) e.args[0], (String) e.args[1], e.args[2],</span>
+<span class="nc" id="L174">					e.args[3]);</span>
+<span class="nc" id="L175">			break;</span>
+		case CER:
+<span class="nc" id="L177">			base.sendEdgeAttributeRemoved(e.sourceId, e.timeId, (String) e.args[0], (String) e.args[1]);</span>
+<span class="nc" id="L178">			break;</span>
+		case CGA:
+<span class="nc" id="L180">			base.sendGraphAttributeAdded(e.sourceId, e.timeId, (String) e.args[0], e.args[1]);</span>
+<span class="nc" id="L181">			break;</span>
+		case CGC:
+<span class="nc" id="L183">			base.sendGraphAttributeChanged(e.sourceId, e.timeId, (String) e.args[0], e.args[1], e.args[2]);</span>
+<span class="nc" id="L184">			break;</span>
+		case CGR:
+<span class="nc" id="L186">			base.sendGraphAttributeRemoved(e.sourceId, e.timeId, (String) e.args[0]);</span>
+<span class="nc" id="L187">			break;</span>
+		case ST:
+<span class="nc" id="L189">			base.sendStepBegins(e.sourceId, e.timeId, (Double) e.args[0]);</span>
+<span class="nc" id="L190">			break;</span>
+		case CL:
+<span class="nc" id="L192">			base.sendGraphCleared(e.sourceId, e.timeId);</span>
+			break;
+		}
+<span class="nc" id="L195">	}</span>
+
+<span class="nc" id="L197">	static enum EventType {</span>
+<span class="nc" id="L198">		AN, DN, CNA, CNC, CNR, AE, DE, CEA, CEC, CER, CGA, CGC, CGR, ST, CL</span>
+	}
+
+	static class Event {
+		EventType type;
+		String sourceId;
+		long timeId;
+		Object[] args;
+
+<span class="nc" id="L207">		Event(EventType type, String sourceId, long timeId, Object... args) {</span>
+<span class="nc" id="L208">			this.type = type;</span>
+<span class="nc" id="L209">			this.sourceId = sourceId;</span>
+<span class="nc" id="L210">			this.timeId = timeId;</span>
+<span class="nc" id="L211">			this.args = args;</span>
+<span class="nc" id="L212">		}</span>
+
+		public void assertEventEquals(Event e) {
+<span class="nc" id="L215">			assertEquals(e.type, type);</span>
+<span class="nc" id="L216">			assertEquals(sourceId, e.sourceId);</span>
+<span class="nc" id="L217">			assertEquals(timeId, e.timeId);</span>
+
+<span class="nc bnc" id="L219" title="All 4 branches missed.">			assertFalse((args == null) ^ (e.args == null));</span>
+
+<span class="nc bnc" id="L221" title="All 2 branches missed.">			if (args != null)</span>
+<span class="nc" id="L222">				assertArrayEquals(args, e.args);</span>
+<span class="nc" id="L223">		}</span>
+	}
+
+<span class="nc" id="L226">	static class EventStack extends LinkedList&lt;Event&gt; implements Sink {</span>
+		private static final long serialVersionUID = -4953996922753724259L;
+
+		public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L230">			Event e = new Event(EventType.CEA, sourceId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L231">			addLast(e);</span>
+<span class="nc" id="L232">		}</span>
+
+		public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L236">			Event e = new Event(EventType.CEC, sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L237">			addLast(e);</span>
+<span class="nc" id="L238">		}</span>
+
+		public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L241">			Event e = new Event(EventType.CER, sourceId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L242">			addLast(e);</span>
+<span class="nc" id="L243">		}</span>
+
+		public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L246">			Event e = new Event(EventType.CGA, sourceId, timeId, attribute, value);</span>
+<span class="nc" id="L247">			addLast(e);</span>
+<span class="nc" id="L248">		}</span>
+
+		public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L252">			Event e = new Event(EventType.CGC, sourceId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L253">			addLast(e);</span>
+<span class="nc" id="L254">		}</span>
+
+		public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L257">			Event e = new Event(EventType.CGR, sourceId, timeId, attribute);</span>
+<span class="nc" id="L258">			addLast(e);</span>
+<span class="nc" id="L259">		}</span>
+
+		public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L262">			Event e = new Event(EventType.CNA, sourceId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L263">			addLast(e);</span>
+<span class="nc" id="L264">		}</span>
+
+		public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+				Object newValue) {
+<span class="nc" id="L268">			Event e = new Event(EventType.CNC, sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L269">			addLast(e);</span>
+<span class="nc" id="L270">		}</span>
+
+		public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L273">			Event e = new Event(EventType.CNR, sourceId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L274">			addLast(e);</span>
+<span class="nc" id="L275">		}</span>
+
+		public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+				boolean directed) {
+<span class="nc" id="L279">			Event e = new Event(EventType.AE, sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L280">			addLast(e);</span>
+<span class="nc" id="L281">		}</span>
+
+		public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L284">			Event e = new Event(EventType.DE, sourceId, timeId, edgeId);</span>
+<span class="nc" id="L285">			addLast(e);</span>
+<span class="nc" id="L286">		}</span>
+
+		public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L289">			Event e = new Event(EventType.CL, sourceId, timeId);</span>
+<span class="nc" id="L290">			addLast(e);</span>
+<span class="nc" id="L291">		}</span>
+
+		public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L294">			Event e = new Event(EventType.AN, sourceId, timeId, nodeId);</span>
+<span class="nc" id="L295">			addLast(e);</span>
+<span class="nc" id="L296">		}</span>
+
+		public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L299">			Event e = new Event(EventType.DN, sourceId, timeId, nodeId);</span>
+<span class="nc" id="L300">			addLast(e);</span>
+<span class="nc" id="L301">		}</span>
+
+		public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L304">			Event e = new Event(EventType.ST, sourceId, timeId, step);</span>
+<span class="nc" id="L305">			addLast(e);</span>
+<span class="nc" id="L306">		}</span>
+	}
+
+<span class="nc" id="L309">	static class TestSource extends SourceBase {</span>
+
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

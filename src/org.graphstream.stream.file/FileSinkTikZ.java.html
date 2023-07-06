@@ -1,0 +1,883 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSinkTikZ.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSinkTikZ.java</span></div><h1>FileSinkTikZ.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-04-13
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import org.graphstream.ui.graphicGraph.stylesheet.Color;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Locale;
+import java.util.logging.Logger;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Element;
+import org.graphstream.graph.Node;
+import org.graphstream.stream.GraphReplay;
+import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.graphicGraph.GraphicEdge;
+import org.graphstream.ui.graphicGraph.GraphicGraph;
+import org.graphstream.ui.graphicGraph.GraphicNode;
+import org.graphstream.ui.graphicGraph.StyleGroup;
+import org.graphstream.ui.graphicGraph.StyleGroupSet;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.FillMode;
+import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.SizeMode;
+import org.graphstream.ui.layout.springbox.implementations.SpringBox;
+
+/**
+ * An export of a graph to PGF/TikZ format.
+ * &lt;a&gt;http://sourceforge.net/projects/pgf/&lt;/a&gt;
+ * 
+ * This allows to include graph in a latex document. Only
+ * &lt;code&gt;writeAll(Graph,*)&lt;/code&gt; is working, dynamics is not handle. If the
+ * exported graph is a GraphicGraph, then CSS style of the graph will be used.
+ * 
+ * For a better rendering, it is strongly recommended to run previously a layout
+ * algorithm that will add coordinates on nodes. Else, random coordinates will
+ * be choosen for nodes. Layout can be run in this way : &lt;code&gt;
+ * Graph g;
+ * ...
+ * SpringBox sbox = new SpringBox();
+ * 
+ * g.addSink(sbox);
+ * sbox.addAttributeSink(g);
+ * 
+ * do sbox.compute(); while (sbox.getStabilization() &lt; 0.9);
+ * 
+ * g.removeSink(sbox);
+ * sbox.remoteAttributeSink(g);
+ * &lt;/code&gt;
+ * 
+ * TikZ pictures are scalable so pixel units is not handle here. The picture is
+ * bounded in a box which width and height can be defined by adding attributes
+ * to the graph:
+ * &lt;ul&gt;
+ * &lt;li&gt;&quot;ui.tikz.width&quot;&lt;/li&gt;
+ * &lt;li&gt;&quot;ui.tikz.height&quot;&lt;/li&gt;
+ * &lt;/ul&gt;
+ * The value of these attributes has to be considered as centimeters.
+ * 
+ * Common supported style :
+ * &lt;ul&gt;
+ * &lt;li&gt;&quot;fill-color&quot;, alpha is supported to&lt;/li&gt;
+ * &lt;li&gt;&quot;size&quot; in &quot;gu&quot;&lt;/li&gt;
+ * &lt;/ul&gt;
+ * 
+ * Node supported style :
+ * &lt;ul&gt;
+ * &lt;li&gt;&quot;shape&quot; with &quot;box&quot;, &quot;rounded-box&quot;, &quot;circle&quot;, &quot;triangle&quot;, &quot;diamond&quot;&lt;/li&gt;
+ * &lt;li&gt;&quot;stroke-mode&quot; with &quot;plain&quot;&lt;/li&gt;
+ * &lt;li&gt;&quot;stroke-color&quot;, alpha is supported to&lt;/li&gt;
+ * &lt;li&gt;&quot;stroke-width&quot; in &quot;gu&quot;&lt;/li&gt;
+ * &lt;/ul&gt;
+ * 
+ * Edge supported style :
+ * &lt;ul&gt;
+ * &lt;/ul&gt;
+ */
+public class FileSinkTikZ extends FileSinkBase {
+<span class="nc" id="L112">	private static final Logger LOGGER = Logger.getLogger(FileSinkTikZ.class.getName());</span>
+
+	/**
+	 * Node attribute storing coordinates.
+	 */
+	public static final String XYZ_ATTR = &quot;xyz&quot;;
+
+	/**
+	 * Graph attribute storing width of the TikZ picture.
+	 */
+	public static final String WIDTH_ATTR = &quot;ui.tikz.width&quot;;
+
+	/**
+	 * Graph attribute storing height of the TikZ picture.
+	 */
+	public static final String HEIGHT_ATTR = &quot;ui.tikz.height&quot;;
+
+	public static final double DEFAULT_WIDTH = 10;
+
+	public static final double DEFAULT_HEIGHT = 10;
+
+	/**
+	 * Define the default minimum size of nodes when using a dynamic size. This size
+	 * is in millimeter.
+	 */
+	public static final double DISPLAY_MIN_SIZE_IN_MM = 2;
+
+	/**
+	 * Define the default maximum size of nodes when using a dynamic size. This size
+	 * is in millimeter.
+	 */
+<span class="nc" id="L143">	public static final double DISPLAY_MAX_SIZE_IN_MM = 10;</span>
+
+	protected PrintWriter out;
+
+<span class="nc" id="L147">	protected HashMap&lt;String, String&gt; colors = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L148">	protected HashMap&lt;String, String&gt; classes = new HashMap&lt;String, String&gt;();</span>
+<span class="nc" id="L149">	protected HashMap&lt;String, String&gt; classNames = new HashMap&lt;String, String&gt;();</span>
+
+<span class="nc" id="L151">	protected int classIndex = 0;</span>
+<span class="nc" id="L152">	protected int colorIndex = 0;</span>
+
+<span class="nc" id="L154">	protected double width = Double.NaN;</span>
+<span class="nc" id="L155">	protected double height = Double.NaN;</span>
+
+<span class="nc" id="L157">	protected boolean layout = false;</span>
+
+	protected GraphicGraph buffer;
+
+<span class="nc" id="L161">	protected String css = null;</span>
+
+<span class="nc" id="L163">	protected double minSize = 0;</span>
+
+<span class="nc" id="L165">	protected double maxSize = 0;</span>
+
+<span class="nc" id="L167">	protected double displayMinSize = DISPLAY_MIN_SIZE_IN_MM;</span>
+
+<span class="nc" id="L169">	protected double displayMaxSize = DISPLAY_MAX_SIZE_IN_MM;</span>
+
+	private double xmin, ymin, xmax, ymax;
+
+	private PointsWrapper points;
+<span class="nc" id="L174">	private Locale l = Locale.ROOT;</span>
+
+	protected static String formatId(String id) {
+<span class="nc" id="L177">		return &quot;node&quot; + id.replaceAll(&quot;\\W&quot;, &quot;_&quot;);</span>
+	}
+
+<span class="nc" id="L180">	public FileSinkTikZ() {</span>
+<span class="nc" id="L181">		buffer = new GraphicGraph(&quot;tikz-buffer&quot;);</span>
+<span class="nc" id="L182">	}</span>
+
+	public double getWidth() {
+<span class="nc" id="L185">		return width;</span>
+	}
+
+	public void setWidth(double width) {
+<span class="nc" id="L189">		this.width = width;</span>
+<span class="nc" id="L190">	}</span>
+
+	public double getHeight() {
+<span class="nc" id="L193">		return height;</span>
+	}
+
+	public void setHeight(double height) {
+<span class="nc" id="L197">		this.height = height;</span>
+<span class="nc" id="L198">	}</span>
+
+	public void setDisplaySize(double min, double max) {
+<span class="nc" id="L201">		this.displayMinSize = min;</span>
+<span class="nc" id="L202">		this.displayMaxSize = max;</span>
+<span class="nc" id="L203">	}</span>
+
+	public void setCSS(String css) {
+<span class="nc" id="L206">		this.css = css;</span>
+<span class="nc" id="L207">	}</span>
+
+	public void setLayout(boolean layout) {
+<span class="nc" id="L210">		this.layout = layout;</span>
+<span class="nc" id="L211">	}</span>
+
+	protected double getNodeX(Node n) {
+<span class="nc bnc" id="L214" title="All 2 branches missed.">		if (n.hasAttribute(XYZ_ATTR))</span>
+<span class="nc" id="L215">			return ((Number) (n.getArray(XYZ_ATTR)[0])).doubleValue();</span>
+
+<span class="nc bnc" id="L217" title="All 2 branches missed.">		if (n.hasAttribute(&quot;x&quot;))</span>
+<span class="nc" id="L218">			return n.getNumber(&quot;x&quot;);</span>
+
+<span class="nc" id="L220">		return Double.NaN;</span>
+	}
+
+	protected double getNodeY(Node n) {
+<span class="nc bnc" id="L224" title="All 2 branches missed.">		if (n.hasAttribute(XYZ_ATTR))</span>
+<span class="nc" id="L225">			return ((Number) (n.getArray(XYZ_ATTR)[1])).doubleValue();</span>
+
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		if (n.hasAttribute(&quot;y&quot;))</span>
+<span class="nc" id="L228">			return n.getNumber(&quot;y&quot;);</span>
+
+<span class="nc" id="L230">		return Double.NaN;</span>
+	}
+
+	protected String getNodeStyle(Node n) {
+<span class="nc" id="L234">		String style = &quot;tikzgsnode&quot;;</span>
+
+<span class="nc bnc" id="L236" title="All 2 branches missed.">		if (n instanceof GraphicNode) {</span>
+<span class="nc" id="L237">			GraphicNode gn = (GraphicNode) n;</span>
+
+<span class="nc" id="L239">			style = classNames.get(gn.style.getId());</span>
+
+<span class="nc bnc" id="L241" title="All 2 branches missed.">			if (gn.style.getFillMode() == FillMode.DYN_PLAIN) {</span>
+<span class="nc" id="L242">				double uicolor = gn.getNumber(&quot;ui.color&quot;);</span>
+
+<span class="nc bnc" id="L244" title="All 2 branches missed.">				if (Double.isNaN(uicolor))</span>
+<span class="nc" id="L245">					uicolor = 0;</span>
+
+<span class="nc" id="L247">				int c = gn.style.getFillColorCount();</span>
+<span class="nc" id="L248">				int s = 1;</span>
+<span class="nc" id="L249">				double d = 1.0 / (c - 1);</span>
+
+<span class="nc bnc" id="L251" title="All 4 branches missed.">				while (s * d &lt; uicolor &amp;&amp; s &lt; c)</span>
+<span class="nc" id="L252">					s++;</span>
+
+<span class="nc" id="L254">				uicolor -= (s - 1) * d;</span>
+<span class="nc" id="L255">				uicolor *= c;</span>
+
+<span class="nc" id="L257">				style += String.format(Locale.ROOT, &quot;, fill=%s!%d!%s&quot;, checkColor(gn.style.getFillColor(0)),</span>
+<span class="nc" id="L258">						(int) (uicolor * 100), checkColor(gn.style.getFillColor(1)));</span>
+			}
+
+<span class="nc bnc" id="L261" title="All 2 branches missed.">			if (gn.style.getSizeMode() == SizeMode.DYN_SIZE) {</span>
+<span class="nc" id="L262">				double uisize = gn.getNumber(&quot;ui.size&quot;);</span>
+
+<span class="nc bnc" id="L264" title="All 2 branches missed.">				if (Double.isNaN(uisize))</span>
+<span class="nc" id="L265">					uisize = minSize;</span>
+
+<span class="nc" id="L267">				uisize = (uisize - minSize) / (maxSize - minSize);</span>
+<span class="nc" id="L268">				uisize = uisize * (displayMaxSize - displayMinSize) + displayMinSize;</span>
+
+<span class="nc" id="L270">				style += String.format(Locale.ROOT, &quot;, minimum size=%fmm&quot;, uisize);</span>
+			}
+		}
+
+<span class="nc" id="L274">		return style;</span>
+	}
+
+	protected String getEdgeStyle(Edge e) {
+<span class="nc" id="L278">		String style = &quot;tikzgsnode&quot;;</span>
+
+<span class="nc bnc" id="L280" title="All 2 branches missed.">		if (e instanceof GraphicEdge) {</span>
+<span class="nc" id="L281">			GraphicEdge ge = (GraphicEdge) e;</span>
+
+<span class="nc" id="L283">			style = classNames.get(ge.style.getId());</span>
+
+<span class="nc bnc" id="L285" title="All 2 branches missed.">			if (ge.style.getFillMode() == FillMode.DYN_PLAIN) {</span>
+<span class="nc" id="L286">				double uicolor = ge.getNumber(&quot;ui.color&quot;);</span>
+
+<span class="nc bnc" id="L288" title="All 2 branches missed.">				if (Double.isNaN(uicolor))</span>
+<span class="nc" id="L289">					uicolor = 0;</span>
+
+<span class="nc" id="L291">				int c = ge.style.getFillColorCount();</span>
+<span class="nc" id="L292">				int s = 1;</span>
+<span class="nc" id="L293">				double d = 1.0 / (c - 1);</span>
+
+<span class="nc bnc" id="L295" title="All 4 branches missed.">				while (s * d &lt; uicolor &amp;&amp; s &lt; c)</span>
+<span class="nc" id="L296">					s++;</span>
+
+<span class="nc" id="L298">				uicolor -= (s - 1) * d;</span>
+<span class="nc" id="L299">				uicolor *= c;</span>
+
+<span class="nc" id="L301">				style += String.format(Locale.ROOT, &quot;, draw=%s!%d!%s&quot;, checkColor(ge.style.getFillColor(s - 1)),</span>
+<span class="nc" id="L302">						(int) (uicolor * 100), checkColor(ge.style.getFillColor(s)));</span>
+			}
+
+<span class="nc bnc" id="L305" title="All 2 branches missed.">			if (ge.style.getSizeMode() == SizeMode.DYN_SIZE) {</span>
+<span class="nc" id="L306">				double uisize = ge.getNumber(&quot;ui.size&quot;);</span>
+
+<span class="nc bnc" id="L308" title="All 4 branches missed.">				if (Double.isNaN(uisize) || uisize &lt; 0.01)</span>
+<span class="nc" id="L309">					uisize = 1;</span>
+
+<span class="nc" id="L311">				style += String.format(Locale.ROOT, &quot;, line width=%fpt&quot;, uisize);</span>
+			}
+		}
+
+<span class="nc" id="L315">		return style;</span>
+	}
+
+	protected String checkColor(Color c) {
+<span class="nc" id="L319">		String rgb = String.format(Locale.ROOT, &quot;%.3f,%.3f,%.3f&quot;, c.getRed() / 255.0f, c.getGreen() / 255.0f,</span>
+<span class="nc" id="L320">				c.getBlue() / 255.0f);</span>
+
+<span class="nc bnc" id="L322" title="All 2 branches missed.">		if (colors.containsKey(rgb))</span>
+<span class="nc" id="L323">			return colors.get(rgb);</span>
+
+<span class="nc" id="L325">		String key = String.format(&quot;tikzC%02d&quot;, colorIndex++);</span>
+<span class="nc" id="L326">		colors.put(rgb, key);</span>
+
+<span class="nc" id="L328">		return key;</span>
+	}
+
+	/**
+	 * Convert a StyleGroup to tikz style.
+	 * 
+	 * @param group
+	 *            the style group to convert
+	 * @return string representation of the style group usable in TikZ.
+	 */
+	protected String getTikzStyle(StyleGroup group) {
+<span class="nc" id="L339">		StringBuilder buffer = new StringBuilder();</span>
+<span class="nc" id="L340">		LinkedList&lt;String&gt; style = new LinkedList&lt;String&gt;();</span>
+
+<span class="nc bnc" id="L342" title="All 2 branches missed.">		for (int i = 0; i &lt; group.getFillColorCount(); i++)</span>
+<span class="nc" id="L343">			checkColor(group.getFillColor(i));</span>
+
+<span class="nc bnc" id="L345" title="All 3 branches missed.">		switch (group.getType()) {</span>
+		case NODE: {
+<span class="nc bnc" id="L347" title="All 2 branches missed.">			if (group.getFillMode() != FillMode.DYN_PLAIN) {</span>
+<span class="nc" id="L348">				String fill = checkColor(group.getFillColor(0));</span>
+<span class="nc" id="L349">				style.add(&quot;fill=&quot; + fill);</span>
+			}
+
+<span class="nc bnc" id="L352" title="All 2 branches missed.">			if (group.getFillColor(0).getAlpha() &lt; 255)</span>
+<span class="nc" id="L353">				style.add(String.format(Locale.ROOT, &quot;fill opacity=%.2f&quot;, group.getFillColor(0).getAlpha() / 255.0f));</span>
+
+<span class="nc bnc" id="L355" title="All 2 branches missed.">			switch (group.getStrokeMode()) {</span>
+			case DOTS:
+			case DASHES:
+			case PLAIN:
+<span class="nc" id="L359">				String stroke = checkColor(group.getStrokeColor(0));</span>
+<span class="nc" id="L360">				style.add(&quot;draw=&quot; + stroke);</span>
+<span class="nc" id="L361">				style.add(&quot;line width=&quot; + String.format(Locale.ROOT, &quot;%.1fpt&quot;, group.getStrokeWidth().value));</span>
+
+<span class="nc bnc" id="L363" title="All 2 branches missed.">				if (group.getStrokeColor(0).getAlpha() &lt; 255)</span>
+<span class="nc" id="L364">					style.add(String.format(Locale.ROOT, &quot;draw opacity=%.2f&quot;,</span>
+<span class="nc" id="L365">							group.getStrokeColor(0).getAlpha() / 255.0f));</span>
+
+<span class="nc" id="L367">				break;</span>
+			default:
+<span class="nc" id="L369">				LOGGER.warning(String.format(&quot;unhandled stroke mode : %s%n&quot;, group.getStrokeMode()));</span>
+			}
+
+<span class="nc bnc" id="L372" title="All 6 branches missed.">			switch (group.getShape()) {</span>
+			case CIRCLE:
+<span class="nc" id="L374">				style.add(&quot;circle&quot;);</span>
+<span class="nc" id="L375">				break;</span>
+			case ROUNDED_BOX:
+<span class="nc" id="L377">				style.add(&quot;rounded corners=2pt&quot;);</span>
+			case BOX:
+<span class="nc" id="L379">				style.add(&quot;rectangle&quot;);</span>
+<span class="nc" id="L380">				break;</span>
+			case TRIANGLE:
+<span class="nc" id="L382">				style.add(&quot;isosceles triangle&quot;);</span>
+<span class="nc" id="L383">				break;</span>
+			case DIAMOND:
+<span class="nc" id="L385">				style.add(&quot;diamond&quot;);</span>
+<span class="nc" id="L386">				break;</span>
+			default:
+<span class="nc" id="L388">				LOGGER.warning(String.format(&quot;unhandled shape : %s%n&quot;, group.getShape()));</span>
+			}
+
+<span class="nc" id="L391">			String text = checkColor(group.getTextColor(0));</span>
+<span class="nc" id="L392">			style.add(&quot;text=&quot; + text);</span>
+
+<span class="nc bnc" id="L394" title="All 3 branches missed.">			switch (group.getSize().units) {</span>
+			case GU:
+<span class="nc" id="L396">				style.add(&quot;minimum size=&quot; + String.format(Locale.ROOT, &quot;%.1fcm&quot;, group.getSize().values.get(0)));</span>
+<span class="nc" id="L397">				break;</span>
+			case PX:
+<span class="nc" id="L399">				style.add(&quot;minimum size=&quot; + String.format(Locale.ROOT, &quot;%.1fpt&quot;, group.getSize().values.get(0)));</span>
+<span class="nc" id="L400">				break;</span>
+			default:
+<span class="nc" id="L402">				LOGGER.warning(</span>
+<span class="nc" id="L403">						String.format(&quot;%% [warning] units %s are not compatible with TikZ.%n&quot;, group.getSize().units));</span>
+			}
+
+<span class="nc" id="L406">			style.add(&quot;inner sep=0pt&quot;);</span>
+		}
+<span class="nc" id="L408">			break;</span>
+		case EDGE: {
+<span class="nc bnc" id="L410" title="All 2 branches missed.">			if (group.getFillMode() != FillMode.DYN_PLAIN) {</span>
+<span class="nc" id="L411">				String fill = checkColor(group.getFillColor(0));</span>
+<span class="nc" id="L412">				style.add(&quot;draw=&quot; + fill);</span>
+			}
+
+<span class="nc bnc" id="L415" title="All 2 branches missed.">			if (group.getFillColor(0).getAlpha() &lt; 255)</span>
+<span class="nc" id="L416">				style.add(String.format(Locale.ROOT, &quot;draw opacity=%.2f&quot;, group.getFillColor(0).getAlpha() / 255.0f));</span>
+
+<span class="nc bnc" id="L418" title="All 2 branches missed.">			switch (group.getSize().units) {</span>
+			case PX:
+			case GU:
+<span class="nc" id="L421">				style.add(&quot;line width=&quot; + String.format(Locale.ROOT, &quot;%.1fpt&quot;, group.getSize().values.get(0)));</span>
+<span class="nc" id="L422">				break;</span>
+			default:
+<span class="nc" id="L424">				LOGGER.warning(</span>
+<span class="nc" id="L425">						String.format(&quot;%% [warning] units %s are not compatible with TikZ.%n&quot;, group.getSize().units));</span>
+			}
+		}
+<span class="nc" id="L428">			break;</span>
+		default:
+<span class="nc" id="L430">			LOGGER.warning(String.format(&quot;unhandled group type : %s%n&quot;, group.getType()));</span>
+		}
+
+<span class="nc bnc" id="L433" title="All 2 branches missed.">		for (int i = 0; i &lt; style.size(); i++) {</span>
+<span class="nc bnc" id="L434" title="All 2 branches missed.">			if (i &gt; 0)</span>
+<span class="nc" id="L435">				buffer.append(&quot;,&quot;);</span>
+
+<span class="nc" id="L437">			buffer.append(style.get(i));</span>
+		}
+
+<span class="nc" id="L440">		return buffer.toString();</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.file.FileSinkBase#outputHeader()
+	 */
+	protected void outputHeader() throws IOException {
+<span class="nc" id="L449">		out = (PrintWriter) output;</span>
+
+<span class="nc" id="L451">		colors.clear();</span>
+<span class="nc" id="L452">		classes.clear();</span>
+<span class="nc" id="L453">		classNames.clear();</span>
+
+<span class="nc" id="L455">		buffer.clear();</span>
+<span class="nc" id="L456">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.file.FileSinkBase#outputEndOfFile()
+	 */
+	protected void outputEndOfFile() throws IOException {
+<span class="nc bnc" id="L464" title="All 2 branches missed.">		if (Double.isNaN(width)) {</span>
+<span class="nc bnc" id="L465" title="All 2 branches missed.">			if (buffer.hasNumber(WIDTH_ATTR))</span>
+<span class="nc" id="L466">				width = buffer.getNumber(WIDTH_ATTR);</span>
+			else
+<span class="nc" id="L468">				width = DEFAULT_WIDTH;</span>
+		}
+
+<span class="nc bnc" id="L471" title="All 2 branches missed.">		if (Double.isNaN(height)) {</span>
+<span class="nc bnc" id="L472" title="All 2 branches missed.">			if (buffer.hasNumber(HEIGHT_ATTR))</span>
+<span class="nc" id="L473">				height = buffer.getNumber(HEIGHT_ATTR);</span>
+			else
+<span class="nc" id="L475">				height = DEFAULT_WIDTH;</span>
+		}
+
+<span class="nc" id="L478">		checkLayout();</span>
+
+<span class="nc bnc" id="L480" title="All 2 branches missed.">		if (css != null)</span>
+<span class="nc" id="L481">			buffer.setAttribute(&quot;ui.stylesheet&quot;, css);</span>
+
+<span class="nc" id="L483">		points = new PointsWrapper();</span>
+
+		//
+		// Begin tikzpicture
+		//
+<span class="nc" id="L488">		out.printf(&quot;%%%n%% Do not forget \\usepackage{tikz} in header.%n%%%n&quot;);</span>
+<span class="nc" id="L489">		out.printf(&quot;\\begin{tikzpicture}&quot;);</span>
+
+<span class="nc" id="L491">		checkAndOutputStyle();</span>
+<span class="nc" id="L492">		checkXYandSize();</span>
+
+<span class="nc" id="L494">		buffer.nodes().forEach(n -&gt; {</span>
+			double x, y;
+
+<span class="nc" id="L497">			x = getNodeX(n);</span>
+<span class="nc" id="L498">			y = getNodeY(n);</span>
+
+<span class="nc bnc" id="L500" title="All 4 branches missed.">			if (Double.isNaN(x) || Double.isNaN(y)) {</span>
+<span class="nc" id="L501">				x = Math.random() * width;</span>
+<span class="nc" id="L502">				y = Math.random() * height;</span>
+<span class="nc" id="L503">			} else {</span>
+<span class="nc" id="L504">				x = width * (x - xmin) / (xmax - xmin);</span>
+<span class="nc" id="L505">				y = height * (y - ymin) / (ymax - ymin);</span>
+			}
+
+<span class="nc" id="L508">			out.printf(l, &quot;\t\\node[inner sep=0pt] (%s) at (%f,%f) {};%n&quot;, formatId(n.getId()), x, y);</span>
+<span class="nc" id="L509">		});</span>
+
+<span class="nc" id="L511">		StyleGroupSet sgs = buffer.getStyleGroups();</span>
+
+<span class="nc bnc" id="L513" title="All 2 branches missed.">		for (HashSet&lt;StyleGroup&gt; groups : sgs.zIndex()) {</span>
+<span class="nc bnc" id="L514" title="All 2 branches missed.">			for (StyleGroup group : groups) {</span>
+<span class="nc bnc" id="L515" title="All 3 branches missed.">				switch (group.getType()) {</span>
+				case NODE:
+<span class="nc bnc" id="L517" title="All 2 branches missed.">					for (Element e : group.elements())</span>
+<span class="nc" id="L518">						outputNode((Node) e);</span>
+<span class="nc" id="L519">					break;</span>
+				case EDGE:
+<span class="nc bnc" id="L521" title="All 2 branches missed.">					for (Element e : group.elements())</span>
+<span class="nc" id="L522">						outputEdge((Edge) e);</span>
+					break;
+				default:
+				}
+			}
+		}
+
+		//
+		// End of tikzpicture.
+		//
+<span class="nc" id="L532">		out.printf(&quot;\\end{tikzpicture}%n&quot;);</span>
+<span class="nc" id="L533">	}</span>
+
+	private void checkLayout() {
+<span class="nc bnc" id="L536" title="All 2 branches missed.">		if (!layout)</span>
+<span class="nc" id="L537">			return;</span>
+
+<span class="nc" id="L539">		SpringBox sbox = new SpringBox();</span>
+
+<span class="nc" id="L541">		GraphReplay replay = new GraphReplay(&quot;replay&quot;);</span>
+<span class="nc" id="L542">		replay.addSink(sbox);</span>
+<span class="nc" id="L543">		sbox.addAttributeSink(buffer);</span>
+
+<span class="nc" id="L545">		replay.replay(buffer);</span>
+
+<span class="nc bnc" id="L547" title="All 2 branches missed.">		do</span>
+<span class="nc" id="L548">			sbox.compute();</span>
+<span class="nc" id="L549">		while (sbox.getStabilization() &lt; 0.9);</span>
+
+<span class="nc" id="L551">		buffer.removeSink(sbox);</span>
+<span class="nc" id="L552">		sbox.removeAttributeSink(buffer);</span>
+<span class="nc" id="L553">	}</span>
+
+	private void checkXYandSize() {
+<span class="nc" id="L556">		xmin = ymin = Double.MAX_VALUE;</span>
+<span class="nc" id="L557">		xmax = ymax = Double.MIN_VALUE;</span>
+
+<span class="nc" id="L559">		buffer.nodes().forEach(n -&gt; {</span>
+			double x, y;
+
+<span class="nc" id="L562">			x = getNodeX(n);</span>
+<span class="nc" id="L563">			y = getNodeY(n);</span>
+
+<span class="nc bnc" id="L565" title="All 4 branches missed.">			if (!Double.isNaN(x) &amp;&amp; !Double.isNaN(y)) {</span>
+<span class="nc" id="L566">				xmin = Math.min(xmin, x);</span>
+<span class="nc" id="L567">				xmax = Math.max(xmax, x);</span>
+<span class="nc" id="L568">				ymin = Math.min(ymin, y);</span>
+<span class="nc" id="L569">				ymax = Math.max(ymax, y);</span>
+<span class="nc" id="L570">			} else {</span>
+<span class="nc" id="L571">				LOGGER.warning(String.format(&quot;%% [warning] missing node (x,y).%n&quot;));</span>
+			}
+
+<span class="nc bnc" id="L574" title="All 2 branches missed.">			if (n.hasNumber(&quot;ui.size&quot;)) {</span>
+<span class="nc" id="L575">				minSize = Math.min(minSize, n.getNumber(&quot;ui.size&quot;));</span>
+<span class="nc" id="L576">				maxSize = Math.max(maxSize, n.getNumber(&quot;ui.size&quot;));</span>
+			}
+<span class="nc" id="L578">		});</span>
+
+<span class="nc bnc" id="L580" title="All 2 branches missed.">		if (minSize == maxSize)</span>
+<span class="nc" id="L581">			maxSize += 1;</span>
+
+<span class="nc" id="L583">		buffer.edges().forEach(e -&gt; {</span>
+<span class="nc" id="L584">			points.setElement(e);</span>
+
+<span class="nc bnc" id="L586" title="All 2 branches missed.">			if (points.check()) {</span>
+<span class="nc bnc" id="L587" title="All 2 branches missed.">				for (int i = 0; i &lt; points.getPointsCount(); i++) {</span>
+<span class="nc" id="L588">					double x = points.getX(i);</span>
+<span class="nc" id="L589">					double y = points.getY(i);</span>
+
+<span class="nc" id="L591">					xmin = Math.min(xmin, x);</span>
+<span class="nc" id="L592">					xmax = Math.max(xmax, x);</span>
+<span class="nc" id="L593">					ymin = Math.min(ymin, y);</span>
+<span class="nc" id="L594">					ymax = Math.max(ymax, y);</span>
+				}
+			}
+<span class="nc" id="L597">		});</span>
+<span class="nc" id="L598">	}</span>
+
+	private void checkAndOutputStyle() {
+<span class="nc" id="L601">		String nodeStyle = &quot;circle,draw=black,fill=black&quot;;</span>
+<span class="nc" id="L602">		String edgeStyle = &quot;draw=black&quot;;</span>
+<span class="nc" id="L603">		StyleGroupSet sgs = buffer.getStyleGroups();</span>
+
+<span class="nc bnc" id="L605" title="All 2 branches missed.">		for (StyleGroup sg : sgs.groups()) {</span>
+<span class="nc" id="L606">			String key = String.format(&quot;class%02d&quot;, classIndex++);</span>
+<span class="nc" id="L607">			classNames.put(sg.getId(), key);</span>
+<span class="nc" id="L608">			classes.put(key, getTikzStyle(sg));</span>
+		}
+
+<span class="nc" id="L611">		out.printf(&quot;[%n&quot;);</span>
+
+<span class="nc bnc" id="L613" title="All 2 branches missed.">		for (String key : classes.keySet())</span>
+<span class="nc" id="L614">			out.printf(l, &quot;\t%s/.style={%s},%n&quot;, key, classes.get(key));</span>
+
+<span class="nc" id="L616">		out.printf(l, &quot;\ttikzgsnode/.style={%s},%n&quot;, nodeStyle);</span>
+<span class="nc" id="L617">		out.printf(l, &quot;\ttikzgsedge/.style={%s}%n&quot;, edgeStyle);</span>
+
+<span class="nc" id="L619">		out.printf(&quot;]%n&quot;);</span>
+
+<span class="nc bnc" id="L621" title="All 2 branches missed.">		for (String rgb : colors.keySet())</span>
+<span class="nc" id="L622">			out.printf(l, &quot;\t\\definecolor{%s}{rgb}{%s}%n&quot;, colors.get(rgb), rgb);</span>
+<span class="nc" id="L623">	}</span>
+
+	private void outputNode(Node n) {
+		String label;
+<span class="nc" id="L627">		String style = getNodeStyle(n);</span>
+
+<span class="nc bnc" id="L629" title="All 2 branches missed.">		label = n.hasAttribute(&quot;label&quot;) ? (String) n.getLabel(&quot;label&quot;)</span>
+<span class="nc bnc" id="L630" title="All 2 branches missed.">				: (n.hasAttribute(&quot;ui.label&quot;) ? (String) n.getLabel(&quot;ui.label&quot;) : &quot;&quot;);</span>
+
+<span class="nc" id="L632">		out.printf(l, &quot;\t\\node[%s] at (%s) {%s};%n&quot;, style, formatId(n.getId()), label);</span>
+<span class="nc" id="L633">	}</span>
+
+	private void outputEdge(Edge e) {
+<span class="nc" id="L636">		String style = getEdgeStyle(e);</span>
+<span class="nc" id="L637">		String uiPoints = &quot;&quot;;</span>
+<span class="nc" id="L638">		points.setElement(e);</span>
+
+<span class="nc bnc" id="L640" title="All 2 branches missed.">		if (points.check()) {</span>
+<span class="nc bnc" id="L641" title="All 2 branches missed.">			for (int i = 0; i &lt; points.getPointsCount(); i++) {</span>
+				double x, y;
+
+<span class="nc" id="L644">				x = points.getX(i);</span>
+<span class="nc" id="L645">				y = points.getY(i);</span>
+<span class="nc" id="L646">				x = width * (x - xmin) / (xmax - xmin);</span>
+<span class="nc" id="L647">				y = height * (y - ymin) / (ymax - ymin);</span>
+
+<span class="nc" id="L649">				uiPoints = String.format(l, &quot;%s-- (%.3f,%.3f) &quot;, uiPoints, x, y);</span>
+			}
+		}
+
+<span class="nc" id="L653">		out.printf(l, &quot;\t\\draw[%s] (%s) %s%s (%s);%n&quot;, style, formatId(e.getSourceNode().getId()), uiPoints,</span>
+<span class="nc bnc" id="L654" title="All 2 branches missed.">				e.isDirected() ? &quot;-&gt;&quot; : &quot;--&quot;, formatId(e.getTargetNode().getId()));</span>
+<span class="nc" id="L655">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#graphAttributeAdded(java.lang.String ,
+	 * long, java.lang.String, java.lang.Object)
+	 */
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L665">		buffer.graphAttributeAdded(sourceId, timeId, attribute, value);</span>
+<span class="nc" id="L666">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#graphAttributeChanged(java.lang.
+	 * String, long, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L676">		buffer.graphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L677">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.AttributeSink#graphAttributeRemoved(java.lang.
+	 * String, long, java.lang.String)
+	 */
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L686">		buffer.graphAttributeRemoved(sourceId, timeId, attribute);</span>
+<span class="nc" id="L687">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeAdded(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L697">		buffer.nodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L698">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeChanged(java.lang.String ,
+	 * long, java.lang.String, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L709">		buffer.nodeAttributeChanged(sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L710">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#nodeAttributeRemoved(java.lang.String ,
+	 * long, java.lang.String, java.lang.String)
+	 */
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L720">		buffer.nodeAttributeRemoved(sourceId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L721">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeAdded(java.lang.String,
+	 * long, java.lang.String, java.lang.String, java.lang.Object)
+	 */
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L731">		buffer.edgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L732">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeChanged(java.lang.String ,
+	 * long, java.lang.String, java.lang.String, java.lang.Object, java.lang.Object)
+	 */
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L743">		buffer.edgeAttributeChanged(sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L744">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.AttributeSink#edgeAttributeRemoved(java.lang.String ,
+	 * long, java.lang.String, java.lang.String)
+	 */
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L754">		buffer.edgeAttributeRemoved(sourceId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L755">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#nodeAdded(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L764">		buffer.nodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L765">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#nodeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L774">		buffer.nodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L775">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#edgeAdded(java.lang.String, long,
+	 * java.lang.String, java.lang.String, java.lang.String, boolean)
+	 */
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L785">		buffer.edgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L786">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#edgeRemoved(java.lang.String, long,
+	 * java.lang.String)
+	 */
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L795">		buffer.edgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L796">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#graphCleared(java.lang.String, long)
+	 */
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L804">		buffer.graphCleared(sourceId, timeId);</span>
+<span class="nc" id="L805">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.ElementSink#stepBegins(java.lang.String, long,
+	 * double)
+	 */
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L814">		buffer.stepBegins(sourceId, timeId, step);</span>
+<span class="nc" id="L815">	}</span>
+
+	protected class PointsWrapper {
+		Object[] points;
+
+<span class="nc" id="L820">		PointsWrapper() {</span>
+<span class="nc" id="L821">		}</span>
+
+		public void setElement(Element e) {
+<span class="nc bnc" id="L824" title="All 2 branches missed.">			if (e.hasArray(&quot;ui.points&quot;))</span>
+<span class="nc" id="L825">				points = e.getArray(&quot;ui.points&quot;);</span>
+			else
+<span class="nc" id="L827">				points = null;</span>
+<span class="nc" id="L828">		}</span>
+
+		public boolean check() {
+<span class="nc bnc" id="L831" title="All 2 branches missed.">			if (points == null)</span>
+<span class="nc" id="L832">				return false;</span>
+
+<span class="nc bnc" id="L834" title="All 2 branches missed.">			for (int i = 0; i &lt; points.length; i++) {</span>
+<span class="nc bnc" id="L835" title="All 4 branches missed.">				if (!(points[i] instanceof Point3) &amp;&amp; !points[i].getClass().isArray())</span>
+<span class="nc" id="L836">					return false;</span>
+			}
+
+<span class="nc" id="L839">			return true;</span>
+		}
+
+		public int getPointsCount() {
+<span class="nc bnc" id="L843" title="All 2 branches missed.">			return points == null ? 0 : points.length;</span>
+		}
+
+		public double getX(int i) {
+<span class="nc bnc" id="L847" title="All 4 branches missed.">			if (points == null || i &gt;= points.length)</span>
+<span class="nc" id="L848">				return Double.NaN;</span>
+
+<span class="nc" id="L850">			Object p = points[i];</span>
+
+<span class="nc bnc" id="L852" title="All 2 branches missed.">			if (p instanceof Point3)</span>
+<span class="nc" id="L853">				return ((Point3) p).x;</span>
+			else {
+<span class="nc" id="L855">				Object x = Array.get(p, 0);</span>
+
+<span class="nc bnc" id="L857" title="All 2 branches missed.">				if (x instanceof Number)</span>
+<span class="nc" id="L858">					return ((Number) x).doubleValue();</span>
+				else
+<span class="nc" id="L860">					return Array.getDouble(p, 0);</span>
+			}
+		}
+
+		public double getY(int i) {
+<span class="nc bnc" id="L865" title="All 2 branches missed.">			if (i &gt;= points.length)</span>
+<span class="nc" id="L866">				return Double.NaN;</span>
+
+<span class="nc" id="L868">			Object p = points[i];</span>
+
+<span class="nc bnc" id="L870" title="All 2 branches missed.">			if (p instanceof Point3)</span>
+<span class="nc" id="L871">				return ((Point3) p).y;</span>
+			else {
+<span class="nc" id="L873">				Object y = Array.get(p, 0);</span>
+
+<span class="nc bnc" id="L875" title="All 2 branches missed.">				if (y instanceof Number)</span>
+<span class="nc" id="L876">					return ((Number) y).doubleValue();</span>
+				else
+<span class="nc" id="L878">					return Array.getDouble(p, 1);</span>
+			}
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

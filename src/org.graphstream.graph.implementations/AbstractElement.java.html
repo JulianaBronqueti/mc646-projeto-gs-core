@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractElement.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.implementations</a> &gt; <span class="el_source">AbstractElement.java</span></div><h1>AbstractElement.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.implementations;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Stream;
+
+import org.graphstream.graph.Element;
+
+/**
+ * A base implementation of an element.
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * This class is the Base class for {@link org.graphstream.graph.Node},
+ * {@link org.graphstream.graph.Edge} and {@link org.graphstream.graph.Graph}.
+ * An element is made of an unique and arbitrary identifier that identifies it,
+ * and a set of attributes.
+ * &lt;/p&gt;
+ *
+ * @since 20040910
+ */
+<span class="fc" id="L58">public abstract class AbstractElement implements Element {</span>
+<span class="nc" id="L59">	public enum AttributeChangeEvent {</span>
+<span class="nc" id="L60">		ADD, CHANGE, REMOVE</span>
+	}
+
+	// Attribute
+
+	/**
+	 * Tag of this element.
+	 */
+	protected final String id;
+
+	/**
+	 * The index of this element.
+	 */
+	private int index;
+
+	/**
+	 * Attributes map. This map is created only when needed. It contains pairs
+	 * (key,value) where the key is the attribute name and the value an Object.
+	 */
+<span class="fc" id="L79">	protected Map&lt;String, Object&gt; attributes = null;</span>
+
+	/**
+	 * Vector used when removing attributes to avoid recursive removing.
+	 */
+<span class="fc" id="L84">	protected ArrayList&lt;String&gt; attributesBeingRemoved = null;</span>
+
+	// Construction
+
+	/**
+	 * New element.
+	 *
+	 * @param id
+	 *            The unique identifier of this element.
+	 */
+<span class="fc" id="L94">	public AbstractElement(String id) {</span>
+<span class="pc bpc" id="L95" title="1 of 2 branches missed.">		assert id != null : &quot;Graph elements cannot have a null identifier&quot;;</span>
+<span class="fc" id="L96">		this.id = id;</span>
+<span class="fc" id="L97">	}</span>
+
+	// Access
+
+	public String getId() {
+<span class="fc" id="L102">		return id;</span>
+	}
+
+	public int getIndex() {
+<span class="fc" id="L106">		return index;</span>
+	}
+
+	/**
+	 * Used by subclasses to change the index of an element
+	 *
+	 * @param index
+	 *            the new index
+	 */
+	protected void setIndex(int index) {
+<span class="fc" id="L116">		this.index = index;</span>
+<span class="fc" id="L117">	}</span>
+
+	// XXX UGLY. how to create events in the abstract element ?
+	// XXX The various methods that add and remove attributes will propagate an
+	// event
+	// XXX sometimes this is in response to another event and the
+	// sourceId/timeId is given
+	// XXX sometimes this comes from a direct call to
+	// add/change/removeAttribute() methods
+	// XXX in which case we need to generate a new event (sourceId/timeId) using
+	// the graph
+	// XXX id and a new time. These methods allow access to this.
+	// protected abstract String myGraphId(); // XXX
+
+	// protected abstract long newEvent(); // XXX
+
+	/**
+	 * Called for each change in the attribute set. This method must be implemented
+	 * by sub-elements in order to send events to the graph listeners.
+	 *
+	 * @param attribute
+	 *            The attribute name that changed.
+	 * @param event
+	 *            The type of event among ADD, CHANGE and REMOVE.
+	 * @param oldValue
+	 *            The old value of the attribute, null if the attribute was added.
+	 * @param newValue
+	 *            The new value of the attribute, null if the attribute is about to
+	 *            be removed.
+	 */
+	protected abstract void attributeChanged(AttributeChangeEvent event, String attribute, Object oldValue,
+			Object newValue);
+
+	/**
+	 * @complexity O(log(n)) with n being the number of attributes of this element.
+	 */
+	@Override
+	public Object getAttribute(String key) {
+<span class="nc bnc" id="L155" title="All 2 branches missed.">		if (attributes != null) {</span>
+<span class="nc" id="L156">			Object value = attributes.get(key);</span>
+
+<span class="nc bnc" id="L158" title="All 2 branches missed.">			if (value != null)</span>
+<span class="nc" id="L159">				return value;</span>
+		}
+
+<span class="nc" id="L162">		return null;</span>
+	}
+
+	/**
+	 * @complexity O(log(n*m)) with n being the number of attributes of this element
+	 *             and m the number of keys given.
+	 */
+	@Override
+	public Object getFirstAttributeOf(String... keys) {
+<span class="nc" id="L171">		Object o = null;</span>
+
+<span class="nc bnc" id="L173" title="All 2 branches missed.">		if (attributes != null) {</span>
+<span class="nc bnc" id="L174" title="All 2 branches missed.">			for (String key : keys) {</span>
+<span class="nc" id="L175">				o = attributes.get(key);</span>
+
+<span class="nc bnc" id="L177" title="All 2 branches missed.">				if (o != null)</span>
+<span class="nc" id="L178">					return o;</span>
+			}
+		}
+
+<span class="nc" id="L182">		return o;</span>
+	}
+
+	/**
+	 * @complexity O(log(n)) with n being the number of attributes of this element.
+	 */
+	@Override
+	public &lt;T&gt; T getAttribute(String key, Class&lt;T&gt; clazz) {
+<span class="nc bnc" id="L190" title="All 2 branches missed.">		if (attributes != null) {</span>
+<span class="nc" id="L191">			Object o = attributes.get(key);</span>
+
+<span class="nc bnc" id="L193" title="All 4 branches missed.">			if (o != null &amp;&amp; clazz.isInstance(o))</span>
+<span class="nc" id="L194">				return clazz.cast(o);</span>
+		}
+
+<span class="nc" id="L197">		return null;</span>
+	}
+
+	/**
+	 * @complexity O(log(n*m)) with n being the number of attributes of this element
+	 *             and m the number of keys given.
+	 */
+	@Override
+	public &lt;T&gt; T getFirstAttributeOf(Class&lt;T&gt; clazz, String... keys) {
+<span class="nc" id="L206">		Object o = null;</span>
+
+<span class="nc bnc" id="L208" title="All 2 branches missed.">		if (attributes == null)</span>
+<span class="nc" id="L209">			return null;</span>
+
+<span class="nc bnc" id="L211" title="All 2 branches missed.">		for (String key : keys) {</span>
+<span class="nc" id="L212">			o = attributes.get(key);</span>
+
+<span class="nc bnc" id="L214" title="All 4 branches missed.">			if (o != null &amp;&amp; clazz.isInstance(o))</span>
+<span class="nc" id="L215">				return clazz.cast(o);</span>
+		}
+
+<span class="nc" id="L218">		return null;</span>
+	}
+
+	/**
+	 * @complexity O(log(n)) with n being the number of attributes of this element.
+	 */
+	@Override
+	public boolean hasAttribute(String key) {
+<span class="nc bnc" id="L226" title="All 4 branches missed.">		return attributes != null &amp;&amp; attributes.containsKey(key);</span>
+	}
+
+	/**
+	 * @complexity O(log(n)) with n being the number of attributes of this element.
+	 */
+	@Override
+	public boolean hasAttribute(String key, Class&lt;?&gt; clazz) {
+<span class="nc bnc" id="L234" title="All 2 branches missed.">		if (attributes != null) {</span>
+<span class="nc" id="L235">			Object o = attributes.get(key);</span>
+
+<span class="nc bnc" id="L237" title="All 2 branches missed.">			if (o != null)</span>
+<span class="nc" id="L238">				return (clazz.isInstance(o));</span>
+		}
+
+<span class="nc" id="L241">		return false;</span>
+	}
+
+	@Override
+	public Stream&lt;String&gt; attributeKeys() {
+<span class="nc bnc" id="L246" title="All 2 branches missed.">		if (attributes == null)</span>
+<span class="nc" id="L247">			return Stream.empty();</span>
+
+<span class="nc" id="L249">		return attributes.keySet().stream();</span>
+	}
+
+	/**
+	 * Override the Object method
+	 */
+	@Override
+	public String toString() {
+<span class="fc" id="L257">		return id;</span>
+	}
+
+	@Override
+	public int getAttributeCount() {
+<span class="nc bnc" id="L262" title="All 2 branches missed.">		if (attributes != null)</span>
+<span class="nc" id="L263">			return attributes.size();</span>
+
+<span class="nc" id="L265">		return 0;</span>
+	}
+
+	// Command
+
+	@Override
+	public void clearAttributes() {
+<span class="nc bnc" id="L272" title="All 2 branches missed.">		if (attributes != null) {</span>
+<span class="nc bnc" id="L273" title="All 2 branches missed.">			for (Map.Entry&lt;String, Object&gt; entry : attributes.entrySet())</span>
+<span class="nc" id="L274">				attributeChanged(AttributeChangeEvent.REMOVE, entry.getKey(), entry.getValue(), null);</span>
+
+<span class="nc" id="L276">			attributes.clear();</span>
+		}
+<span class="nc" id="L278">	}</span>
+
+	protected void clearAttributesWithNoEvent() {
+<span class="pc bpc" id="L281" title="1 of 2 branches missed.">		if (attributes != null)</span>
+<span class="nc" id="L282">			attributes.clear();</span>
+<span class="fc" id="L283">	}</span>
+
+	/**
+	 * @complexity O(log(n)) with n being the number of attributes of this element.
+	 */
+	@Override
+	public void setAttribute(String attribute, Object... values) {
+<span class="nc bnc" id="L290" title="All 2 branches missed.">		if (attributes == null)</span>
+<span class="nc" id="L291">			attributes = new HashMap&lt;&gt;(1);</span>
+
+		Object oldValue;
+		Object value;
+
+<span class="nc bnc" id="L296" title="All 2 branches missed.">		if (values == null)</span>
+<span class="nc" id="L297">			value = null;</span>
+<span class="nc bnc" id="L298" title="All 2 branches missed.">		else if (values.length == 0)</span>
+<span class="nc" id="L299">			value = true;</span>
+<span class="nc bnc" id="L300" title="All 2 branches missed.">		else if (values.length == 1)</span>
+<span class="nc" id="L301">			value = values[0];</span>
+		else
+<span class="nc" id="L303">			value = values;</span>
+
+<span class="nc" id="L305">		AttributeChangeEvent event = AttributeChangeEvent.ADD;</span>
+
+<span class="nc bnc" id="L307" title="All 2 branches missed.">		if (attributes.containsKey(attribute)) // In case the value is null,</span>
+<span class="nc" id="L308">			event = AttributeChangeEvent.CHANGE; // but the attribute exists.</span>
+
+<span class="nc" id="L310">		oldValue = attributes.put(attribute, value);</span>
+<span class="nc" id="L311">		attributeChanged(event, attribute, oldValue, value);</span>
+<span class="nc" id="L312">	}</span>
+
+	/**
+	 * @complexity O(log(n)) with n being the number of attributes of this element.
+	 */
+	@Override
+	public void removeAttribute(String attribute) {
+<span class="nc bnc" id="L319" title="All 2 branches missed.">		if (attributes != null) {</span>
+			//
+			// 'attributesBeingRemoved' is created only if this is required.
+			//
+<span class="nc bnc" id="L323" title="All 2 branches missed.">			if (attributesBeingRemoved == null)</span>
+<span class="nc" id="L324">				attributesBeingRemoved = new ArrayList&lt;&gt;();</span>
+
+			//
+			// Avoid recursive calls when synchronizing graphs.
+			//
+<span class="nc bnc" id="L329" title="All 4 branches missed.">			if (attributes.containsKey(attribute) &amp;&amp; !attributesBeingRemoved.contains(attribute)) {</span>
+<span class="nc" id="L330">				attributesBeingRemoved.add(attribute);</span>
+
+<span class="nc" id="L332">				attributeChanged(AttributeChangeEvent.REMOVE, attribute, attributes.get(attribute), null);</span>
+
+<span class="nc" id="L334">				attributesBeingRemoved.remove(attributesBeingRemoved.size() - 1);</span>
+<span class="nc" id="L335">				attributes.remove(attribute);</span>
+			}
+		}
+<span class="nc" id="L338">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestElementAttributeConcurrency.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.test</a> &gt; <span class="el_source">TestElementAttributeConcurrency.java</span></div><h1>TestElementAttributeConcurrency.java</h1><pre class="source lang-java linenums">package org.graphstream.graph.test;
+
+import static org.junit.Assert.assertTrue;
+
+import java.util.ArrayList;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.Graphs;
+import org.graphstream.graph.implementations.SingleGraph;
+import org.junit.Test;
+
+<span class="nc" id="L13">public class TestElementAttributeConcurrency  {</span>
+<span class="nc" id="L14">	private ArrayList&lt;TestRunnable&gt; threads = new ArrayList&lt;TestRunnable&gt;();</span>
+	
+	@Test
+	public void TestNoExceptionElementConcurrency(){
+<span class="nc" id="L18">		Graph graph = new SingleGraph(&quot;Graph&quot;);</span>
+<span class="nc" id="L19">		Node s = graph.addNode(&quot;s&quot;);</span>
+<span class="nc" id="L20">		Node t = graph.addNode(&quot;t&quot;);</span>
+<span class="nc" id="L21">		Node v = graph.addNode(&quot;v&quot;);</span>
+		
+<span class="nc" id="L23">		graph.addEdge(&quot;st&quot;, &quot;s&quot;, &quot;t&quot;, true);</span>
+<span class="nc" id="L24">		graph.addEdge(&quot;tv&quot;, &quot;t&quot;, &quot;v&quot;, true);</span>
+		
+<span class="nc" id="L26">		Graph graphSynchro = Graphs.synchronizedGraph(graph);		</span>
+
+<span class="nc bnc" id="L28" title="All 2 branches missed.">		for (int i=0; i &lt; 10 ; i++) {</span>
+			//System.out.println(&quot;start thread &quot;+i);
+<span class="nc" id="L30">			TestRunnable r = new TestRunnable(i, graphSynchro) ;</span>
+<span class="nc" id="L31">			threads.add(r);</span>
+
+<span class="nc" id="L33">			Thread th = new Thread(r, &quot;Thread &quot;+i);</span>
+<span class="nc" id="L34">			th.start();</span>
+		}
+		
+<span class="nc bnc" id="L37" title="All 2 branches missed.">		while(!threads.isEmpty()) {</span>
+<span class="nc bnc" id="L38" title="All 2 branches missed.">			for (int i=0; i &lt; threads.size() ; i++) {</span>
+<span class="nc bnc" id="L39" title="All 2 branches missed.">				if (threads.get(i).getResult() != null) {</span>
+<span class="nc" id="L40">					assertTrue(threads.get(i).getResult());			</span>
+<span class="nc" id="L41">					threads.remove(i);</span>
+				}
+			}
+		}
+<span class="nc" id="L45">	}</span>
+	
+	class TestRunnable implements Runnable {
+		private int i;
+		private Graph g ;
+		private Boolean result ;
+		
+<span class="nc" id="L52">		public TestRunnable(int i, Graph g) {</span>
+<span class="nc" id="L53">			this.i = i ;</span>
+<span class="nc" id="L54">			this.g = g ;</span>
+<span class="nc" id="L55">			this.result = null;</span>
+<span class="nc" id="L56">		}</span>
+		
+		public void run() {
+			try {
+<span class="nc bnc" id="L60" title="All 2 branches missed.">				for (int j=0; j &lt; 100000 ; j++) {</span>
+<span class="nc" id="L61">					g.setAttribute(&quot;Test&quot;, &quot;Graph &quot;+i);</span>
+<span class="nc" id="L62">					g.getNode(&quot;s&quot;).setAttribute(&quot;Test&quot;, &quot;Node &quot;+i);</span>
+<span class="nc" id="L63">					g.getEdge(&quot;st&quot;).setAttribute(&quot;Test&quot;, &quot;Edge &quot;+i);</span>
+				}
+				
+<span class="nc" id="L66">				this.result = true ;</span>
+<span class="nc" id="L67">			} catch (Exception e) {</span>
+<span class="nc" id="L68">				this.result = false;</span>
+			}
+<span class="nc" id="L70">		}</span>
+		
+		public Boolean getResult() {
+<span class="nc" id="L73">			return result;</span>
+		}
+		
+	}
+	
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

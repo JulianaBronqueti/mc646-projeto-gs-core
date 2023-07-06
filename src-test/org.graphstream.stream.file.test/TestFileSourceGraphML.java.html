@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestFileSourceGraphML.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.test</a> &gt; <span class="el_source">TestFileSourceGraphML.java</span></div><h1>TestFileSourceGraphML.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2010-03-05
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.test;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.stream.file.FileSourceGraphML;
+import org.junit.Test;
+
+import java.io.IOException;
+
+import static org.junit.Assert.*;
+
+<span class="nc" id="L44">public class TestFileSourceGraphML {</span>
+
+	protected Graph readRessource(String url, boolean strict) {
+<span class="nc" id="L47">		Graph g = new AdjacencyListGraph(url);</span>
+<span class="nc" id="L48">		FileSourceGraphML graphml = new FileSourceGraphML();</span>
+<span class="nc" id="L49">		graphml.setStrictMode(strict);</span>
+<span class="nc" id="L50">		graphml.addSink(g);</span>
+
+		try {
+<span class="nc" id="L53">			graphml.readAll(getClass().getResourceAsStream(url));</span>
+<span class="nc" id="L54">		} catch (IOException e) {</span>
+<span class="nc" id="L55">			fail(&quot;IOException occured : &quot; + e.getMessage());</span>
+		}
+
+<span class="nc" id="L58">		graphml.removeSink(g);</span>
+
+<span class="nc" id="L60">		return g;</span>
+	}
+
+	@Test
+	public void testBasic() {
+<span class="nc" id="L65">		Graph g = readRessource(&quot;data/example.graphml&quot;, true);</span>
+
+<span class="nc" id="L67">		Node n1 = g.getNode(&quot;1&quot;);</span>
+<span class="nc" id="L68">		Node n2 = g.getNode(&quot;2&quot;);</span>
+<span class="nc" id="L69">		Node n3 = g.getNode(&quot;3&quot;);</span>
+
+<span class="nc" id="L71">		assertNotNull(n1);</span>
+<span class="nc" id="L72">		assertNotNull(n2);</span>
+<span class="nc" id="L73">		assertNotNull(n3);</span>
+
+<span class="nc" id="L75">		assertNotNull(n1.getEdgeToward(n2));</span>
+<span class="nc" id="L76">		assertNotNull(n2.getEdgeToward(n3));</span>
+<span class="nc" id="L77">		assertNotNull(n3.getEdgeToward(n1));</span>
+
+<span class="nc" id="L79">		assertTrue(g.hasAttribute(&quot;label&quot;));</span>
+<span class="nc" id="L80">		assertEquals(&quot;This is a label&quot;, g.getAttribute(&quot;label&quot;));</span>
+
+<span class="nc" id="L82">		assertTrue(g.getNode(&quot;1&quot;).hasAttribute(&quot;ordering&quot;));</span>
+<span class="nc" id="L83">		assertEquals(&quot;1 2&quot;, g.getNode(&quot;1&quot;).getAttribute(&quot;ordering&quot;));</span>
+<span class="nc" id="L84">		assertTrue(g.getNode(&quot;2&quot;).hasAttribute(&quot;ordering&quot;));</span>
+<span class="nc" id="L85">		assertEquals(&quot;2 3&quot;, g.getNode(&quot;2&quot;).getAttribute(&quot;ordering&quot;));</span>
+<span class="nc" id="L86">		assertTrue(g.getNode(&quot;3&quot;).hasAttribute(&quot;ordering&quot;));</span>
+<span class="nc" id="L87">		assertEquals(&quot;3 1&quot;, g.getNode(&quot;3&quot;).getAttribute(&quot;ordering&quot;));</span>
+<span class="nc" id="L88">	}</span>
+
+	@Test
+	public void testUndeclaredAttributes() {
+<span class="nc" id="L92">		Graph g = readRessource(&quot;data/example-extraattributes.graphml&quot;, false);</span>
+
+<span class="nc" id="L94">		Node n1 = g.getNode(&quot;1&quot;);</span>
+<span class="nc" id="L95">		Node n2 = g.getNode(&quot;2&quot;);</span>
+<span class="nc" id="L96">		Node n3 = g.getNode(&quot;3&quot;);</span>
+
+<span class="nc" id="L98">		assertNotNull(n1);</span>
+<span class="nc" id="L99">		assertNotNull(n2);</span>
+<span class="nc" id="L100">		assertNotNull(n3);</span>
+
+<span class="nc" id="L102">		assertTrue(g.getNode(&quot;1&quot;).hasAttribute(&quot;label&quot;));</span>
+<span class="nc" id="L103">		assertEquals(&quot;My label 1&quot;, g.getNode(&quot;1&quot;).getAttribute(&quot;label&quot;));</span>
+<span class="nc" id="L104">		assertTrue(g.getNode(&quot;2&quot;).hasAttribute(&quot;other&quot;));</span>
+<span class="nc" id="L105">		assertEquals(&quot;Other undeclared attribute&quot;, g.getNode(&quot;2&quot;).getAttribute(&quot;other&quot;));</span>
+<span class="nc" id="L106">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

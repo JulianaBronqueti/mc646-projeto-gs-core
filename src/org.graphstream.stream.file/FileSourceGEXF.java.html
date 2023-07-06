@@ -1,0 +1,1301 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSourceGEXF.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSourceGEXF.java</span></div><h1>FileSourceGEXF.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-09-21
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.awt.Color;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.regex.Pattern;
+
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.events.XMLEvent;
+
+/**
+ * File source for the &lt;a href=&quot;http://gexf.net/format/&quot;&gt;GEXF&lt;/a&gt; file format
+ * used by &lt;a href=&quot;http://www.gephi.org&quot;&gt;Gephi&lt;/a&gt;.
+ *
+ * @author Guilhelm Savin
+ */
+<span class="nc" id="L52">public class FileSourceGEXF extends FileSourceXML {</span>
+<span class="nc" id="L53">	private static final Pattern IS_DOUBLE = Pattern.compile(&quot;^-?\\d+([.]\\d+)?$&quot;);</span>
+
+	/**
+	 * The GEXF parser.
+	 */
+	protected GEXFParser parser;
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSourceXML#afterStartDocument()
+	 */
+	protected void afterStartDocument() throws IOException, XMLStreamException {
+<span class="nc" id="L66">		parser = new GEXFParser();</span>
+<span class="nc" id="L67">		parser.__gexf();</span>
+<span class="nc" id="L68">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSourceXML#nextEvents()
+	 */
+	public boolean nextEvents() throws IOException {
+<span class="nc" id="L76">		return false;</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.file.FileSourceXML#beforeEndDocument()
+	 */
+	protected void beforeEndDocument() {
+<span class="nc" id="L85">		parser = null;</span>
+<span class="nc" id="L86">	}</span>
+
+	@SuppressWarnings(&quot;unused&quot;)
+	private class Attribute implements GEXFConstants {
+		final String id;
+		final String title;
+		final AttributeType type;
+		Object def;
+		String options;
+
+<span class="nc" id="L96">		Attribute(String id, String title, AttributeType type) {</span>
+<span class="nc" id="L97">			this.id = id;</span>
+<span class="nc" id="L98">			this.title = title;</span>
+<span class="nc" id="L99">			this.type = type;</span>
+<span class="nc" id="L100">		}</span>
+
+		Object getValue(String value) {
+			Object r;
+
+<span class="nc bnc" id="L105" title="All 8 branches missed.">			switch (type) {</span>
+			case INTEGER:
+<span class="nc" id="L107">				r = Integer.valueOf(value);</span>
+<span class="nc" id="L108">				break;</span>
+			case LONG:
+<span class="nc" id="L110">				r = Long.valueOf(value);</span>
+<span class="nc" id="L111">				break;</span>
+			case FLOAT:
+<span class="nc" id="L113">				r = Float.valueOf(value);</span>
+<span class="nc" id="L114">				break;</span>
+			case DOUBLE:
+<span class="nc" id="L116">				r = Double.valueOf(value);</span>
+<span class="nc" id="L117">				break;</span>
+			case BOOLEAN:
+<span class="nc" id="L119">				r = Boolean.valueOf(value);</span>
+<span class="nc" id="L120">				break;</span>
+			case LISTSTRING:
+<span class="nc" id="L122">				String[] list = value.split(&quot;\\|&quot;);</span>
+
+<span class="nc" id="L124">				boolean isDouble = true;</span>
+
+<span class="nc bnc" id="L126" title="All 2 branches missed.">				for (int i = 0; i &lt; list.length; i++)</span>
+<span class="nc bnc" id="L127" title="All 4 branches missed.">					isDouble = isDouble &amp;&amp; IS_DOUBLE.matcher(list[i]).matches();</span>
+
+<span class="nc bnc" id="L129" title="All 2 branches missed.">				if (isDouble) {</span>
+<span class="nc" id="L130">					double[] dlist = new double[list.length];</span>
+
+<span class="nc bnc" id="L132" title="All 2 branches missed.">					for (int i = 0; i &lt; list.length; i++)</span>
+<span class="nc" id="L133">						dlist[i] = Double.parseDouble(list[i]);</span>
+
+<span class="nc" id="L135">					r = dlist;</span>
+<span class="nc" id="L136">				} else</span>
+<span class="nc" id="L137">					r = list;</span>
+
+<span class="nc" id="L139">				break;</span>
+			case ANYURI:
+				try {
+<span class="nc" id="L142">					r = new URI(value);</span>
+<span class="nc" id="L143">				} catch (URISyntaxException e) {</span>
+<span class="nc" id="L144">					throw new IllegalArgumentException(e);</span>
+				}
+				break;
+			default:
+<span class="nc" id="L148">				r = value;</span>
+			}
+
+<span class="nc" id="L151">			return r;</span>
+		}
+
+		void setDefault(String value) {
+<span class="nc" id="L155">			this.def = getValue(value);</span>
+<span class="nc" id="L156">		}</span>
+
+		void setOptions(String options) {
+<span class="nc" id="L159">			this.options = options;</span>
+<span class="nc" id="L160">		}</span>
+	}
+
+	private class GEXFParser extends Parser implements GEXFConstants {
+		EdgeType defaultEdgeType;
+		TimeFormatType timeFormat;
+		HashMap&lt;String, Attribute&gt; nodeAttributesDefinition;
+		HashMap&lt;String, Attribute&gt; edgeAttributesDefinition;
+
+<span class="nc" id="L169">		GEXFParser() {</span>
+<span class="nc" id="L170">			defaultEdgeType = EdgeType.UNDIRECTED;</span>
+<span class="nc" id="L171">			timeFormat = TimeFormatType.INTEGER;</span>
+<span class="nc" id="L172">			nodeAttributesDefinition = new HashMap&lt;String, Attribute&gt;();</span>
+<span class="nc" id="L173">			edgeAttributesDefinition = new HashMap&lt;String, Attribute&gt;();</span>
+<span class="nc" id="L174">		}</span>
+
+		@SuppressWarnings(&quot;unused&quot;)
+		private long getTime(String time) {
+<span class="nc" id="L178">			long t = 0;</span>
+
+<span class="nc bnc" id="L180" title="All 4 branches missed.">			switch (timeFormat) {</span>
+			case INTEGER:
+<span class="nc" id="L182">				t = Integer.valueOf(time);</span>
+<span class="nc" id="L183">				break;</span>
+			case DOUBLE:
+				// TODO
+<span class="nc" id="L186">				break;</span>
+			case DATE:
+				// TODO
+<span class="nc" id="L189">				break;</span>
+			case DATETIME:
+				// TODO
+				break;
+			}
+
+<span class="nc" id="L195">			return t;</span>
+		}
+
+		/**
+		 * name : GEXF attributes : GEXFAttribute structure : META ? GRAPH
+		 */
+		private void __gexf() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L204">			e = getNextEvent();</span>
+<span class="nc" id="L205">			checkValid(e, XMLEvent.START_ELEMENT, &quot;gexf&quot;);</span>
+
+<span class="nc" id="L207">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L209" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;meta&quot;)) {</span>
+<span class="nc" id="L210">				pushback(e);</span>
+<span class="nc" id="L211">				__meta();</span>
+<span class="nc" id="L212">			} else</span>
+<span class="nc" id="L213">				pushback(e);</span>
+
+<span class="nc" id="L215">			__graph();</span>
+
+<span class="nc" id="L217">			e = getNextEvent();</span>
+<span class="nc" id="L218">			checkValid(e, XMLEvent.END_ELEMENT, &quot;gexf&quot;);</span>
+<span class="nc" id="L219">		}</span>
+
+		/**
+		 * name : META attributes : METAttribute structure : ( CREATOR | KEYWORDS |
+		 * DESCRIPTION )*
+		 */
+		private void __meta() throws IOException, XMLStreamException {
+			EnumMap&lt;METAAttribute, String&gt; attributes;
+			XMLEvent e;
+
+<span class="nc" id="L229">			e = getNextEvent();</span>
+<span class="nc" id="L230">			checkValid(e, XMLEvent.START_ELEMENT, &quot;meta&quot;);</span>
+
+<span class="nc" id="L232">			attributes = getAttributes(METAAttribute.class, e.asStartElement());</span>
+
+<span class="nc bnc" id="L234" title="All 2 branches missed.">			if (attributes.containsKey(METAAttribute.LASTMODIFIEDDATE))</span>
+<span class="nc" id="L235">				sendGraphAttributeAdded(sourceId, &quot;lastmodifieddate&quot;, attributes.get(METAAttribute.LASTMODIFIEDDATE));</span>
+
+<span class="nc" id="L237">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">			while (!isEvent(e, XMLEvent.END_ELEMENT, &quot;meta&quot;)) {</span>
+				try {
+					String str;
+<span class="nc" id="L242">					Balise b = Balise.valueOf(toConstantName(e.asStartElement().getName().getLocalPart()));</span>
+
+<span class="nc" id="L244">					pushback(e);</span>
+
+<span class="nc bnc" id="L246" title="All 4 branches missed.">					switch (b) {</span>
+					case CREATOR:
+<span class="nc" id="L248">						str = __creator();</span>
+<span class="nc" id="L249">						sendGraphAttributeAdded(sourceId, &quot;creator&quot;, str);</span>
+<span class="nc" id="L250">						break;</span>
+					case KEYWORDS:
+<span class="nc" id="L252">						str = __keywords();</span>
+<span class="nc" id="L253">						sendGraphAttributeAdded(sourceId, &quot;keywords&quot;, str);</span>
+<span class="nc" id="L254">						break;</span>
+					case DESCRIPTION:
+<span class="nc" id="L256">						str = __description();</span>
+<span class="nc" id="L257">						sendGraphAttributeAdded(sourceId, &quot;description&quot;, str);</span>
+<span class="nc" id="L258">						break;</span>
+					default:
+<span class="nc" id="L260">						newParseError(e, false, &quot;meta children should be one of 'creator','keywords' or 'description'&quot;);</span>
+					}
+<span class="nc" id="L262">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L263">					newParseError(e, true, &quot;unknown element '%s'&quot;, e.asStartElement().getName().getLocalPart());</span>
+				}
+
+<span class="nc" id="L266">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L269">			checkValid(e, XMLEvent.END_ELEMENT, &quot;meta&quot;);</span>
+<span class="nc" id="L270">		}</span>
+
+		/**
+		 * name : CREATOR attributes : structure : string
+		 */
+		private String __creator() throws IOException, XMLStreamException {
+			String creator;
+			XMLEvent e;
+
+<span class="nc" id="L279">			e = getNextEvent();</span>
+<span class="nc" id="L280">			checkValid(e, XMLEvent.START_ELEMENT, &quot;creator&quot;);</span>
+
+<span class="nc" id="L282">			creator = __characters();</span>
+
+<span class="nc" id="L284">			e = getNextEvent();</span>
+<span class="nc" id="L285">			checkValid(e, XMLEvent.END_ELEMENT, &quot;creator&quot;);</span>
+
+<span class="nc" id="L287">			return creator;</span>
+		}
+
+		/**
+		 * name : KEYWORDS attributes : structure : string
+		 */
+		private String __keywords() throws IOException, XMLStreamException {
+			String keywords;
+			XMLEvent e;
+
+<span class="nc" id="L297">			e = getNextEvent();</span>
+<span class="nc" id="L298">			checkValid(e, XMLEvent.START_ELEMENT, &quot;keywords&quot;);</span>
+
+<span class="nc" id="L300">			keywords = __characters();</span>
+
+<span class="nc" id="L302">			e = getNextEvent();</span>
+<span class="nc" id="L303">			checkValid(e, XMLEvent.END_ELEMENT, &quot;keywords&quot;);</span>
+
+<span class="nc" id="L305">			return keywords;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: DESCRIPTION
+		 * attributes 	:
+		 * structure 	: string
+		 * &lt;/pre&gt;
+		 */
+		private String __description() throws IOException, XMLStreamException {
+			String description;
+			XMLEvent e;
+
+<span class="nc" id="L319">			e = getNextEvent();</span>
+<span class="nc" id="L320">			checkValid(e, XMLEvent.START_ELEMENT, &quot;description&quot;);</span>
+
+<span class="nc" id="L322">			description = __characters();</span>
+
+<span class="nc" id="L324">			e = getNextEvent();</span>
+<span class="nc" id="L325">			checkValid(e, XMLEvent.END_ELEMENT, &quot;description&quot;);</span>
+
+<span class="nc" id="L327">			return description;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: GRAPH
+		 * attributes 	: GRAPHAttribute
+		 * structure 	: ATTRIBUTES * ( NODES | EDGES )*
+		 * &lt;/pre&gt;
+		 */
+		private void __graph() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;GRAPHAttribute, String&gt; attributes;
+
+<span class="nc" id="L341">			e = getNextEvent();</span>
+<span class="nc" id="L342">			checkValid(e, XMLEvent.START_ELEMENT, &quot;graph&quot;);</span>
+
+<span class="nc" id="L344">			attributes = getAttributes(GRAPHAttribute.class, e.asStartElement());</span>
+
+<span class="nc bnc" id="L346" title="All 2 branches missed.">			if (attributes.containsKey(GRAPHAttribute.DEFAULTEDGETYPE)) {</span>
+				try {
+<span class="nc" id="L348">					defaultEdgeType = EdgeType.valueOf(toConstantName(attributes.get(GRAPHAttribute.DEFAULTEDGETYPE)));</span>
+<span class="nc" id="L349">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L350">					newParseError(e, true,</span>
+<span class="nc" id="L351">							&quot;'defaultedgetype' value should be one of 'directed', 'undirected' or 'mutual'&quot;);</span>
+				}
+			}
+
+<span class="nc bnc" id="L355" title="All 2 branches missed.">			if (attributes.containsKey(GRAPHAttribute.TIMEFORMAT)) {</span>
+				try {
+<span class="nc" id="L357">					timeFormat = TimeFormatType.valueOf(toConstantName(attributes.get(GRAPHAttribute.TIMEFORMAT)));</span>
+<span class="nc" id="L358">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L359">					newParseError(e, true,</span>
+<span class="nc" id="L360">							&quot;'timeformat' value should be one of 'integer', 'double', 'date' or 'datetime'&quot;);</span>
+				}
+			}
+
+<span class="nc" id="L364">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L366" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;attributes&quot;)) {</span>
+<span class="nc" id="L367">				pushback(e);</span>
+
+<span class="nc" id="L369">				__attributes();</span>
+<span class="nc" id="L370">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L373" title="All 4 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;nodes&quot;) || isEvent(e, XMLEvent.START_ELEMENT, &quot;edges&quot;)) {</span>
+<span class="nc bnc" id="L374" title="All 2 branches missed.">				if (isEvent(e, XMLEvent.START_ELEMENT, &quot;nodes&quot;)) {</span>
+<span class="nc" id="L375">					pushback(e);</span>
+<span class="nc" id="L376">					__nodes();</span>
+<span class="nc" id="L377">				} else {</span>
+<span class="nc" id="L378">					pushback(e);</span>
+<span class="nc" id="L379">					__edges();</span>
+				}
+
+<span class="nc" id="L382">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L385">			checkValid(e, XMLEvent.END_ELEMENT, &quot;graph&quot;);</span>
+<span class="nc" id="L386">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: ATTRIBUTES
+		 * attributes 	: ATTRIBUTESAttributes { CLASS!, MODE, START, STARTOPEN, END, ENDOPEN }
+		 * structure 	: ATTRIBUTE *
+		 * &lt;/pre&gt;
+		 */
+		private void __attributes() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;ATTRIBUTESAttribute, String&gt; attributes;
+			Attribute a;
+<span class="nc" id="L399">			ClassType type = null;</span>
+			HashMap&lt;String, Attribute&gt; attr;
+
+<span class="nc" id="L402">			e = getNextEvent();</span>
+<span class="nc" id="L403">			checkValid(e, XMLEvent.START_ELEMENT, &quot;attributes&quot;);</span>
+
+<span class="nc" id="L405">			attributes = getAttributes(ATTRIBUTESAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L407">			checkRequiredAttributes(e, attributes, ATTRIBUTESAttribute.CLASS);</span>
+
+			try {
+<span class="nc" id="L410">				type = ClassType.valueOf(toConstantName(attributes.get(ATTRIBUTESAttribute.CLASS)));</span>
+<span class="nc" id="L411">			} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L412">				newParseError(e, true, &quot;'class' value shoudl be one of 'node' or 'edge'&quot;);</span>
+			}
+
+<span class="nc bnc" id="L415" title="All 2 branches missed.">			if (type == ClassType.NODE)</span>
+<span class="nc" id="L416">				attr = nodeAttributesDefinition;</span>
+			else
+<span class="nc" id="L418">				attr = edgeAttributesDefinition;</span>
+
+<span class="nc" id="L420">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L422" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;attribute&quot;)) {</span>
+<span class="nc" id="L423">				pushback(e);</span>
+
+<span class="nc" id="L425">				a = __attribute();</span>
+<span class="nc" id="L426">				attr.put(a.id, a);</span>
+<span class="nc" id="L427">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L430">			checkValid(e, XMLEvent.END_ELEMENT, &quot;attributes&quot;);</span>
+<span class="nc" id="L431">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: ATTRIBUTE
+		 * attributes 	: ATTRIBUTEAttribute { ID, TITLE, TYPE }
+		 * structure 	: ( DEFAULT | OPTIONS ) *
+		 * &lt;/pre&gt;
+		 */
+		private Attribute __attribute() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;ATTRIBUTEAttribute, String&gt; attributes;
+			String id, title;
+<span class="nc" id="L444">			AttributeType type = null;</span>
+			Attribute theAttribute;
+
+<span class="nc" id="L447">			e = getNextEvent();</span>
+<span class="nc" id="L448">			checkValid(e, XMLEvent.START_ELEMENT, &quot;attribute&quot;);</span>
+
+<span class="nc" id="L450">			attributes = getAttributes(ATTRIBUTEAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L452">			checkRequiredAttributes(e, attributes, ATTRIBUTEAttribute.ID, ATTRIBUTEAttribute.TITLE,</span>
+<span class="nc" id="L453">					ATTRIBUTEAttribute.TYPE);</span>
+
+<span class="nc" id="L455">			id = attributes.get(ATTRIBUTEAttribute.ID);</span>
+<span class="nc" id="L456">			title = attributes.get(ATTRIBUTEAttribute.TITLE);</span>
+
+			try {
+<span class="nc" id="L459">				type = AttributeType.valueOf(toConstantName(attributes.get(ATTRIBUTEAttribute.TYPE)));</span>
+<span class="nc" id="L460">			} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L461">				newParseError(e, true,</span>
+<span class="nc" id="L462">						&quot;'type' of attribute should be one of 'integer', 'long', 'float, 'double', 'string', 'liststring', 'anyURI' or 'boolean'&quot;);</span>
+			}
+
+<span class="nc" id="L465">			theAttribute = new Attribute(id, title, type);</span>
+
+<span class="nc" id="L467">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L469" title="All 2 branches missed.">			while (!isEvent(e, XMLEvent.END_ELEMENT, &quot;attribute&quot;)) {</span>
+				try {
+<span class="nc" id="L471">					Balise b = Balise.valueOf(toConstantName(e.asStartElement().getName().getLocalPart()));</span>
+
+<span class="nc" id="L473">					pushback(e);</span>
+
+<span class="nc bnc" id="L475" title="All 3 branches missed.">					switch (b) {</span>
+					case DEFAULT:
+						try {
+<span class="nc" id="L478">							theAttribute.setDefault(__default());</span>
+<span class="nc" id="L479">						} catch (Exception invalid) {</span>
+<span class="nc" id="L480">							newParseError(e, false, &quot;invalid 'default' value&quot;);</span>
+						}
+
+<span class="nc" id="L483">						break;</span>
+					case OPTIONS:
+<span class="nc" id="L485">						theAttribute.setOptions(__options());</span>
+<span class="nc" id="L486">						break;</span>
+					default:
+<span class="nc" id="L488">						newParseError(e, true, &quot;attribute children should be one of 'default' or 'options'&quot;);</span>
+					}
+<span class="nc" id="L490">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L491">					newParseError(e, true, &quot;unknown element '%s'&quot;, e.asStartElement().getName().getLocalPart());</span>
+				}
+
+<span class="nc" id="L494">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L497">			checkValid(e, XMLEvent.END_ELEMENT, &quot;attribute&quot;);</span>
+
+<span class="nc" id="L499">			return theAttribute;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: DEFAULT
+		 * attributes 	:
+		 * structure 	: string
+		 * &lt;/pre&gt;
+		 */
+		private String __default() throws IOException, XMLStreamException {
+			String def;
+			XMLEvent e;
+
+<span class="nc" id="L513">			e = getNextEvent();</span>
+<span class="nc" id="L514">			checkValid(e, XMLEvent.START_ELEMENT, &quot;default&quot;);</span>
+
+<span class="nc" id="L516">			def = __characters();</span>
+
+<span class="nc" id="L518">			e = getNextEvent();</span>
+<span class="nc" id="L519">			checkValid(e, XMLEvent.END_ELEMENT, &quot;default&quot;);</span>
+
+<span class="nc" id="L521">			return def;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: OPTIONS
+		 * attributes 	:
+		 * structure 	: string
+		 * &lt;/pre&gt;
+		 */
+		private String __options() throws IOException, XMLStreamException {
+			String options;
+			XMLEvent e;
+
+<span class="nc" id="L535">			e = getNextEvent();</span>
+<span class="nc" id="L536">			checkValid(e, XMLEvent.START_ELEMENT, &quot;options&quot;);</span>
+
+<span class="nc" id="L538">			options = __characters();</span>
+
+<span class="nc" id="L540">			e = getNextEvent();</span>
+<span class="nc" id="L541">			checkValid(e, XMLEvent.END_ELEMENT, &quot;options&quot;);</span>
+
+<span class="nc" id="L543">			return options;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: NODES
+		 * attributes 	: NODESAttribute { 'count' }
+		 * structure 	: NODE *
+		 * &lt;/pre&gt;
+		 */
+		private void __nodes() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L556">			e = getNextEvent();</span>
+<span class="nc" id="L557">			checkValid(e, XMLEvent.START_ELEMENT, &quot;nodes&quot;);</span>
+
+<span class="nc" id="L559">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L561" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;node&quot;)) {</span>
+<span class="nc" id="L562">				pushback(e);</span>
+
+<span class="nc" id="L564">				__node();</span>
+<span class="nc" id="L565">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L568">			checkValid(e, XMLEvent.END_ELEMENT, &quot;nodes&quot;);</span>
+
+<span class="nc" id="L570">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: NODE
+		 * attributes 	: NODEAttribute { 'pid', 'id', 'label', 'start', 'startopen', 'end', 'endopen' }
+		 * structure 	: ( ATTVALUES | SPELLS | ( NODES | EDGES ) | PARENTS | ( COLOR | POSITION | SIZE | NODESHAPE ) ) *
+		 * &lt;/pre&gt;
+		 */
+		private void __node() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;NODEAttribute, String&gt; attributes;
+			String id;
+<span class="nc" id="L583">			HashSet&lt;String&gt; defined = new HashSet&lt;String&gt;();</span>
+
+<span class="nc" id="L585">			e = getNextEvent();</span>
+<span class="nc" id="L586">			checkValid(e, XMLEvent.START_ELEMENT, &quot;node&quot;);</span>
+
+<span class="nc" id="L588">			attributes = getAttributes(NODEAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L590">			checkRequiredAttributes(e, attributes, NODEAttribute.ID);</span>
+
+<span class="nc" id="L592">			id = attributes.get(NODEAttribute.ID);</span>
+<span class="nc" id="L593">			sendNodeAdded(sourceId, id);</span>
+
+<span class="nc bnc" id="L595" title="All 2 branches missed.">			if (attributes.containsKey(NODEAttribute.LABEL))</span>
+<span class="nc" id="L596">				sendNodeAttributeAdded(sourceId, id, &quot;label&quot;, attributes.get(NODEAttribute.LABEL));</span>
+
+<span class="nc" id="L598">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L600" title="All 2 branches missed.">			while (!isEvent(e, XMLEvent.END_ELEMENT, &quot;node&quot;)) {</span>
+				try {
+<span class="nc" id="L602">					Balise b = Balise.valueOf(toConstantName(e.asStartElement().getName().getLocalPart()));</span>
+
+<span class="nc" id="L604">					pushback(e);</span>
+
+<span class="nc bnc" id="L606" title="All 10 branches missed.">					switch (b) {</span>
+					case ATTVALUES:
+<span class="nc" id="L608">						defined.addAll(__attvalues(ClassType.NODE, id));</span>
+<span class="nc" id="L609">						break;</span>
+					case COLOR:
+<span class="nc" id="L611">						__color(ClassType.NODE, id);</span>
+<span class="nc" id="L612">						break;</span>
+					case POSITION:
+<span class="nc" id="L614">						__position(id);</span>
+<span class="nc" id="L615">						break;</span>
+					case SIZE:
+<span class="nc" id="L617">						__size(id);</span>
+<span class="nc" id="L618">						break;</span>
+					case SHAPE:
+<span class="nc" id="L620">						__node_shape(id);</span>
+<span class="nc" id="L621">						break;</span>
+					case SPELLS:
+<span class="nc" id="L623">						__spells();</span>
+<span class="nc" id="L624">						break;</span>
+					case NODES:
+<span class="nc" id="L626">						__nodes();</span>
+<span class="nc" id="L627">						break;</span>
+					case EDGES:
+<span class="nc" id="L629">						__edges();</span>
+<span class="nc" id="L630">						break;</span>
+					case PARENTS:
+<span class="nc" id="L632">						__parents(id);</span>
+<span class="nc" id="L633">						break;</span>
+					default:
+<span class="nc" id="L635">						newParseError(e, true,</span>
+<span class="nc" id="L636">								&quot;attribute children should be one of 'attvalues', 'color', 'position', 'size', shape', 'spells', 'nodes, 'edges' or 'parents'&quot;);</span>
+					}
+<span class="nc" id="L638">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L639">					newParseError(e, true, &quot;unknown element '%s'&quot;, e.asStartElement().getName().getLocalPart());</span>
+				}
+
+<span class="nc" id="L642">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L645" title="All 2 branches missed.">			for (Attribute theAttribute : nodeAttributesDefinition.values()) {</span>
+<span class="nc bnc" id="L646" title="All 2 branches missed.">				if (!defined.contains(theAttribute.id)) {</span>
+<span class="nc" id="L647">					sendNodeAttributeAdded(sourceId, id, theAttribute.title, theAttribute.def);</span>
+				}
+			}
+
+<span class="nc" id="L651">			checkValid(e, XMLEvent.END_ELEMENT, &quot;node&quot;);</span>
+<span class="nc" id="L652">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name : ATTVALUES attributes : structure : ATTVALUE * &lt;/spell&gt;
+		 */
+		private HashSet&lt;String&gt; __attvalues(ClassType type, String elementId) throws IOException, XMLStreamException {
+			XMLEvent e;
+<span class="nc" id="L660">			HashSet&lt;String&gt; defined = new HashSet&lt;String&gt;();</span>
+
+<span class="nc" id="L662">			e = getNextEvent();</span>
+<span class="nc" id="L663">			checkValid(e, XMLEvent.START_ELEMENT, &quot;attvalues&quot;);</span>
+
+<span class="nc" id="L665">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L667" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;attvalue&quot;)) {</span>
+<span class="nc" id="L668">				pushback(e);</span>
+
+<span class="nc" id="L670">				defined.add(__attvalue(type, elementId));</span>
+<span class="nc" id="L671">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L674">			checkValid(e, XMLEvent.END_ELEMENT, &quot;attvalues&quot;);</span>
+
+<span class="nc" id="L676">			return defined;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: ATTVALUE
+		 * attributes 	: ATTVALUEAttribute { FOR!, VALUE!, START, STARTOPEN, END, ENDOPEN }
+		 * structure 	:
+		 * &lt;/pre&gt;
+		 */
+		private String __attvalue(ClassType type, String elementId) throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;ATTVALUEAttribute, String&gt; attributes;
+			Attribute theAttribute;
+<span class="nc" id="L690">			Object value = null;</span>
+
+<span class="nc" id="L692">			e = getNextEvent();</span>
+<span class="nc" id="L693">			checkValid(e, XMLEvent.START_ELEMENT, &quot;attvalue&quot;);</span>
+
+<span class="nc" id="L695">			attributes = getAttributes(ATTVALUEAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L697">			checkRequiredAttributes(e, attributes, ATTVALUEAttribute.FOR, ATTVALUEAttribute.VALUE);</span>
+
+<span class="nc bnc" id="L699" title="All 2 branches missed.">			if (type == ClassType.NODE)</span>
+<span class="nc" id="L700">				theAttribute = nodeAttributesDefinition.get(attributes.get(ATTVALUEAttribute.FOR));</span>
+			else
+<span class="nc" id="L702">				theAttribute = edgeAttributesDefinition.get(attributes.get(ATTVALUEAttribute.FOR));</span>
+
+<span class="nc bnc" id="L704" title="All 2 branches missed.">			if (theAttribute == null)</span>
+<span class="nc" id="L705">				newParseError(e, false, &quot;undefined attribute \&quot;%s\&quot;&quot;, attributes.get(ATTVALUEAttribute.FOR));</span>
+			else {
+				try {
+<span class="nc" id="L708">					value = theAttribute.getValue(attributes.get(ATTVALUEAttribute.VALUE));</span>
+<span class="nc" id="L709">				} catch (Exception ex) {</span>
+<span class="nc" id="L710">					newParseError(e, true, &quot;invalid 'value' value&quot;);</span>
+				}
+
+<span class="nc bnc" id="L713" title="All 3 branches missed.">				switch (type) {</span>
+				case NODE:
+<span class="nc" id="L715">					sendNodeAttributeAdded(sourceId, elementId, theAttribute.title, value);</span>
+<span class="nc" id="L716">					break;</span>
+				case EDGE:
+<span class="nc" id="L718">					sendEdgeAttributeAdded(sourceId, elementId, theAttribute.title, value);</span>
+					break;
+				}
+			}
+
+<span class="nc" id="L723">			e = getNextEvent();</span>
+<span class="nc" id="L724">			checkValid(e, XMLEvent.END_ELEMENT, &quot;attvalue&quot;);</span>
+
+<span class="nc bnc" id="L726" title="All 2 branches missed.">			return theAttribute == null ? null : theAttribute.id;</span>
+		}
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: SPELLS
+		 * attributes 	:
+		 * structure 	: SPELL +
+		 * &lt;/pre&gt;
+		 */
+		private void __spells() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L739">			e = getNextEvent();</span>
+<span class="nc" id="L740">			checkValid(e, XMLEvent.START_ELEMENT, &quot;spells&quot;);</span>
+
+			do {
+<span class="nc" id="L743">				__spell();</span>
+<span class="nc" id="L744">				e = getNextEvent();</span>
+<span class="nc bnc" id="L745" title="All 2 branches missed.">			} while (isEvent(e, XMLEvent.START_ELEMENT, &quot;spell&quot;));</span>
+
+<span class="nc" id="L747">			checkValid(e, XMLEvent.END_ELEMENT, &quot;spells&quot;);</span>
+<span class="nc" id="L748">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: SPELL
+		 * attributes 	: SPELLAttribute
+		 * structure 	:
+		 * &lt;/pre&gt;
+		 */
+		@SuppressWarnings(&quot;unused&quot;)
+		private void __spell() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;SPELLAttribute, String&gt; attributes;
+
+<span class="nc" id="L762">			e = getNextEvent();</span>
+<span class="nc" id="L763">			checkValid(e, XMLEvent.START_ELEMENT, &quot;spell&quot;);</span>
+
+<span class="nc" id="L765">			attributes = getAttributes(SPELLAttribute.class, e.asStartElement());</span>
+
+			// TODO Handle spell
+
+<span class="nc" id="L769">			e = getNextEvent();</span>
+<span class="nc" id="L770">			checkValid(e, XMLEvent.END_ELEMENT, &quot;spell&quot;);</span>
+<span class="nc" id="L771">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: PARENTS
+		 * attributes 	:
+		 * structure 	: PARENT *
+		 * &lt;/pre&gt;
+		 */
+		private void __parents(String nodeId) throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L783">			e = getNextEvent();</span>
+<span class="nc" id="L784">			checkValid(e, XMLEvent.START_ELEMENT, &quot;parents&quot;);</span>
+
+<span class="nc" id="L786">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L788" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;parent&quot;)) {</span>
+<span class="nc" id="L789">				__parent(nodeId);</span>
+<span class="nc" id="L790">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L793">			checkValid(e, XMLEvent.END_ELEMENT, &quot;parents&quot;);</span>
+<span class="nc" id="L794">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: PARENT
+		 * attributes 	: PARENTAttribute { FOR! }
+		 * structure 	:
+		 * &lt;/pre&gt;
+		 */
+		private void __parent(String nodeId) throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;PARENTAttribute, String&gt; attributes;
+
+<span class="nc" id="L807">			e = getNextEvent();</span>
+<span class="nc" id="L808">			checkValid(e, XMLEvent.START_ELEMENT, &quot;parent&quot;);</span>
+
+<span class="nc" id="L810">			attributes = getAttributes(PARENTAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L812">			checkRequiredAttributes(e, attributes, PARENTAttribute.FOR);</span>
+<span class="nc" id="L813">			sendNodeAttributeAdded(sourceId, attributes.get(PARENTAttribute.FOR), &quot;parent&quot;, nodeId);</span>
+
+<span class="nc" id="L815">			e = getNextEvent();</span>
+<span class="nc" id="L816">			checkValid(e, XMLEvent.END_ELEMENT, &quot;parent&quot;);</span>
+<span class="nc" id="L817">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: COLOR
+		 * attributes 	: COLORAttribute { R!, G!, B!, A, START, STARTOPEN, END, ENDOPEN }
+		 * structure 	: SPELLS ?
+		 * &lt;/pre&gt;
+		 */
+		private void __color(ClassType type, String id) throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;COLORAttribute, String&gt; attributes;
+			Color color;
+<span class="nc" id="L830">			int r, g, b, a = 255;</span>
+
+<span class="nc" id="L832">			e = getNextEvent();</span>
+<span class="nc" id="L833">			checkValid(e, XMLEvent.START_ELEMENT, &quot;color&quot;);</span>
+
+<span class="nc" id="L835">			attributes = getAttributes(COLORAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L837">			checkRequiredAttributes(e, attributes, COLORAttribute.R, COLORAttribute.G, COLORAttribute.B);</span>
+
+<span class="nc" id="L839">			r = Integer.valueOf(attributes.get(COLORAttribute.R));</span>
+<span class="nc" id="L840">			g = Integer.valueOf(attributes.get(COLORAttribute.G));</span>
+<span class="nc" id="L841">			b = Integer.valueOf(attributes.get(COLORAttribute.B));</span>
+
+<span class="nc bnc" id="L843" title="All 2 branches missed.">			if (attributes.containsKey(COLORAttribute.A))</span>
+<span class="nc" id="L844">				a = Integer.valueOf(attributes.get(COLORAttribute.A));</span>
+
+<span class="nc" id="L846">			color = new Color(r, g, b, a);</span>
+
+<span class="nc bnc" id="L848" title="All 3 branches missed.">			switch (type) {</span>
+			case NODE:
+<span class="nc" id="L850">				sendNodeAttributeAdded(sourceId, id, &quot;ui.color&quot;, color);</span>
+<span class="nc" id="L851">				break;</span>
+			case EDGE:
+<span class="nc" id="L853">				sendEdgeAttributeAdded(sourceId, id, &quot;ui.color&quot;, color);</span>
+				break;
+			}
+
+<span class="nc" id="L857">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L859" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;spells&quot;)) {</span>
+<span class="nc" id="L860">				pushback(e);</span>
+
+<span class="nc" id="L862">				__spells();</span>
+<span class="nc" id="L863">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L866">			checkValid(e, XMLEvent.END_ELEMENT, &quot;color&quot;);</span>
+<span class="nc" id="L867">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: POSITION
+		 * attributes 	: POSITIONAttribute { X!, Y!, Z!, START, STARTOPEN, END, ENDOPEN }
+		 * structure 	: SPELLS ?
+		 * &lt;/pre&gt;
+		 */
+		private void __position(String nodeId) throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;POSITIONAttribute, String&gt; attributes;
+<span class="nc" id="L879">			double[] xyz = { 0, 0, 0 };</span>
+
+<span class="nc" id="L881">			e = getNextEvent();</span>
+<span class="nc" id="L882">			checkValid(e, XMLEvent.START_ELEMENT, &quot;position&quot;);</span>
+
+<span class="nc" id="L884">			attributes = getAttributes(POSITIONAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L886">			checkRequiredAttributes(e, attributes, POSITIONAttribute.X, POSITIONAttribute.Y, POSITIONAttribute.Z);</span>
+
+<span class="nc" id="L888">			xyz[0] = Double.valueOf(attributes.get(POSITIONAttribute.X));</span>
+<span class="nc" id="L889">			xyz[1] = Double.valueOf(attributes.get(POSITIONAttribute.Y));</span>
+<span class="nc" id="L890">			xyz[2] = Double.valueOf(attributes.get(POSITIONAttribute.Z));</span>
+
+<span class="nc" id="L892">			sendNodeAttributeAdded(sourceId, nodeId, &quot;xyz&quot;, xyz);</span>
+
+<span class="nc" id="L894">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L896" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;spells&quot;)) {</span>
+<span class="nc" id="L897">				pushback(e);</span>
+
+<span class="nc" id="L899">				__spells();</span>
+<span class="nc" id="L900">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L903">			checkValid(e, XMLEvent.END_ELEMENT, &quot;position&quot;);</span>
+<span class="nc" id="L904">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: SIZE
+		 * attributes 	: SIZEAttribute { VALUE!, START, STARTOPEN, END, ENDOPEN }
+		 * structure 	: SPELLS ?
+		 * &lt;/pre&gt;
+		 */
+		private void __size(String nodeId) throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;SIZEAttribute, String&gt; attributes;
+			double value;
+
+<span class="nc" id="L918">			e = getNextEvent();</span>
+<span class="nc" id="L919">			checkValid(e, XMLEvent.START_ELEMENT, &quot;size&quot;);</span>
+
+<span class="nc" id="L921">			attributes = getAttributes(SIZEAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L923">			checkRequiredAttributes(e, attributes, SIZEAttribute.VALUE);</span>
+
+<span class="nc" id="L925">			value = Double.valueOf(attributes.get(SIZEAttribute.VALUE));</span>
+
+<span class="nc" id="L927">			sendNodeAttributeAdded(sourceId, nodeId, &quot;ui.size&quot;, value);</span>
+
+<span class="nc" id="L929">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L931" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;spells&quot;)) {</span>
+<span class="nc" id="L932">				pushback(e);</span>
+
+<span class="nc" id="L934">				__spells();</span>
+<span class="nc" id="L935">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L938">			checkValid(e, XMLEvent.END_ELEMENT, &quot;size&quot;);</span>
+<span class="nc" id="L939">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: NODESHAPE
+		 * attributes 	: NODESHAPEAttributes { VALUE!, URI, START, STARTOPEN, END, ENDOPEN }
+		 * structure 	: SPELLS ?
+		 * &lt;/pre&gt;
+		 */
+		private void __node_shape(String nodeId) throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;NODESHAPEAttribute, String&gt; attributes;
+<span class="nc" id="L951">			NodeShapeType type = null;</span>
+			String uri;
+
+<span class="nc" id="L954">			e = getNextEvent();</span>
+<span class="nc" id="L955">			checkValid(e, XMLEvent.START_ELEMENT, &quot;shape&quot;);</span>
+
+<span class="nc" id="L957">			attributes = getAttributes(NODESHAPEAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L959">			checkRequiredAttributes(e, attributes, NODESHAPEAttribute.VALUE);</span>
+
+			try {
+<span class="nc" id="L962">				type = NodeShapeType.valueOf(toConstantName(attributes.get(NODESHAPEAttribute.VALUE)));</span>
+<span class="nc" id="L963">			} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L964">				newParseError(e, true, &quot;'value' should be one of 'disc', 'diamond', 'triangle', 'square' or 'image'&quot;);</span>
+			}
+
+<span class="nc bnc" id="L967" title="All 2 branches missed.">			switch (type) {</span>
+			case IMAGE:
+<span class="nc bnc" id="L969" title="All 2 branches missed.">				if (!attributes.containsKey(NODESHAPEAttribute.URI))</span>
+<span class="nc" id="L970">					newParseError(e, true, &quot;'image' shape type needs 'uri' attribute&quot;);</span>
+
+<span class="nc" id="L972">				uri = attributes.get(NODESHAPEAttribute.URI);</span>
+<span class="nc" id="L973">				sendNodeAttributeAdded(sourceId, nodeId, &quot;ui.style&quot;,</span>
+<span class="nc" id="L974">						String.format(&quot;fill-mode: image-scaled; fill-image: url('%s');&quot;, uri));</span>
+
+<span class="nc" id="L976">				break;</span>
+			default:
+<span class="nc" id="L978">				sendNodeAttributeAdded(sourceId, nodeId, &quot;ui.style&quot;,</span>
+<span class="nc" id="L979">						String.format(&quot;shape: %s;&quot;, type.name().toLowerCase()));</span>
+			}
+
+<span class="nc" id="L982">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L984" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;spells&quot;)) {</span>
+<span class="nc" id="L985">				pushback(e);</span>
+
+<span class="nc" id="L987">				__spells();</span>
+<span class="nc" id="L988">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L991">			checkValid(e, XMLEvent.END_ELEMENT, &quot;shape&quot;);</span>
+<span class="nc" id="L992">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: EDGES
+		 * attributes 	: EDGESAttribute { 'count' }
+		 * structure 	: EDGE *
+		 * &lt;/pre&gt;
+		 */
+		private void __edges() throws IOException, XMLStreamException {
+			XMLEvent e;
+
+<span class="nc" id="L1004">			e = getNextEvent();</span>
+<span class="nc" id="L1005">			checkValid(e, XMLEvent.START_ELEMENT, &quot;edges&quot;);</span>
+
+<span class="nc" id="L1007">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L1009" title="All 2 branches missed.">			while (isEvent(e, XMLEvent.START_ELEMENT, &quot;edge&quot;)) {</span>
+<span class="nc" id="L1010">				pushback(e);</span>
+
+<span class="nc" id="L1012">				__edge();</span>
+<span class="nc" id="L1013">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L1016">			checkValid(e, XMLEvent.END_ELEMENT, &quot;edges&quot;);</span>
+<span class="nc" id="L1017">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: EDGE
+		 * attributes 	: EDGEAttribute { START, STARTOPEN, END, ENDOPEN, ID!, TYPE, LABEL, SOURCE!, TARGET!, WEIGHT }
+		 * structure 	: ( ATTVALUES | SPELLS | ( COLOR | THICKNESS | EDGESHAPE ) ) *
+		 * &lt;/pre&gt;
+		 */
+		private void __edge() throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;EDGEAttribute, String&gt; attributes;
+			String id, source, target;
+<span class="nc" id="L1030">			EdgeType type = defaultEdgeType;</span>
+<span class="nc" id="L1031">			HashSet&lt;String&gt; defined = new HashSet&lt;String&gt;();</span>
+
+<span class="nc" id="L1033">			e = getNextEvent();</span>
+<span class="nc" id="L1034">			checkValid(e, XMLEvent.START_ELEMENT, &quot;edge&quot;);</span>
+
+<span class="nc" id="L1036">			attributes = getAttributes(EDGEAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L1038">			checkRequiredAttributes(e, attributes, EDGEAttribute.ID, EDGEAttribute.SOURCE, EDGEAttribute.TARGET);</span>
+
+<span class="nc" id="L1040">			id = attributes.get(EDGEAttribute.ID);</span>
+<span class="nc" id="L1041">			source = attributes.get(EDGEAttribute.SOURCE);</span>
+<span class="nc" id="L1042">			target = attributes.get(EDGEAttribute.TARGET);</span>
+
+<span class="nc bnc" id="L1044" title="All 2 branches missed.">			if (attributes.containsKey(EDGEAttribute.TYPE)) {</span>
+				try {
+<span class="nc" id="L1046">					type = EdgeType.valueOf(toConstantName(attributes.get(EDGEAttribute.TYPE)));</span>
+<span class="nc" id="L1047">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L1048">					newParseError(e, true, &quot;edge type should be one of 'undirected', 'undirected' or 'mutual'&quot;);</span>
+				}
+			}
+
+<span class="nc bnc" id="L1052" title="All 3 branches missed.">			switch (type) {</span>
+			case DIRECTED:
+<span class="nc" id="L1054">				sendEdgeAdded(sourceId, id, source, target, true);</span>
+<span class="nc" id="L1055">				break;</span>
+			case MUTUAL:
+			case UNDIRECTED:
+<span class="nc" id="L1058">				sendEdgeAdded(sourceId, id, source, target, false);</span>
+				break;
+			}
+
+<span class="nc bnc" id="L1062" title="All 2 branches missed.">			if (attributes.containsKey(EDGEAttribute.LABEL))</span>
+<span class="nc" id="L1063">				sendEdgeAttributeAdded(sourceId, id, &quot;ui.label&quot;, attributes.get(EDGEAttribute.LABEL));</span>
+
+<span class="nc bnc" id="L1065" title="All 2 branches missed.">			if (attributes.containsKey(EDGEAttribute.WEIGHT)) {</span>
+				try {
+<span class="nc" id="L1067">					double d = Double.valueOf(attributes.get(EDGEAttribute.WEIGHT));</span>
+<span class="nc" id="L1068">					sendEdgeAttributeAdded(sourceId, id, &quot;weight&quot;, d);</span>
+<span class="nc" id="L1069">				} catch (NumberFormatException ex) {</span>
+<span class="nc" id="L1070">					newParseError(e, true, &quot;'weight' attribute of edge should be a real&quot;);</span>
+				}
+			}
+
+<span class="nc" id="L1074">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L1076" title="All 2 branches missed.">			while (!isEvent(e, XMLEvent.END_ELEMENT, &quot;edge&quot;)) {</span>
+				try {
+<span class="nc" id="L1078">					Balise b = Balise.valueOf(toConstantName(e.asStartElement().getName().getLocalPart()));</span>
+
+<span class="nc" id="L1080">					pushback(e);</span>
+
+<span class="nc bnc" id="L1082" title="All 6 branches missed.">					switch (b) {</span>
+					case ATTVALUES:
+<span class="nc" id="L1084">						defined.addAll(__attvalues(ClassType.EDGE, id));</span>
+<span class="nc" id="L1085">						break;</span>
+					case SPELLS:
+<span class="nc" id="L1087">						__spells();</span>
+<span class="nc" id="L1088">						break;</span>
+					case COLOR:
+<span class="nc" id="L1090">						__color(ClassType.EDGE, id);</span>
+<span class="nc" id="L1091">						break;</span>
+					case THICKNESS:
+<span class="nc" id="L1093">						__thickness(id);</span>
+<span class="nc" id="L1094">						break;</span>
+					case SHAPE:
+<span class="nc" id="L1096">						__edge_shape(id);</span>
+<span class="nc" id="L1097">						break;</span>
+					default:
+<span class="nc" id="L1099">						newParseError(e, true,</span>
+<span class="nc" id="L1100">								&quot;edge children should be one of 'attvalues', 'color', 'thicknes', 'shape' or 'spells'&quot;);</span>
+					}
+<span class="nc" id="L1102">				} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L1103">					newParseError(e, true, &quot;unknown tag '%s'&quot;, e.asStartElement().getName().getLocalPart());</span>
+				}
+
+<span class="nc" id="L1106">				e = getNextEvent();</span>
+			}
+
+<span class="nc bnc" id="L1109" title="All 2 branches missed.">			for (String key : edgeAttributesDefinition.keySet()) {</span>
+<span class="nc bnc" id="L1110" title="All 2 branches missed.">				if (!defined.contains(key))</span>
+<span class="nc" id="L1111">					sendEdgeAttributeAdded(sourceId, id, key, edgeAttributesDefinition.get(key).def);</span>
+			}
+
+<span class="nc" id="L1114">			checkValid(e, XMLEvent.END_ELEMENT, &quot;edge&quot;);</span>
+<span class="nc" id="L1115">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: EDGESHAPE
+		 * attributes 	: EDGESHAPEAttributes { VALUE!, START, STARTOPEN, END, ENDOPEN }
+		 * structure 	: SPELLS ?
+		 * &lt;/pre&gt;
+		 */
+		@SuppressWarnings(&quot;unused&quot;)
+		private void __edge_shape(String edgeId) throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;EDGESHAPEAttribute, String&gt; attributes;
+			EdgeShapeType type;
+
+<span class="nc" id="L1130">			e = getNextEvent();</span>
+<span class="nc" id="L1131">			checkValid(e, XMLEvent.START_ELEMENT, &quot;shape&quot;);</span>
+
+<span class="nc" id="L1133">			attributes = getAttributes(EDGESHAPEAttribute.class, e.asStartElement());</span>
+<span class="nc" id="L1134">			checkRequiredAttributes(e, attributes, EDGESHAPEAttribute.VALUE);</span>
+
+			try {
+<span class="nc" id="L1137">				type = EdgeShapeType.valueOf(toConstantName(attributes.get(EDGESHAPEAttribute.VALUE)));</span>
+<span class="nc" id="L1138">			} catch (IllegalArgumentException ex) {</span>
+<span class="nc" id="L1139">				newParseError(e, true, &quot;'value' of shape should be one of 'solid', 'dotted', 'dashed' or 'double'&quot;);</span>
+			}
+
+			// TODO Handle shape of edges
+
+<span class="nc" id="L1144">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L1146" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;spells&quot;)) {</span>
+<span class="nc" id="L1147">				pushback(e);</span>
+
+<span class="nc" id="L1149">				__spells();</span>
+<span class="nc" id="L1150">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L1153">			checkValid(e, XMLEvent.END_ELEMENT, &quot;shape&quot;);</span>
+<span class="nc" id="L1154">		}</span>
+
+		/**
+		 * &lt;pre&gt;
+		 * name 		: THICKNESS
+		 * attributes 	: THICKNESSAttribute { VALUE!, START, STARTOPEN, END, ENDOPEN }
+		 * structure 	: SPELLS ?
+		 * &lt;/pre&gt;
+		 */
+		private void __thickness(String edgeId) throws IOException, XMLStreamException {
+			XMLEvent e;
+			EnumMap&lt;THICKNESSAttribute, String&gt; attributes;
+
+<span class="nc" id="L1167">			e = getNextEvent();</span>
+<span class="nc" id="L1168">			checkValid(e, XMLEvent.START_ELEMENT, &quot;thickness&quot;);</span>
+
+<span class="nc" id="L1170">			attributes = getAttributes(THICKNESSAttribute.class, e.asStartElement());</span>
+
+<span class="nc" id="L1172">			checkRequiredAttributes(e, attributes, THICKNESSAttribute.VALUE);</span>
+
+<span class="nc" id="L1174">			e = getNextEvent();</span>
+
+<span class="nc bnc" id="L1176" title="All 2 branches missed.">			if (isEvent(e, XMLEvent.START_ELEMENT, &quot;spells&quot;)) {</span>
+<span class="nc" id="L1177">				pushback(e);</span>
+
+<span class="nc" id="L1179">				__spells();</span>
+<span class="nc" id="L1180">				e = getNextEvent();</span>
+			}
+
+<span class="nc" id="L1183">			checkValid(e, XMLEvent.END_ELEMENT, &quot;thickness&quot;);</span>
+<span class="nc" id="L1184">		}</span>
+	}
+
+	public static interface GEXFConstants {
+<span class="nc" id="L1188">		public static enum Balise {</span>
+<span class="nc" id="L1189">			GEXF, GRAPH, META, CREATOR, KEYWORDS, DESCRIPTION, NODES, NODE, EDGES, EDGE, COLOR, POSITION, SIZE, SHAPE, THICKNESS, DEFAULT, OPTIONS, ATTVALUES, PARENTS, SPELLS</span>
+		}
+
+<span class="nc" id="L1192">		public static enum GEXFAttribute {</span>
+<span class="nc" id="L1193">			XMLNS, VERSION</span>
+		}
+
+<span class="nc" id="L1196">		public static enum METAAttribute {</span>
+<span class="nc" id="L1197">			LASTMODIFIEDDATE</span>
+		}
+
+<span class="nc" id="L1200">		public static enum GRAPHAttribute {</span>
+<span class="nc" id="L1201">			TIMEFORMAT, START, STARTOPEN, END, ENDOPEN, DEFAULTEDGETYPE, IDTYPE, MODE</span>
+		}
+
+<span class="nc" id="L1204">		public static enum ATTRIBUTESAttribute {</span>
+<span class="nc" id="L1205">			CLASS, MODE, START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1208">		public static enum ATTRIBUTEAttribute {</span>
+<span class="nc" id="L1209">			ID, TITLE, TYPE</span>
+		}
+
+<span class="nc" id="L1212">		public static enum NODESAttribute {</span>
+<span class="nc" id="L1213">			COUNT</span>
+		}
+
+<span class="nc" id="L1216">		public static enum NODEAttribute {</span>
+<span class="nc" id="L1217">			START, STARTOPEN, END, ENDOPEN, PID, ID, LABEL</span>
+		}
+
+<span class="nc" id="L1220">		public static enum ATTVALUEAttribute {</span>
+<span class="nc" id="L1221">			FOR, VALUE, START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1224">		public static enum PARENTAttribute {</span>
+<span class="nc" id="L1225">			FOR</span>
+		}
+
+<span class="nc" id="L1228">		public static enum EDGESAttribute {</span>
+<span class="nc" id="L1229">			COUNT</span>
+		}
+
+<span class="nc" id="L1232">		public static enum SPELLAttribute {</span>
+<span class="nc" id="L1233">			START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1236">		public static enum COLORAttribute {</span>
+<span class="nc" id="L1237">			R, G, B, A, START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1240">		public static enum POSITIONAttribute {</span>
+<span class="nc" id="L1241">			X, Y, Z, START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1244">		public static enum SIZEAttribute {</span>
+<span class="nc" id="L1245">			VALUE, START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1248">		public static enum NODESHAPEAttribute {</span>
+<span class="nc" id="L1249">			VALUE, URI, START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1252">		public static enum EDGEAttribute {</span>
+<span class="nc" id="L1253">			START, STARTOPEN, END, ENDOPEN, ID, TYPE, LABEL, SOURCE, TARGET, WEIGHT</span>
+		}
+
+<span class="nc" id="L1256">		public static enum THICKNESSAttribute {</span>
+<span class="nc" id="L1257">			VALUE, START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1260">		public static enum EDGESHAPEAttribute {</span>
+<span class="nc" id="L1261">			VALUE, START, STARTOPEN, END, ENDOPEN</span>
+		}
+
+<span class="nc" id="L1264">		public static enum IDType {</span>
+<span class="nc" id="L1265">			INTEGER, STRING</span>
+		}
+
+<span class="nc" id="L1268">		public static enum ModeType {</span>
+<span class="nc" id="L1269">			STATIC, DYNAMIC</span>
+		}
+
+<span class="nc" id="L1272">		public static enum WeightType {</span>
+<span class="nc" id="L1273">			FLOAT</span>
+		}
+
+<span class="nc" id="L1276">		public static enum EdgeType {</span>
+<span class="nc" id="L1277">			DIRECTED, UNDIRECTED, MUTUAL</span>
+		}
+
+<span class="nc" id="L1280">		public static enum NodeShapeType {</span>
+<span class="nc" id="L1281">			DISC, SQUARE, TRIANGLE, DIAMOND, IMAGE</span>
+		}
+
+<span class="nc" id="L1284">		public static enum EdgeShapeType {</span>
+<span class="nc" id="L1285">			SOLID, DOTTED, DASHED, DOUBLE</span>
+		}
+
+<span class="nc" id="L1288">		public static enum AttributeType {</span>
+<span class="nc" id="L1289">			INTEGER, LONG, FLOAT, DOUBLE, BOOLEAN, ANYURI, LISTSTRING, STRING</span>
+		}
+
+<span class="nc" id="L1292">		public static enum ClassType {</span>
+<span class="nc" id="L1293">			NODE, EDGE</span>
+		}
+
+<span class="nc" id="L1296">		public static enum TimeFormatType {</span>
+<span class="nc" id="L1297">			INTEGER, DOUBLE, DATE, DATETIME</span>
+		}
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

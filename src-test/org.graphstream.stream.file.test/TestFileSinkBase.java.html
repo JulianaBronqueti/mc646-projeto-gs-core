@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestFileSinkBase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.test</a> &gt; <span class="el_source">TestFileSinkBase.java</span></div><h1>TestFileSinkBase.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.test;
+
+import static org.junit.Assert.*;
+
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.stream.file.FileSink;
+import org.graphstream.stream.file.FileSource;
+import org.junit.Before;
+import org.junit.Test;
+
+/**
+ * Base for tests on descendants of {@link org.graphstream.stream.file.FileSink}
+ * .
+ * 
+ * &lt;p&gt;
+ * This files does all the tests. To implement a test for a specific file
+ * format, you have only to implement/override two methods :
+ * &lt;ul&gt;
+ * &lt;li&gt;Override the {@link #graphFileExtension()} method that will return the
+ * name of a file with the correct extension for the file format.&lt;/li&gt;
+ * &lt;li&gt;Implement the {@link #setup()} method that initialise the {@link #input}
+ * and {@link #output} fields. These fields contain an instance of the
+ * {@link org.graphstream.stream.file.FileSink} you want to test and the
+ * corresponding {@link org.graphstream.stream.file.FileSource} for reading back
+ * the results of an output and test it.&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * Some tests may not be appropriate for some graph formats :
+ * &lt;ul&gt;
+ * &lt;li&gt;If your graph format does not support edge identifiers, set
+ * {@link #formatHandlesEdgesIDs} to false.&lt;/li&gt;
+ * &lt;li&gt;If your graph format does not support dynamic graphs, set
+ * {@link #formatHandleDynamics} to false.&lt;/li&gt;
+ * &lt;li&gt;If your graph format does not support attributes, set
+ * {@link #formatHandlesAttributes} to false.&lt;/li&gt;
+ * &lt;/ul&gt;
+ * By default all these settings are set to true. You can change them in the
+ * {@link #setup()} method.
+ * &lt;/p&gt;
+ */
+<span class="nc" id="L81">public abstract class TestFileSinkBase {</span>
+	// Attribute
+
+	protected Graph outGraph;
+	protected Graph inGraph;
+	protected FileSource input;
+	protected FileSink output;
+
+<span class="nc" id="L89">	protected boolean formatHandlesEdgesIDs = true;</span>
+<span class="nc" id="L90">	protected boolean formatHandlesAttributes = true;</span>
+<span class="nc" id="L91">	protected boolean formatHandleDynamics = true;</span>
+
+	protected File theFile;
+
+	// To implement or override
+
+	@Before
+	public void createTheFile() {
+		try {
+<span class="nc" id="L100">			theFile = File.createTempFile(&quot;test_&quot;, graphFileExtension());</span>
+<span class="nc" id="L101">		} catch (IOException e) {</span>
+<span class="nc" id="L102">			fail(&quot;Can not create temporary file&quot;);</span>
+		}
+<span class="nc" id="L104">	}</span>
+
+	/**
+	 * Method to implement to create the {@link #input} and {@link #output} fields.
+	 * These fields contain the instance of the
+	 * {@link org.graphstream.stream.file.FileSource} and
+	 * {@link org.graphstream.stream.file.FileSink} to test.
+	 */
+	@Before
+	public abstract void setup();
+
+	/**
+	 * Return the name of a graph file in the current graph output format. The name
+	 * of the file must remain the same.
+	 */
+	protected abstract String graphFileExtension();
+
+	// Test
+
+	@Before
+	public void setup2() {
+<span class="nc" id="L125">		outGraph = new MultiGraph(&quot;out&quot;);</span>
+<span class="nc" id="L126">		inGraph = new MultiGraph(&quot;in&quot;);</span>
+<span class="nc" id="L127">	}</span>
+
+	@Test
+	public void test_UndirectedTriangle_WriteAll_FileName() {
+<span class="nc" id="L131">		createUndirectedTriangle();</span>
+
+		try {
+<span class="nc" id="L134">			output.writeAll(outGraph, theFile.getAbsolutePath());</span>
+<span class="nc" id="L135">			input.addSink(inGraph);</span>
+<span class="nc" id="L136">			input.readAll(theFile.getAbsolutePath());</span>
+<span class="nc" id="L137">			testUndirectedTriangle();</span>
+<span class="nc" id="L138">		} catch (IOException e) {</span>
+<span class="nc" id="L139">			e.printStackTrace();</span>
+<span class="nc" id="L140">			fail(&quot;Should not happen !&quot;);</span>
+		}
+<span class="nc" id="L142">	}</span>
+
+	@Test
+	public void test_UndirectedTriangle_WriteAll_Stream() {
+<span class="nc" id="L146">		createUndirectedTriangle();</span>
+
+		try {
+<span class="nc" id="L149">			output.writeAll(outGraph, new FileOutputStream(theFile.getAbsolutePath()));</span>
+<span class="nc" id="L150">			input.addSink(inGraph);</span>
+<span class="nc" id="L151">			input.readAll(theFile.getAbsolutePath());</span>
+<span class="nc" id="L152">			testUndirectedTriangle();</span>
+<span class="nc" id="L153">		} catch (IOException e) {</span>
+<span class="nc" id="L154">			e.printStackTrace();</span>
+<span class="nc" id="L155">			fail(&quot;Should not happen !&quot;);</span>
+		}
+<span class="nc" id="L157">	}</span>
+
+	@Test
+	public void test_UndirectedTriangle_ByEvent() {
+		try {
+<span class="nc" id="L162">			output.begin(theFile.getAbsolutePath());</span>
+<span class="nc" id="L163">			output.nodeAdded(&quot;?&quot;, 1, &quot;A&quot;);</span>
+<span class="nc" id="L164">			output.nodeAdded(&quot;?&quot;, 2, &quot;B&quot;);</span>
+<span class="nc" id="L165">			output.nodeAdded(&quot;?&quot;, 3, &quot;C&quot;);</span>
+<span class="nc" id="L166">			output.edgeAdded(&quot;?&quot;, 4, &quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, false);</span>
+<span class="nc" id="L167">			output.edgeAdded(&quot;?&quot;, 5, &quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, false);</span>
+<span class="nc" id="L168">			output.edgeAdded(&quot;?&quot;, 6, &quot;CA&quot;, &quot;C&quot;, &quot;A&quot;, false);</span>
+<span class="nc" id="L169">			output.end();</span>
+
+<span class="nc" id="L171">			input.addSink(inGraph);</span>
+<span class="nc" id="L172">			input.readAll(theFile.getAbsolutePath());</span>
+<span class="nc" id="L173">			testUndirectedTriangle();</span>
+<span class="nc" id="L174">		} catch (IOException e) {</span>
+<span class="nc" id="L175">			e.printStackTrace();</span>
+<span class="nc" id="L176">			fail(&quot;Should not happen !&quot;);</span>
+		}
+<span class="nc" id="L178">	}</span>
+
+	@Test
+	public void test_DirectedTriangle() {
+<span class="nc" id="L182">		createDirectedTriangle();</span>
+
+		try {
+<span class="nc" id="L185">			output.writeAll(outGraph, new FileOutputStream(theFile.getAbsolutePath()));</span>
+<span class="nc" id="L186">			input.addSink(inGraph);</span>
+<span class="nc" id="L187">			input.readAll(theFile.getAbsolutePath());</span>
+<span class="nc" id="L188">			testDirectedTriangle();</span>
+<span class="nc" id="L189">		} catch (IOException e) {</span>
+<span class="nc" id="L190">			e.printStackTrace();</span>
+<span class="nc" id="L191">			fail(&quot;Should not happen !&quot;);</span>
+		}
+<span class="nc" id="L193">	}</span>
+
+	@Test
+	public void test_Attributes() {
+<span class="nc bnc" id="L197" title="All 2 branches missed.">		if (formatHandlesAttributes) {</span>
+<span class="nc" id="L198">			createAttributedTriangle();</span>
+
+			try {
+<span class="nc" id="L201">				output.writeAll(outGraph, new FileOutputStream(theFile.getAbsolutePath()));</span>
+<span class="nc" id="L202">				input.addSink(inGraph);</span>
+<span class="nc" id="L203">				input.readAll(theFile.getAbsolutePath());</span>
+
+<span class="nc" id="L205">				testAttributedTriangle();</span>
+<span class="nc" id="L206">			} catch (IOException e) {</span>
+<span class="nc" id="L207">				e.printStackTrace();</span>
+<span class="nc" id="L208">				fail(&quot;Should not happen !&quot;);</span>
+			} finally {
+				// removeFile(theFile.getAbsolutePath());
+			}
+		}
+<span class="nc" id="L213">	}</span>
+
+	@Test
+	public void test_Dynamic() {
+<span class="nc bnc" id="L217" title="All 2 branches missed.">		if (formatHandleDynamics) {</span>
+			try {
+<span class="nc" id="L219">				output.begin(new FileOutputStream(theFile.getAbsolutePath()));</span>
+<span class="nc" id="L220">				outGraph.addSink(output);</span>
+<span class="nc" id="L221">				outGraph.stepBegins(0);</span>
+<span class="nc" id="L222">				outGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L223">				outGraph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L224">				outGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L225">				outGraph.stepBegins(1);</span>
+<span class="nc" id="L226">				outGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L227">				outGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;);</span>
+<span class="nc" id="L228">				outGraph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;);</span>
+<span class="nc" id="L229">				outGraph.stepBegins(2);</span>
+<span class="nc" id="L230">				outGraph.setAttribute(&quot;a&quot;, 1);</span>
+<span class="nc" id="L231">				outGraph.setAttribute(&quot;b&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L232">				outGraph.getNode(&quot;A&quot;).setAttribute(&quot;a&quot;, 1);</span>
+<span class="nc" id="L233">				outGraph.getNode(&quot;B&quot;).setAttribute(&quot;b&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L234">				outGraph.getNode(&quot;C&quot;).setAttribute(&quot;c&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L235">				outGraph.stepBegins(3);</span>
+<span class="nc" id="L236">				outGraph.removeNode(&quot;A&quot;);</span>
+<span class="nc" id="L237">				outGraph.stepBegins(4);</span>
+<span class="nc" id="L238">				outGraph.removeEdge(&quot;BC&quot;);</span>
+<span class="nc" id="L239">				output.end();</span>
+
+<span class="nc" id="L241">				input.addSink(inGraph);</span>
+<span class="nc" id="L242">				input.begin(theFile.getAbsolutePath());</span>
+<span class="nc" id="L243">				testDynamicTriangleStep0();</span>
+<span class="nc" id="L244">				input.nextStep();</span>
+<span class="nc" id="L245">				testDynamicTriangleStep0_1();</span>
+<span class="nc" id="L246">				input.nextStep();</span>
+<span class="nc" id="L247">				testDynamicTriangleStep1_2();</span>
+<span class="nc" id="L248">				input.nextStep();</span>
+<span class="nc" id="L249">				testDynamicTriangleStep2_3();</span>
+<span class="nc" id="L250">				input.nextStep();</span>
+<span class="nc" id="L251">				testDynamicTriangleStep3_4();</span>
+<span class="nc" id="L252">				input.nextStep();</span>
+<span class="nc" id="L253">				testDynamicTriangleStep4();</span>
+<span class="nc" id="L254">				input.end();</span>
+<span class="nc" id="L255">			} catch (IOException e) {</span>
+<span class="nc" id="L256">				e.printStackTrace();</span>
+<span class="nc" id="L257">				fail(&quot;Should not happen !&quot;);</span>
+			}
+		}
+<span class="nc" id="L260">	}</span>
+
+	/**
+	 * Create a simple undirected graph triangle (A--B--C--A).
+	 */
+	protected void createUndirectedTriangle() {
+<span class="nc" id="L266">		outGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L267">		outGraph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L268">		outGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L269">		outGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, false);</span>
+<span class="nc" id="L270">		outGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, false);</span>
+<span class="nc" id="L271">		outGraph.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;, false);</span>
+<span class="nc" id="L272">	}</span>
+
+	/**
+	 * Create a directed triangle (A-&gt;B--C&lt;-A).
+	 */
+	protected void createDirectedTriangle() {
+<span class="nc" id="L278">		outGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L279">		outGraph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L280">		outGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L281">		outGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, true);</span>
+<span class="nc" id="L282">		outGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, false);</span>
+<span class="nc" id="L283">		outGraph.addEdge(&quot;CA&quot;, &quot;A&quot;, &quot;C&quot;, true);</span>
+<span class="nc" id="L284">	}</span>
+
+	protected void createAttributedTriangle() {
+<span class="nc" id="L287">		outGraph.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L288">		outGraph.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L289">		outGraph.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L290">		outGraph.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, true);</span>
+<span class="nc" id="L291">		outGraph.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, false);</span>
+<span class="nc" id="L292">		outGraph.addEdge(&quot;CA&quot;, &quot;A&quot;, &quot;C&quot;, true);</span>
+<span class="nc" id="L293">		outGraph.setAttribute(&quot;a&quot;, 1);</span>
+<span class="nc" id="L294">		outGraph.setAttribute(&quot;b&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L295">		outGraph.getNode(&quot;A&quot;).setAttribute(&quot;a&quot;, 1);</span>
+<span class="nc" id="L296">		outGraph.getNode(&quot;B&quot;).setAttribute(&quot;b&quot;, &quot;foo&quot;);</span>
+<span class="nc" id="L297">		outGraph.getNode(&quot;C&quot;).setAttribute(&quot;c&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L298">	}</span>
+
+	protected void testUndirectedTriangle() {
+<span class="nc" id="L301">		assertEquals(3, inGraph.getNodeCount());</span>
+<span class="nc" id="L302">		assertEquals(3, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L304">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L305">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L306">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L308">		assertNotNull(A);</span>
+<span class="nc" id="L309">		assertNotNull(B);</span>
+<span class="nc" id="L310">		assertNotNull(C);</span>
+
+<span class="nc bnc" id="L312" title="All 2 branches missed.">		if (formatHandlesEdgesIDs) {</span>
+<span class="nc" id="L313">			assertNotNull(inGraph.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L314">			assertNotNull(inGraph.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L315">			assertNotNull(inGraph.getEdge(&quot;CA&quot;));</span>
+		}
+
+<span class="nc" id="L318">		assertTrue(A.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L319">		assertTrue(B.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L320">		assertTrue(C.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L321">		assertTrue(A.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L322">		assertTrue(B.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L323">		assertTrue(C.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L324">	}</span>
+
+	protected void testDirectedTriangle() {
+<span class="nc" id="L327">		assertEquals(3, inGraph.getNodeCount());</span>
+<span class="nc" id="L328">		assertEquals(3, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L330">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L331">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L332">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L334">		assertNotNull(A);</span>
+<span class="nc" id="L335">		assertNotNull(B);</span>
+<span class="nc" id="L336">		assertNotNull(C);</span>
+
+<span class="nc" id="L338">		assertTrue(A.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L339">		assertTrue(A.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L340">		assertFalse(B.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L341">		assertTrue(B.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L342">		assertFalse(C.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L343">		assertTrue(C.hasEdgeToward(&quot;B&quot;));</span>
+
+<span class="nc" id="L345">		Edge AB = A.getEdgeToward(&quot;B&quot;);</span>
+<span class="nc" id="L346">		Edge BC = B.getEdgeToward(&quot;C&quot;);</span>
+<span class="nc" id="L347">		Edge CA = A.getEdgeToward(&quot;C&quot;);</span>
+
+<span class="nc" id="L349">		assertTrue(AB.isDirected());</span>
+<span class="nc" id="L350">		assertFalse(BC.isDirected());</span>
+<span class="nc" id="L351">		assertTrue(CA.isDirected());</span>
+<span class="nc" id="L352">	}</span>
+
+	protected void testAttributedTriangle() {
+<span class="nc" id="L355">		assertEquals(3, inGraph.getNodeCount());</span>
+<span class="nc" id="L356">		assertEquals(3, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L358">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L359">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L360">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L362">		assertNotNull(A);</span>
+<span class="nc" id="L363">		assertNotNull(B);</span>
+<span class="nc" id="L364">		assertNotNull(C);</span>
+
+<span class="nc" id="L366">		assertEquals(1.0, ((Number) inGraph.getAttribute(&quot;a&quot;)).doubleValue(), 1E-12);</span>
+<span class="nc" id="L367">		assertEquals(&quot;foo&quot;, inGraph.getAttribute(&quot;b&quot;));</span>
+
+<span class="nc" id="L369">		assertEquals(1.0, ((Number) A.getAttribute(&quot;a&quot;)).doubleValue(), 1E-12);</span>
+<span class="nc" id="L370">		assertEquals(&quot;foo&quot;, B.getAttribute(&quot;b&quot;));</span>
+<span class="nc" id="L371">		assertEquals(&quot;bar&quot;, C.getAttribute(&quot;c&quot;));</span>
+<span class="nc" id="L372">	}</span>
+
+	protected void testDynamicTriangleStep0() {
+<span class="nc" id="L375">		assertEquals(0, inGraph.getNodeCount());</span>
+<span class="nc" id="L376">		assertEquals(0, inGraph.getEdgeCount());</span>
+<span class="nc" id="L377">	}</span>
+
+	protected void testDynamicTriangleStep0_1() {
+<span class="nc" id="L380">		assertEquals(3, inGraph.getNodeCount());</span>
+<span class="nc" id="L381">		assertEquals(0, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L383">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L384">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L385">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L387">		assertNotNull(A);</span>
+<span class="nc" id="L388">		assertNotNull(B);</span>
+<span class="nc" id="L389">		assertNotNull(C);</span>
+
+<span class="nc" id="L391">		assertEquals(0, A.getAttributeCount());</span>
+<span class="nc" id="L392">		assertEquals(0, B.getAttributeCount());</span>
+<span class="nc" id="L393">		assertEquals(0, C.getAttributeCount());</span>
+<span class="nc" id="L394">	}</span>
+
+	protected void testDynamicTriangleStep1_2() {
+<span class="nc" id="L397">		assertEquals(3, inGraph.getNodeCount());</span>
+<span class="nc" id="L398">		assertEquals(3, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L400">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L401">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L402">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L404">		assertNotNull(A);</span>
+<span class="nc" id="L405">		assertNotNull(B);</span>
+<span class="nc" id="L406">		assertNotNull(C);</span>
+
+<span class="nc" id="L408">		assertTrue(A.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L409">		assertTrue(A.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L410">		assertTrue(B.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L411">		assertTrue(B.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L412">		assertTrue(C.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L413">		assertTrue(C.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L414">	}</span>
+
+	protected void testDynamicTriangleStep2_3() {
+<span class="nc" id="L417">		assertEquals(3, inGraph.getNodeCount());</span>
+<span class="nc" id="L418">		assertEquals(3, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L420">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L421">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L422">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L424">		assertNotNull(A);</span>
+<span class="nc" id="L425">		assertNotNull(B);</span>
+<span class="nc" id="L426">		assertNotNull(C);</span>
+
+<span class="nc" id="L428">		assertTrue(inGraph.hasAttribute(&quot;a&quot;));</span>
+<span class="nc" id="L429">		assertTrue(inGraph.hasAttribute(&quot;b&quot;));</span>
+<span class="nc" id="L430">		assertTrue(A.hasAttribute(&quot;a&quot;));</span>
+<span class="nc" id="L431">		assertTrue(B.hasAttribute(&quot;b&quot;));</span>
+<span class="nc" id="L432">		assertTrue(C.hasAttribute(&quot;c&quot;));</span>
+
+<span class="nc" id="L434">		assertEquals(Integer.valueOf(1), inGraph.getAttribute(&quot;a&quot;));</span>
+<span class="nc" id="L435">		assertEquals(&quot;foo&quot;, inGraph.getAttribute(&quot;b&quot;));</span>
+<span class="nc" id="L436">		assertEquals(Integer.valueOf(1), A.getAttribute(&quot;a&quot;));</span>
+<span class="nc" id="L437">		assertEquals(&quot;foo&quot;, B.getAttribute(&quot;b&quot;));</span>
+<span class="nc" id="L438">		assertEquals(&quot;bar&quot;, C.getAttribute(&quot;c&quot;));</span>
+<span class="nc" id="L439">	}</span>
+
+	protected void testDynamicTriangleStep3_4() {
+<span class="nc" id="L442">		assertEquals(2, inGraph.getNodeCount());</span>
+<span class="nc" id="L443">		assertEquals(1, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L445">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L446">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L447">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L449">		assertNull(A);</span>
+<span class="nc" id="L450">		assertNotNull(B);</span>
+<span class="nc" id="L451">		assertNotNull(C);</span>
+
+<span class="nc" id="L453">		assertFalse(B.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L454">		assertTrue(B.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L455">		assertFalse(C.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L456">		assertTrue(C.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L457">	}</span>
+
+	protected void testDynamicTriangleStep4() {
+<span class="nc" id="L460">		assertEquals(2, inGraph.getNodeCount());</span>
+<span class="nc" id="L461">		assertEquals(0, inGraph.getEdgeCount());</span>
+
+<span class="nc" id="L463">		Node A = inGraph.getNode(&quot;A&quot;);</span>
+<span class="nc" id="L464">		Node B = inGraph.getNode(&quot;B&quot;);</span>
+<span class="nc" id="L465">		Node C = inGraph.getNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L467">		assertNull(A);</span>
+<span class="nc" id="L468">		assertNotNull(B);</span>
+<span class="nc" id="L469">		assertNotNull(C);</span>
+
+<span class="nc" id="L471">		assertFalse(B.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L472">		assertFalse(B.hasEdgeToward(&quot;C&quot;));</span>
+<span class="nc" id="L473">		assertFalse(C.hasEdgeToward(&quot;A&quot;));</span>
+<span class="nc" id="L474">		assertFalse(C.hasEdgeToward(&quot;B&quot;));</span>
+<span class="nc" id="L475">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

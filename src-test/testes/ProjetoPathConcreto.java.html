@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ProjetoPathConcreto.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">testes</a> &gt; <span class="el_source">ProjetoPathConcreto.java</span></div><h1>ProjetoPathConcreto.java</h1><pre class="source lang-java linenums">package testes;
+
+import org.graphstream.graph.Path;
+
+import org.graphstream.graph.implementations.SingleGraph;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.Node;
+
+import java.nio.charset.Charset;
+import java.util.List;
+import java.util.Random;
+
+import org.graphstream.graph.Edge;
+
+import org.graphwalker.core.machine.ExecutionContext;
+import org.graphwalker.java.annotation.GraphWalker;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+
+@GraphWalker(value = &quot;random(edge_coverage(100))&quot;, start = &quot;v_Inicio&quot;)
+<span class="fc" id="L21">public class ProjetoPathConcreto extends ExecutionContext implements ProjetoPathModel {</span>
+
+<span class="fc" id="L23">	Path path = null;</span>
+<span class="fc" id="L24">	static Graph graph = new SingleGraph(&quot;graph&quot;);</span>
+<span class="fc" id="L25">	boolean illegalArgument = false;</span>
+
+	private void imprimeGrafo() {
+		// Verificar lista de nós
+<span class="fc" id="L29">		System.out.printf(&quot;Contagem de nós: %d\n&quot;, path.getNodeCount());		</span>
+<span class="fc" id="L30">		System.out.printf(&quot;Lista de nós: %s\n&quot;, path.getNodePath().toString());</span>
+		
+		// Verificar lista de arestas
+<span class="fc" id="L33">		int quantidadeArestas = path.getEdgeCount();</span>
+<span class="fc" id="L34">		System.out.printf(&quot;Contagem de arestas: %d\n&quot;, quantidadeArestas);</span>
+<span class="fc" id="L35">		System.out.printf(&quot;Lista de arestas: %s\n&quot;, path.getEdgePath().toString());</span>
+		
+		// Verificando últimos valores da pilha
+<span class="fc bfc" id="L38" title="All 2 branches covered.">		if(quantidadeArestas != 0) {</span>
+<span class="fc" id="L39">			Edge lastEdge = path.peekEdge();</span>
+<span class="fc" id="L40">			System.out.printf(&quot;Última aresta: %s\n&quot;, lastEdge.getId());</span>
+			
+<span class="fc" id="L42">			Node lastNode = path.peekNode();</span>
+<span class="fc" id="L43">			System.out.printf(&quot;Último nó: %s\n\n&quot;, lastNode.getId());</span>
+		}
+		
+		// Transformar em string
+<span class="fc" id="L47">		System.out.printf(&quot;toString(): %s\n\n&quot;, path.toString());</span>
+<span class="fc" id="L48">	}</span>
+	
+	@Override
+	public void v_Inicio(){
+<span class="fc" id="L52">		System.out.println(&quot;Running: v_Inicio\n&quot;);</span>
+<span class="fc" id="L53">		Assertions.assertNull(path);</span>
+<span class="fc" id="L54">	};</span>
+
+	@Override
+	public void e_CriaCaminho(){
+<span class="fc" id="L58">		System.out.println(&quot;Running: e_CriaCaminho\n&quot;);</span>
+<span class="fc" id="L59">		path = new Path();</span>
+<span class="fc" id="L60">	};</span>
+
+	@Override
+	public void v_CaminhoVazio(){
+<span class="fc" id="L64">		System.out.println(&quot;Running: v_CaminhoVazio\n&quot;);</span>
+<span class="fc" id="L65">		Assertions.assertNotNull(path);				// Caminho instanciado</span>
+<span class="fc" id="L66">		Assertions.assertNull(path.getRoot());		// Raiz vazia</span>
+<span class="fc" id="L67">		Assertions.assertTrue(path.empty());		// Caminho vazio</span>
+<span class="fc" id="L68">		imprimeGrafo();</span>
+<span class="fc" id="L69">	};</span>
+	
+	static String geraIdDeTamanho5() {
+<span class="fc" id="L72">		int n = 5;</span>
+<span class="fc" id="L73">        byte[] array = new byte[256];</span>
+<span class="fc" id="L74">        new Random().nextBytes(array);</span>
+  
+<span class="fc" id="L76">        String randomString = new String(array, Charset.forName(&quot;UTF-8&quot;));</span>
+   
+        // Resultado
+<span class="fc" id="L79">        StringBuffer r = new StringBuffer();</span>
+  
+        // Concatena os 5 caracteres alfanuméricos gerados com a função random
+<span class="fc bfc" id="L82" title="All 2 branches covered.">        for (int k = 0; k &lt; randomString.length(); k++) {</span>
+<span class="fc" id="L83">            char ch = randomString.charAt(k);</span>
+  
+<span class="fc bfc" id="L85" title="All 4 branches covered.">            if (((ch &gt;= 'a' &amp;&amp; ch &lt;= 'z')</span>
+<span class="fc bfc" id="L86" title="All 4 branches covered.">                 || (ch &gt;= 'A' &amp;&amp; ch &lt;= 'Z')</span>
+<span class="fc bfc" id="L87" title="All 4 branches covered.">                 || (ch &gt;= '0' &amp;&amp; ch &lt;= '9'))</span>
+<span class="fc bfc" id="L88" title="All 2 branches covered.">                &amp;&amp; (n &gt; 0)) {</span>
+<span class="fc" id="L89">                r.append(ch);</span>
+<span class="fc" id="L90">                n--;</span>
+            }
+        }
+  
+        // Retorna a string resultante
+<span class="fc" id="L95">        return r.toString();</span>
+    }
+	
+	private Node geraNoCompativel() {
+		// Gerando id aleatório
+<span class="fc" id="L100">        String id = geraIdDeTamanho5();</span>
+		
+        // Significa que já existem arestas no grafo
+<span class="fc bfc" id="L103" title="All 2 branches covered.">		if(path.size() != 0) {</span>
+<span class="fc" id="L104">			Node ultimo_no = path.peekNode();</span>
+<span class="fc" id="L105">			String id_ultimo_no = ultimo_no.getId();</span>
+<span class="pc bpc" id="L106" title="1 of 2 branches missed.">			while(id == id_ultimo_no) {	// O novo nó de destino não pode ser igual ao de origem</span>
+<span class="nc" id="L107">		        id = geraIdDeTamanho5();</span>
+			}
+		} 
+		
+<span class="fc" id="L111">		Node no = graph.addNode(id.toUpperCase());</span>
+<span class="fc" id="L112">		return no;</span>
+	};
+
+	@Override
+	public void e_DefineRaiz(){
+<span class="fc" id="L117">		System.out.println(&quot;Running: e_DefineRaiz\n&quot;);</span>
+<span class="fc" id="L118">		path.setRoot(geraNoCompativel());</span>
+<span class="fc" id="L119">	};</span>
+
+	@Override
+	public void e_RedefineRaiz() {
+<span class="fc" id="L123">		System.out.println(&quot;Running: e_RedefineRaiz\n&quot;);</span>
+<span class="fc" id="L124">		path.setRoot(geraNoCompativel());</span>
+<span class="fc" id="L125">	}</span>
+
+	@Override
+	public void v_CaminhoComRaiz(){
+<span class="fc" id="L129">		System.out.println(&quot;Running: v_CaminhoComRaiz\n&quot;);</span>
+<span class="fc" id="L130">		Assertions.assertNotNull(path);				// Caminho instanciado</span>
+<span class="fc" id="L131">		Assertions.assertNotNull(path.getRoot());	// Raiz não vazia</span>
+<span class="fc" id="L132">		Assertions.assertFalse(path.empty());		// Caminho não vazio</span>
+<span class="fc" id="L133">		imprimeGrafo();</span>
+<span class="fc" id="L134">	};</span>
+	
+private Edge geraArestaCompativel() {
+<span class="fc" id="L137">	Node no_origem = null;</span>
+	
+<span class="fc bfc" id="L139" title="All 2 branches covered.">	if(!path.empty()) {</span>
+<span class="fc" id="L140">		no_origem = path.peekNode();</span>
+<span class="fc" id="L141">	} else {</span>
+		// Criando novo nó
+<span class="fc" id="L143">		no_origem = geraNoCompativel();</span>
+	}
+	
+	// Criando novo nó
+<span class="fc" id="L147">	Node no_destino = geraNoCompativel();</span>
+	
+	// Criando edge
+<span class="fc" id="L150">	Edge edge = graph.addEdge(no_origem.getId().concat(no_destino.getId()), no_origem, no_destino);</span>
+	
+<span class="fc" id="L152">	return edge;</span>
+};
+
+	@Override
+	public void e_AdicionaAresta(){
+		try {
+<span class="fc" id="L158">			System.out.println(&quot;Running: e_AdicionaAresta\n&quot;);</span>
+<span class="fc" id="L159">			Edge edge = geraArestaCompativel();</span>
+<span class="fc" id="L160">			path.add(edge);		// Pode acontecer no caso em que a raiz ainda não foi definida, gerando erro</span>
+<span class="pc" id="L161">		} catch (java.lang.IllegalArgumentException e) {</span>
+<span class="nc" id="L162">			illegalArgument = true;</span>
+		}
+<span class="fc" id="L164">	};</span>
+	
+	@Override
+	public void e_AdicionaNoEAresta() {
+<span class="fc" id="L168">		System.out.println(&quot;Running: e_AdicionaNoEAresta\n&quot;);</span>
+<span class="fc" id="L169">		Edge edge = geraArestaCompativel();</span>
+<span class="fc" id="L170">		path.add(edge.getNode0(), edge);	// Segunda versão do método add, o qual adiciona aresta e define raiz</span>
+<span class="fc" id="L171">	}</span>
+
+	@Override
+	public void v_CaminhoComArestas(){
+<span class="fc" id="L175">		System.out.println(&quot;Running: v_CaminhoComArestas\n&quot;);</span>
+<span class="fc" id="L176">		Assertions.assertNotNull(path);				// Caminho instanciado</span>
+<span class="fc" id="L177">		Assertions.assertNotNull(path.getRoot());	// Raiz não vazia</span>
+<span class="fc" id="L178">		Assertions.assertNotEquals(0, path.size(), &quot;Tamanho do caminho está zerado.\n&quot;);</span>
+<span class="fc" id="L179">		imprimeGrafo();</span>
+<span class="fc" id="L180">	};</span>
+
+	@Override
+	public void e_RemoveAresta(){
+<span class="fc" id="L184">		System.out.println(&quot;Running: e_RemoveAresta\n&quot;);</span>
+<span class="fc" id="L185">		Edge edge_removida = path.popEdge();</span>
+<span class="fc" id="L186">		System.out.printf(&quot;A aresta removida foi: %s\n&quot;, edge_removida.toString());</span>
+<span class="fc" id="L187">	};</span>
+
+	@Override
+	public void e_RemoveNo(){
+<span class="fc" id="L191">		System.out.println(&quot;Running: e_RemoveNo\n&quot;);</span>
+<span class="fc" id="L192">		Node node_removido = path.popNode();</span>
+<span class="fc" id="L193">		System.out.printf(&quot;O nó removido foi: %s\n&quot;, node_removido.toString());</span>
+<span class="fc" id="L194">	};</span>
+
+	@Override
+	public void e_AdicionaArestaAntesDaRaiz(){
+		try {
+<span class="fc" id="L199">			System.out.println(&quot;Running: e_AdicionaArestaAntesDaRaiz\n&quot;);</span>
+<span class="fc" id="L200">			Edge edge = geraArestaCompativel();</span>
+<span class="nc" id="L201">			path.add(edge);</span>
+<span class="pc" id="L202">		} catch (java.lang.IllegalArgumentException e) {</span>
+<span class="fc" id="L203">			illegalArgument = true;</span>
+		}
+<span class="fc" id="L205">	};</span>
+	
+	private Edge geraArestaIncompativel() {
+<span class="fc" id="L208">		String id = geraIdDeTamanho5();</span>
+<span class="fc" id="L209">		Node no = graph.addNode(id);</span>
+<span class="fc" id="L210">		Edge edge = graph.addEdge(id.concat(id), no, no);</span>
+<span class="fc" id="L211">		return edge;</span>
+	}
+
+	@Override
+	public void e_AdicionaNoFonteDiferenteUltimoNoDestino(){
+		try {
+<span class="fc" id="L217">			System.out.println(&quot;Running: e_AdicionaNoFonteDiferenteUltimoNoDestino\n&quot;);</span>
+<span class="fc" id="L218">			Edge edge = geraArestaIncompativel();</span>
+<span class="nc" id="L219">			path.add(edge);</span>
+<span class="pc" id="L220">		} catch (java.lang.IllegalArgumentException e) {</span>
+<span class="fc" id="L221">			illegalArgument = true;</span>
+		}
+<span class="fc" id="L223">	};</span>
+
+	@Override
+	public void e_AdicionaNoNuloEAresta() {
+		try {
+<span class="fc" id="L228">			System.out.println(&quot;Running: e_AdicionaNoNuloEAresta\n&quot;);</span>
+<span class="fc" id="L229">			Edge edge = geraArestaCompativel();</span>
+<span class="fc" id="L230">			path.add(null, edge);	// Gera exceção</span>
+<span class="fc" id="L231">		} catch (java.lang.IllegalArgumentException e) {</span>
+<span class="fc" id="L232">			illegalArgument = true;</span>
+		}
+<span class="fc" id="L234">	}</span>
+
+	@Override
+	public void e_AdicionaNoNaoPresenteEAresta() {
+		try {
+<span class="fc" id="L239">			System.out.println(&quot;Running: e_AdicionaNoNaoPresenteEAresta\n&quot;);</span>
+<span class="fc" id="L240">			Edge edge = geraArestaCompativel();</span>
+<span class="fc" id="L241">			String id = edge.getNode0().getId();</span>
+<span class="pc bpc" id="L242" title="1 of 4 branches missed.">			while(id == edge.getNode0().getId() || id == edge.getNode1().getId()) {</span>
+<span class="fc" id="L243">				id = geraIdDeTamanho5();</span>
+			}
+<span class="fc" id="L245">			Node no = graph.addNode(id);</span>
+<span class="nc" id="L246">			path.add(no, edge);	// Gera exceção</span>
+<span class="pc" id="L247">		} catch (java.lang.IllegalArgumentException e) {</span>
+<span class="fc" id="L248">			illegalArgument = true;</span>
+		}		
+<span class="fc" id="L250">	}</span>
+
+	@Override
+	public void v_ExcecaoIllegalArgument(){
+<span class="fc" id="L254">		System.out.println(&quot;Running: v_ExcecaoIllegalArgument\n&quot;);</span>
+		// Caso a raiz seja nula, é o caso que veio de &quot;e_AdicionaArestaAntesDaRaiz&quot;. Então, testar no if, diz que está correto por si só.
+		// Caso a raiz não seja nula, é o caso que deveria vir de &quot;e_AdicionaNoFonteDiferenteUltimoNoDestino&quot;, então precisa verificar se a exceção foi lanaçada também.
+<span class="fc bfc" id="L257" title="All 2 branches covered.">		if(path.getRoot() != null) {</span>
+<span class="fc" id="L258">			Assertions.assertTrue(illegalArgument);</span>
+		}
+<span class="fc" id="L260">	};</span>
+	
+	@Override
+	public void e_Reinicia(){
+<span class="fc" id="L264">		System.out.println(&quot;Running: e_Reinicia\n&quot;);</span>
+<span class="fc" id="L265">		path.clear();</span>
+<span class="fc" id="L266">		illegalArgument = false;</span>
+<span class="fc" id="L267">		System.out.printf(&quot;Path: %s\n\n&quot;, path.toString());</span>
+<span class="fc" id="L268">		path = null;</span>
+<span class="fc" id="L269">	};</span>
+	
+	private static void graphConfig() {
+<span class="fc" id="L272">		graph.setStrict(false);</span>
+<span class="fc" id="L273">        graph.setAutoCreate(true);</span>
+<span class="fc" id="L274">	}</span>
+	
+	
+	@Test
+	public void TestPath() {
+<span class="fc" id="L279">		graphConfig();</span>
+		
+		// Sequencia de chamadas
+<span class="fc" id="L282">		v_Inicio();</span>
+<span class="fc" id="L283">		e_CriaCaminho();</span>
+<span class="fc" id="L284">		v_CaminhoVazio();</span>
+<span class="fc" id="L285">		e_AdicionaNoNaoPresenteEAresta();</span>
+<span class="fc" id="L286">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L287">		e_Reinicia();</span>
+<span class="fc" id="L288">		v_Inicio();</span>
+<span class="fc" id="L289">		e_CriaCaminho();</span>
+<span class="fc" id="L290">		v_CaminhoVazio();</span>
+<span class="fc" id="L291">		e_AdicionaNoEAresta();</span>
+<span class="fc" id="L292">		v_CaminhoComArestas();</span>
+<span class="fc" id="L293">		e_RedefineRaiz();</span>
+<span class="fc" id="L294">		v_CaminhoComArestas();</span>
+<span class="fc" id="L295">		e_RemoveNo();</span>
+<span class="fc" id="L296">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L297">		e_AdicionaNoFonteDiferenteUltimoNoDestino();</span>
+<span class="fc" id="L298">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L299">		e_Reinicia();</span>
+<span class="fc" id="L300">		v_Inicio();</span>
+<span class="fc" id="L301">		e_CriaCaminho();</span>
+<span class="fc" id="L302">		v_CaminhoVazio();</span>
+<span class="fc" id="L303">		e_DefineRaiz();</span>
+<span class="fc" id="L304">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L305">		e_AdicionaNoNuloEAresta();</span>
+<span class="fc" id="L306">		v_CaminhoComArestas();</span>
+<span class="fc" id="L307">		e_RedefineRaiz();</span>
+<span class="fc" id="L308">		v_CaminhoComArestas();</span>
+<span class="fc" id="L309">		e_RemoveNo();</span>
+<span class="fc" id="L310">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L311">		e_AdicionaNoFonteDiferenteUltimoNoDestino();</span>
+<span class="fc" id="L312">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L313">		e_Reinicia();</span>
+<span class="fc" id="L314">		v_Inicio();</span>
+<span class="fc" id="L315">		e_CriaCaminho();</span>
+<span class="fc" id="L316">		v_CaminhoVazio();</span>
+<span class="fc" id="L317">		e_DefineRaiz();</span>
+<span class="fc" id="L318">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L319">		e_AdicionaNoEAresta();</span>
+<span class="fc" id="L320">		v_CaminhoComArestas();</span>
+<span class="fc" id="L321">		e_RemoveNo();</span>
+<span class="fc" id="L322">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L323">		e_AdicionaNoEAresta();</span>
+<span class="fc" id="L324">		v_CaminhoComArestas();</span>
+<span class="fc" id="L325">		e_AdicionaNoNuloEAresta();</span>
+<span class="fc" id="L326">		v_CaminhoComArestas();</span>
+<span class="fc" id="L327">		e_RemoveAresta();</span>
+<span class="fc" id="L328">		v_CaminhoComArestas();</span>
+<span class="fc" id="L329">		e_RemoveAresta();</span>
+<span class="fc" id="L330">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L331">		e_RedefineRaiz();</span>
+<span class="fc" id="L332">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L333">		e_AdicionaNoEAresta();</span>
+<span class="fc" id="L334">		v_CaminhoComArestas();</span>
+<span class="fc" id="L335">		e_AdicionaNoNaoPresenteEAresta();</span>
+<span class="fc" id="L336">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L337">		e_Reinicia();</span>
+<span class="fc" id="L338">		v_Inicio();</span>
+<span class="fc" id="L339">		e_CriaCaminho();</span>
+<span class="fc" id="L340">		v_CaminhoVazio();</span>
+<span class="fc" id="L341">		e_AdicionaNoNuloEAresta();</span>
+<span class="fc" id="L342">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L343">		e_Reinicia();</span>
+<span class="fc" id="L344">		v_Inicio();</span>
+<span class="fc" id="L345">		e_CriaCaminho();</span>
+<span class="fc" id="L346">		v_CaminhoVazio();</span>
+<span class="fc" id="L347">		e_AdicionaNoNuloEAresta();</span>
+<span class="fc" id="L348">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L349">		e_Reinicia();</span>
+<span class="fc" id="L350">		v_Inicio();</span>
+<span class="fc" id="L351">		e_CriaCaminho();</span>
+<span class="fc" id="L352">		v_CaminhoVazio();</span>
+<span class="fc" id="L353">		e_AdicionaNoNaoPresenteEAresta();</span>
+<span class="fc" id="L354">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L355">		e_Reinicia();</span>
+<span class="fc" id="L356">		v_Inicio();</span>
+<span class="fc" id="L357">		e_CriaCaminho();</span>
+<span class="fc" id="L358">		v_CaminhoVazio();</span>
+<span class="fc" id="L359">		e_DefineRaiz();</span>
+<span class="fc" id="L360">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L361">		e_AdicionaAresta();</span>
+<span class="fc" id="L362">		v_CaminhoComArestas();</span>
+<span class="fc" id="L363">		e_AdicionaNoNuloEAresta();</span>
+<span class="fc" id="L364">		v_CaminhoComArestas();</span>
+<span class="fc" id="L365">		e_RemoveAresta();</span>
+<span class="fc" id="L366">		v_CaminhoComArestas();</span>
+<span class="fc" id="L367">		e_RedefineRaiz();</span>
+<span class="fc" id="L368">		v_CaminhoComArestas();</span>
+<span class="fc" id="L369">		e_AdicionaNoFonteDiferenteUltimoNoDestino();</span>
+<span class="fc" id="L370">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L371">		e_Reinicia();</span>
+<span class="fc" id="L372">		v_Inicio();</span>
+<span class="fc" id="L373">		e_CriaCaminho();</span>
+<span class="fc" id="L374">		v_CaminhoVazio();</span>
+<span class="fc" id="L375">		e_DefineRaiz();</span>
+<span class="fc" id="L376">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L377">		e_AdicionaNoEAresta();</span>
+<span class="fc" id="L378">		v_CaminhoComArestas();</span>
+<span class="fc" id="L379">		e_AdicionaNoEAresta();</span>
+<span class="fc" id="L380">		v_CaminhoComArestas();</span>
+<span class="fc" id="L381">		e_RemoveNo();</span>
+<span class="fc" id="L382">		v_CaminhoComArestas();</span>
+<span class="fc" id="L383">		e_RemoveNo();</span>
+<span class="fc" id="L384">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L385">		e_AdicionaAresta();</span>
+<span class="fc" id="L386">		v_CaminhoComArestas();</span>
+<span class="fc" id="L387">		e_RedefineRaiz();</span>
+<span class="fc" id="L388">		v_CaminhoComArestas();</span>
+<span class="fc" id="L389">		e_AdicionaAresta();</span>
+<span class="fc" id="L390">		v_CaminhoComArestas();</span>
+<span class="fc" id="L391">		e_AdicionaAresta();</span>
+<span class="fc" id="L392">		v_CaminhoComArestas();</span>
+<span class="fc" id="L393">		e_AdicionaAresta();</span>
+<span class="fc" id="L394">		v_CaminhoComArestas();</span>
+<span class="fc" id="L395">		e_RemoveNo();</span>
+<span class="fc" id="L396">		v_CaminhoComArestas();</span>
+<span class="fc" id="L397">		e_AdicionaNoEAresta();</span>
+<span class="fc" id="L398">		v_CaminhoComArestas();</span>
+<span class="fc" id="L399">		e_AdicionaNoNaoPresenteEAresta();</span>
+<span class="fc" id="L400">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L401">		e_Reinicia();</span>
+<span class="fc" id="L402">		v_Inicio();</span>
+<span class="fc" id="L403">		e_CriaCaminho();</span>
+<span class="fc" id="L404">		v_CaminhoVazio();</span>
+<span class="fc" id="L405">		e_AdicionaNoEAresta();</span>
+<span class="fc" id="L406">		v_CaminhoComArestas();</span>
+<span class="fc" id="L407">		e_AdicionaNoNaoPresenteEAresta();</span>
+<span class="fc" id="L408">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L409">		e_Reinicia();</span>
+<span class="fc" id="L410">		v_Inicio();</span>
+<span class="fc" id="L411">		e_CriaCaminho();</span>
+<span class="fc" id="L412">		v_CaminhoVazio();</span>
+<span class="fc" id="L413">		e_AdicionaNoNuloEAresta();</span>
+<span class="fc" id="L414">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L415">		e_Reinicia();</span>
+<span class="fc" id="L416">		v_Inicio();</span>
+<span class="fc" id="L417">		e_CriaCaminho();</span>
+<span class="fc" id="L418">		v_CaminhoVazio();</span>
+<span class="fc" id="L419">		e_DefineRaiz();</span>
+<span class="fc" id="L420">		v_CaminhoComRaiz();</span>
+<span class="fc" id="L421">		e_AdicionaNoNaoPresenteEAresta();</span>
+<span class="fc" id="L422">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L423">		e_Reinicia();</span>
+<span class="fc" id="L424">		v_Inicio();</span>
+<span class="fc" id="L425">		e_CriaCaminho();</span>
+<span class="fc" id="L426">		v_CaminhoVazio();</span>
+<span class="fc" id="L427">		e_AdicionaNoNaoPresenteEAresta();</span>
+<span class="fc" id="L428">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L429">		e_Reinicia();</span>
+<span class="fc" id="L430">		v_Inicio();</span>
+<span class="fc" id="L431">		e_CriaCaminho();</span>
+<span class="fc" id="L432">		v_CaminhoVazio();</span>
+<span class="fc" id="L433">		e_AdicionaArestaAntesDaRaiz();</span>
+<span class="fc" id="L434">		v_ExcecaoIllegalArgument();</span>
+<span class="fc" id="L435">	}</span>
+
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

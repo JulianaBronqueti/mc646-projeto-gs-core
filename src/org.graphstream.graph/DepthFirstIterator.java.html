@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>DepthFirstIterator.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph</a> &gt; <span class="el_source">DepthFirstIterator.java</span></div><h1>DepthFirstIterator.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph;
+
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class DepthFirstIterator implements Iterator&lt;Node&gt; {
+	boolean directed;
+	Graph graph;
+
+	Node[] parent;
+	Iterator&lt;Edge&gt;[] iterator;
+	int depth[];
+	Node next;
+	int maxDepth;
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+<span class="nc" id="L51">	public DepthFirstIterator(Node startNode, boolean directed) {</span>
+<span class="nc" id="L52">		this.directed = directed;</span>
+<span class="nc" id="L53">		graph = startNode.getGraph();</span>
+<span class="nc" id="L54">		int n = graph.getNodeCount();</span>
+<span class="nc" id="L55">		parent = new Node[n];</span>
+<span class="nc" id="L56">		iterator = new Iterator[n];</span>
+<span class="nc" id="L57">		depth = new int[n];</span>
+
+<span class="nc" id="L59">		int s = startNode.getIndex();</span>
+<span class="nc bnc" id="L60" title="All 2 branches missed.">		for (int i = 0; i &lt; n; i++)</span>
+<span class="nc bnc" id="L61" title="All 2 branches missed.">			depth[i] = i == s ? 0 : -1;</span>
+<span class="nc" id="L62">		next = startNode;</span>
+<span class="nc" id="L63">	}</span>
+
+	protected void gotoNext() {
+<span class="nc bnc" id="L66" title="All 2 branches missed.">		while (next != null) {</span>
+<span class="nc" id="L67">			int i = next.getIndex();</span>
+<span class="nc bnc" id="L68" title="All 2 branches missed.">			while (iterator[i].hasNext()) {</span>
+<span class="nc" id="L69">				Node neighbor = iterator[i].next().getOpposite(next);</span>
+<span class="nc" id="L70">				int j = neighbor.getIndex();</span>
+<span class="nc bnc" id="L71" title="All 2 branches missed.">				if (iterator[j] == null) {</span>
+<span class="nc" id="L72">					parent[j] = next;</span>
+<span class="nc bnc" id="L73" title="All 2 branches missed.">					iterator[j] = directed ? neighbor.leavingEdges().iterator() : neighbor.enteringEdges().iterator();</span>
+<span class="nc" id="L74">					depth[j] = depth[i] + 1;</span>
+<span class="nc bnc" id="L75" title="All 2 branches missed.">					if (depth[j] &gt; maxDepth)</span>
+<span class="nc" id="L76">						maxDepth = depth[j];</span>
+<span class="nc" id="L77">					next = neighbor;</span>
+<span class="nc" id="L78">					return;</span>
+				}
+			}
+<span class="nc" id="L81">			next = parent[i];</span>
+		}
+<span class="nc" id="L83">	}</span>
+
+	public DepthFirstIterator(Node startNode) {
+<span class="nc" id="L86">		this(startNode, true);</span>
+<span class="nc" id="L87">	}</span>
+
+	public boolean hasNext() {
+<span class="nc bnc" id="L90" title="All 2 branches missed.">		return next != null;</span>
+	}
+
+	public Node next() {
+<span class="nc bnc" id="L94" title="All 2 branches missed.">		if (next == null)</span>
+<span class="nc" id="L95">			throw new NoSuchElementException();</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">		iterator[next.getIndex()] = directed ? next.leavingEdges().iterator() : next.enteringEdges().iterator();</span>
+<span class="nc" id="L97">		Node previous = next;</span>
+<span class="nc" id="L98">		gotoNext();</span>
+<span class="nc" id="L99">		return previous;</span>
+	}
+
+	public void remove() {
+<span class="nc" id="L103">		throw new UnsupportedOperationException(&quot;This iterator does not support remove&quot;);</span>
+	}
+
+	public int getDepthOf(Node node) {
+<span class="nc" id="L107">		return depth[node.getIndex()];</span>
+	}
+
+	public int getDepthMax() {
+<span class="nc" id="L111">		return maxDepth;</span>
+	}
+
+	public boolean tabu(Node node) {
+<span class="nc bnc" id="L115" title="All 2 branches missed.">		return depth[node.getIndex()] != -1;</span>
+	}
+
+	public boolean isDirected() {
+<span class="nc" id="L119">		return directed;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FileSourceGML.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file</a> &gt; <span class="el_source">FileSourceGML.java</span></div><h1>FileSourceGML.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file;
+
+import java.io.IOException;
+import java.io.Reader;
+
+import org.graphstream.stream.file.gml.GMLParser;
+
+import org.graphstream.util.parser.ParseException;
+import org.graphstream.util.parser.Parser;
+import org.graphstream.util.parser.ParserFactory;
+
+/**
+ * A GML parser.
+ * 
+ * This parser should understand the whole GML syntax. It transforms any unknown
+ * tag into an attribute. Depending on the location of the unknown tag, the
+ * attribute is added to the graph, to nodes or to the edges.
+ * 
+ * The &quot;graphics&quot; attributes are, as far as possible, transformed into
+ * &quot;ui.style&quot; attributes that are merged with the style sheet. The understood
+ * graphics tags are &quot;x&quot;, &quot;y&quot;, &quot;z&quot;, &quot;w&quot;, &quot;h&quot;, &quot;d&quot; for position and size, &quot;fill&quot;
+ * for the background color (becomes &quot;fill-color&quot;), &quot;outline&quot; (becomes
+ * &quot;stroke-color&quot;), &quot;type&quot; (becomes &quot;shape&quot;, the known shapes being the ones of
+ * the GraphStream CSS, plus the &quot;ellipse&quot; tag wich maps to &quot;circle&quot; and the
+ * &quot;rectangle&quot; tag that maps to &quot;box&quot;), &quot;outline_width&quot; (becomes &quot;stroke-width&quot;,
+ * in pixels).
+ * 
+ * If edges have no &quot;id&quot; tag, the id is the concatenation of the source and
+ * target node identifiers separated by a &quot;_&quot; character and a random number.
+ * 
+ * You can declare nodes either with the full declaration:
+ * 
+ * &lt;pre&gt;
+ * 		node [ Id &quot;foo&quot; ]
+ * &lt;/pre&gt;
+ * 
+ * Which is useful when adding attributes to it. Or you can use a lighter
+ * declaration with:
+ * 
+ * &lt;pre&gt;
+ *      node &quot;foo&quot;
+ * &lt;/pre&gt;
+ * 
+ * You can also remove nodes and edges by using:
+ * 
+ * &lt;pre&gt;
+ *      -node &quot;foo&quot;
+ *      del-node &quot;foo&quot;
+ *      -node [ Id &quot;foo&quot; ]
+ *      del-node [ Id &quot;foo&quot; ]
+ * &lt;/pre&gt;
+ * 
+ * And the same for edges with &quot;-edge&quot; or &quot;del-edge&quot;.
+ * 
+ * All the dynamic events of GraphStream are supported as an extension.
+ * 
+ * You can add or remove attributes to or from a node or edge using a minus sign
+ * in front of the attribute name and following the attribute name by [].
+ * 
+ * You can remove a node or edge using a minus sign in front of the node and
+ * edge tags:
+ * 
+ * &lt;pre&gt;
+ *     -node [ id &quot;foo&quot; ]
+ * &lt;/pre&gt;
+ * 
+ * Or
+ * 
+ * &lt;pre&gt;
+ *     -node &quot;foo&quot;
+ * &lt;/pre&gt;
+ * 
+ * You can change the attributes of a node or edge using a plus sign in front of
+ * the node and edge tags:
+ * 
+ * &lt;pre&gt;
+ *     +node [ id &quot;foo&quot; someAttribute &quot;added&quot; -removedAttribute [] ]
+ * &lt;/pre&gt;
+ * 
+ * Be careful, that files exported with the dynamic extensions will not be
+ * compatible with most GML readers of other programs.
+ * 
+ * The standard extension for GML files is &quot;.gml&quot;. If your file contains dynamic
+ * additions, you can use the &quot;.dgml&quot; (Dynamic GML) extensions. The parser will
+ * handle both dynamic and non dynamic files with the extension &quot;.gml&quot;.
+ */
+<span class="nc" id="L120">public class FileSourceGML extends FileSourceParser {</span>
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.file.FileSourceParser#nextStep()
+	 */
+	public boolean nextStep() throws IOException {
+		try {
+<span class="nc" id="L129">			return ((GMLParser) parser).step();</span>
+<span class="nc" id="L130">		} catch (ParseException e) {</span>
+<span class="nc" id="L131">			throw new IOException(e);</span>
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see org.graphstream.stream.file.FileSourceParser#getNewParserFactory()
+	 */
+	public ParserFactory getNewParserFactory() {
+<span class="nc" id="L141">		return new ParserFactory() {</span>
+			public Parser newParser(Reader reader) {
+<span class="nc" id="L143">				return new GMLParser(FileSourceGML.this, reader);</span>
+			}
+		};
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

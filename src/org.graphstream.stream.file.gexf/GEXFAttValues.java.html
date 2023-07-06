@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>GEXFAttValues.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream.file.gexf</a> &gt; <span class="el_source">GEXFAttValues.java</span></div><h1>GEXFAttValues.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-09-18
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream.file.gexf;
+
+import java.lang.reflect.Array;
+import java.util.HashMap;
+import java.util.LinkedList;
+
+import javax.xml.stream.XMLStreamException;
+
+public class GEXFAttValues implements GEXFElement {
+	GEXF root;
+	HashMap&lt;Integer, LinkedList&lt;GEXFAttValue&gt;&gt; values;
+
+<span class="nc" id="L44">	public GEXFAttValues(GEXF root) {</span>
+<span class="nc" id="L45">		this.root = root;</span>
+<span class="nc" id="L46">		this.values = new HashMap&lt;Integer, LinkedList&lt;GEXFAttValue&gt;&gt;();</span>
+<span class="nc" id="L47">	}</span>
+
+	public void attributeUpdated(GEXFAttribute decl, Object value) {
+<span class="nc bnc" id="L50" title="All 2 branches missed.">		if (!values.containsKey(decl.id))</span>
+<span class="nc" id="L51">			values.put(decl.id, new LinkedList&lt;GEXFAttValue&gt;());</span>
+
+<span class="nc" id="L53">		LinkedList&lt;GEXFAttValue&gt; attr = values.get(decl.id);</span>
+
+<span class="nc bnc" id="L55" title="All 2 branches missed.">		if (value != null) {</span>
+<span class="nc bnc" id="L56" title="All 2 branches missed.">			if (attr.size() &gt; 0) {</span>
+<span class="nc bnc" id="L57" title="All 2 branches missed.">				if (attr.getLast().start == root.step)</span>
+<span class="nc" id="L58">					attr.removeLast();</span>
+				else
+<span class="nc" id="L60">					attr.getLast().end = root.step;</span>
+			}
+
+<span class="nc" id="L63">			GEXFAttValue av = new GEXFAttValue(root, Integer.toString(decl.id), formatValue(value));</span>
+<span class="nc" id="L64">			attr.add(av);</span>
+<span class="nc" id="L65">		} else {</span>
+<span class="nc bnc" id="L66" title="All 2 branches missed.">			if (attr.size() &gt; 0)</span>
+<span class="nc" id="L67">				attr.getLast().end = root.step;</span>
+		}
+<span class="nc" id="L69">	}</span>
+
+	String formatValue(Object o) {
+<span class="nc bnc" id="L72" title="All 2 branches missed.">		if (o == null)</span>
+<span class="nc" id="L73">			return &quot;&lt;null&gt;&quot;;</span>
+
+<span class="nc bnc" id="L75" title="All 2 branches missed.">		if (o.getClass().isArray()) {</span>
+<span class="nc" id="L76">			StringBuilder buffer = new StringBuilder();</span>
+
+<span class="nc bnc" id="L78" title="All 2 branches missed.">			for (int i = 0; i &lt; Array.getLength(o); i++) {</span>
+<span class="nc" id="L79">				Object ochild = Array.get(o, i);</span>
+
+<span class="nc bnc" id="L81" title="All 2 branches missed.">				if (i &gt; 0)</span>
+<span class="nc" id="L82">					buffer.append(&quot;|&quot;);</span>
+
+<span class="nc bnc" id="L84" title="All 2 branches missed.">				if (ochild != null)</span>
+<span class="nc" id="L85">					buffer.append(ochild.toString());</span>
+			}
+
+<span class="nc" id="L88">			o = buffer;</span>
+		}
+
+<span class="nc" id="L91">		return o.toString();</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 * 
+	 * @see
+	 * org.graphstream.stream.file.gexf.GEXFElement#export(org.graphstream.stream
+	 * .file.gexf.SmartXMLWriter)
+	 */
+	public void export(SmartXMLWriter stream) throws XMLStreamException {
+<span class="nc bnc" id="L102" title="All 2 branches missed.">		if (values.size() == 0)</span>
+<span class="nc" id="L103">			return;</span>
+
+<span class="nc" id="L105">		stream.startElement(&quot;attvalues&quot;);</span>
+
+<span class="nc bnc" id="L107" title="All 2 branches missed.">		for (LinkedList&lt;GEXFAttValue&gt; attrValues : values.values()) {</span>
+<span class="nc bnc" id="L108" title="All 2 branches missed.">			for (int i = 0; i &lt; attrValues.size(); i++)</span>
+<span class="nc" id="L109">				attrValues.get(i).export(stream);</span>
+		}
+
+<span class="nc" id="L112">		stream.endElement(); // ATTVALUES</span>
+<span class="nc" id="L113">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

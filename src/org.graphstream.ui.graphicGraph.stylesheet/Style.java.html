@@ -1,0 +1,815 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>Style.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.graphicGraph.stylesheet</a> &gt; <span class="el_source">Style.java</span></div><h1>Style.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Tim Wundke &lt;gtwundke@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.graphicGraph.stylesheet;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+
+/**
+ * A style is a whole set of settings for a graphic element.
+ * 
+ * &lt;p&gt;
+ * Styles inherit each others. By default a style is all set to invalid values
+ * meaning &quot;unset&quot;. This means that the value is to be taken from the parent.
+ * The getters are able to resolve this process by themselves and therefore must
+ * be used instead of a direct access to fields.
+ * &lt;/p&gt;
+ */
+public class Style extends StyleConstants {
+	// Attributes
+
+	/**
+	 * The vertical part of the cascade.
+	 */
+<span class="nc" id="L57">	protected Rule parent = null;</span>
+
+	/**
+	 * The values of each style property.
+	 */
+<span class="nc" id="L62">	protected HashMap&lt;String, Object&gt; values = null;</span>
+
+	/**
+	 * The set of special styles that must override this style when some event
+	 * occurs.
+	 */
+<span class="nc" id="L68">	protected HashMap&lt;String, Rule&gt; alternates = null;</span>
+
+	// Constructors
+
+	/**
+	 * New style with all settings to a special value meaning &quot;unset&quot;. In this
+	 * modeField, all the settings are inherited from the parent (when set).
+	 */
+	public Style() {
+<span class="nc" id="L77">		this(null);</span>
+<span class="nc" id="L78">	}</span>
+
+	/**
+	 * New style with all settings to a special value meaning &quot;unset&quot;. In this
+	 * modeField, all the settings are inherited from the parent.
+	 * 
+	 * @param parent
+	 *            The parent style.
+	 */
+<span class="nc" id="L87">	public Style(Rule parent) {</span>
+<span class="nc" id="L88">		this.parent = parent;</span>
+<span class="nc" id="L89">		this.values = new HashMap&lt;String, Object&gt;();</span>
+<span class="nc" id="L90">	}</span>
+
+	// Access
+
+	/**
+	 * The parent style.
+	 * 
+	 * @return a style from which some settings are inherited.
+	 */
+	public Rule getParent() {
+<span class="nc" id="L100">		return parent;</span>
+	}
+
+	/**
+	 * Get the value of a given property.
+	 * 
+	 * This code is the same for all &quot;getX&quot; methods so we explain it once here. This
+	 * is the implementation of style inheritance.
+	 * 
+	 * First if some event is actually occurring, the alternative styles are
+	 * searched first. If these events have unset values for the property, their
+	 * parent are then searched.
+	 * 
+	 * If the value for the property is not found in the alternative styles,
+	 * alternative styles parents, or if there is no event occurring actually, this
+	 * style is checked.
+	 * 
+	 * If its value is unset, the parents of this style are checked.
+	 * 
+	 * Classes are not checked here, they are processed in the
+	 * {@link org.graphstream.ui.graphicGraph.StyleGroup} class.
+	 * 
+	 * @param property
+	 *            The style property the value is searched for.
+	 */
+	public Object getValue(String property, String... events) {
+<span class="nc bnc" id="L126" title="All 4 branches missed.">		if (events != null &amp;&amp; events.length &gt; 0)// &amp;&amp; alternates != null )</span>
+		{
+<span class="nc" id="L128">			Object o = null;</span>
+<span class="nc" id="L129">			int i = events.length - 1;</span>
+
+<span class="nc bnc" id="L131" title="All 2 branches missed.">			do {</span>
+<span class="nc" id="L132">				o = getValueForEvent(property, events[i]);</span>
+<span class="nc" id="L133">				i--;</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">			} while (o == null &amp;&amp; i &gt;= 0);</span>
+
+<span class="nc bnc" id="L136" title="All 2 branches missed.">			if (o != null)</span>
+<span class="nc" id="L137">				return o;</span>
+		}
+
+<span class="nc" id="L140">		Object value = values.get(property);</span>
+
+<span class="nc bnc" id="L142" title="All 2 branches missed.">		if (value == null) {</span>
+<span class="nc bnc" id="L143" title="All 2 branches missed.">			if (parent != null)</span>
+<span class="nc" id="L144">				return parent.style.getValue(property, events);</span>
+		}
+
+<span class="nc" id="L147">		return value;</span>
+	}
+
+	protected Object getValueForEvent(String property, String event) {
+<span class="nc bnc" id="L151" title="All 2 branches missed.">		if (alternates != null) {</span>
+<span class="nc" id="L152">			Rule rule = alternates.get(event);</span>
+
+<span class="nc bnc" id="L154" title="All 2 branches missed.">			if (rule != null) {</span>
+<span class="nc" id="L155">				Object o = rule.getStyle().values.get(property);</span>
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">				if (o != null)</span>
+<span class="nc" id="L158">					return o;</span>
+			}
+<span class="nc bnc" id="L160" title="All 2 branches missed.">		} else if (parent != null) {</span>
+<span class="nc" id="L161">			return parent.style.getValueForEvent(property, event);</span>
+		}
+
+<span class="nc" id="L164">		return null;</span>
+	}
+
+	/**
+	 * True if the given field exists in this style only (not the parents).
+	 * 
+	 * @param field
+	 *            The field to test.
+	 * @return True if this style has a value for the given field.
+	 */
+	public boolean hasValue(String field, String... events) {
+<span class="nc" id="L175">		boolean hasValue = false;</span>
+
+<span class="nc bnc" id="L177" title="All 6 branches missed.">		if (events != null &amp;&amp; events.length &gt; 0 &amp;&amp; alternates != null) {</span>
+<span class="nc bnc" id="L178" title="All 2 branches missed.">			for (String event : events) {</span>
+<span class="nc" id="L179">				Rule rule = alternates.get(event);</span>
+
+<span class="nc bnc" id="L181" title="All 2 branches missed.">				if (rule != null) {</span>
+<span class="nc bnc" id="L182" title="All 2 branches missed.">					if (rule.getStyle().hasValue(field)) {</span>
+<span class="nc" id="L183">						hasValue = true;</span>
+<span class="nc" id="L184">						break;</span>
+					}
+				}
+			}
+		}
+
+<span class="nc bnc" id="L190" title="All 2 branches missed.">		if (!hasValue) {</span>
+<span class="nc bnc" id="L191" title="All 2 branches missed.">			hasValue = (values.get(field) != null);</span>
+		}
+
+<span class="nc" id="L194">		return hasValue;</span>
+	}
+
+	// Individual style properties.
+
+	/**
+	 * How to fill the content of an element.
+	 */
+	public FillMode getFillMode() {
+<span class="nc" id="L203">		return (FillMode) getValue(&quot;fill-mode&quot;);</span>
+	}
+
+	/**
+	 * Which color(s) to use for fill modes that use it.
+	 */
+	public Colors getFillColors() {
+<span class="nc" id="L210">		return (Colors) getValue(&quot;fill-color&quot;);</span>
+	}
+
+	public int getFillColorCount() {
+<span class="nc" id="L214">		Colors colors = (Colors) getValue(&quot;fill-color&quot;);</span>
+
+<span class="nc bnc" id="L216" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L217">			return colors.size();</span>
+
+<span class="nc" id="L219">		return 0;</span>
+	}
+
+	public Color getFillColor(int i) {
+<span class="nc" id="L223">		Colors colors = (Colors) getValue(&quot;fill-color&quot;);</span>
+
+<span class="nc bnc" id="L225" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L226">			return colors.get(i);</span>
+
+<span class="nc" id="L228">		return null;</span>
+	}
+
+	/**
+	 * Which image to use when filling the element contents with it.
+	 */
+	public String getFillImage() {
+<span class="nc" id="L235">		return (String) getValue(&quot;fill-image&quot;);</span>
+	}
+
+	/**
+	 * How to draw the element contour.
+	 */
+	public StrokeMode getStrokeMode() {
+<span class="nc" id="L242">		return (StrokeMode) getValue(&quot;stroke-mode&quot;);</span>
+	}
+
+	/**
+	 * How to color the element contour.
+	 */
+	public Colors getStrokeColor() {
+<span class="nc" id="L249">		return (Colors) getValue(&quot;stroke-color&quot;);</span>
+	}
+
+	public int getStrokeColorCount() {
+<span class="nc" id="L253">		Colors colors = (Colors) getValue(&quot;stroke-color&quot;);</span>
+
+<span class="nc bnc" id="L255" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L256">			return colors.size();</span>
+
+<span class="nc" id="L258">		return 0;</span>
+	}
+
+	public Color getStrokeColor(int i) {
+<span class="nc" id="L262">		Colors colors = (Colors) getValue(&quot;stroke-color&quot;);</span>
+
+<span class="nc bnc" id="L264" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L265">			return colors.get(i);</span>
+
+<span class="nc" id="L267">		return null;</span>
+	}
+
+	/**
+	 * Width of the element contour.
+	 */
+	public Value getStrokeWidth() {
+<span class="nc" id="L274">		return (Value) getValue(&quot;stroke-width&quot;);</span>
+	}
+
+	/**
+	 * How to draw the shadow of the element.
+	 */
+	public ShadowMode getShadowMode() {
+<span class="nc" id="L281">		return (ShadowMode) getValue(&quot;shadow-mode&quot;);</span>
+	}
+
+	/**
+	 * Color(s) of the element shadow.
+	 */
+	public Colors getShadowColors() {
+<span class="nc" id="L288">		return (Colors) getValue(&quot;shadow-color&quot;);</span>
+	}
+
+	public int getShadowColorCount() {
+<span class="nc" id="L292">		Colors colors = (Colors) getValue(&quot;shadow-color&quot;);</span>
+
+<span class="nc bnc" id="L294" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L295">			return colors.size();</span>
+
+<span class="nc" id="L297">		return 0;</span>
+	}
+
+	public Color getShadowColor(int i) {
+<span class="nc" id="L301">		Colors colors = (Colors) getValue(&quot;shadow-color&quot;);</span>
+
+<span class="nc bnc" id="L303" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L304">			return colors.get(i);</span>
+
+<span class="nc" id="L306">		return null;</span>
+	}
+
+	/**
+	 * Width of the element shadow.
+	 */
+	public Value getShadowWidth() {
+<span class="nc" id="L313">		return (Value) getValue(&quot;shadow-width&quot;);</span>
+	}
+
+	/**
+	 * Offset of the element shadow centre according to the element centre.
+	 */
+	public Values getShadowOffset() {
+<span class="nc" id="L320">		return (Values) getValue(&quot;shadow-offset&quot;);</span>
+	}
+
+	/**
+	 * Additional space to add inside the element between its contour and its
+	 * contents.
+	 */
+	public Values getPadding() {
+<span class="nc" id="L328">		return (Values) getValue(&quot;padding&quot;);</span>
+	}
+
+	/**
+	 * How to draw the text of the element.
+	 */
+	public TextMode getTextMode() {
+<span class="nc" id="L335">		return (TextMode) getValue(&quot;text-mode&quot;);</span>
+	}
+
+	/**
+	 * How and when to show the text of the element.
+	 */
+	public TextVisibilityMode getTextVisibilityMode() {
+<span class="nc" id="L342">		return (TextVisibilityMode) getValue(&quot;text-visibility-mode&quot;);</span>
+	}
+
+	/**
+	 * Visibility values if the text visibility changes.
+	 */
+	public Values getTextVisibility() {
+<span class="nc" id="L349">		return (Values) getValue(&quot;text-visibility&quot;);</span>
+	}
+
+	/**
+	 * The text color(s).
+	 */
+	public Colors getTextColor() {
+<span class="nc" id="L356">		return (Colors) getValue(&quot;text-color&quot;);</span>
+	}
+
+	public int getTextColorCount() {
+<span class="nc" id="L360">		Colors colors = (Colors) getValue(&quot;text-color&quot;);</span>
+
+<span class="nc bnc" id="L362" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L363">			return colors.size();</span>
+
+<span class="nc" id="L365">		return 0;</span>
+	}
+
+	public Color getTextColor(int i) {
+<span class="nc" id="L369">		Colors colors = (Colors) getValue(&quot;text-color&quot;);</span>
+
+<span class="nc bnc" id="L371" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L372">			return colors.get(i);</span>
+
+<span class="nc" id="L374">		return null;</span>
+	}
+
+	/**
+	 * The text font style variation.
+	 */
+	public TextStyle getTextStyle() {
+<span class="nc" id="L381">		return (TextStyle) getValue(&quot;text-style&quot;);</span>
+	}
+
+	/**
+	 * The text font.
+	 */
+	public String getTextFont() {
+<span class="nc" id="L388">		return (String) getValue(&quot;text-font&quot;);</span>
+	}
+
+	/**
+	 * The text size in points.
+	 */
+	public Value getTextSize() {
+<span class="nc" id="L395">		return (Value) getValue(&quot;text-size&quot;);</span>
+	}
+
+	/**
+	 * How to draw the icon around the text (or instead of the text).
+	 */
+	public IconMode getIconMode() {
+<span class="nc" id="L402">		return (IconMode) getValue(&quot;icon-mode&quot;);</span>
+	}
+
+	/**
+	 * The icon image to use.
+	 */
+	public String getIcon() {
+<span class="nc" id="L409">		return (String) getValue(&quot;icon&quot;);</span>
+	}
+
+	/**
+	 * How and when to show the element.
+	 */
+	public VisibilityMode getVisibilityMode() {
+<span class="nc" id="L416">		return (VisibilityMode) getValue(&quot;visibility-mode&quot;);</span>
+	}
+
+	/**
+	 * The element visibility if it is variable.
+	 */
+	public Values getVisibility() {
+<span class="nc" id="L423">		return (Values) getValue(&quot;visibility&quot;);</span>
+	}
+
+	/**
+	 * How to size the element.
+	 */
+	public SizeMode getSizeMode() {
+<span class="nc" id="L430">		return (SizeMode) getValue(&quot;size-mode&quot;);</span>
+	}
+
+	/**
+	 * The element dimensions.
+	 */
+	public Values getSize() {
+<span class="nc" id="L437">		return (Values) getValue(&quot;size&quot;);</span>
+	}
+
+	/**
+	 * The element polygonal shape.
+	 */
+	public Values getShapePoints() {
+<span class="nc" id="L444">		return (Values) getValue(&quot;shape-points&quot;);</span>
+	}
+
+	/**
+	 * How to align the text according to the element centre.
+	 */
+	public TextAlignment getTextAlignment() {
+<span class="nc" id="L451">		return (TextAlignment) getValue(&quot;text-alignment&quot;);</span>
+	}
+
+	public TextBackgroundMode getTextBackgroundMode() {
+<span class="nc" id="L455">		return (TextBackgroundMode) getValue(&quot;text-background-mode&quot;);</span>
+	}
+
+	public Colors getTextBackgroundColor() {
+<span class="nc" id="L459">		return (Colors) getValue(&quot;text-background-color&quot;);</span>
+	}
+
+	public Color getTextBackgroundColor(int i) {
+<span class="nc" id="L463">		Colors colors = (Colors) getValue(&quot;text-background-color&quot;);</span>
+
+<span class="nc bnc" id="L465" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L466">			return colors.get(i);</span>
+
+<span class="nc" id="L468">		return null;</span>
+	}
+
+	/**
+	 * Offset of the text from its computed position.
+	 */
+	public Values getTextOffset() {
+<span class="nc" id="L475">		return (Values) getValue(&quot;text-offset&quot;);</span>
+	}
+
+	/**
+	 * Padding of the text inside its background, if any.
+	 */
+	public Values getTextPadding() {
+<span class="nc" id="L482">		return (Values) getValue(&quot;text-padding&quot;);</span>
+	}
+
+	/**
+	 * The element shape.
+	 */
+	public Shape getShape() {
+<span class="nc" id="L489">		return (Shape) getValue(&quot;shape&quot;);</span>
+	}
+
+	/**
+	 * The element JComponent type if available.
+	 */
+	public JComponents getJComponent() {
+<span class="nc" id="L496">		return (JComponents) getValue(&quot;jcomponent&quot;);</span>
+	}
+
+	/**
+	 * How to orient a sprite according to its attachement.
+	 */
+	public SpriteOrientation getSpriteOrientation() {
+<span class="nc" id="L503">		return (SpriteOrientation) getValue(&quot;sprite-orientation&quot;);</span>
+	}
+
+	/**
+	 * The shape of edges arrows.
+	 */
+	public ArrowShape getArrowShape() {
+<span class="nc" id="L510">		return (ArrowShape) getValue(&quot;arrow-shape&quot;);</span>
+	}
+
+	/**
+	 * Image to use for the arrow.
+	 */
+	public String getArrowImage() {
+<span class="nc" id="L517">		return (String) getValue(&quot;arrow-image&quot;);</span>
+	}
+
+	/**
+	 * Edge arrow dimensions.
+	 */
+	public Values getArrowSize() {
+<span class="nc" id="L524">		return (Values) getValue(&quot;arrow-size&quot;);</span>
+	}
+
+	/**
+	 * Colour of all non-graph, non-edge, non-node, non-sprite things.
+	 */
+	public Colors getCanvasColor() {
+<span class="nc" id="L531">		return (Colors) getValue(&quot;canvas-color&quot;);</span>
+	}
+
+	public int getCanvasColorCount() {
+<span class="nc" id="L535">		Colors colors = (Colors) getValue(&quot;canvas-color&quot;);</span>
+
+<span class="nc bnc" id="L537" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L538">			return colors.size();</span>
+
+<span class="nc" id="L540">		return 0;</span>
+	}
+
+	public Color getCanvasColor(int i) {
+<span class="nc" id="L544">		Colors colors = (Colors) getValue(&quot;canvas-color&quot;);</span>
+
+<span class="nc bnc" id="L546" title="All 2 branches missed.">		if (colors != null)</span>
+<span class="nc" id="L547">			return colors.get(i);</span>
+
+<span class="nc" id="L549">		return null;</span>
+	}
+
+	public Integer getZIndex() {
+<span class="nc" id="L553">		return (Integer) getValue(&quot;z-index&quot;);</span>
+	}
+
+	// Commands
+
+	/**
+	 * Set the default values for each setting.
+	 */
+	public void setDefaults() {
+<span class="nc" id="L562">		Colors fillColor = new Colors();</span>
+<span class="nc" id="L563">		Colors strokeColor = new Colors();</span>
+<span class="nc" id="L564">		Colors shadowColor = new Colors();</span>
+<span class="nc" id="L565">		Colors textColor = new Colors();</span>
+<span class="nc" id="L566">		Colors canvasColor = new Colors();</span>
+<span class="nc" id="L567">		Colors textBgColor = new Colors();</span>
+
+<span class="nc" id="L569">		fillColor.add(Color.BLACK);</span>
+<span class="nc" id="L570">		strokeColor.add(Color.BLACK);</span>
+<span class="nc" id="L571">		shadowColor.add(Color.GRAY);</span>
+<span class="nc" id="L572">		textColor.add(Color.BLACK);</span>
+<span class="nc" id="L573">		canvasColor.add(Color.WHITE);</span>
+<span class="nc" id="L574">		textBgColor.add(Color.WHITE);</span>
+
+<span class="nc" id="L576">		values.put(&quot;z-index&quot;, new Integer(0));</span>
+
+<span class="nc" id="L578">		values.put(&quot;fill-mode&quot;, FillMode.PLAIN);</span>
+<span class="nc" id="L579">		values.put(&quot;fill-color&quot;, fillColor);</span>
+<span class="nc" id="L580">		values.put(&quot;fill-image&quot;, null);</span>
+
+<span class="nc" id="L582">		values.put(&quot;stroke-mode&quot;, StrokeMode.NONE);</span>
+<span class="nc" id="L583">		values.put(&quot;stroke-color&quot;, strokeColor);</span>
+<span class="nc" id="L584">		values.put(&quot;stroke-width&quot;, new Value(Units.PX, 1));</span>
+
+<span class="nc" id="L586">		values.put(&quot;shadow-mode&quot;, ShadowMode.NONE);</span>
+<span class="nc" id="L587">		values.put(&quot;shadow-color&quot;, shadowColor);</span>
+<span class="nc" id="L588">		values.put(&quot;shadow-width&quot;, new Value(Units.PX, 3));</span>
+<span class="nc" id="L589">		values.put(&quot;shadow-offset&quot;, new Values(Units.PX, 3, 3));</span>
+
+<span class="nc" id="L591">		values.put(&quot;padding&quot;, new Values(Units.PX, 0, 0, 0));</span>
+
+<span class="nc" id="L593">		values.put(&quot;text-mode&quot;, TextMode.NORMAL);</span>
+<span class="nc" id="L594">		values.put(&quot;text-visibility-mode&quot;, TextVisibilityMode.NORMAL);</span>
+<span class="nc" id="L595">		values.put(&quot;text-visibility&quot;, null);</span>
+<span class="nc" id="L596">		values.put(&quot;text-color&quot;, textColor);</span>
+<span class="nc" id="L597">		values.put(&quot;text-style&quot;, TextStyle.NORMAL);</span>
+<span class="nc" id="L598">		values.put(&quot;text-font&quot;, &quot;default&quot;);</span>
+<span class="nc" id="L599">		values.put(&quot;text-size&quot;, new Value(Units.PX, 10));</span>
+<span class="nc" id="L600">		values.put(&quot;text-alignment&quot;, TextAlignment.CENTER);</span>
+<span class="nc" id="L601">		values.put(&quot;text-background-mode&quot;, TextBackgroundMode.NONE);</span>
+<span class="nc" id="L602">		values.put(&quot;text-background-color&quot;, textBgColor);</span>
+<span class="nc" id="L603">		values.put(&quot;text-offset&quot;, new Values(Units.PX, 0, 0));</span>
+<span class="nc" id="L604">		values.put(&quot;text-padding&quot;, new Values(Units.PX, 0, 0));</span>
+
+<span class="nc" id="L606">		values.put(&quot;icon-mode&quot;, IconMode.NONE);</span>
+<span class="nc" id="L607">		values.put(&quot;icon&quot;, null);</span>
+
+<span class="nc" id="L609">		values.put(&quot;visibility-mode&quot;, VisibilityMode.NORMAL);</span>
+<span class="nc" id="L610">		values.put(&quot;visibility&quot;, null);</span>
+
+<span class="nc" id="L612">		values.put(&quot;size-mode&quot;, SizeMode.NORMAL);</span>
+<span class="nc" id="L613">		values.put(&quot;size&quot;, new Values(Units.PX, 10, 10, 10));</span>
+
+<span class="nc" id="L615">		values.put(&quot;shape&quot;, Shape.CIRCLE);</span>
+<span class="nc" id="L616">		values.put(&quot;shape-points&quot;, null);</span>
+<span class="nc" id="L617">		values.put(&quot;jcomponent&quot;, null);</span>
+
+<span class="nc" id="L619">		values.put(&quot;sprite-orientation&quot;, SpriteOrientation.NONE);</span>
+
+<span class="nc" id="L621">		values.put(&quot;arrow-shape&quot;, ArrowShape.ARROW);</span>
+<span class="nc" id="L622">		values.put(&quot;arrow-size&quot;, new Values(Units.PX, 8, 4));</span>
+<span class="nc" id="L623">		values.put(&quot;arrow-image&quot;, null);</span>
+
+<span class="nc" id="L625">		values.put(&quot;canvas-color&quot;, canvasColor);</span>
+
+<span class="nc" id="L627">	}</span>
+
+	/**
+	 * Copy all the settings of the other style that are set, excepted the parent.
+	 * Only the settings that have a value (different from &quot;unset&quot;) are copied. The
+	 * parent field is never copied.
+	 * 
+	 * @param other
+	 *            Another style.
+	 */
+	public void augment(Style other) {
+<span class="nc bnc" id="L638" title="All 2 branches missed.">		if (other != this) {</span>
+<span class="nc" id="L639">			augmentField(&quot;z-index&quot;, other);</span>
+<span class="nc" id="L640">			augmentField(&quot;fill-mode&quot;, other);</span>
+<span class="nc" id="L641">			augmentField(&quot;fill-color&quot;, other);</span>
+<span class="nc" id="L642">			augmentField(&quot;fill-image&quot;, other);</span>
+
+<span class="nc" id="L644">			augmentField(&quot;stroke-mode&quot;, other);</span>
+<span class="nc" id="L645">			augmentField(&quot;stroke-color&quot;, other);</span>
+<span class="nc" id="L646">			augmentField(&quot;stroke-width&quot;, other);</span>
+
+<span class="nc" id="L648">			augmentField(&quot;shadow-mode&quot;, other);</span>
+<span class="nc" id="L649">			augmentField(&quot;shadow-color&quot;, other);</span>
+<span class="nc" id="L650">			augmentField(&quot;shadow-width&quot;, other);</span>
+<span class="nc" id="L651">			augmentField(&quot;shadow-offset&quot;, other);</span>
+
+<span class="nc" id="L653">			augmentField(&quot;padding&quot;, other);</span>
+
+<span class="nc" id="L655">			augmentField(&quot;text-mode&quot;, other);</span>
+<span class="nc" id="L656">			augmentField(&quot;text-visibility-mode&quot;, other);</span>
+<span class="nc" id="L657">			augmentField(&quot;text-visibility&quot;, other);</span>
+<span class="nc" id="L658">			augmentField(&quot;text-color&quot;, other);</span>
+<span class="nc" id="L659">			augmentField(&quot;text-style&quot;, other);</span>
+<span class="nc" id="L660">			augmentField(&quot;text-font&quot;, other);</span>
+<span class="nc" id="L661">			augmentField(&quot;text-size&quot;, other);</span>
+<span class="nc" id="L662">			augmentField(&quot;text-alignment&quot;, other);</span>
+<span class="nc" id="L663">			augmentField(&quot;text-background-mode&quot;, other);</span>
+<span class="nc" id="L664">			augmentField(&quot;text-background-color&quot;, other);</span>
+<span class="nc" id="L665">			augmentField(&quot;text-offset&quot;, other);</span>
+<span class="nc" id="L666">			augmentField(&quot;text-padding&quot;, other);</span>
+
+<span class="nc" id="L668">			augmentField(&quot;icon-mode&quot;, other);</span>
+<span class="nc" id="L669">			augmentField(&quot;icon&quot;, other);</span>
+
+<span class="nc" id="L671">			augmentField(&quot;visibility-mode&quot;, other);</span>
+<span class="nc" id="L672">			augmentField(&quot;visibility&quot;, other);</span>
+
+<span class="nc" id="L674">			augmentField(&quot;size-mode&quot;, other);</span>
+<span class="nc" id="L675">			augmentField(&quot;size&quot;, other);</span>
+
+<span class="nc" id="L677">			augmentField(&quot;shape&quot;, other);</span>
+<span class="nc" id="L678">			augmentField(&quot;shape-points&quot;, other);</span>
+<span class="nc" id="L679">			augmentField(&quot;jcomponent&quot;, other);</span>
+
+<span class="nc" id="L681">			augmentField(&quot;sprite-orientation&quot;, other);</span>
+
+<span class="nc" id="L683">			augmentField(&quot;arrow-shape&quot;, other);</span>
+<span class="nc" id="L684">			augmentField(&quot;arrow-size&quot;, other);</span>
+<span class="nc" id="L685">			augmentField(&quot;arrow-image&quot;, other);</span>
+
+<span class="nc" id="L687">			augmentField(&quot;canvas-color&quot;, other);</span>
+		}
+<span class="nc" id="L689">	}</span>
+
+	protected void augmentField(String field, Style other) {
+<span class="nc" id="L692">		Object value = other.values.get(field);</span>
+
+<span class="nc bnc" id="L694" title="All 2 branches missed.">		if (value != null) {</span>
+<span class="nc bnc" id="L695" title="All 2 branches missed.">			if (value instanceof Value)</span>
+<span class="nc" id="L696">				setValue(field, new Value((Value) value));</span>
+<span class="nc bnc" id="L697" title="All 2 branches missed.">			else if (value instanceof Values)</span>
+<span class="nc" id="L698">				setValue(field, new Values((Values) value));</span>
+<span class="nc bnc" id="L699" title="All 2 branches missed.">			else if (value instanceof Colors)</span>
+<span class="nc" id="L700">				setValue(field, new Colors((Colors) value));</span>
+			else
+<span class="nc" id="L702">				setValue(field, value);</span>
+		}
+<span class="nc" id="L704">	}</span>
+
+	/**
+	 * Set or change the parent of the style.
+	 * 
+	 * @param parent
+	 *            The new parent.
+	 */
+	public void reparent(Rule parent) {
+<span class="nc" id="L713">		this.parent = parent;</span>
+<span class="nc" id="L714">	}</span>
+
+	/**
+	 * Add an alternative style for specific events.
+	 * 
+	 * @param event
+	 *            The event that triggers the alternate style.
+	 * @param alternateStyle
+	 *            The alternative style.
+	 */
+	public void addAlternateStyle(String event, Rule alternateStyle) {
+<span class="nc bnc" id="L725" title="All 2 branches missed.">		if (alternates == null)</span>
+<span class="nc" id="L726">			alternates = new HashMap&lt;String, Rule&gt;();</span>
+
+<span class="nc" id="L728">		alternates.put(event, alternateStyle);</span>
+<span class="nc" id="L729">	}</span>
+
+	// Commands -- Setters
+
+	public void setValue(String field, Object value) {
+<span class="nc" id="L734">		values.put(field, value);</span>
+<span class="nc" id="L735">	}</span>
+
+	// Utility
+
+	@Override
+	public String toString() {
+<span class="nc" id="L741">		return toString(-1);</span>
+	}
+
+	public String toString(int level) {
+<span class="nc" id="L745">		StringBuilder builder = new StringBuilder();</span>
+<span class="nc" id="L746">		String prefix = &quot;&quot;;</span>
+<span class="nc" id="L747">		String sprefix = &quot;    &quot;;</span>
+
+<span class="nc bnc" id="L749" title="All 2 branches missed.">		if (level &gt; 0) {</span>
+<span class="nc bnc" id="L750" title="All 2 branches missed.">			for (int i = 0; i &lt; level; i++)</span>
+<span class="nc" id="L751">				prefix += &quot;    &quot;;</span>
+		}
+
+		// builder.append( String.format( &quot;%s%s%n&quot;, prefix, super.toString() )
+		// );
+
+<span class="nc bnc" id="L757" title="All 2 branches missed.">		if (parent != null) {</span>
+<span class="nc" id="L758">			Rule p = parent;</span>
+
+<span class="nc bnc" id="L760" title="All 2 branches missed.">			while (!(p == null)) {</span>
+<span class="nc" id="L761">				builder.append(String.format(&quot; -&gt; %s&quot;, p.selector.toString()));</span>
+<span class="nc" id="L762">				p = p.getStyle().getParent();</span>
+			}
+
+		}
+
+<span class="nc" id="L767">		builder.append(String.format(&quot;%n&quot;));</span>
+
+<span class="nc" id="L769">		Iterator&lt;String&gt; i = values.keySet().iterator();</span>
+
+<span class="nc bnc" id="L771" title="All 2 branches missed.">		while (i.hasNext()) {</span>
+<span class="nc" id="L772">			String key = i.next();</span>
+<span class="nc" id="L773">			Object o = values.get(key);</span>
+
+<span class="nc bnc" id="L775" title="All 2 branches missed.">			if (o instanceof ArrayList&lt;?&gt;) {</span>
+<span class="nc" id="L776">				ArrayList&lt;?&gt; array = (ArrayList&lt;?&gt;) o;</span>
+
+<span class="nc bnc" id="L778" title="All 2 branches missed.">				if (array.size() &gt; 0) {</span>
+<span class="nc" id="L779">					builder.append(String.format(&quot;%s%s%s%s: &quot;, prefix, sprefix, sprefix, key));</span>
+
+<span class="nc bnc" id="L781" title="All 2 branches missed.">					for (Object p : array)</span>
+<span class="nc" id="L782">						builder.append(String.format(&quot;%s &quot;, p.toString()));</span>
+
+<span class="nc" id="L784">					builder.append(String.format(&quot;%n&quot;));</span>
+<span class="nc" id="L785">				} else {</span>
+<span class="nc" id="L786">					builder.append(String.format(&quot;%s%s%s%s: &lt;empty&gt;%n&quot;, prefix, sprefix, sprefix, key));</span>
+				}
+<span class="nc" id="L788">			} else {</span>
+<span class="nc" id="L789">				builder.append(String.format(&quot;%s%s%s%s: %s%n&quot;, prefix, sprefix, sprefix, key,</span>
+<span class="nc bnc" id="L790" title="All 2 branches missed.">						o != null ? o.toString() : &quot;&lt;null&gt;&quot;));</span>
+			}
+		}
+
+<span class="nc bnc" id="L794" title="All 4 branches missed.">		if (alternates != null &amp;&amp; alternates.size() &gt; 0) {</span>
+<span class="nc bnc" id="L795" title="All 2 branches missed.">			for (Rule rule : alternates.values()) {</span>
+				// We use &quot;level-1&quot; to ensure that these styles line up with those above
+<span class="nc" id="L797">				builder.append(rule.toString(level - 1));</span>
+			}
+		}
+
+		/*
+		 * if( level &gt;= 0 ) { if( parent != null ) { String rec = parent.style.toString(
+		 * level + 1 );
+		 * 
+		 * builder.append( rec ); } }
+		 */
+<span class="nc" id="L807">		String res = builder.toString();</span>
+
+<span class="nc bnc" id="L809" title="All 2 branches missed.">		if (res.length() == 0)</span>
+<span class="nc" id="L810">			return String.format(&quot;%s%s&lt;empty&gt;%n&quot;, prefix, prefix);</span>
+
+<span class="nc" id="L812">		return res;</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

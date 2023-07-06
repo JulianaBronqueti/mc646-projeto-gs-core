@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>CumulativeAttributes.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util.cumulative</a> &gt; <span class="el_source">CumulativeAttributes.java</span></div><h1>CumulativeAttributes.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2013-07-31
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ */
+package org.graphstream.util.cumulative;
+
+import java.util.Collections;
+import java.util.HashMap;
+
+import org.graphstream.util.cumulative.CumulativeSpells.Spell;
+
+public class CumulativeAttributes {
+	boolean nullAttributesAreErrors;
+	HashMap&lt;String, CumulativeSpells&gt; data;
+	double date;
+
+<span class="nc" id="L43">	public CumulativeAttributes(double date) {</span>
+<span class="nc" id="L44">		data = new HashMap&lt;String, CumulativeSpells&gt;();</span>
+<span class="nc" id="L45">	}</span>
+
+	public Object get(String key) {
+<span class="nc" id="L48">		CumulativeSpells o = data.get(key);</span>
+
+<span class="nc bnc" id="L50" title="All 2 branches missed.">		if (o != null) {</span>
+<span class="nc" id="L51">			Spell s = o.getCurrentSpell();</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">			return s == null ? null : s.getAttachedData();</span>
+		}
+
+<span class="nc" id="L55">		return null;</span>
+	}
+
+	public Object getAny(String key) {
+<span class="nc" id="L59">		CumulativeSpells o = data.get(key);</span>
+
+<span class="nc bnc" id="L61" title="All 2 branches missed.">		if (o != null) {</span>
+<span class="nc" id="L62">			Spell s = o.getSpell(0);</span>
+<span class="nc bnc" id="L63" title="All 2 branches missed.">			return s == null ? null : s.getAttachedData();</span>
+		}
+
+<span class="nc" id="L66">		return null;</span>
+	}
+
+	public Iterable&lt;String&gt; getAttributes() {
+<span class="nc" id="L70">		return data.keySet();</span>
+	}
+
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public Iterable&lt;Spell&gt; getAttributeSpells(String key) {
+<span class="nc" id="L75">		CumulativeSpells o = data.get(key);</span>
+
+<span class="nc bnc" id="L77" title="All 2 branches missed.">		if (o != null)</span>
+<span class="nc" id="L78">			return Collections.unmodifiableList(o.spells);</span>
+
+<span class="nc" id="L80">		return Collections.EMPTY_LIST;</span>
+	}
+
+	public int getAttributesCount() {
+<span class="nc" id="L84">		return data.size();</span>
+	}
+
+	public void set(String key, Object value) {
+<span class="nc" id="L88">		CumulativeSpells spells = data.get(key);</span>
+
+<span class="nc bnc" id="L90" title="All 2 branches missed.">		if (spells == null) {</span>
+<span class="nc" id="L91">			spells = new CumulativeSpells();</span>
+<span class="nc" id="L92">			data.put(key, spells);</span>
+		}
+
+<span class="nc" id="L95">		Spell s = spells.closeSpell();</span>
+
+<span class="nc bnc" id="L97" title="All 2 branches missed.">		if (s != null)</span>
+<span class="nc" id="L98">			s.setEndOpen(true);</span>
+
+<span class="nc" id="L100">		s = spells.startSpell(date);</span>
+<span class="nc" id="L101">		s.setAttachedData(value);</span>
+<span class="nc" id="L102">	}</span>
+
+	public void remove(String key) {
+<span class="nc" id="L105">		CumulativeSpells spells = data.get(key);</span>
+
+<span class="nc bnc" id="L107" title="All 2 branches missed.">		if (spells == null)</span>
+<span class="nc" id="L108">			return;</span>
+
+<span class="nc" id="L110">		spells.closeSpell();</span>
+<span class="nc" id="L111">	}</span>
+
+	public void remove() {
+<span class="nc bnc" id="L114" title="All 2 branches missed.">		for (CumulativeSpells spells : data.values())</span>
+<span class="nc" id="L115">			spells.closeSpell();</span>
+<span class="nc" id="L116">	}</span>
+
+	public void updateDate(double date) {
+<span class="nc" id="L119">		this.date = date;</span>
+
+<span class="nc bnc" id="L121" title="All 2 branches missed.">		for (CumulativeSpells spells : data.values())</span>
+<span class="nc" id="L122">			spells.updateCurrentSpell(date);</span>
+<span class="nc" id="L123">	}</span>
+
+	public String toString() {
+<span class="nc" id="L126">		StringBuilder buffer = new StringBuilder();</span>
+
+<span class="nc" id="L128">		buffer.append(&quot;(&quot;);</span>
+
+<span class="nc bnc" id="L130" title="All 2 branches missed.">		for (String key : data.keySet()) {</span>
+<span class="nc" id="L131">			buffer.append(key).append(&quot;:&quot;).append(data.get(key));</span>
+		}
+
+<span class="nc" id="L134">		buffer.append(&quot;)&quot;);</span>
+
+<span class="nc" id="L136">		return buffer.toString();</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

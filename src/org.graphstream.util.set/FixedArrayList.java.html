@@ -1,0 +1,415 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>FixedArrayList.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util.set</a> &gt; <span class="el_source">FixedArrayList.java</span></div><h1>FixedArrayList.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-07-22
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.util.set;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.NoSuchElementException;
+import java.util.RandomAccess;
+
+/**
+ * Array list with immutable element indices.
+ * 
+ * &lt;p&gt;
+ * A fixed array list is like an array list, but it ensures the property that
+ * each element will always stay at the same index, even if elements are removed
+ * in between. The counterpart of this property is that the array handles by
+ * itself the insertion of new elements (since when an element is removed in the
+ * middle, this position can be reused), and therefore indices cannot be chosen
+ * (i.e. only the {@link #add(Object)} and {@link #addAll(Collection)} methods
+ * are usable to insert new elements in the array).
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * This is the reason why this does not implement the List interface, because
+ * the add(int,E) method cannot be implemented.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * Furthermore, this array cannot contain null values, because it marks unused
+ * positions within the array using the null value.
+ * &lt;/p&gt;
+ * 
+ * @author Antoine Dutot
+ * @since 20040912
+ */
+<span class="nc" id="L65">public class FixedArrayList&lt;E&gt; implements Collection&lt;E&gt;, RandomAccess {</span>
+	// Attributes
+
+	/**
+	 * List of elements.
+	 */
+<span class="nc" id="L71">	protected ArrayList&lt;E&gt; elements = new ArrayList&lt;E&gt;();</span>
+
+	/**
+	 * List of free indices.
+	 */
+<span class="nc" id="L76">	protected ArrayList&lt;Integer&gt; freeIndices = new ArrayList&lt;Integer&gt;();</span>
+
+	/**
+	 * Last inserted element index.
+	 */
+<span class="nc" id="L81">	protected int lastIndex = -1;</span>
+
+	// Constructors
+
+<span class="nc" id="L85">	public FixedArrayList() {</span>
+<span class="nc" id="L86">		elements = new ArrayList&lt;E&gt;();</span>
+<span class="nc" id="L87">		freeIndices = new ArrayList&lt;Integer&gt;(16);</span>
+<span class="nc" id="L88">	}</span>
+
+<span class="nc" id="L90">	public FixedArrayList(int capacity) {</span>
+<span class="nc" id="L91">		elements = new ArrayList&lt;E&gt;(capacity);</span>
+<span class="nc" id="L92">		freeIndices = new ArrayList&lt;Integer&gt;(16);</span>
+<span class="nc" id="L93">	}</span>
+
+	// Accessors
+
+	/**
+	 * Number of elements in the array.
+	 * 
+	 * @return The number of elements in the array.
+	 */
+	public int size() {
+<span class="nc" id="L103">		return elements.size() - freeIndices.size();</span>
+	}
+
+	/**
+	 * Real size of the array, counting elements that have been erased.
+	 * 
+	 * @see #unsafeGet(int)
+	 */
+	public int realSize() {
+<span class="nc" id="L112">		return elements.size();</span>
+	}
+
+	public boolean isEmpty() {
+<span class="nc bnc" id="L116" title="All 2 branches missed.">		return (size() == 0);</span>
+	}
+
+	/**
+	 * I-th element.
+	 * 
+	 * @param i
+	 *            The element index.
+	 * @return The element at index &lt;code&gt;i&lt;/code&gt;.
+	 */
+	public E get(int i) {
+<span class="nc" id="L127">		E e = elements.get(i);</span>
+
+<span class="nc bnc" id="L129" title="All 2 branches missed.">		if (e == null)</span>
+<span class="nc" id="L130">			throw new NoSuchElementException(&quot;no element at index &quot; + i);</span>
+
+<span class="nc" id="L132">		return e;</span>
+	}
+
+	/**
+	 * I-th element. Like the {@link #get(int)} method but it does not check the
+	 * element does not exists at the given index.
+	 * 
+	 * @param i
+	 *            The element index.
+	 * @return The element at index &lt;code&gt;i&lt;/code&gt;.
+	 */
+	public E unsafeGet(int i) {
+<span class="nc" id="L144">		return elements.get(i);</span>
+	}
+
+	public boolean contains(Object o) {
+<span class="nc" id="L148">		int n = elements.size();</span>
+
+<span class="nc bnc" id="L150" title="All 2 branches missed.">		for (int i = 0; i &lt; n; ++i) {</span>
+<span class="nc" id="L151">			E e = elements.get(i);</span>
+
+<span class="nc bnc" id="L153" title="All 2 branches missed.">			if (e != null) {</span>
+<span class="nc bnc" id="L154" title="All 2 branches missed.">				if (e == o)</span>
+<span class="nc" id="L155">					return true;</span>
+
+<span class="nc bnc" id="L157" title="All 2 branches missed.">				if (elements.equals(o))</span>
+<span class="nc" id="L158">					return true;</span>
+			}
+		}
+
+<span class="nc" id="L162">		return false;</span>
+	}
+
+	public boolean containsAll(Collection&lt;?&gt; c) {
+<span class="nc bnc" id="L166" title="All 2 branches missed.">		for (Object o : c) {</span>
+<span class="nc bnc" id="L167" title="All 2 branches missed.">			if (!contains(o))</span>
+<span class="nc" id="L168">				return false;</span>
+		}
+
+<span class="nc" id="L171">		return true;</span>
+	}
+
+	@Override
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public boolean equals(Object o) {
+<span class="nc bnc" id="L177" title="All 2 branches missed.">		if (o instanceof FixedArrayList) {</span>
+<span class="nc" id="L178">			FixedArrayList&lt;? extends E&gt; other = (FixedArrayList&lt;? extends E&gt;) o;</span>
+
+<span class="nc" id="L180">			int n = size();</span>
+
+<span class="nc bnc" id="L182" title="All 2 branches missed.">			if (other.size() == n) {</span>
+<span class="nc bnc" id="L183" title="All 2 branches missed.">				for (int i = 0; i &lt; n; ++i) {</span>
+<span class="nc" id="L184">					E e0 = elements.get(i);</span>
+<span class="nc" id="L185">					E e1 = other.elements.get(i);</span>
+
+<span class="nc bnc" id="L187" title="All 2 branches missed.">					if (e0 != e1) {</span>
+<span class="nc bnc" id="L188" title="All 4 branches missed.">						if (e0 == null &amp;&amp; e1 != null)</span>
+<span class="nc" id="L189">							return false;</span>
+
+<span class="nc bnc" id="L191" title="All 4 branches missed.">						if (e0 != null &amp;&amp; e1 == null)</span>
+<span class="nc" id="L192">							return false;</span>
+
+<span class="nc bnc" id="L194" title="All 2 branches missed.">						if (!e0.equals(e1))</span>
+<span class="nc" id="L195">							return false;</span>
+					}
+				}
+
+<span class="nc" id="L199">				return true;</span>
+			}
+		}
+
+<span class="nc" id="L203">		return false;</span>
+	}
+
+	public java.util.Iterator&lt;E&gt; iterator() {
+<span class="nc" id="L207">		return new FixedArrayIterator();</span>
+	}
+
+	/**
+	 * Last index used by the {@link #add(Object)} method.
+	 * 
+	 * @return The last insertion index.
+	 */
+	public int getLastIndex() {
+<span class="nc" id="L216">		return lastIndex;</span>
+	}
+
+	/**
+	 * The index that will be used in case of a next insertion in this array.
+	 * 
+	 * @return
+	 */
+	public int getNextAddIndex() {
+<span class="nc" id="L225">		int n = freeIndices.size();</span>
+
+<span class="nc bnc" id="L227" title="All 2 branches missed.">		if (n &gt; 0)</span>
+<span class="nc" id="L228">			return freeIndices.get(n - 1);</span>
+		else
+<span class="nc" id="L230">			return elements.size();</span>
+	}
+
+	public Object[] toArray() {
+<span class="nc" id="L234">		int n = size();</span>
+<span class="nc" id="L235">		int m = elements.size();</span>
+<span class="nc" id="L236">		int j = 0;</span>
+<span class="nc" id="L237">		Object a[] = new Object[n];</span>
+
+<span class="nc bnc" id="L239" title="All 2 branches missed.">		for (int i = 0; i &lt; m; ++i) {</span>
+<span class="nc" id="L240">			E e = elements.get(i);</span>
+
+<span class="nc bnc" id="L242" title="All 2 branches missed.">			if (e != null)</span>
+<span class="nc" id="L243">				a[j++] = e;</span>
+		}
+
+<span class="nc bnc" id="L246" title="All 2 branches missed.">		assert (j == n);</span>
+<span class="nc" id="L247">		return a;</span>
+	}
+
+	public &lt;T&gt; T[] toArray(T[] a) {
+		// TODO
+<span class="nc" id="L252">		throw new RuntimeException(&quot;not implemented yet&quot;);</span>
+	}
+
+	// Commands
+
+	/**
+	 * Add one &lt;code&gt;element&lt;/code&gt; in the array. The index used for inserting the
+	 * element is then available using {@link #getLastIndex()}.
+	 * 
+	 * @see #getLastIndex()
+	 * @param element
+	 *            The element to add.
+	 * @return Always true.
+	 * @throws NullPointerException
+	 *             If a null value is inserted.
+	 */
+	public boolean add(E element) throws java.lang.NullPointerException {
+<span class="nc bnc" id="L269" title="All 2 branches missed.">		if (element == null)</span>
+<span class="nc" id="L270">			throw new java.lang.NullPointerException(&quot;this array cannot contain null value&quot;);</span>
+
+<span class="nc" id="L272">		int n = freeIndices.size();</span>
+
+<span class="nc bnc" id="L274" title="All 2 branches missed.">		if (n &gt; 0) {</span>
+<span class="nc" id="L275">			int i = freeIndices.remove(n - 1);</span>
+<span class="nc" id="L276">			elements.set(i, element);</span>
+<span class="nc" id="L277">			lastIndex = i;</span>
+<span class="nc" id="L278">		} else {</span>
+<span class="nc" id="L279">			elements.add(element);</span>
+<span class="nc" id="L280">			lastIndex = elements.size() - 1;</span>
+		}
+
+<span class="nc" id="L283">		return true;</span>
+	}
+
+	public boolean addAll(Collection&lt;? extends E&gt; c) throws UnsupportedOperationException {
+<span class="nc" id="L287">		java.util.Iterator&lt;? extends E&gt; k = c.iterator();</span>
+
+<span class="nc bnc" id="L289" title="All 2 branches missed.">		while (k.hasNext()) {</span>
+<span class="nc" id="L290">			add(k.next());</span>
+		}
+
+<span class="nc" id="L293">		return true;</span>
+	}
+
+	/**
+	 * Remove the element at index &lt;code&gt;i&lt;/code&gt;.
+	 * 
+	 * @param i
+	 *            Index of the element to remove.
+	 * @return The removed element.
+	 */
+	public E remove(int i) {
+<span class="nc" id="L304">		int n = elements.size();</span>
+
+<span class="nc bnc" id="L306" title="All 4 branches missed.">		if (i &lt; 0 || i &gt;= n)</span>
+<span class="nc" id="L307">			throw new ArrayIndexOutOfBoundsException(&quot;index &quot; + i + &quot; does not exist&quot;);</span>
+
+<span class="nc bnc" id="L309" title="All 2 branches missed.">		if (n &gt; 0) {</span>
+<span class="nc bnc" id="L310" title="All 2 branches missed.">			if (elements.get(i) == null)</span>
+<span class="nc" id="L311">				throw new NullPointerException(&quot;no element stored at index &quot; + i);</span>
+
+<span class="nc bnc" id="L313" title="All 2 branches missed.">			if (i == (n - 1)) {</span>
+<span class="nc" id="L314">				return elements.remove(i);</span>
+			} else {
+<span class="nc" id="L316">				E e = elements.get(i);</span>
+<span class="nc" id="L317">				elements.set(i, null);</span>
+<span class="nc" id="L318">				freeIndices.add(i);</span>
+<span class="nc" id="L319">				return e;</span>
+			}
+		}
+
+<span class="nc" id="L323">		throw new ArrayIndexOutOfBoundsException(&quot;index &quot; + i + &quot; does not exist&quot;);</span>
+	}
+
+	protected void removeIt(int i) {
+<span class="nc" id="L327">		remove(i);</span>
+<span class="nc" id="L328">	}</span>
+
+	/**
+	 * Remove the element &lt;code&gt;e&lt;/code&gt;.
+	 * 
+	 * @param e
+	 *            The element to remove.
+	 * @return True if removed.
+	 */
+	public boolean remove(Object e) {
+<span class="nc" id="L338">		int n = elements.size();</span>
+
+<span class="nc bnc" id="L340" title="All 2 branches missed.">		for (int i = 0; i &lt; n; ++i) {</span>
+<span class="nc bnc" id="L341" title="All 2 branches missed.">			if (elements.get(i) == e) {</span>
+<span class="nc" id="L342">				elements.remove(i);</span>
+<span class="nc" id="L343">				return true;</span>
+			}
+		}
+
+<span class="nc" id="L347">		return false;</span>
+	}
+
+	public boolean removeAll(Collection&lt;?&gt; c) {
+<span class="nc" id="L351">		throw new UnsupportedOperationException(&quot;not implemented yet&quot;);</span>
+	}
+
+	public boolean retainAll(Collection&lt;?&gt; c) {
+<span class="nc" id="L355">		throw new UnsupportedOperationException(&quot;not implemented yet&quot;);</span>
+	}
+
+	public void clear() {
+<span class="nc" id="L359">		elements.clear();</span>
+<span class="nc" id="L360">		freeIndices.clear();</span>
+<span class="nc" id="L361">	}</span>
+
+	// Nested classes
+
+	protected class FixedArrayIterator implements java.util.Iterator&lt;E&gt; {
+		int i;
+
+<span class="nc" id="L368">		public FixedArrayIterator() {</span>
+<span class="nc" id="L369">			i = -1;</span>
+<span class="nc" id="L370">		}</span>
+
+		public boolean hasNext() {
+<span class="nc" id="L373">			int n = elements.size();</span>
+
+<span class="nc bnc" id="L375" title="All 2 branches missed.">			for (int j = i + 1; j &lt; n; ++j) {</span>
+<span class="nc bnc" id="L376" title="All 2 branches missed.">				if (elements.get(j) != null)</span>
+<span class="nc" id="L377">					return true;</span>
+			}
+
+<span class="nc" id="L380">			return false;</span>
+		}
+
+		public E next() {
+<span class="nc" id="L384">			int n = elements.size();</span>
+
+<span class="nc bnc" id="L386" title="All 2 branches missed.">			for (int j = i + 1; j &lt; n; ++j) {</span>
+<span class="nc" id="L387">				E e = elements.get(j);</span>
+
+<span class="nc bnc" id="L389" title="All 2 branches missed.">				if (e != null) {</span>
+<span class="nc" id="L390">					i = j;</span>
+<span class="nc" id="L391">					return e;</span>
+				}
+			}
+
+<span class="nc" id="L395">			throw new NoSuchElementException(&quot;no more elements in iterator&quot;);</span>
+		}
+
+		public void remove() throws UnsupportedOperationException {
+			// throw new UnsupportedOperationException( &quot;not implemented yet&quot; );
+
+<span class="nc bnc" id="L401" title="All 6 branches missed.">			if (i &gt;= 0 &amp;&amp; i &lt; elements.size() &amp;&amp; elements.get(i) != null) {</span>
+<span class="nc" id="L402">				removeIt(i); // A parent class method cannot be called if it has</span>
+								// the same name as one in the inner class
+								// (normal), but even if they have distinct
+								// arguments types. Hence this strange removeIt()
+								// method...
+<span class="nc" id="L407">			} else {</span>
+<span class="nc" id="L408">				throw new IllegalStateException(&quot;no such element&quot;);</span>
+			}
+
+<span class="nc" id="L411">		}</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

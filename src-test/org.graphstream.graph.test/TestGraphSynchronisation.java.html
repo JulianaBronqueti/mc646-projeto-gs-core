@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>TestGraphSynchronisation.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src-test</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.test</a> &gt; <span class="el_source">TestGraphSynchronisation.java</span></div><h1>TestGraphSynchronisation.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2011-05-11
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.graph.test;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.implementations.AdjacencyListGraph;
+import org.graphstream.graph.implementations.MultiGraph;
+import org.graphstream.graph.implementations.SingleGraph;
+import org.junit.Test;
+
+/**
+ * Synchronisation between Sources and Sinks is not as trivial as it seems, but
+ * should looks like it is ! Therefore we need to test it accurately ...
+ */
+<span class="nc" id="L50">public class TestGraphSynchronisation {</span>
+	@Test
+	public void testGraphSyncBase() {
+		// Simple test with two graphs that mutually listen at themselves.
+		//
+		// /-------&gt; g2
+		// | |
+		// g1 &lt;-------/
+
+<span class="nc" id="L59">		testGraphSyncBase(new MultiGraph(&quot;g1&quot;), new MultiGraph(&quot;g2&quot;));</span>
+<span class="nc" id="L60">		testGraphSyncBase(new SingleGraph(&quot;g1&quot;), new SingleGraph(&quot;g2&quot;));</span>
+<span class="nc" id="L61">		testGraphSyncBase(new AdjacencyListGraph(&quot;g1&quot;), new AdjacencyListGraph(&quot;g2&quot;));</span>
+<span class="nc" id="L62">		testGraphSyncBase(new MultiGraph(&quot;g1&quot;), new AdjacencyListGraph(&quot;g2&quot;));</span>
+
+<span class="nc" id="L64">	}</span>
+
+	protected void testGraphSyncBase(Graph g1, Graph g2) {
+<span class="nc" id="L67">		g2.addNode(&quot;Z&quot;); // Allows to offset the internal &quot;time&quot; of source g2</span>
+<span class="nc" id="L68">		g2.removeNode(&quot;Z&quot;); // (see implementation of synchronisation).</span>
+
+<span class="nc" id="L70">		g1.addSink(g2); // These two lines seem simple but introduce an eventual</span>
+<span class="nc" id="L71">		g2.addSink(g1); // recursive loop between the two graphs. Graph</span>
+						// synchronisation
+						// is all about avoiding this loop.
+
+		// Test with element addition.
+		// We add elements in both graphs alternatively. At the end, the two
+		// graphs must be
+		// the same.
+
+<span class="nc" id="L80">		g1.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L81">		g2.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L82">		g1.addNode(&quot;C&quot;);</span>
+<span class="nc" id="L83">		g2.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;, false);</span>
+<span class="nc" id="L84">		g1.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, true);</span>
+<span class="nc" id="L85">		g2.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;, true);</span>
+
+<span class="nc" id="L87">		assertEquals(3, g1.getNodeCount());</span>
+<span class="nc" id="L88">		assertEquals(3, g2.getNodeCount());</span>
+<span class="nc" id="L89">		assertEquals(3, g1.getEdgeCount());</span>
+<span class="nc" id="L90">		assertEquals(3, g2.getEdgeCount());</span>
+
+<span class="nc" id="L92">		assertNotNull(g1.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L93">		assertNotNull(g2.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L94">		assertNotNull(g1.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L95">		assertNotNull(g2.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L96">		assertNotNull(g1.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L97">		assertNotNull(g2.getNode(&quot;C&quot;));</span>
+
+<span class="nc" id="L99">		assertNotNull(g1.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L100">		assertNotNull(g2.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L101">		assertNotNull(g1.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L102">		assertNotNull(g2.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L103">		assertNotNull(g1.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L104">		assertNotNull(g2.getEdge(&quot;CA&quot;));</span>
+
+		// Test with attribute addition.
+
+<span class="nc" id="L108">		g1.getNode(&quot;A&quot;).setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L109">		g2.getEdge(&quot;AB&quot;).setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+
+<span class="nc" id="L111">		assertEquals(1, g1.getNode(&quot;A&quot;).getAttributeCount());</span>
+<span class="nc" id="L112">		assertEquals(1, g2.getNode(&quot;A&quot;).getAttributeCount());</span>
+<span class="nc" id="L113">		assertEquals(1, g1.getEdge(&quot;AB&quot;).getAttributeCount());</span>
+<span class="nc" id="L114">		assertEquals(1, g2.getEdge(&quot;AB&quot;).getAttributeCount());</span>
+<span class="nc" id="L115">		assertEquals(&quot;bar&quot;, g1.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L116">		assertEquals(&quot;bar&quot;, g2.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L117">		assertEquals(&quot;bar&quot;, g1.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L118">		assertEquals(&quot;bar&quot;, g2.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+
+		// Test attribute change.
+
+<span class="nc" id="L122">		g1.getNode(&quot;A&quot;).setAttribute(&quot;foo&quot;, &quot;truc&quot;);</span>
+<span class="nc" id="L123">		g2.getEdge(&quot;AB&quot;).setAttribute(&quot;foo&quot;, &quot;truc&quot;);</span>
+
+<span class="nc" id="L125">		assertEquals(&quot;truc&quot;, g1.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L126">		assertEquals(&quot;truc&quot;, g2.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L127">		assertEquals(&quot;truc&quot;, g1.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L128">		assertEquals(&quot;truc&quot;, g2.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+
+		// Test attribute removal.
+
+<span class="nc" id="L132">		g2.getNode(&quot;A&quot;).removeAttribute(&quot;foo&quot;);</span>
+<span class="nc" id="L133">		g1.getEdge(&quot;AB&quot;).removeAttribute(&quot;foo&quot;);</span>
+
+<span class="nc" id="L135">		assertEquals(0, g1.getNode(&quot;A&quot;).getAttributeCount());</span>
+<span class="nc" id="L136">		assertEquals(0, g2.getNode(&quot;A&quot;).getAttributeCount());</span>
+<span class="nc" id="L137">		assertEquals(0, g1.getEdge(&quot;AB&quot;).getAttributeCount());</span>
+<span class="nc" id="L138">		assertEquals(0, g2.getEdge(&quot;AB&quot;).getAttributeCount());</span>
+<span class="nc" id="L139">		assertFalse(g1.getNode(&quot;A&quot;).hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L140">		assertFalse(g2.getNode(&quot;A&quot;).hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L141">		assertFalse(g1.getEdge(&quot;AB&quot;).hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L142">		assertFalse(g2.getEdge(&quot;AB&quot;).hasAttribute(&quot;foo&quot;));</span>
+
+		// Test edge removal
+
+<span class="nc" id="L146">		g1.removeEdge(&quot;CA&quot;);</span>
+
+<span class="nc" id="L148">		assertEquals(2, g1.getEdgeCount());</span>
+<span class="nc" id="L149">		assertEquals(2, g2.getEdgeCount());</span>
+<span class="nc" id="L150">		assertNull(g1.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L151">		assertNull(g2.getEdge(&quot;CA&quot;));</span>
+
+		// Test node removal and automatic edge removal (edge &quot;AB&quot; is
+		// automatically removed).
+
+<span class="nc" id="L156">		g2.removeNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L158">		assertEquals(2, g2.getNodeCount());</span>
+<span class="nc" id="L159">		assertEquals(2, g1.getNodeCount());</span>
+<span class="nc" id="L160">		assertEquals(1, g1.getEdgeCount());</span>
+<span class="nc" id="L161">		assertEquals(1, g2.getEdgeCount());</span>
+<span class="nc" id="L162">		assertNull(g1.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L163">		assertNull(g2.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L164">		assertNull(g1.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L165">		assertNull(g2.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L166">	}</span>
+
+	@Test
+	public void testGraphSyncCycleSimple() {
+		// More advanced test where three graphs mutually listen at themselves.
+		//
+		// /--------&gt; g3
+		// | |
+		// /--------&gt; g2 |
+		// | |
+		// g1 &lt;--------------------/
+
+<span class="nc" id="L178">		testGraphSyncCycleSimple(new MultiGraph(&quot;g1&quot;), new MultiGraph(&quot;g2&quot;), new MultiGraph(&quot;g3&quot;));</span>
+<span class="nc" id="L179">		testGraphSyncCycleSimple(new SingleGraph(&quot;g1&quot;), new SingleGraph(&quot;g2&quot;), new SingleGraph(&quot;g3&quot;));</span>
+<span class="nc" id="L180">		testGraphSyncCycleSimple(new AdjacencyListGraph(&quot;g1&quot;), new AdjacencyListGraph(&quot;g2&quot;),</span>
+<span class="nc" id="L181">				new AdjacencyListGraph(&quot;g3&quot;));</span>
+<span class="nc" id="L182">		testGraphSyncCycleSimple(new MultiGraph(&quot;g1&quot;), new SingleGraph(&quot;g2&quot;), new AdjacencyListGraph(&quot;g3&quot;));</span>
+<span class="nc" id="L183">	}</span>
+
+	protected void testGraphSyncCycleSimple(Graph g1, Graph g2, Graph g3) {
+<span class="nc" id="L186">		g1.addSink(g2);</span>
+<span class="nc" id="L187">		g2.addSink(g3);</span>
+<span class="nc" id="L188">		g3.addSink(g1);</span>
+<span class="nc" id="L189">		testGraphSyncCycle(g1, g2, g3);</span>
+<span class="nc" id="L190">	}</span>
+
+	@Test
+	public void testGraphSyncCycleProblem() {
+		// More advanced test where three graphs mutually listen at themselves.
+		//
+		// /--------&gt; g3
+		// | |
+		// /--------&gt; g2 &lt;---------+
+		// | |
+		// g1 &lt;--------------------/
+
+<span class="nc" id="L202">		testGraphSyncCycleProblem(new MultiGraph(&quot;g1&quot;), new MultiGraph(&quot;g2&quot;), new MultiGraph(&quot;g3&quot;));</span>
+<span class="nc" id="L203">		testGraphSyncCycleProblem(new SingleGraph(&quot;g1&quot;), new SingleGraph(&quot;g2&quot;), new SingleGraph(&quot;g3&quot;));</span>
+<span class="nc" id="L204">		testGraphSyncCycleProblem(new AdjacencyListGraph(&quot;g1&quot;), new AdjacencyListGraph(&quot;g2&quot;),</span>
+<span class="nc" id="L205">				new AdjacencyListGraph(&quot;g3&quot;));</span>
+<span class="nc" id="L206">		testGraphSyncCycleProblem(new MultiGraph(&quot;g1&quot;), new SingleGraph(&quot;g2&quot;), new AdjacencyListGraph(&quot;g3&quot;));</span>
+<span class="nc" id="L207">	}</span>
+
+	protected void testGraphSyncCycleProblem(Graph g1, Graph g2, Graph g3) {
+<span class="nc" id="L210">		g1.addSink(g2);</span>
+<span class="nc" id="L211">		g2.addSink(g3);</span>
+<span class="nc" id="L212">		g3.addSink(g1);</span>
+<span class="nc" id="L213">		g3.addSink(g2); // Exactly the same test as above with this line</span>
+						// added... :-)
+<span class="nc" id="L215">		testGraphSyncCycle(g1, g2, g3);</span>
+<span class="nc" id="L216">	}</span>
+
+	protected void testGraphSyncCycle(Graph g1, Graph g2, Graph g3) {
+<span class="nc" id="L219">		g1.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L220">		g2.addNode(&quot;B&quot;);</span>
+<span class="nc" id="L221">		g3.addNode(&quot;C&quot;);</span>
+
+<span class="nc" id="L223">		assertEquals(3, g1.getNodeCount());</span>
+<span class="nc" id="L224">		assertEquals(3, g2.getNodeCount());</span>
+<span class="nc" id="L225">		assertEquals(3, g3.getNodeCount());</span>
+
+<span class="nc" id="L227">		assertNotNull(g1.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L228">		assertNotNull(g2.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L229">		assertNotNull(g3.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L230">		assertNotNull(g1.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L231">		assertNotNull(g2.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L232">		assertNotNull(g3.getNode(&quot;B&quot;));</span>
+<span class="nc" id="L233">		assertNotNull(g1.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L234">		assertNotNull(g2.getNode(&quot;C&quot;));</span>
+<span class="nc" id="L235">		assertNotNull(g3.getNode(&quot;C&quot;));</span>
+
+<span class="nc" id="L237">		g1.addEdge(&quot;AB&quot;, &quot;A&quot;, &quot;B&quot;);</span>
+<span class="nc" id="L238">		g2.addEdge(&quot;BC&quot;, &quot;B&quot;, &quot;C&quot;, true);</span>
+<span class="nc" id="L239">		g3.addEdge(&quot;CA&quot;, &quot;C&quot;, &quot;A&quot;, false);</span>
+
+<span class="nc" id="L241">		assertEquals(3, g1.getEdgeCount());</span>
+<span class="nc" id="L242">		assertEquals(3, g2.getEdgeCount());</span>
+<span class="nc" id="L243">		assertEquals(3, g3.getEdgeCount());</span>
+
+<span class="nc" id="L245">		assertNotNull(g1.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L246">		assertNotNull(g2.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L247">		assertNotNull(g3.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L248">		assertNotNull(g1.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L249">		assertNotNull(g2.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L250">		assertNotNull(g3.getEdge(&quot;BC&quot;));</span>
+<span class="nc" id="L251">		assertNotNull(g1.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L252">		assertNotNull(g2.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L253">		assertNotNull(g3.getEdge(&quot;CA&quot;));</span>
+
+		// Now attributes.
+
+<span class="nc" id="L257">		g1.setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L258">		g2.getNode(&quot;A&quot;).setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+<span class="nc" id="L259">		g3.getEdge(&quot;AB&quot;).setAttribute(&quot;foo&quot;, &quot;bar&quot;);</span>
+
+<span class="nc" id="L261">		assertEquals(&quot;bar&quot;, g1.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L262">		assertEquals(&quot;bar&quot;, g2.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L263">		assertEquals(&quot;bar&quot;, g3.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L264">		assertEquals(&quot;bar&quot;, g1.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L265">		assertEquals(&quot;bar&quot;, g2.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L266">		assertEquals(&quot;bar&quot;, g3.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L267">		assertEquals(&quot;bar&quot;, g1.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L268">		assertEquals(&quot;bar&quot;, g2.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L269">		assertEquals(&quot;bar&quot;, g3.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+
+		// Attributes change.
+
+<span class="nc" id="L273">		g1.setAttribute(&quot;foo&quot;, &quot;truc&quot;);</span>
+<span class="nc" id="L274">		g2.getNode(&quot;A&quot;).setAttribute(&quot;foo&quot;, &quot;truc&quot;);</span>
+<span class="nc" id="L275">		g3.getEdge(&quot;AB&quot;).setAttribute(&quot;foo&quot;, &quot;truc&quot;);</span>
+
+<span class="nc" id="L277">		assertEquals(&quot;truc&quot;, g1.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L278">		assertEquals(&quot;truc&quot;, g2.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L279">		assertEquals(&quot;truc&quot;, g3.getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L280">		assertEquals(&quot;truc&quot;, g1.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L281">		assertEquals(&quot;truc&quot;, g2.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L282">		assertEquals(&quot;truc&quot;, g3.getNode(&quot;A&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L283">		assertEquals(&quot;truc&quot;, g1.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L284">		assertEquals(&quot;truc&quot;, g2.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L285">		assertEquals(&quot;truc&quot;, g3.getEdge(&quot;AB&quot;).getAttribute(&quot;foo&quot;));</span>
+
+		// Attribute removal.
+
+<span class="nc" id="L289">		g1.removeAttribute(&quot;foo&quot;);</span>
+<span class="nc" id="L290">		g2.getNode(&quot;A&quot;).removeAttribute(&quot;foo&quot;);</span>
+<span class="nc" id="L291">		g3.getEdge(&quot;AB&quot;).removeAttribute(&quot;foo&quot;);</span>
+
+<span class="nc" id="L293">		assertFalse(g1.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L294">		assertFalse(g2.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L295">		assertFalse(g3.hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L296">		assertFalse(g1.getNode(&quot;A&quot;).hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L297">		assertFalse(g2.getNode(&quot;A&quot;).hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L298">		assertFalse(g3.getNode(&quot;A&quot;).hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L299">		assertFalse(g1.getEdge(&quot;AB&quot;).hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L300">		assertFalse(g2.getEdge(&quot;AB&quot;).hasAttribute(&quot;foo&quot;));</span>
+<span class="nc" id="L301">		assertFalse(g3.getEdge(&quot;AB&quot;).hasAttribute(&quot;foo&quot;));</span>
+
+		// Edge removal.
+
+<span class="nc" id="L305">		g1.removeEdge(&quot;AB&quot;);</span>
+
+<span class="nc" id="L307">		assertEquals(2, g1.getEdgeCount());</span>
+<span class="nc" id="L308">		assertEquals(2, g2.getEdgeCount());</span>
+<span class="nc" id="L309">		assertEquals(2, g3.getEdgeCount());</span>
+<span class="nc" id="L310">		assertNull(g1.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L311">		assertNull(g2.getEdge(&quot;AB&quot;));</span>
+<span class="nc" id="L312">		assertNull(g3.getEdge(&quot;AB&quot;));</span>
+
+		// Node removal and automatic edge removal.
+
+<span class="nc" id="L316">		g2.removeNode(&quot;A&quot;);</span>
+
+<span class="nc" id="L318">		assertEquals(2, g1.getNodeCount());</span>
+<span class="nc" id="L319">		assertEquals(2, g2.getNodeCount());</span>
+<span class="nc" id="L320">		assertEquals(2, g3.getNodeCount());</span>
+<span class="nc" id="L321">		assertEquals(1, g1.getEdgeCount());</span>
+<span class="nc" id="L322">		assertEquals(1, g2.getEdgeCount());</span>
+<span class="nc" id="L323">		assertEquals(1, g3.getEdgeCount());</span>
+<span class="nc" id="L324">		assertNull(g1.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L325">		assertNull(g2.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L326">		assertNull(g3.getNode(&quot;A&quot;));</span>
+<span class="nc" id="L327">		assertNull(g1.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L328">		assertNull(g2.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L329">		assertNull(g3.getEdge(&quot;CA&quot;));</span>
+<span class="nc" id="L330">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

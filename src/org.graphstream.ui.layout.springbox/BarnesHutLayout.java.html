@@ -1,0 +1,904 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>BarnesHutLayout.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.ui.layout.springbox</a> &gt; <span class="el_source">BarnesHutLayout.java</span></div><h1>BarnesHutLayout.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author kitskub &lt;kitskub@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.ui.layout.springbox;
+
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.SourceBase;
+import org.graphstream.stream.sync.SinkTime;
+import org.graphstream.ui.geom.Point3;
+import org.graphstream.ui.graphicGraph.GraphPosLengthUtils;
+import org.graphstream.ui.layout.Layout;
+import org.miv.pherd.ParticleBox;
+import org.miv.pherd.ParticleBoxListener;
+import org.miv.pherd.ntree.Anchor;
+import org.miv.pherd.ntree.CellSpace;
+import org.miv.pherd.ntree.OctreeCellSpace;
+import org.miv.pherd.ntree.QuadtreeCellSpace;
+
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.Locale;
+import java.util.Random;
+import java.util.logging.Logger;
+
+/**
+ * Base implementation of a Barnes-Hut space decomposition and particle
+ * interaction algorithm to be used for force-based layout algorithms.
+ * 
+ * &lt;p&gt;
+ * This base class creates the space decomposition method and manages the main
+ * loop of the simulation. The simulation is made of {@link NodeParticle} and
+ * {@link EdgeSpring} elements that are created and linked for you in response
+ * to graph events received via the {@link Sink} interface. However you have to
+ * provide an implementation of the abstract {@link NodeParticle} class (by
+ * overriding the abstract method {@link #newNodeParticle(String)}).
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * As almost all the repulsion/attraction forces computation is done in the
+ * {@link NodeParticle} class, this is the most important one.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * This algorithm can be configured using several attributes put on the graph :
+ * &lt;ul&gt;
+ * &lt;li&gt;layout.force : a floating point number (default 0.5f), that allows to
+ * define the importance of movement of each node at each computation step. The
+ * larger the value the quicker nodes move to their position of lowest energy.
+ * However too high values can generate non stable layouts and
+ * oscillations.&lt;/li&gt;
+ * &lt;li&gt;layout.quality : an integer between 0 and 4. With value 0 the layout is
+ * faster but it also can be farther from equilibrium. With value 4 the
+ * algorithm tries to be as close as possible from equilibrium (the n-tree and
+ * Barnes-Hut algorithms are disabled), but the computation can take a lot of
+ * time (the algorithm becomes O(n^2)). TODO change this into layout.barneshut
+ * or something similar.&lt;/li&gt;
+ * &lt;/ul&gt;
+ * You can also put the following attributes on nodes :
+ * &lt;ul&gt;
+ * &lt;li&gt;layout.weight : The force of repulsion of a node. The larger the value,
+ * the more the node repulses its neighbors.&lt;/li&gt;
+ * &lt;/ul&gt;
+ * And on edges :
+ * &lt;ul&gt;
+ * &lt;li&gt;layout.weight : the multiplier for the desired edge length. By default
+ * the algorithm tries to make each edge of length one. This is the position of
+ * lowest energy for a spring. This coefficient allows to modify this target
+ * spring length. Value larger than one will make the edge longer. Values
+ * between 0 and 1 will make the edge smaller.&lt;/li&gt;
+ * &lt;li&gt;layout.stabilization-limit : the stabilization of a layout is a number
+ * between 0 and 1. 1 means fully stable, but this value is rare. Therefore one
+ * can consider the layout stable at a lower value. The default is 0.9. You can
+ * fix it with this attribute.&lt;/li&gt;
+ * &lt;/ul&gt;
+ * &lt;/p&gt;
+ */
+public abstract class BarnesHutLayout extends SourceBase implements Layout, ParticleBoxListener {
+
+	/**
+	 * class level logger
+	 */
+<span class="nc" id="L114">	private static final Logger logger = Logger.getLogger(BarnesHutLayout.class.getName());</span>
+
+	/**
+	 * The nodes representation and the n-tree. The particle-box is an
+	 * implementation of a recursive space decomposition method that is used here to
+	 * break the O(n^2) complexity into a Barnes-Hut algorithm that is closer to O(n
+	 * log n).
+	 */
+	protected ParticleBox nodes;
+
+	/**
+	 * The set of edges.
+	 */
+<span class="nc" id="L127">	protected HashMap&lt;String, EdgeSpring&gt; edges = new HashMap&lt;String, EdgeSpring&gt;();</span>
+
+	/**
+	 * Used to avoid stabilizing if an event occurred.
+	 */
+<span class="nc" id="L132">	protected int lastElementCount = 0;</span>
+
+	/**
+	 * Random number generator.
+	 */
+	protected Random random;
+
+	/**
+	 * The lowest node position.
+	 */
+<span class="nc" id="L142">	protected Point3 lo = new Point3(0, 0, 0);</span>
+
+	/**
+	 * The highest node position.
+	 */
+<span class="nc" id="L147">	protected Point3 hi = new Point3(1, 1, 1);</span>
+
+	/**
+	 * The point in the middle of the layout.
+	 */
+<span class="nc" id="L152">	protected Point3 center = new Point3(0.5, 0.5, 0.5);</span>
+
+	/**
+	 * Output stream for statistics if in debug mode.
+	 */
+	protected PrintStream statsOut;
+
+	/**
+	 * Energy, and the history of energies.
+	 */
+<span class="nc" id="L162">	protected Energies energies = new Energies();</span>
+
+	/**
+	 * Global force strength. This is a factor in [0..1] that is used to scale all
+	 * computed displacements.
+	 */
+<span class="nc" id="L168">	protected double force = 1f;</span>
+
+	/**
+	 * The view distance at which the cells of the n-tree are explored exhaustively,
+	 * after this the poles are used. This is a multiple of k.
+	 */
+<span class="nc" id="L174">	protected double viewZone = 5f;</span>
+
+	/**
+	 * The Barnes/Hut theta threshold to know if we use a pole or not.
+	 */
+<span class="nc" id="L179">	protected double theta = .7f;</span>
+
+	/**
+	 * The quality level.
+	 */
+<span class="nc" id="L184">	protected double quality = 1;</span>
+
+	/**
+	 * Number of nodes per space-cell.
+	 */
+<span class="nc" id="L189">	protected int nodesPerCell = 10;</span>
+
+	/**
+	 * The diagonal of the graph area at the current step.
+	 */
+<span class="nc" id="L194">	protected double area = 1;</span>
+
+	/**
+	 * The stabilization limit of this algorithm.
+	 */
+<span class="nc" id="L199">	protected double stabilizationLimit = 0.9;</span>
+
+	// Attributes -- Statistics
+
+	/**
+	 * Current step.
+	 */
+	protected int time;
+
+	/**
+	 * The duration of the last step in milliseconds.
+	 */
+	protected long lastStepTime;
+
+	/**
+	 * The maximum length of a node displacement at the current step.
+	 */
+	protected double maxMoveLength;
+
+	/**
+	 * Average move length.
+	 */
+	protected double avgLength;
+
+	/**
+	 * Number of nodes that moved during last step.
+	 */
+	protected int nodeMoveCount;
+
+	// Attributes -- Settings
+
+	/**
+	 * Compute the third coordinate ?.
+	 */
+<span class="nc" id="L233">	protected boolean is3D = false;</span>
+
+	/**
+	 * The gravity factor. If set to 0 the gravity computation is disabled.
+	 */
+<span class="nc" id="L238">	protected double gravity = 0;</span>
+
+	/**
+	 * Send node informations?.
+	 */
+<span class="nc" id="L243">	protected boolean sendNodeInfos = false;</span>
+
+	/**
+	 * If true a file is created to output the statistics of the spring box
+	 * algorithm.
+	 */
+<span class="nc" id="L249">	protected boolean outputStats = false;</span>
+
+	/**
+	 * If true a file is created for each node (!!!) and its movement statistics are
+	 * logged.
+	 */
+<span class="nc" id="L255">	protected boolean outputNodeStats = false;</span>
+
+	/**
+	 * If greater than one, move events are sent only every N steps.
+	 */
+<span class="nc" id="L260">	protected int sendMoveEventsEvery = 1;</span>
+
+	/**
+	 * Sink time.
+	 */
+	protected SinkTime sinkTime;
+
+	/**
+	 * New 2D Barnes-Hut simulation.
+	 */
+	public BarnesHutLayout() {
+<span class="nc" id="L271">		this(false);</span>
+<span class="nc" id="L272">	}</span>
+
+	/**
+	 * New Barnes-Hut simulation.
+	 * 
+	 * @param is3D
+	 *            If true the simulation dimensions count is 3 else 2.
+	 */
+	public BarnesHutLayout(boolean is3D) {
+<span class="nc" id="L281">		this(is3D, new Random(System.currentTimeMillis()));</span>
+<span class="nc" id="L282">	}</span>
+
+	/**
+	 * New Barnes-Hut simulation.
+	 * 
+	 * @param is3D
+	 *            If true the simulation dimensions count is 3 else 2.
+	 * @param randomNumberGenerator
+	 *            The random number generator to use.
+	 */
+<span class="nc" id="L292">	public BarnesHutLayout(boolean is3D, Random randomNumberGenerator) {</span>
+		CellSpace space;
+
+<span class="nc" id="L295">		this.is3D = is3D;</span>
+<span class="nc" id="L296">		this.random = randomNumberGenerator;</span>
+
+<span class="nc bnc" id="L298" title="All 2 branches missed.">		if (is3D) {</span>
+<span class="nc" id="L299">			space = new OctreeCellSpace(new Anchor(-1, -1, -1), new Anchor(1, 1, 1));</span>
+<span class="nc" id="L300">		} else {</span>
+<span class="nc" id="L301">			space = new QuadtreeCellSpace(new Anchor(-1, -1, -0.01f), new Anchor(1, 1, 0.01f));</span>
+		}
+
+<span class="nc" id="L304">		this.nodes = new ParticleBox(nodesPerCell, space, new GraphCellData());</span>
+
+<span class="nc" id="L306">		nodes.addParticleBoxListener(this);</span>
+<span class="nc" id="L307">		setQuality(quality);</span>
+
+<span class="nc" id="L309">		sinkTime = new SinkTime();</span>
+<span class="nc" id="L310">		sourceTime.setSinkTime(sinkTime);</span>
+<span class="nc" id="L311">	}</span>
+
+	public Point3 getLowPoint() {
+<span class="nc" id="L314">		org.miv.pherd.geom.Point3 p = nodes.getNTree().getLowestPoint();</span>
+<span class="nc" id="L315">		lo = new Point3(p.x, p.y, p.z);</span>
+<span class="nc" id="L316">		return lo;</span>
+	}
+
+	public Point3 getHiPoint() {
+<span class="nc" id="L320">		org.miv.pherd.geom.Point3 p = nodes.getNTree().getHighestPoint();</span>
+<span class="nc" id="L321">		hi = new Point3(p.x, p.y, p.z);</span>
+<span class="nc" id="L322">		return hi;</span>
+	}
+
+	public double randomXInsideBounds() {
+<span class="nc" id="L326">		org.miv.pherd.geom.Point3 c = ((GraphCellData) nodes.getNTree().getRootCell().getData()).center;</span>
+<span class="nc" id="L327">		return c.x + (random.nextDouble() * 2 - 1);</span>
+		// org.miv.pherd.geom.Point3 lo = nodes.getNTree().getLowestPoint();
+		// org.miv.pherd.geom.Point3 hi = nodes.getNTree().getHighestPoint();
+		// return lo.x + ((hi.x - lo.x)*random.nextDouble());
+	}
+
+	public double randomYInsideBounds() {
+<span class="nc" id="L334">		org.miv.pherd.geom.Point3 c = ((GraphCellData) nodes.getNTree().getRootCell().getData()).center;</span>
+<span class="nc" id="L335">		return c.y + (random.nextDouble() * 2 - 1);</span>
+		// org.miv.pherd.geom.Point3 lo = nodes.getNTree().getLowestPoint();
+		// org.miv.pherd.geom.Point3 hi = nodes.getNTree().getHighestPoint();
+		// return lo.y + ((hi.y - lo.y)*random.nextDouble());
+	}
+
+	public double randomZInsideBounds() {
+<span class="nc" id="L342">		org.miv.pherd.geom.Point3 c = ((GraphCellData) nodes.getNTree().getRootCell().getData()).center;</span>
+<span class="nc" id="L343">		return c.z + (random.nextDouble() * 2 - 1);</span>
+		// org.miv.pherd.geom.Point3 lo = nodes.getNTree().getLowestPoint();
+		// org.miv.pherd.geom.Point3 hi = nodes.getNTree().getHighestPoint();
+		// return lo.z + ((hi.z - lo.z)*random.nextDouble());
+	}
+
+	public Point3 getCenterPoint() {
+<span class="nc" id="L350">		return center;</span>
+	}
+
+	/**
+	 * A gravity factor that attracts all nodes to the center of the layout to avoid
+	 * flying components. If set to zero, the gravity computation is disabled.
+	 * 
+	 * @return The gravity factor, usually between 0 and 1.
+	 */
+	public double getGravityFactor() {
+<span class="nc" id="L360">		return gravity;</span>
+	}
+
+	/**
+	 * Set the gravity factor that attracts all nodes to the center of the layout to
+	 * avoid flying components. If set to zero, the gravity computation is disabled.
+	 * 
+	 * @param value
+	 *            The new gravity factor, usually between 0 and 1.
+	 */
+	public void setGravityFactor(double value) {
+<span class="nc" id="L371">		gravity = value;</span>
+<span class="nc" id="L372">	}</span>
+
+	/**
+	 * The spatial index as a n-tree.
+	 * 
+	 * @return The n-tree.
+	 */
+	public ParticleBox getSpatialIndex() {
+<span class="nc" id="L380">		return nodes;</span>
+	}
+
+	public long getLastStepTime() {
+<span class="nc" id="L384">		return lastStepTime;</span>
+	}
+
+	public abstract String getLayoutAlgorithmName();
+
+	public int getNodeMovedCount() {
+<span class="nc" id="L390">		return nodeMoveCount;</span>
+	}
+
+	public double getStabilization() {
+<span class="nc bnc" id="L394" title="All 2 branches missed.">		if (lastElementCount == nodes.getParticleCount() + edges.size()) {</span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">			if (time &gt; energies.getBufferSize())</span>
+<span class="nc" id="L396">				return energies.getStabilization();</span>
+		}
+
+<span class="nc" id="L399">		lastElementCount = nodes.getParticleCount() + edges.size();</span>
+
+<span class="nc" id="L401">		return 0;</span>
+	}
+
+	public double getStabilizationLimit() {
+<span class="nc" id="L405">		return stabilizationLimit;</span>
+	}
+
+	public int getSteps() {
+<span class="nc" id="L409">		return time;</span>
+	}
+
+	public double getQuality() {
+<span class="nc" id="L413">		return quality;</span>
+	}
+
+	public boolean is3D() {
+<span class="nc" id="L417">		return is3D;</span>
+	}
+
+	public double getForce() {
+<span class="nc" id="L421">		return force;</span>
+	}
+
+	public Random getRandom() {
+<span class="nc" id="L425">		return random;</span>
+	}
+
+	public Energies getEnergies() {
+<span class="nc" id="L429">		return energies;</span>
+	}
+
+	/**
+	 * The Barnes-Hut theta value used to know if we use a pole or not.
+	 * 
+	 * @return The theta value (between 0 and 1).
+	 */
+	public double getBarnesHutTheta() {
+<span class="nc" id="L438">		return theta;</span>
+	}
+
+	public double getViewZone() {
+<span class="nc" id="L442">		return viewZone;</span>
+	}
+
+	public void setSendNodeInfos(boolean on) {
+<span class="nc" id="L446">		sendNodeInfos = on;</span>
+<span class="nc" id="L447">	}</span>
+
+	/**
+	 * Change the barnes-hut theta parameter allowing to know if we use a pole or
+	 * not.
+	 * 
+	 * @param theta
+	 *            The new value for theta (between 0 and 1).
+	 */
+	public void setBarnesHutTheta(double theta) {
+<span class="nc bnc" id="L457" title="All 4 branches missed.">		if (theta &gt; 0 &amp;&amp; theta &lt; 1) {</span>
+<span class="nc" id="L458">			this.theta = theta;</span>
+		}
+<span class="nc" id="L460">	}</span>
+
+	public void setForce(double value) {
+<span class="nc" id="L463">		this.force = value;</span>
+<span class="nc" id="L464">	}</span>
+
+	public void setStabilizationLimit(double value) {
+<span class="nc" id="L467">		this.stabilizationLimit = value;</span>
+<span class="nc" id="L468">	}</span>
+
+	public void setQuality(double qualityLevel) {
+<span class="nc bnc" id="L471" title="All 2 branches missed.">		if (qualityLevel &gt; 1)</span>
+<span class="nc" id="L472">			qualityLevel = 1;</span>
+<span class="nc bnc" id="L473" title="All 2 branches missed.">		else if (qualityLevel &lt; 0)</span>
+<span class="nc" id="L474">			qualityLevel = 0;</span>
+<span class="nc" id="L475">		quality = qualityLevel;</span>
+<span class="nc" id="L476">	}</span>
+
+	public void clear() {
+<span class="nc" id="L479">		energies.clearEnergies();</span>
+<span class="nc" id="L480">		nodes.removeAllParticles();</span>
+<span class="nc" id="L481">		edges.clear();</span>
+<span class="nc" id="L482">		nodeMoveCount = 0;</span>
+<span class="nc" id="L483">		lastStepTime = 0;</span>
+<span class="nc" id="L484">	}</span>
+
+	public void compute() {
+		long t1;
+
+<span class="nc" id="L489">		computeArea();</span>
+
+<span class="nc" id="L491">		maxMoveLength = Double.MIN_VALUE;</span>
+<span class="nc" id="L492">		t1 = System.currentTimeMillis();</span>
+<span class="nc" id="L493">		nodeMoveCount = 0;</span>
+<span class="nc" id="L494">		avgLength = 0;</span>
+
+		// All the movement computation is done in this call.
+<span class="nc" id="L497">		nodes.step();</span>
+
+<span class="nc bnc" id="L499" title="All 2 branches missed.">		if (nodeMoveCount &gt; 0)</span>
+<span class="nc" id="L500">			avgLength /= nodeMoveCount;</span>
+
+		// Ready for the next step.
+
+<span class="nc" id="L504">		getLowPoint();</span>
+<span class="nc" id="L505">		getHiPoint();</span>
+<span class="nc" id="L506">		center = new Point3(lo.x + (hi.x - lo.x) / 2, lo.y + (hi.y - lo.y) / 2, lo.z + (hi.z - lo.z) / 2);</span>
+		// center.set(0, 0, 0);
+<span class="nc" id="L508">		energies.storeEnergy();</span>
+<span class="nc" id="L509">		printStats();</span>
+<span class="nc" id="L510">		time++;</span>
+<span class="nc" id="L511">		lastStepTime = System.currentTimeMillis() - t1;</span>
+<span class="nc" id="L512">	}</span>
+
+	/**
+	 * Output some statistics on the layout process. This method is active only if
+	 * {@link #outputStats} is true.
+	 */
+	protected void printStats() {
+<span class="nc bnc" id="L519" title="All 2 branches missed.">		if (outputStats) {</span>
+<span class="nc bnc" id="L520" title="All 2 branches missed.">			if (statsOut == null) {</span>
+				try {
+<span class="nc" id="L522">					statsOut = new PrintStream(&quot;springBox.dat&quot;);</span>
+<span class="nc" id="L523">					statsOut.printf(&quot;# stabilization nodeMoveCount energy energyDiff maxMoveLength avgLength area%n&quot;);</span>
+<span class="nc" id="L524">					statsOut.flush();</span>
+<span class="nc" id="L525">				} catch (FileNotFoundException e) {</span>
+<span class="nc" id="L526">					e.printStackTrace();</span>
+				}
+			}
+
+<span class="nc bnc" id="L530" title="All 2 branches missed.">			if (statsOut != null) {</span>
+<span class="nc" id="L531">				double energyDiff = energies.getEnergy() - energies.getPreviousEnergyValue(30);</span>
+
+<span class="nc" id="L533">				statsOut.printf(Locale.US, &quot;%f %d %f %f %f %f%n&quot;, getStabilization(), nodeMoveCount,</span>
+<span class="nc" id="L534">						energies.getEnergy(), energyDiff, maxMoveLength, avgLength, area);</span>
+<span class="nc" id="L535">				statsOut.flush();</span>
+			}
+		}
+<span class="nc" id="L538">	}</span>
+
+	protected void computeArea() {
+<span class="nc" id="L541">		area = getHiPoint().distance(getLowPoint());</span>
+<span class="nc" id="L542">	}</span>
+
+	public void shake() {
+<span class="nc" id="L545">		energies.clearEnergies();</span>
+<span class="nc" id="L546">	}</span>
+
+	protected NodeParticle addNode(String sourceId, String id) {
+<span class="nc" id="L549">		NodeParticle np = newNodeParticle(id);</span>
+<span class="nc" id="L550">		nodes.addParticle(np);</span>
+<span class="nc" id="L551">		return np;</span>
+	}
+
+	public void moveNode(String id, double x, double y, double z) {
+<span class="nc" id="L555">		NodeParticle node = (NodeParticle) nodes.getParticle(id);</span>
+
+<span class="nc bnc" id="L557" title="All 2 branches missed.">		if (node != null) {</span>
+<span class="nc" id="L558">			node.moveTo(x, y, z);</span>
+<span class="nc" id="L559">			energies.clearEnergies();</span>
+		}
+<span class="nc" id="L561">	}</span>
+
+	public void freezeNode(String id, boolean on) {
+<span class="nc" id="L564">		NodeParticle node = (NodeParticle) nodes.getParticle(id);</span>
+
+<span class="nc bnc" id="L566" title="All 2 branches missed.">		if (node != null) {</span>
+<span class="nc" id="L567">			node.frozen = on;</span>
+		}
+<span class="nc" id="L569">	}</span>
+
+	protected void setNodeWeight(String id, double weight) {
+<span class="nc" id="L572">		NodeParticle node = (NodeParticle) nodes.getParticle(id);</span>
+
+<span class="nc bnc" id="L574" title="All 2 branches missed.">		if (node != null)</span>
+<span class="nc" id="L575">			node.setWeight(weight);</span>
+<span class="nc" id="L576">	}</span>
+
+	protected void removeNode(String sourceId, String id) {
+<span class="nc" id="L579">		NodeParticle node = (NodeParticle) nodes.removeParticle(id);</span>
+
+<span class="nc bnc" id="L581" title="All 2 branches missed.">		if (node != null) {</span>
+<span class="nc" id="L582">			node.removeNeighborEdges();</span>
+<span class="nc" id="L583">		} else {</span>
+<span class="nc" id="L584">			logger.warning(</span>
+<span class="nc" id="L585">					String.format(&quot;layout %s: cannot remove non existing node %s%n&quot;, getLayoutAlgorithmName(), id));</span>
+		}
+<span class="nc" id="L587">	}</span>
+
+	protected void addEdge(String sourceId, String id, String from, String to, boolean directed) {
+<span class="nc" id="L590">		NodeParticle n0 = (NodeParticle) nodes.getParticle(from);</span>
+<span class="nc" id="L591">		NodeParticle n1 = (NodeParticle) nodes.getParticle(to);</span>
+
+<span class="nc bnc" id="L593" title="All 4 branches missed.">		if (n0 != null &amp;&amp; n1 != null) {</span>
+<span class="nc" id="L594">			EdgeSpring e = new EdgeSpring(id, n0, n1);</span>
+<span class="nc" id="L595">			EdgeSpring o = edges.put(id, e);</span>
+
+<span class="nc bnc" id="L597" title="All 2 branches missed.">			if (o != null) {</span>
+<span class="nc" id="L598">				logger.warning(String.format(&quot;layout %s: edge '%s' already exists.&quot;, getLayoutAlgorithmName(), id));</span>
+<span class="nc" id="L599">			} else {</span>
+<span class="nc" id="L600">				n0.registerEdge(e);</span>
+<span class="nc" id="L601">				n1.registerEdge(e);</span>
+			}
+
+<span class="nc" id="L604">			chooseNodePosition(n0, n1);</span>
+<span class="nc" id="L605">		} else {</span>
+<span class="nc bnc" id="L606" title="All 2 branches missed.">			if (n0 == null)</span>
+<span class="nc" id="L607">				logger.warning(String.format(&quot;layout %s: node '%s' does not exist, cannot create edge %s.&quot;,</span>
+<span class="nc" id="L608">						getLayoutAlgorithmName(), from, id));</span>
+<span class="nc bnc" id="L609" title="All 2 branches missed.">			if (n1 == null)</span>
+<span class="nc" id="L610">				logger.warning(String.format(&quot;layout %s: node '%s' does not exist, cannot create edge %s.&quot;,</span>
+<span class="nc" id="L611">						getLayoutAlgorithmName(), to, id));</span>
+		}
+<span class="nc" id="L613">	}</span>
+
+	/**
+	 * Choose the best position for a node that was just connected by only one edge
+	 * to a cluster of nodes.
+	 * 
+	 * @param n0
+	 *            source node of the edge.
+	 * @param n1
+	 *            target node of the edge.
+	 */
+	protected abstract void chooseNodePosition(NodeParticle n0, NodeParticle n1);
+
+	protected void addEdgeBreakPoint(String edgeId, int points) {
+<span class="nc" id="L627">		logger.warning(String.format(&quot;layout %s: edge break points are not handled yet.&quot;, getLayoutAlgorithmName()));</span>
+<span class="nc" id="L628">	}</span>
+
+	protected void ignoreEdge(String edgeId, boolean on) {
+<span class="nc" id="L631">		EdgeSpring edge = edges.get(edgeId);</span>
+
+<span class="nc bnc" id="L633" title="All 2 branches missed.">		if (edge != null) {</span>
+<span class="nc" id="L634">			edge.ignored = on;</span>
+		}
+<span class="nc" id="L636">	}</span>
+
+	protected void setEdgeWeight(String id, double weight) {
+<span class="nc" id="L639">		EdgeSpring edge = edges.get(id);</span>
+
+<span class="nc bnc" id="L641" title="All 2 branches missed.">		if (edge != null)</span>
+<span class="nc" id="L642">			edge.weight = weight;</span>
+<span class="nc" id="L643">	}</span>
+
+	protected void removeEdge(String sourceId, String id) {
+<span class="nc" id="L646">		EdgeSpring e = edges.remove(id);</span>
+
+<span class="nc bnc" id="L648" title="All 2 branches missed.">		if (e != null) {</span>
+<span class="nc" id="L649">			e.node0.unregisterEdge(e);</span>
+<span class="nc" id="L650">			e.node1.unregisterEdge(e);</span>
+<span class="nc" id="L651">		} else {</span>
+<span class="nc" id="L652">			logger.warning(</span>
+<span class="nc" id="L653">					String.format(&quot;layout %s: cannot remove non existing edge %s%n&quot;, getLayoutAlgorithmName(), id));</span>
+		}
+<span class="nc" id="L655">	}</span>
+
+	// Particle box listener
+
+	public void particleAdded(Object id, double x, double y, double z, Object mark) {
+<span class="nc" id="L660">	}</span>
+
+	public void particleAdded(Object id, double x, double y, double z) {
+<span class="nc" id="L663">	}</span>
+
+	public void particleMarked(Object id, Object mark) {
+<span class="nc" id="L666">	}</span>
+
+	public void particleMoved(Object id, double x, double y, double z) {
+<span class="nc bnc" id="L669" title="All 2 branches missed.">		if ((time % sendMoveEventsEvery) == 0) {</span>
+<span class="nc" id="L670">			Object xyz[] = new Object[3];</span>
+<span class="nc" id="L671">			xyz[0] = x;</span>
+<span class="nc" id="L672">			xyz[1] = y;</span>
+<span class="nc" id="L673">			xyz[2] = z;</span>
+
+<span class="nc" id="L675">			sendNodeAttributeChanged(sourceId, (String) id, &quot;xyz&quot;, xyz, xyz);</span>
+		}
+<span class="nc" id="L677">	}</span>
+
+	public void particleRemoved(Object id) {
+<span class="nc" id="L680">	}</span>
+
+	public void stepFinished(int time) {
+<span class="nc" id="L683">	}</span>
+
+	public void particleAttributeChanged(Object id, String attribute, Object newValue, boolean removed) {
+<span class="nc" id="L686">	}</span>
+
+	// SourceBase interface
+
+	public void edgeAdded(String graphId, long time, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc bnc" id="L692" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L693">			addEdge(graphId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L694">			sendEdgeAdded(graphId, time, edgeId, fromNodeId, toNodeId, directed);</span>
+		}
+<span class="nc" id="L696">	}</span>
+
+	public void nodeAdded(String graphId, long time, String nodeId) {
+<span class="nc bnc" id="L699" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L700">			NodeParticle np = addNode(graphId, nodeId);</span>
+<span class="nc" id="L701">			sendNodeAdded(graphId, time, nodeId);</span>
+		}
+<span class="nc" id="L703">	}</span>
+
+	public void edgeRemoved(String graphId, long time, String edgeId) {
+<span class="nc bnc" id="L706" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L707">			removeEdge(graphId, edgeId);</span>
+<span class="nc" id="L708">			sendEdgeRemoved(graphId, time, edgeId);</span>
+		}
+<span class="nc" id="L710">	}</span>
+
+	public void nodeRemoved(String graphId, long time, String nodeId) {
+<span class="nc bnc" id="L713" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L714">			removeNode(graphId, nodeId);</span>
+<span class="nc" id="L715">			sendNodeRemoved(graphId, time, nodeId);</span>
+		}
+<span class="nc" id="L717">	}</span>
+
+	public void graphCleared(String graphId, long time) {
+<span class="nc bnc" id="L720" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L721">			clear();</span>
+<span class="nc" id="L722">			sendGraphCleared(graphId, time);</span>
+		}
+<span class="nc" id="L724">	}</span>
+
+	public void stepBegins(String graphId, long time, double step) {
+<span class="nc bnc" id="L727" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L728">			sendStepBegins(graphId, time, step);</span>
+		}
+<span class="nc" id="L730">	}</span>
+
+	public void graphAttributeAdded(String graphId, long time, String attribute, Object value) {
+<span class="nc bnc" id="L733" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L734">			graphAttributeChanged_(graphId, attribute, null, value);</span>
+<span class="nc" id="L735">			sendGraphAttributeAdded(graphId, time, attribute, value);</span>
+		}
+<span class="nc" id="L737">	}</span>
+
+	public void graphAttributeChanged(String graphId, long time, String attribute, Object oldValue, Object newValue) {
+<span class="nc bnc" id="L740" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L741">			graphAttributeChanged_(graphId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L742">			sendGraphAttributeChanged(graphId, time, attribute, oldValue, newValue);</span>
+		}
+<span class="nc" id="L744">	}</span>
+
+	protected void graphAttributeChanged_(String graphId, String attribute, Object oldValue, Object newValue) {
+<span class="nc bnc" id="L747" title="All 2 branches missed.">		if (attribute.equals(&quot;layout.force&quot;)) {</span>
+<span class="nc bnc" id="L748" title="All 2 branches missed.">			if (newValue instanceof Number)</span>
+<span class="nc" id="L749">				setForce(((Number) newValue).doubleValue());</span>
+<span class="nc" id="L750">			energies.clearEnergies();</span>
+<span class="nc bnc" id="L751" title="All 2 branches missed.">		} else if (attribute.equals(&quot;layout.quality&quot;)) {</span>
+<span class="nc bnc" id="L752" title="All 2 branches missed.">			if (newValue instanceof Number) {</span>
+<span class="nc" id="L753">				int q = ((Number) newValue).intValue();</span>
+
+<span class="nc bnc" id="L755" title="All 2 branches missed.">				q = q &gt; 4 ? 4 : q;</span>
+<span class="nc bnc" id="L756" title="All 2 branches missed.">				q = q &lt; 0 ? 0 : q;</span>
+
+<span class="nc" id="L758">				setQuality(q);</span>
+<span class="nc" id="L759">				logger.fine(String.format(&quot;layout.%s.quality: %d.&quot;, getLayoutAlgorithmName(), q));</span>
+			}
+
+<span class="nc" id="L762">			energies.clearEnergies();</span>
+<span class="nc bnc" id="L763" title="All 2 branches missed.">		} else if (attribute.equals(&quot;layout.gravity&quot;)) {</span>
+<span class="nc bnc" id="L764" title="All 2 branches missed.">			if (newValue instanceof Number) {</span>
+<span class="nc" id="L765">				double value = ((Number) newValue).doubleValue();</span>
+<span class="nc" id="L766">				setGravityFactor(value);</span>
+<span class="nc" id="L767">				logger.fine(String.format(&quot;layout.%s.gravity: %f.&quot;, getLayoutAlgorithmName(), value));</span>
+			}
+<span class="nc bnc" id="L769" title="All 2 branches missed.">		} else if (attribute.equals(&quot;layout.exact-zone&quot;)) {</span>
+<span class="nc bnc" id="L770" title="All 2 branches missed.">			if (newValue instanceof Number) {</span>
+<span class="nc" id="L771">				double factor = ((Number) newValue).doubleValue();</span>
+
+<span class="nc bnc" id="L773" title="All 2 branches missed.">				factor = factor &gt; 1 ? 1 : factor;</span>
+<span class="nc bnc" id="L774" title="All 2 branches missed.">				factor = factor &lt; 0 ? 0 : factor;</span>
+
+<span class="nc" id="L776">				viewZone = factor;</span>
+<span class="nc" id="L777">				logger.fine(String.format(&quot;layout.%s.exact-zone: %f of [0..1]%n&quot;, getLayoutAlgorithmName(), viewZone));</span>
+
+<span class="nc" id="L779">				energies.clearEnergies();</span>
+			}
+<span class="nc bnc" id="L781" title="All 2 branches missed.">		} else if (attribute.equals(&quot;layout.output-stats&quot;)) {</span>
+<span class="nc bnc" id="L782" title="All 2 branches missed.">			if (newValue == null)</span>
+<span class="nc" id="L783">				outputStats = false;</span>
+			else
+<span class="nc" id="L785">				outputStats = true;</span>
+
+<span class="nc" id="L787">			logger.fine(String.format(&quot;layout.%s.output-stats: %b%n&quot;, getLayoutAlgorithmName(), outputStats));</span>
+<span class="nc bnc" id="L788" title="All 2 branches missed.">		} else if (attribute.equals(&quot;layout.stabilization-limit&quot;)) {</span>
+<span class="nc bnc" id="L789" title="All 2 branches missed.">			if (newValue instanceof Number) {</span>
+<span class="nc" id="L790">				stabilizationLimit = ((Number) newValue).doubleValue();</span>
+<span class="nc bnc" id="L791" title="All 2 branches missed.">				if (stabilizationLimit &gt; 1)</span>
+<span class="nc" id="L792">					stabilizationLimit = 1;</span>
+<span class="nc bnc" id="L793" title="All 2 branches missed.">				else if (stabilizationLimit &lt; 0)</span>
+<span class="nc" id="L794">					stabilizationLimit = 0;</span>
+
+<span class="nc" id="L796">				energies.clearEnergies();</span>
+			}
+		}
+<span class="nc" id="L799">	}</span>
+
+	public void graphAttributeRemoved(String graphId, long time, String attribute) {
+<span class="nc bnc" id="L802" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L803">			sendGraphAttributeRemoved(graphId, time, attribute);</span>
+		}
+<span class="nc" id="L805">	}</span>
+
+	public void nodeAttributeAdded(String graphId, long time, String nodeId, String attribute, Object value) {
+<span class="nc bnc" id="L808" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L809">			nodeAttributeChanged_(graphId, nodeId, attribute, null, value);</span>
+<span class="nc" id="L810">			sendNodeAttributeAdded(graphId, time, nodeId, attribute, value);</span>
+		}
+<span class="nc" id="L812">	}</span>
+
+	public void nodeAttributeChanged(String graphId, long time, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L816" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L817">			nodeAttributeChanged_(graphId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L818">			sendNodeAttributeChanged(graphId, time, nodeId, attribute, oldValue, newValue);</span>
+		}
+<span class="nc" id="L820">	}</span>
+
+	protected void nodeAttributeChanged_(String graphId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L824" title="All 2 branches missed.">		if (attribute.equals(&quot;layout.weight&quot;)) {</span>
+<span class="nc bnc" id="L825" title="All 2 branches missed.">			if (newValue instanceof Number)</span>
+<span class="nc" id="L826">				setNodeWeight(nodeId, ((Number) newValue).doubleValue());</span>
+<span class="nc bnc" id="L827" title="All 2 branches missed.">			else if (newValue == null)</span>
+<span class="nc" id="L828">				setNodeWeight(nodeId, 1);</span>
+
+<span class="nc" id="L830">			energies.clearEnergies();</span>
+<span class="nc bnc" id="L831" title="All 2 branches missed.">		} else if (attribute.equals(&quot;layout.frozen&quot;)) {</span>
+<span class="nc bnc" id="L832" title="All 2 branches missed.">			freezeNode(nodeId, (newValue != null));</span>
+<span class="nc bnc" id="L833" title="All 4 branches missed.">		} else if (attribute.equals(&quot;xyz&quot;) || attribute.equals(&quot;xy&quot;)) {</span>
+<span class="nc" id="L834">			double xyz[] = new double[3];</span>
+<span class="nc" id="L835">			GraphPosLengthUtils.positionFromObject(newValue, xyz);</span>
+<span class="nc" id="L836">			moveNode(nodeId, xyz[0], xyz[1], xyz[2]);</span>
+<span class="nc bnc" id="L837" title="All 4 branches missed.">		} else if (attribute.equals(&quot;x&quot;) &amp;&amp; newValue instanceof Number) {</span>
+<span class="nc" id="L838">			NodeParticle node = (NodeParticle) nodes.getParticle(nodeId);</span>
+<span class="nc bnc" id="L839" title="All 2 branches missed.">			if (node != null) {</span>
+<span class="nc" id="L840">				moveNode(nodeId, ((Number) newValue).doubleValue(), node.getPosition().y, node.getPosition().z);</span>
+			}
+<span class="nc bnc" id="L842" title="All 4 branches missed.">		} else if (attribute.equals(&quot;y&quot;) &amp;&amp; newValue instanceof Number) {</span>
+<span class="nc" id="L843">			NodeParticle node = (NodeParticle) nodes.getParticle(nodeId);</span>
+<span class="nc bnc" id="L844" title="All 2 branches missed.">			if (node != null) {</span>
+<span class="nc" id="L845">				moveNode(nodeId, node.getPosition().x, ((Number) newValue).doubleValue(), node.getPosition().z);</span>
+			}
+		}
+<span class="nc" id="L848">	}</span>
+
+	public void nodeAttributeRemoved(String graphId, long time, String nodeId, String attribute) {
+<span class="nc bnc" id="L851" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L852">			nodeAttributeChanged_(graphId, nodeId, attribute, null, null);</span>
+<span class="nc" id="L853">			sendNodeAttributeRemoved(graphId, time, nodeId, attribute);</span>
+		}
+<span class="nc" id="L855">	}</span>
+
+	public void edgeAttributeAdded(String graphId, long time, String edgeId, String attribute, Object value) {
+<span class="nc bnc" id="L858" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L859">			edgeAttributeChanged_(graphId, edgeId, attribute, null, value);</span>
+<span class="nc" id="L860">			sendEdgeAttributeAdded(graphId, time, edgeId, attribute, value);</span>
+		}
+<span class="nc" id="L862">	}</span>
+
+	public void edgeAttributeChanged(String graphId, long time, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L866" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L867">			edgeAttributeChanged_(graphId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L868">			sendEdgeAttributeChanged(graphId, time, edgeId, attribute, oldValue, newValue);</span>
+		}
+<span class="nc" id="L870">	}</span>
+
+	protected void edgeAttributeChanged_(String graphId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc bnc" id="L874" title="All 2 branches missed.">		if (attribute.equals(&quot;layout.weight&quot;)) {</span>
+<span class="nc bnc" id="L875" title="All 2 branches missed.">			if (newValue instanceof Number)</span>
+<span class="nc" id="L876">				setEdgeWeight(edgeId, ((Number) newValue).doubleValue());</span>
+<span class="nc bnc" id="L877" title="All 2 branches missed.">			else if (newValue == null)</span>
+<span class="nc" id="L878">				setEdgeWeight(edgeId, 1);</span>
+
+<span class="nc" id="L880">			energies.clearEnergies();</span>
+<span class="nc bnc" id="L881" title="All 2 branches missed.">		} else if (attribute.equals(&quot;layout.ignored&quot;)) {</span>
+<span class="nc bnc" id="L882" title="All 2 branches missed.">			if (newValue instanceof Boolean)</span>
+<span class="nc" id="L883">				ignoreEdge(edgeId, (Boolean) newValue);</span>
+<span class="nc" id="L884">			energies.clearEnergies();</span>
+		}
+<span class="nc" id="L886">	}</span>
+
+	public void edgeAttributeRemoved(String graphId, long time, String edgeId, String attribute) {
+<span class="nc bnc" id="L889" title="All 2 branches missed.">		if (sinkTime.isNewEvent(graphId, time)) {</span>
+<span class="nc" id="L890">			edgeAttributeChanged_(graphId, edgeId, attribute, null, null);</span>
+<span class="nc" id="L891">			sendEdgeAttributeRemoved(attribute, time, edgeId, attribute);</span>
+		}
+<span class="nc" id="L893">	}</span>
+
+	/**
+	 * Factory method to create node particles.
+	 * 
+	 * @param id
+	 *            The identifier of the new node/particle.
+	 * @return The new node/particle.
+	 */
+	public abstract NodeParticle newNodeParticle(String id);
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

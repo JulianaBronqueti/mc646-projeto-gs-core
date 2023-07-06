@@ -1,0 +1,491 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SingleGraphTest.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">main</a> &gt; <span class="el_source">SingleGraphTest.java</span></div><h1>SingleGraphTest.java</h1><pre class="source lang-java linenums"><span class="nc" id="L1">package main;</span>
+
+import org.graphwalker.core.machine.ExecutionContext;
+import org.graphwalker.core.condition.EdgeCoverage;
+import org.graphwalker.core.condition.ReachedVertex;
+import org.graphwalker.core.generator.RandomPath;
+import org.graphwalker.core.generator.SingletonRandomGenerator;
+import org.graphwalker.java.annotation.Edge;
+import org.graphwalker.java.annotation.GraphWalker;
+import org.graphwalker.java.annotation.Model;
+import org.graphwalker.java.annotation.Vertex;
+import org.graphwalker.java.test.TestBuilder;
+import org.graphwalker.java.test.TestExecutor;
+import org.graphwalker.java.test.Result;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import org.graphstream.graph.*;
+import org.graphstream.graph.implementations.*;
+
+@GraphWalker(value = &quot;quick_random(edge_coverage(100))&quot;, start = &quot;v_inicio&quot;)
+<span class="nc" id="L29">public class SingleGraphTest extends ExecutionContext implements SingleGraphTestInterface {</span>
+<span class="nc" id="L30">	Graph graph = new SingleGraph(&quot;graph1&quot;, true, false, 5, 10);</span>
+<span class="nc" id="L31">	int nodesIndex = 0, edgesIndex = 0, lastEdgeCount = 0, lastNodeCount = 0, newNodeCount = 0, newEdgeCount = 0;</span>
+<span class="nc" id="L32">	String cameFrom = &quot;&quot;;</span>
+<span class="nc" id="L33">	boolean jaExistente = false, naoEncontrado = false, arestaRejeitada = false;</span>
+<span class="nc" id="L34">	List&lt;String&gt; usedPairs = new ArrayList&lt;&gt;();</span>
+	
+    public static void removeStringsContainingCharacter(String string, List&lt;String&gt; stringList) {
+<span class="nc" id="L37">        List&lt;String&gt; stringsToRemove = new ArrayList&lt;&gt;();</span>
+
+<span class="nc bnc" id="L39" title="All 2 branches missed.">        for (String str : stringList) {</span>
+<span class="nc bnc" id="L40" title="All 2 branches missed.">            if (str.contains(string)) {</span>
+<span class="nc" id="L41">                stringsToRemove.add(str);</span>
+            }
+        }
+
+<span class="nc" id="L45">        stringList.removeAll(stringsToRemove);</span>
+<span class="nc" id="L46">    }</span>
+
+	public static boolean addEdgesToGraph(Graph graph, int numEdges, int pairCount, List&lt;String&gt; usedPairs) {
+<span class="nc" id="L49">		Node[] nodes = graph.nodes().toArray(Node[]::new);</span>
+<span class="nc" id="L50">		int numNodes = nodes.length;</span>
+
+<span class="nc bnc" id="L52" title="All 2 branches missed.">		if (numNodes &lt; 2) {</span>
+<span class="nc" id="L53">			System.out.println(&quot;The graph must have at least two nodes to add edges.&quot;);</span>
+<span class="nc" id="L54">			return false;</span>
+		}
+
+<span class="nc bnc" id="L57" title="All 2 branches missed.">		for (int indexA = 0; indexA &lt; numNodes; indexA++) {</span>
+<span class="nc bnc" id="L58" title="All 2 branches missed.">			for (int indexB = 0; indexB &lt; numNodes; indexB++) {</span>
+<span class="nc bnc" id="L59" title="All 2 branches missed.">				if (pairCount &gt;= numEdges) {</span>
+<span class="nc" id="L60">					System.out.println(pairCount);</span>
+<span class="nc" id="L61">					System.out.println(&quot;retornando&quot;);</span>
+<span class="nc" id="L62">					return true;</span>
+				}
+
+<span class="nc" id="L65">				String pair1 = indexA + &quot;-&quot; + indexB;</span>
+<span class="nc" id="L66">				String pair2 = indexB + &quot;-&quot; + indexA;</span>
+<span class="nc" id="L67">				System.out.println(&quot;tentando aresta entre&quot;);</span>
+<span class="nc" id="L68">				System.out.println(pair1);</span>
+<span class="nc" id="L69">				System.out.println(pair2);</span>
+
+				// Ensure that both pairs are unique and haven't been used before
+<span class="nc bnc" id="L72" title="All 4 branches missed.">				if (!usedPairs.contains(pair1) &amp;&amp; !usedPairs.contains(pair2)) {</span>
+<span class="nc" id="L73">					usedPairs.add(pair1);</span>
+
+<span class="nc" id="L75">					Node nodeA = nodes[indexA];</span>
+<span class="nc" id="L76">					Node nodeB = nodes[indexB];</span>
+
+<span class="nc" id="L78">					String edgeName = &quot;edge&quot; + pairCount;</span>
+<span class="nc" id="L79">					graph.addEdge(edgeName, nodeA, nodeB);</span>
+<span class="nc" id="L80">					System.out.println(&quot;aresta entre&quot;);</span>
+<span class="nc" id="L81">					System.out.println(nodeA);</span>
+<span class="nc" id="L82">					System.out.println(nodeB);</span>
+
+<span class="nc" id="L84">					pairCount++;</span>
+				}
+				
+<span class="nc" id="L87">				System.out.println(indexB);</span>
+			}
+<span class="nc" id="L89">			System.out.println(indexA);</span>
+		}
+		
+<span class="nc bnc" id="L92" title="All 2 branches missed.">		if (numEdges &gt; pairCount) {</span>
+<span class="nc" id="L93">			System.out.println(&quot;numero de arestas eh impossivel sem quebrar o grafo&quot;);</span>
+<span class="nc" id="L94">			return false;</span>
+		}
+<span class="nc" id="L96">		return true;</span>
+	}
+
+	@Override
+	public void v_ExcecaoIdJaUsado() {
+<span class="nc" id="L101">		System.out.println(&quot;Running v_ExcecaoIdJaUsado&quot;);</span>
+<span class="nc" id="L102">		System.out.println(jaExistente);</span>
+<span class="nc" id="L103">		Assertions.assertTrue(jaExistente);</span>
+<span class="nc" id="L104">	}</span>
+
+	@Override
+	public void e_removeAresta() {
+<span class="nc" id="L108">		System.out.println(&quot;Running e_removeAresta&quot;);</span>
+		
+		try {
+<span class="nc" id="L111">			lastEdgeCount = graph.getEdgeCount();</span>
+<span class="nc" id="L112">			newEdgeCount = graph.getEdgeCount();</span>
+<span class="nc" id="L113">			graph.removeEdge(usedPairs.get(0));</span>
+<span class="nc" id="L114">			usedPairs.remove(0);</span>
+<span class="nc" id="L115">			edgesIndex = edgesIndex - 1;</span>
+<span class="nc" id="L116">			cameFrom = &quot;e_removeAresta&quot;;</span>
+<span class="nc" id="L117">		} catch (Exception e) {</span>
+<span class="nc" id="L118">			naoEncontrado = true;</span>
+		}
+<span class="nc" id="L120">	}</span>
+
+	@Override
+	public void e_removeNoInexistente() {
+<span class="nc" id="L124">		System.out.println(&quot;Running e_removeNoInexistente&quot;);</span>
+
+		try {
+<span class="nc" id="L127">			graph.removeNode(100000);</span>
+<span class="nc" id="L128">		} catch (Exception e) {</span>
+<span class="nc" id="L129">			naoEncontrado = true;</span>
+		}
+<span class="nc" id="L131">	}</span>
+
+	@Override
+	public void e_limpaGrafo() {
+<span class="nc" id="L135">		System.out.println(&quot;Running e_limpaGrafo&quot;);</span>
+<span class="nc" id="L136">		graph.clear();</span>
+<span class="nc" id="L137">	}</span>
+
+	@Override
+	public void v_inicio() {
+<span class="nc" id="L141">		System.out.println(&quot;Running v_inicio&quot;);</span>
+<span class="nc" id="L142">	}</span>
+
+	@Override
+	public void v_ExcecaoArestaRejeitada() {
+<span class="nc" id="L146">		System.out.println(&quot;Running v_ExcecaoArestaRejeitada&quot;);</span>
+<span class="nc" id="L147">		Assertions.assertTrue(arestaRejeitada);</span>
+<span class="nc" id="L148">	}</span>
+
+	@Override
+	public void v_grafoNaoVazio() {
+<span class="nc" id="L152">		System.out.println(&quot;Running v_grafoNaoVazio&quot;);</span>
+<span class="nc bnc" id="L153" title="All 5 branches missed.">		switch (cameFrom) {</span>
+			case &quot;e_adicionaAresta&quot;:
+<span class="nc" id="L155">				System.out.println(&quot;Adding an edge&quot;);</span>
+<span class="nc" id="L156">				Assertions.assertEquals(lastEdgeCount + 1, newEdgeCount);</span>
+<span class="nc" id="L157">				break;</span>
+			case &quot;e_removeAresta&quot;:
+<span class="nc" id="L159">				System.out.println(&quot;Removing an edge&quot;);</span>
+<span class="nc" id="L160">				Assertions.assertEquals(lastEdgeCount - 1, newEdgeCount);</span>
+<span class="nc" id="L161">				break;</span>
+			case &quot;e_adicionaNo&quot;:
+<span class="nc" id="L163">				System.out.println(&quot;Adding a node&quot;);</span>
+<span class="nc" id="L164">				Assertions.assertEquals(lastNodeCount + 1, newNodeCount);</span>
+<span class="nc" id="L165">				break;</span>
+			case &quot;e_removeNo&quot;:
+<span class="nc" id="L167">				System.out.println(&quot;Removing a node&quot;);</span>
+<span class="nc" id="L168">				Assertions.assertEquals(lastNodeCount - 1, newNodeCount);</span>
+<span class="nc" id="L169">				break;</span>
+			default:
+<span class="nc" id="L171">				System.out.println(&quot;Nao caiu em nenhum caso esperado&quot;);</span>
+<span class="nc" id="L172">				throw new IllegalArgumentException(&quot;Invalid operation: &quot; + cameFrom);</span>
+		}
+<span class="nc" id="L174">	}</span>
+
+	@Override
+	public void e_removeUltimoNo() {
+<span class="nc" id="L178">		System.out.println(&quot;Running e_removeUltimoNo&quot;);</span>
+<span class="nc" id="L179">		lastNodeCount = graph.getNodeCount();</span>
+<span class="nc" id="L180">		graph.removeNode(0);</span>
+<span class="nc" id="L181">		newNodeCount = graph.getNodeCount();</span>
+<span class="nc" id="L182">		nodesIndex = nodesIndex - 1;</span>
+<span class="nc" id="L183">	}</span>
+
+	@Override
+	public void e_adicionaNoExistente() {
+<span class="nc" id="L187">		System.out.println(&quot;Running e_adicionaNoExistente&quot;);</span>
+
+		try {
+<span class="nc" id="L190">			graph.addNode(&quot;node0&quot;);</span>
+<span class="nc" id="L191">			graph.addNode(&quot;node0&quot;);</span>
+<span class="nc" id="L192">		} catch (Exception e) {</span>
+<span class="nc" id="L193">			jaExistente = true;</span>
+		}
+<span class="nc" id="L195">	}</span>
+
+	@Override
+	public void e_adicionaArestaEmNoInexistente() {
+<span class="nc" id="L199">		System.out.println(&quot;Running e_adicionaArestaEmNoInexistente&quot;);</span>
+<span class="nc" id="L200">		Graph graph2 = new SingleGraph(&quot;graph2&quot;, true, false, 5, 10);</span>
+<span class="nc" id="L201">		Node A = graph2.addNode(&quot;A&quot;);</span>
+<span class="nc" id="L202">		Node B = graph2.addNode(&quot;B&quot;);</span>
+
+		try {
+<span class="nc" id="L205">			graph.addEdge(&quot;brokeEdge&quot;, A, B);</span>
+<span class="nc" id="L206">		} catch (Exception e) {</span>
+<span class="nc" id="L207">			System.out.println(&quot;pegou a excecao de aresta em no inexistente&quot;);</span>
+<span class="nc" id="L208">			naoEncontrado = true;</span>
+		}
+<span class="nc" id="L210">	}</span>
+
+	@Override
+	public void e_removeNo() {
+<span class="nc" id="L214">		System.out.println(&quot;Running e_removeNo&quot;);</span>
+		try {
+<span class="nc" id="L216">			lastNodeCount = graph.getNodeCount();</span>
+<span class="nc" id="L217">			Node node = graph.getNode(0);</span>
+<span class="nc" id="L218">			graph.removeNode(node);</span>
+<span class="nc" id="L219">			removeStringsContainingCharacter(node.getId(), usedPairs);</span>
+<span class="nc" id="L220">			newNodeCount = graph.getNodeCount();</span>
+<span class="nc" id="L221">			nodesIndex = nodesIndex - 1;</span>
+<span class="nc" id="L222">			cameFrom = &quot;e_removeNo&quot;;</span>
+<span class="nc" id="L223">		} catch (Exception e) {</span>
+<span class="nc" id="L224">			naoEncontrado = true;</span>
+		}
+<span class="nc" id="L226">	}</span>
+
+	@Override
+	public void e_adicionaArestaEmNoCheio() {
+<span class="nc" id="L230">		System.out.println(&quot;Running e_adicionaArestaEmNoCheio&quot;);</span>
+		try {
+<span class="nc" id="L232">			graph.addEdge(&quot;exception1&quot;, graph.getNode(0), graph.getNode(1));</span>
+<span class="nc" id="L233">			graph.addEdge(&quot;exception1&quot;, graph.getNode(0), graph.getNode(1));</span>
+
+<span class="nc" id="L235">		} catch (Exception e) {</span>
+<span class="nc" id="L236">			arestaRejeitada = true;</span>
+		}
+<span class="nc" id="L238">	}</span>
+
+	@Override
+	public void e_criaGrafo() {
+<span class="nc" id="L242">		System.out.println(&quot;Running e_criaGrafo&quot;);</span>
+<span class="nc" id="L243">		graph = new SingleGraph(&quot;graph1&quot;, true, false, 5, 10);</span>
+<span class="nc" id="L244">		cameFrom = &quot;&quot;;</span>
+<span class="nc" id="L245">		jaExistente = false; naoEncontrado = false; arestaRejeitada = false;</span>
+<span class="nc" id="L246">		usedPairs = new ArrayList&lt;&gt;();</span>
+<span class="nc" id="L247">		nodesIndex = 0; edgesIndex = 0; lastEdgeCount = 0; lastNodeCount = 0; newNodeCount = 0; newEdgeCount = 0;</span>
+
+<span class="nc" id="L249">	}</span>
+
+	@Override
+	public void e_adicionaNo() {
+<span class="nc" id="L253">		System.out.println(&quot;Running e_adicionaNo&quot;);</span>
+<span class="nc" id="L254">		lastNodeCount = graph.getNodeCount();</span>
+<span class="nc" id="L255">		graph.addNode(&quot;node&quot; + nodesIndex);</span>
+<span class="nc" id="L256">		newNodeCount = graph.getNodeCount();</span>
+<span class="nc" id="L257">		nodesIndex = nodesIndex + 1;</span>
+<span class="nc" id="L258">		cameFrom = &quot;e_adicionaNo&quot;;</span>
+<span class="nc" id="L259">		System.out.println(lastNodeCount);</span>
+<span class="nc" id="L260">		System.out.println(newNodeCount);</span>
+<span class="nc" id="L261">		System.out.println(nodesIndex);</span>
+<span class="nc" id="L262">	}</span>
+
+	@Override
+	public void e_adicionaAresta() {
+<span class="nc" id="L266">		System.out.println(&quot;Running e_adicionaAresta&quot;);</span>
+		try {
+<span class="nc" id="L268">			lastEdgeCount = graph.getEdgeCount();</span>
+<span class="nc" id="L269">			boolean exception = addEdgesToGraph(graph, 1, usedPairs.size(), usedPairs);</span>
+<span class="nc bnc" id="L270" title="All 2 branches missed.">			if (!exception) {</span>
+<span class="nc" id="L271">				throw new Exception(&quot;The graph must have at least two nodes to add edges.&quot;);</span>
+			}
+<span class="nc" id="L273">			newEdgeCount = graph.getEdgeCount();</span>
+<span class="nc" id="L274">			edgesIndex = edgesIndex + 1;</span>
+<span class="nc" id="L275">			cameFrom = &quot;e_adicionaAresta&quot;;</span>
+<span class="nc" id="L276">		} catch (Exception e) {</span>
+<span class="nc" id="L277">			naoEncontrado = true;</span>
+		}
+<span class="nc" id="L279">	}</span>
+
+	@Override
+	public void v_grafoVazio() {
+<span class="nc" id="L283">		System.out.println(&quot;Running v_grafoVazio&quot;);</span>
+<span class="nc" id="L284">		int nodes = graph.getNodeCount();</span>
+<span class="nc" id="L285">		int edges = graph.getEdgeCount();</span>
+
+<span class="nc" id="L287">		Assertions.assertEquals(0, nodes);</span>
+<span class="nc" id="L288">		Assertions.assertEquals(0, edges);</span>
+<span class="nc" id="L289">	}</span>
+	
+	@Override
+	public void e_adicionaArestaExistente() {
+<span class="nc" id="L293">		System.out.println(&quot;Running e_adicionaArestaExistente&quot;);</span>
+		try {
+<span class="nc" id="L295">			Node A = graph.addNode(&quot;aNodeForExceptionA&quot;);</span>
+<span class="nc" id="L296">			Node B = graph.addNode(&quot;aNodeForExceptionB&quot;);</span>
+<span class="nc" id="L297">			System.out.println(&quot;Nao deu excecao1&quot;);</span>
+<span class="nc" id="L298">			graph.addEdge(&quot;AB&quot;, A, B);</span>
+<span class="nc" id="L299">			System.out.println(&quot;Nao deu excecao2&quot;);</span>
+<span class="nc" id="L300">			graph.addEdge(&quot;AB&quot;, A, B);</span>
+<span class="nc" id="L301">			System.out.println(&quot;Nao deu excecao3&quot;);</span>
+
+<span class="nc" id="L303">		} catch (Exception e) {</span>
+<span class="nc" id="L304">			System.out.println(e);</span>
+<span class="nc" id="L305">			jaExistente = true;</span>
+		}
+<span class="nc" id="L307">	}</span>
+	
+	@Override
+	public void v_ElementoNaoEncontrado() {
+<span class="nc" id="L311">		System.out.println(&quot;Running v_ElementoNaoEncontrado&quot;);</span>
+<span class="nc" id="L312">		Assertions.assertTrue(naoEncontrado);</span>
+<span class="nc" id="L313">	}</span>
+	
+
+	@Test
+	public void TestPath() {
+<span class="nc" id="L318">		v_inicio();</span>
+<span class="nc" id="L319">		e_criaGrafo();</span>
+<span class="nc" id="L320">		v_grafoVazio();</span>
+<span class="nc" id="L321">		e_removeAresta();</span>
+<span class="nc" id="L322">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L323">		e_criaGrafo();</span>
+<span class="nc" id="L324">		v_grafoVazio();</span>
+<span class="nc" id="L325">		e_removeNo();</span>
+<span class="nc" id="L326">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L327">		e_criaGrafo();</span>
+<span class="nc" id="L328">		v_grafoVazio();</span>
+<span class="nc" id="L329">		e_removeNo();</span>
+<span class="nc" id="L330">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L331">		e_criaGrafo();</span>
+<span class="nc" id="L332">		v_grafoVazio();</span>
+<span class="nc" id="L333">		e_removeNo();</span>
+<span class="nc" id="L334">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L335">		e_criaGrafo();</span>
+<span class="nc" id="L336">		v_grafoVazio();</span>
+<span class="nc" id="L337">		e_removeAresta();</span>
+<span class="nc" id="L338">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L339">		e_criaGrafo();</span>
+<span class="nc" id="L340">		v_grafoVazio();</span>
+<span class="nc" id="L341">		e_adicionaAresta();</span>
+<span class="nc" id="L342">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L343">		e_criaGrafo();</span>
+<span class="nc" id="L344">		v_grafoVazio();</span>
+<span class="nc" id="L345">		e_removeAresta();</span>
+<span class="nc" id="L346">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L347">		e_criaGrafo();</span>
+<span class="nc" id="L348">		v_grafoVazio();</span>
+<span class="nc" id="L349">		e_adicionaNo();</span>
+<span class="nc" id="L350">		v_grafoNaoVazio();</span>
+<span class="nc" id="L351">		e_adicionaArestaEmNoInexistente();</span>
+<span class="nc" id="L352">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L353">		System.out.println(&quot;teste&quot;);</span>
+<span class="nc" id="L354">		e_criaGrafo();</span>
+<span class="nc" id="L355">		v_grafoVazio();</span>
+<span class="nc" id="L356">		e_adicionaNo();</span>
+<span class="nc" id="L357">		v_grafoNaoVazio();</span>
+<span class="nc" id="L358">		e_removeNoInexistente();</span>
+<span class="nc" id="L359">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L360">		e_criaGrafo();</span>
+<span class="nc" id="L361">		v_grafoVazio();</span>
+<span class="nc" id="L362">		e_adicionaNo();</span>
+<span class="nc" id="L363">		v_grafoNaoVazio();</span>
+<span class="nc" id="L364">		e_removeNoInexistente();</span>
+<span class="nc" id="L365">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L366">		e_criaGrafo();</span>
+<span class="nc" id="L367">		v_grafoVazio();</span>
+<span class="nc" id="L368">		e_adicionaNo();</span>
+<span class="nc" id="L369">		v_grafoNaoVazio();</span>
+<span class="nc" id="L370">		e_limpaGrafo();</span>
+<span class="nc" id="L371">		v_grafoVazio();</span>
+<span class="nc" id="L372">		e_adicionaNo();</span>
+<span class="nc" id="L373">		v_grafoNaoVazio();</span>
+<span class="nc" id="L374">		e_removeNoInexistente();</span>
+<span class="nc" id="L375">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L376">		e_criaGrafo();</span>
+<span class="nc" id="L377">		v_grafoVazio();</span>
+<span class="nc" id="L378">		e_adicionaNo();</span>
+<span class="nc" id="L379">		v_grafoNaoVazio();</span>
+<span class="nc" id="L380">		e_removeNo();</span>
+<span class="nc" id="L381">		v_grafoNaoVazio();</span>
+<span class="nc" id="L382">		e_removeNoInexistente();</span>
+<span class="nc" id="L383">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L384">		e_criaGrafo();</span>
+<span class="nc" id="L385">		v_grafoVazio();</span>
+<span class="nc" id="L386">		e_adicionaNo();</span>
+<span class="nc" id="L387">		v_grafoNaoVazio();</span>
+<span class="nc" id="L388">		e_removeNo();</span>
+<span class="nc" id="L389">		v_grafoNaoVazio();</span>
+<span class="nc" id="L390">		e_adicionaNo();</span>
+<span class="nc" id="L391">		v_grafoNaoVazio();</span>
+<span class="nc" id="L392">		e_adicionaNoExistente();</span>
+<span class="nc" id="L393">		v_ExcecaoIdJaUsado();</span>
+<span class="nc" id="L394">		e_criaGrafo();</span>
+<span class="nc" id="L395">		v_grafoVazio();</span>
+<span class="nc" id="L396">		e_adicionaNo();</span>
+<span class="nc" id="L397">		v_grafoNaoVazio();</span>
+<span class="nc" id="L398">		e_removeNoInexistente();</span>
+<span class="nc" id="L399">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L400">		e_criaGrafo();</span>
+<span class="nc" id="L401">		v_grafoVazio();</span>
+<span class="nc" id="L402">		e_adicionaNo();</span>
+<span class="nc" id="L403">		v_grafoNaoVazio();</span>
+<span class="nc" id="L404">		e_limpaGrafo();</span>
+<span class="nc" id="L405">		v_grafoVazio();</span>
+<span class="nc" id="L406">		e_adicionaNo();</span>
+<span class="nc" id="L407">		v_grafoNaoVazio();</span>
+<span class="nc" id="L408">		e_removeNoInexistente();</span>
+<span class="nc" id="L409">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L410">		e_criaGrafo();</span>
+<span class="nc" id="L411">		v_grafoVazio();</span>
+<span class="nc" id="L412">		e_adicionaNo();</span>
+<span class="nc" id="L413">		v_grafoNaoVazio();</span>
+<span class="nc" id="L414">		e_removeNoInexistente();</span>
+<span class="nc" id="L415">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L416">		e_criaGrafo();</span>
+<span class="nc" id="L417">		v_grafoVazio();</span>
+<span class="nc" id="L418">		e_adicionaNo();</span>
+<span class="nc" id="L419">		v_grafoNaoVazio();</span>
+<span class="nc" id="L420">		e_removeNoInexistente();</span>
+<span class="nc" id="L421">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L422">		e_criaGrafo();</span>
+<span class="nc" id="L423">		v_grafoVazio();</span>
+<span class="nc" id="L424">		e_adicionaNo();</span>
+<span class="nc" id="L425">		v_grafoNaoVazio();</span>
+<span class="nc" id="L426">		e_removeNoInexistente();</span>
+<span class="nc" id="L427">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L428">		e_criaGrafo();</span>
+<span class="nc" id="L429">		v_grafoVazio();</span>
+<span class="nc" id="L430">		e_adicionaNo();</span>
+<span class="nc" id="L431">		v_grafoNaoVazio();</span>
+<span class="nc" id="L432">		e_removeNoInexistente();</span>
+<span class="nc" id="L433">		v_ElementoNaoEncontrado();</span>
+<span class="nc" id="L434">		e_criaGrafo();</span>
+<span class="nc" id="L435">		v_grafoVazio();</span>
+<span class="nc" id="L436">		e_adicionaNo();</span>
+<span class="nc" id="L437">		v_grafoNaoVazio();</span>
+<span class="nc" id="L438">		e_adicionaNo();</span>
+<span class="nc" id="L439">		v_grafoNaoVazio();</span>
+<span class="nc" id="L440">		e_adicionaAresta();</span>
+<span class="nc" id="L441">		v_grafoNaoVazio();</span>
+<span class="nc" id="L442">		e_adicionaArestaEmNoCheio();</span>
+<span class="nc" id="L443">		v_ExcecaoArestaRejeitada();</span>
+<span class="nc" id="L444">		e_criaGrafo();</span>
+<span class="nc" id="L445">		v_grafoVazio();</span>
+<span class="nc" id="L446">		e_adicionaNo();</span>
+<span class="nc" id="L447">		v_grafoNaoVazio();</span>
+<span class="nc" id="L448">		e_adicionaNo();</span>
+<span class="nc" id="L449">		v_grafoNaoVazio();</span>
+<span class="nc" id="L450">		e_adicionaNo();</span>
+<span class="nc" id="L451">		v_grafoNaoVazio();</span>
+<span class="nc" id="L452">		e_removeAresta();</span>
+<span class="nc" id="L453">		v_grafoNaoVazio();</span>
+<span class="nc" id="L454">		e_adicionaNoExistente();</span>
+<span class="nc" id="L455">		v_ExcecaoIdJaUsado();</span>
+<span class="nc" id="L456">		e_criaGrafo();</span>
+<span class="nc" id="L457">		v_grafoVazio();</span>
+<span class="nc" id="L458">		e_adicionaNo();</span>
+<span class="nc" id="L459">		v_grafoNaoVazio();</span>
+<span class="nc" id="L460">		e_adicionaNo();</span>
+<span class="nc" id="L461">		v_grafoNaoVazio();</span>
+<span class="nc" id="L462">		e_limpaGrafo();</span>
+<span class="nc" id="L463">		v_grafoVazio();</span>
+<span class="nc" id="L464">		e_adicionaNo();</span>
+<span class="nc" id="L465">		v_grafoNaoVazio();</span>
+<span class="nc" id="L466">		e_removeUltimoNo();</span>
+<span class="nc" id="L467">		v_grafoVazio();</span>
+<span class="nc" id="L468">		e_adicionaNo();</span>
+<span class="nc" id="L469">		v_grafoNaoVazio();</span>
+<span class="nc" id="L470">		e_removeUltimoNo();</span>
+<span class="nc" id="L471">		v_grafoVazio();</span>
+<span class="nc" id="L472">		e_adicionaNo();</span>
+<span class="nc" id="L473">		v_grafoNaoVazio();</span>
+<span class="nc" id="L474">		e_limpaGrafo();</span>
+<span class="nc" id="L475">		v_grafoVazio();</span>
+<span class="nc" id="L476">		e_adicionaNo();</span>
+<span class="nc" id="L477">		v_grafoNaoVazio();</span>
+<span class="nc" id="L478">		e_adicionaNoExistente();</span>
+<span class="nc" id="L479">		v_ExcecaoIdJaUsado();</span>
+<span class="nc" id="L480">		e_criaGrafo();</span>
+<span class="nc" id="L481">		v_grafoVazio();</span>
+<span class="nc" id="L482">		e_adicionaNo();</span>
+<span class="nc" id="L483">		v_grafoNaoVazio();</span>
+<span class="nc" id="L484">		e_adicionaAresta();</span>
+<span class="nc" id="L485">		v_grafoNaoVazio();</span>
+<span class="nc" id="L486">		e_adicionaArestaExistente();</span>
+<span class="nc" id="L487">		v_ExcecaoIdJaUsado();</span>
+
+<span class="nc" id="L489">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

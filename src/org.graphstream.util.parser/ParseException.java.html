@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>ParseException.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.util.parser</a> &gt; <span class="el_source">ParseException.java</span></div><h1>ParseException.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-02-19
+ * 
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.util.parser;
+
+/**
+ * This exception is thrown when parse errors are encountered. You can
+ * explicitly create objects of this exception type by calling the method
+ * generateParseException in the generated parser.
+ * 
+ * You can modify this class to customize your error reporting mechanisms so
+ * long as you retain the public fields.
+ */
+public class ParseException extends Exception {
+
+	/**
+	 * The version identifier for this Serializable class. Increment only if the
+	 * &lt;i&gt;serialized&lt;/i&gt; form of the class changes.
+	 */
+	private static final long serialVersionUID = 1L;
+
+	/**
+	 * This constructor is used by the method &quot;generateParseException&quot; in the
+	 * generated parser. Calling this constructor generates a new object of this
+	 * type with the fields &quot;currentToken&quot;, &quot;expectedTokenSequences&quot;, and
+	 * &quot;tokenImage&quot; set.
+	 */
+	public ParseException(Token currentTokenVal, int[][] expectedTokenSequencesVal, String[] tokenImageVal) {
+<span class="nc" id="L57">		super(initialise(currentTokenVal, expectedTokenSequencesVal, tokenImageVal));</span>
+<span class="nc" id="L58">		currentToken = currentTokenVal;</span>
+<span class="nc" id="L59">		expectedTokenSequences = expectedTokenSequencesVal;</span>
+<span class="nc" id="L60">		tokenImage = tokenImageVal;</span>
+<span class="nc" id="L61">	}</span>
+
+	/**
+	 * The following constructors are for use by you for whatever purpose you can
+	 * think of. Constructing the exception in this manner makes the exception
+	 * behave in the normal way - i.e., as documented in the class &quot;Throwable&quot;. The
+	 * fields &quot;errorToken&quot;, &quot;expectedTokenSequences&quot;, and &quot;tokenImage&quot; do not
+	 * contain relevant information. The JavaCC generated code does not use these
+	 * constructors.
+	 */
+
+	public ParseException() {
+<span class="nc" id="L73">		super();</span>
+<span class="nc" id="L74">	}</span>
+
+	/** Constructor with message. */
+	public ParseException(String message) {
+<span class="nc" id="L78">		super(message);</span>
+<span class="nc" id="L79">	}</span>
+
+	/**
+	 * This is the last token that has been consumed successfully. If this object
+	 * has been created due to a parse error, the token followng this token will
+	 * (therefore) be the first error token.
+	 */
+	public Token currentToken;
+
+	/**
+	 * Each entry in this array is an array of integers. Each array of integers
+	 * represents a sequence of tokens (by their ordinal values) that is expected at
+	 * this point of the parse.
+	 */
+	public int[][] expectedTokenSequences;
+
+	/**
+	 * This is a reference to the &quot;tokenImage&quot; array of the generated parser within
+	 * which the parse error occurred. This array is defined in the generated
+	 * ...Constants interface.
+	 */
+	public String[] tokenImage;
+
+	/**
+	 * It uses &quot;currentToken&quot; and &quot;expectedTokenSequences&quot; to generate a parse error
+	 * message and returns it. If this object has been created due to a parse error,
+	 * and you do not catch it (it gets thrown from the parser) the correct error
+	 * message gets displayed.
+	 */
+	private static String initialise(Token currentToken, int[][] expectedTokenSequences, String[] tokenImage) {
+<span class="nc" id="L109">		String eol = System.getProperty(&quot;line.separator&quot;, &quot;\n&quot;);</span>
+<span class="nc" id="L110">		StringBuffer expected = new StringBuffer();</span>
+<span class="nc" id="L111">		int maxSize = 0;</span>
+<span class="nc bnc" id="L112" title="All 2 branches missed.">		for (int i = 0; i &lt; expectedTokenSequences.length; i++) {</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">			if (maxSize &lt; expectedTokenSequences[i].length) {</span>
+<span class="nc" id="L114">				maxSize = expectedTokenSequences[i].length;</span>
+			}
+<span class="nc bnc" id="L116" title="All 2 branches missed.">			for (int j = 0; j &lt; expectedTokenSequences[i].length; j++) {</span>
+<span class="nc" id="L117">				expected.append(tokenImage[expectedTokenSequences[i][j]]).append(' ');</span>
+			}
+<span class="nc bnc" id="L119" title="All 2 branches missed.">			if (expectedTokenSequences[i][expectedTokenSequences[i].length - 1] != 0) {</span>
+<span class="nc" id="L120">				expected.append(&quot;...&quot;);</span>
+			}
+<span class="nc" id="L122">			expected.append(eol).append(&quot;    &quot;);</span>
+		}
+<span class="nc" id="L124">		String retval = &quot;Encountered \&quot;&quot;;</span>
+<span class="nc" id="L125">		Token tok = currentToken.next;</span>
+<span class="nc bnc" id="L126" title="All 2 branches missed.">		for (int i = 0; i &lt; maxSize; i++) {</span>
+<span class="nc bnc" id="L127" title="All 2 branches missed.">			if (i != 0)</span>
+<span class="nc" id="L128">				retval += &quot; &quot;;</span>
+<span class="nc bnc" id="L129" title="All 2 branches missed.">			if (tok.kind == 0) {</span>
+<span class="nc" id="L130">				retval += tokenImage[0];</span>
+<span class="nc" id="L131">				break;</span>
+			}
+<span class="nc" id="L133">			retval += &quot; &quot; + tokenImage[tok.kind];</span>
+<span class="nc" id="L134">			retval += &quot; \&quot;&quot;;</span>
+<span class="nc" id="L135">			retval += add_escapes(tok.image);</span>
+<span class="nc" id="L136">			retval += &quot; \&quot;&quot;;</span>
+<span class="nc" id="L137">			tok = tok.next;</span>
+		}
+<span class="nc" id="L139">		retval += &quot;\&quot; at line &quot; + currentToken.next.beginLine + &quot;, column &quot; + currentToken.next.beginColumn;</span>
+<span class="nc" id="L140">		retval += &quot;.&quot; + eol;</span>
+<span class="nc bnc" id="L141" title="All 2 branches missed.">		if (expectedTokenSequences.length == 1) {</span>
+<span class="nc" id="L142">			retval += &quot;Was expecting:&quot; + eol + &quot;    &quot;;</span>
+<span class="nc" id="L143">		} else {</span>
+<span class="nc" id="L144">			retval += &quot;Was expecting one of:&quot; + eol + &quot;    &quot;;</span>
+		}
+<span class="nc" id="L146">		retval += expected.toString();</span>
+<span class="nc" id="L147">		return retval;</span>
+	}
+
+	/**
+	 * The end of line string for this machine.
+	 */
+<span class="nc" id="L153">	protected String eol = System.getProperty(&quot;line.separator&quot;, &quot;\n&quot;);</span>
+
+	/**
+	 * Used to convert raw characters to their escaped version when these raw
+	 * version cannot be used as part of an ASCII string literal.
+	 */
+	static String add_escapes(String str) {
+<span class="nc" id="L160">		StringBuffer retval = new StringBuffer();</span>
+		char ch;
+<span class="nc bnc" id="L162" title="All 2 branches missed.">		for (int i = 0; i &lt; str.length(); i++) {</span>
+<span class="nc bnc" id="L163" title="All 10 branches missed.">			switch (str.charAt(i)) {</span>
+			case 0:
+<span class="nc" id="L165">				continue;</span>
+			case '\b':
+<span class="nc" id="L167">				retval.append(&quot;\\b&quot;);</span>
+<span class="nc" id="L168">				continue;</span>
+			case '\t':
+<span class="nc" id="L170">				retval.append(&quot;\\t&quot;);</span>
+<span class="nc" id="L171">				continue;</span>
+			case '\n':
+<span class="nc" id="L173">				retval.append(&quot;\\n&quot;);</span>
+<span class="nc" id="L174">				continue;</span>
+			case '\f':
+<span class="nc" id="L176">				retval.append(&quot;\\f&quot;);</span>
+<span class="nc" id="L177">				continue;</span>
+			case '\r':
+<span class="nc" id="L179">				retval.append(&quot;\\r&quot;);</span>
+<span class="nc" id="L180">				continue;</span>
+			case '\&quot;':
+<span class="nc" id="L182">				retval.append(&quot;\\\&quot;&quot;);</span>
+<span class="nc" id="L183">				continue;</span>
+			case '\'':
+<span class="nc" id="L185">				retval.append(&quot;\\\'&quot;);</span>
+<span class="nc" id="L186">				continue;</span>
+			case '\\':
+<span class="nc" id="L188">				retval.append(&quot;\\\\&quot;);</span>
+<span class="nc" id="L189">				continue;</span>
+			default:
+<span class="nc bnc" id="L191" title="All 4 branches missed.">				if ((ch = str.charAt(i)) &lt; 0x20 || ch &gt; 0x7e) {</span>
+<span class="nc" id="L192">					String s = &quot;0000&quot; + Integer.toString(ch, 16);</span>
+<span class="nc" id="L193">					retval.append(&quot;\\u&quot; + s.substring(s.length() - 4, s.length()));</span>
+<span class="nc" id="L194">				} else {</span>
+<span class="nc" id="L195">					retval.append(ch);</span>
+				}
+				continue;
+			}
+		}
+<span class="nc" id="L200">		return retval.toString();</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

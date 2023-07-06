@@ -1,0 +1,1068 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>SourceBase.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.stream</a> &gt; <span class="el_source">SourceBase.java</span></div><h1>SourceBase.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ * 
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ * 
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ * 
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @since 2009-05-07
+ * 
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ */
+package org.graphstream.stream;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+
+import org.graphstream.graph.implementations.AbstractElement.AttributeChangeEvent;
+import org.graphstream.stream.sync.SourceTime;
+
+/**
+ * Base implementation of an input that provide basic sink handling.
+ * 
+ * &lt;p&gt;
+ * This implementation can register a set of graph sinks (or separate sets of
+ * attributes or elements sinks) and provides protected methods to easily
+ * broadcast events to all the sinks (beginning with &quot;send&quot;).
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * Each time you want to produce an event toward all registered sinks, you call
+ * one of the &quot;send*&quot; methods with correct parameters. The parameters of the
+ * &quot;send*&quot; methods maps to the usual GraphStream events.
+ * &lt;/p&gt;
+ * 
+ * &lt;p&gt;
+ * This class is &quot;reentrant&quot;. This means that if a send*() method is called
+ * during the execution of another or the same send*() method, the event is
+ * deferred until the first send*() method is finished. This avoid recursive
+ * loops if a sink modifies the input during event handling.
+ * &lt;/p&gt;
+ */
+public abstract class SourceBase implements Source {
+	// Attribute
+
+<span class="fc" id="L68">	public enum ElementType {</span>
+<span class="fc" id="L69">		NODE, EDGE, GRAPH</span>
+	};
+
+	/**
+	 * Set of graph attributes sinks.
+	 */
+<span class="fc" id="L75">	protected ArrayList&lt;AttributeSink&gt; attrSinks = new ArrayList&lt;AttributeSink&gt;();</span>
+
+	/**
+	 * Set of graph elements sinks.
+	 */
+<span class="fc" id="L80">	protected ArrayList&lt;ElementSink&gt; eltsSinks = new ArrayList&lt;ElementSink&gt;();</span>
+
+	/**
+	 * A queue that allow the management of events (nodes/edge add/delete/change) in
+	 * the right order.
+	 */
+<span class="fc" id="L86">	protected LinkedList&lt;GraphEvent&gt; eventQueue = new LinkedList&lt;GraphEvent&gt;();</span>
+
+	/**
+	 * A boolean that indicates whether or not an Sink event is being sent during
+	 * another one.
+	 */
+<span class="fc" id="L92">	protected boolean eventProcessing = false;</span>
+
+	/**
+	 * Id of this source.
+	 */
+	protected String sourceId;
+
+	/**
+	 * Time of this source.
+	 */
+	protected SourceTime sourceTime;
+
+	// Construction
+
+	protected SourceBase() {
+<span class="nc" id="L107">		this(String.format(&quot;sourceOnThread#%d_%d&quot;, Thread.currentThread().getId(),</span>
+<span class="nc" id="L108">				System.currentTimeMillis() + ((int) (Math.random() * 1000))));</span>
+<span class="nc" id="L109">	}</span>
+
+<span class="fc" id="L111">	protected SourceBase(String sourceId) {</span>
+<span class="fc" id="L112">		this.sourceId = sourceId;</span>
+<span class="fc" id="L113">		this.sourceTime = new SourceTime(sourceId);</span>
+<span class="fc" id="L114">	}</span>
+
+	// Access
+
+	public Iterable&lt;AttributeSink&gt; attributeSinks() {
+<span class="nc" id="L119">		return attrSinks;</span>
+	}
+
+	public Iterable&lt;ElementSink&gt; elementSinks() {
+<span class="nc" id="L123">		return eltsSinks;</span>
+	}
+
+	// Command
+
+	public void addSink(Sink sink) {
+<span class="nc" id="L129">		addAttributeSink(sink);</span>
+<span class="nc" id="L130">		addElementSink(sink);</span>
+<span class="nc" id="L131">	}</span>
+
+	public void addAttributeSink(AttributeSink sink) {
+<span class="nc bnc" id="L134" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L135">			eventProcessing = true;</span>
+<span class="nc" id="L136">			manageEvents();</span>
+
+<span class="nc" id="L138">			attrSinks.add(sink);</span>
+
+<span class="nc" id="L140">			manageEvents();</span>
+<span class="nc" id="L141">			eventProcessing = false;</span>
+<span class="nc" id="L142">		} else {</span>
+<span class="nc" id="L143">			eventQueue.add(new AddToListEvent&lt;AttributeSink&gt;(attrSinks, sink));</span>
+		}
+<span class="nc" id="L145">	}</span>
+
+	public void addElementSink(ElementSink sink) {
+<span class="nc bnc" id="L148" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L149">			eventProcessing = true;</span>
+<span class="nc" id="L150">			manageEvents();</span>
+
+<span class="nc" id="L152">			eltsSinks.add(sink);</span>
+
+<span class="nc" id="L154">			manageEvents();</span>
+<span class="nc" id="L155">			eventProcessing = false;</span>
+<span class="nc" id="L156">		} else {</span>
+<span class="nc" id="L157">			eventQueue.add(new AddToListEvent&lt;ElementSink&gt;(eltsSinks, sink));</span>
+		}
+<span class="nc" id="L159">	}</span>
+
+	public void clearSinks() {
+<span class="nc" id="L162">		clearElementSinks();</span>
+<span class="nc" id="L163">		clearAttributeSinks();</span>
+<span class="nc" id="L164">	}</span>
+
+	public void clearElementSinks() {
+<span class="nc bnc" id="L167" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L168">			eventProcessing = true;</span>
+<span class="nc" id="L169">			manageEvents();</span>
+
+<span class="nc" id="L171">			eltsSinks.clear();</span>
+
+<span class="nc" id="L173">			manageEvents();</span>
+<span class="nc" id="L174">			eventProcessing = false;</span>
+<span class="nc" id="L175">		} else {</span>
+<span class="nc" id="L176">			eventQueue.add(new ClearListEvent&lt;ElementSink&gt;(eltsSinks));</span>
+		}
+<span class="nc" id="L178">	}</span>
+
+	public void clearAttributeSinks() {
+<span class="nc bnc" id="L181" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L182">			eventProcessing = true;</span>
+<span class="nc" id="L183">			manageEvents();</span>
+
+<span class="nc" id="L185">			attrSinks.clear();</span>
+
+<span class="nc" id="L187">			manageEvents();</span>
+<span class="nc" id="L188">			eventProcessing = false;</span>
+<span class="nc" id="L189">		} else {</span>
+<span class="nc" id="L190">			eventQueue.add(new ClearListEvent&lt;AttributeSink&gt;(attrSinks));</span>
+		}
+<span class="nc" id="L192">	}</span>
+
+	public void removeSink(Sink sink) {
+<span class="nc" id="L195">		removeAttributeSink(sink);</span>
+<span class="nc" id="L196">		removeElementSink(sink);</span>
+<span class="nc" id="L197">	}</span>
+
+	public void removeAttributeSink(AttributeSink sink) {
+<span class="nc bnc" id="L200" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L201">			eventProcessing = true;</span>
+<span class="nc" id="L202">			manageEvents();</span>
+
+<span class="nc" id="L204">			attrSinks.remove(sink);</span>
+
+<span class="nc" id="L206">			manageEvents();</span>
+<span class="nc" id="L207">			eventProcessing = false;</span>
+<span class="nc" id="L208">		} else {</span>
+<span class="nc" id="L209">			eventQueue.add(new RemoveFromListEvent&lt;AttributeSink&gt;(attrSinks, sink));</span>
+		}
+<span class="nc" id="L211">	}</span>
+
+	public void removeElementSink(ElementSink sink) {
+<span class="nc bnc" id="L214" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L215">			eventProcessing = true;</span>
+<span class="nc" id="L216">			manageEvents();</span>
+
+<span class="nc" id="L218">			eltsSinks.remove(sink);</span>
+
+<span class="nc" id="L220">			manageEvents();</span>
+<span class="nc" id="L221">			eventProcessing = false;</span>
+<span class="nc" id="L222">		} else {</span>
+<span class="nc" id="L223">			eventQueue.add(new RemoveFromListEvent&lt;ElementSink&gt;(eltsSinks, sink));</span>
+		}
+<span class="nc" id="L225">	}</span>
+
+	/**
+	 * Send a &quot;graph cleared&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 */
+	public void sendGraphCleared(String sourceId) {
+<span class="nc" id="L234">		sendGraphCleared(sourceId, sourceTime.newEvent());</span>
+<span class="nc" id="L235">	}</span>
+
+	/**
+	 * Send a &quot;graph cleared&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 */
+	public void sendGraphCleared(String sourceId, long timeId) {
+<span class="pc bpc" id="L245" title="1 of 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="fc" id="L246">			eventProcessing = true;</span>
+<span class="fc" id="L247">			manageEvents();</span>
+
+<span class="pc bpc" id="L249" title="1 of 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L250">				eltsSinks.get(i).graphCleared(sourceId, timeId);</span>
+
+<span class="fc" id="L252">			manageEvents();</span>
+<span class="fc" id="L253">			eventProcessing = false;</span>
+<span class="fc" id="L254">		} else {</span>
+<span class="nc" id="L255">			eventQueue.add(new BeforeGraphClearEvent(sourceId, timeId));</span>
+		}
+<span class="fc" id="L257">	}</span>
+
+	/**
+	 * Send a &quot;step begins&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The graph identifier.
+	 * @param step
+	 *            The step time stamp.
+	 */
+	public void sendStepBegins(String sourceId, double step) {
+<span class="nc" id="L268">		sendStepBegins(sourceId, sourceTime.newEvent(), step);</span>
+<span class="nc" id="L269">	}</span>
+
+	/**
+	 * Send a &quot;step begins&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The graph identifier.
+	 * @param timeId
+	 * @param step
+	 *            The step time stamp.
+	 */
+	public void sendStepBegins(String sourceId, long timeId, double step) {
+<span class="nc bnc" id="L281" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L282">			eventProcessing = true;</span>
+<span class="nc" id="L283">			manageEvents();</span>
+
+<span class="nc bnc" id="L285" title="All 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L286">				eltsSinks.get(i).stepBegins(sourceId, timeId, step);</span>
+
+<span class="nc" id="L288">			manageEvents();</span>
+<span class="nc" id="L289">			eventProcessing = false;</span>
+<span class="nc" id="L290">		} else {</span>
+<span class="nc" id="L291">			eventQueue.add(new StepBeginsEvent(sourceId, timeId, step));</span>
+		}
+<span class="nc" id="L293">	}</span>
+
+	/**
+	 * Send a &quot;node added&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param nodeId
+	 *            The node identifier.
+	 */
+	public void sendNodeAdded(String sourceId, String nodeId) {
+<span class="nc" id="L304">		sendNodeAdded(sourceId, sourceTime.newEvent(), nodeId);</span>
+<span class="nc" id="L305">	}</span>
+
+	/**
+	 * Send a &quot;node added&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param nodeId
+	 *            The node identifier.
+	 */
+	public void sendNodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="pc bpc" id="L317" title="1 of 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="fc" id="L318">			eventProcessing = true;</span>
+<span class="fc" id="L319">			manageEvents();</span>
+
+<span class="pc bpc" id="L321" title="1 of 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L322">				eltsSinks.get(i).nodeAdded(sourceId, timeId, nodeId);</span>
+
+<span class="fc" id="L324">			manageEvents();</span>
+<span class="fc" id="L325">			eventProcessing = false;</span>
+<span class="fc" id="L326">		} else {</span>
+<span class="nc" id="L327">			eventQueue.add(new AfterNodeAddEvent(sourceId, timeId, nodeId));</span>
+		}
+<span class="fc" id="L329">	}</span>
+
+	/**
+	 * Send a &quot;node removed&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The graph identifier.
+	 * @param nodeId
+	 *            The node identifier.
+	 */
+	public void sendNodeRemoved(String sourceId, String nodeId) {
+<span class="nc" id="L340">		sendNodeRemoved(sourceId, sourceTime.newEvent(), nodeId);</span>
+<span class="nc" id="L341">	}</span>
+
+	/**
+	 * Send a &quot;node removed&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The graph identifier.
+	 * @param timeId
+	 * @param nodeId
+	 *            The node identifier.
+	 */
+	public void sendNodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="pc bpc" id="L353" title="1 of 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="fc" id="L354">			eventProcessing = true;</span>
+<span class="fc" id="L355">			manageEvents();</span>
+
+<span class="pc bpc" id="L357" title="1 of 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L358">				eltsSinks.get(i).nodeRemoved(sourceId, timeId, nodeId);</span>
+
+<span class="fc" id="L360">			manageEvents();</span>
+<span class="fc" id="L361">			eventProcessing = false;</span>
+<span class="fc" id="L362">		} else {</span>
+<span class="nc" id="L363">			eventQueue.add(new BeforeNodeRemoveEvent(sourceId, timeId, nodeId));</span>
+		}
+<span class="fc" id="L365">	}</span>
+
+	/**
+	 * Send an &quot;edge added&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param edgeId
+	 *            The edge identifier.
+	 * @param fromNodeId
+	 *            The edge start node.
+	 * @param toNodeId
+	 *            The edge end node.
+	 * @param directed
+	 *            Is the edge directed?.
+	 */
+	public void sendEdgeAdded(String sourceId, String edgeId, String fromNodeId, String toNodeId, boolean directed) {
+<span class="nc" id="L382">		sendEdgeAdded(sourceId, sourceTime.newEvent(), edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L383">	}</span>
+
+	/**
+	 * Send an &quot;edge added&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param edgeId
+	 *            The edge identifier.
+	 * @param fromNodeId
+	 *            The edge start node.
+	 * @param toNodeId
+	 *            The edge end node.
+	 * @param directed
+	 *            Is the edge directed?.
+	 */
+	public void sendEdgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="pc bpc" id="L402" title="1 of 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="fc" id="L403">			eventProcessing = true;</span>
+<span class="fc" id="L404">			manageEvents();</span>
+
+<span class="pc bpc" id="L406" title="1 of 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L407">				eltsSinks.get(i).edgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+
+<span class="fc" id="L409">			manageEvents();</span>
+<span class="fc" id="L410">			eventProcessing = false;</span>
+<span class="fc" id="L411">		} else {</span>
+<span class="nc" id="L412">			eventQueue.add(new AfterEdgeAddEvent(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed));</span>
+		}
+<span class="fc" id="L414">	}</span>
+
+	/**
+	 * Send a &quot;edge removed&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param edgeId
+	 *            The edge identifier.
+	 */
+	public void sendEdgeRemoved(String sourceId, String edgeId) {
+<span class="nc" id="L425">		sendEdgeRemoved(sourceId, sourceTime.newEvent(), edgeId);</span>
+<span class="nc" id="L426">	}</span>
+
+	/**
+	 * Send a &quot;edge removed&quot; event to all element sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param edgeId
+	 *            The edge identifier.
+	 */
+	public void sendEdgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc bnc" id="L438" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L439">			eventProcessing = true;</span>
+<span class="nc" id="L440">			manageEvents();</span>
+
+<span class="nc bnc" id="L442" title="All 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L443">				eltsSinks.get(i).edgeRemoved(sourceId, timeId, edgeId);</span>
+
+<span class="nc" id="L445">			manageEvents();</span>
+<span class="nc" id="L446">			eventProcessing = false;</span>
+<span class="nc" id="L447">		} else {</span>
+<span class="nc" id="L448">			eventQueue.add(new BeforeEdgeRemoveEvent(sourceId, timeId, edgeId));</span>
+		}
+<span class="nc" id="L450">	}</span>
+
+	/**
+	 * Send a &quot;edge attribute added&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param edgeId
+	 *            The edge identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param value
+	 *            The attribute value.
+	 */
+	public void sendEdgeAttributeAdded(String sourceId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L465">		sendAttributeChangedEvent(sourceId, edgeId, ElementType.EDGE, attribute, AttributeChangeEvent.ADD, null, value);</span>
+<span class="nc" id="L466">	}</span>
+
+	/**
+	 * Send a &quot;edge attribute added&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param edgeId
+	 *            The edge identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param value
+	 *            The attribute value.
+	 */
+	public void sendEdgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L482">		sendAttributeChangedEvent(sourceId, timeId, edgeId, ElementType.EDGE, attribute, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L483">				value);</span>
+<span class="nc" id="L484">	}</span>
+
+	/**
+	 * Send a &quot;edge attribute changed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param edgeId
+	 *            The edge identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param oldValue
+	 *            The old attribute value.
+	 * @param newValue
+	 *            The new attribute value.
+	 */
+	public void sendEdgeAttributeChanged(String sourceId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L502">		sendAttributeChangedEvent(sourceId, edgeId, ElementType.EDGE, attribute, AttributeChangeEvent.CHANGE, oldValue,</span>
+<span class="nc" id="L503">				newValue);</span>
+<span class="nc" id="L504">	}</span>
+
+	/**
+	 * Send a &quot;edge attribute changed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param edgeId
+	 *            The edge identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param oldValue
+	 *            The old attribute value.
+	 * @param newValue
+	 *            The new attribute value.
+	 */
+	public void sendEdgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L523">		sendAttributeChangedEvent(sourceId, timeId, edgeId, ElementType.EDGE, attribute, AttributeChangeEvent.CHANGE,</span>
+<span class="nc" id="L524">				oldValue, newValue);</span>
+<span class="nc" id="L525">	}</span>
+
+	/**
+	 * Send a &quot;edge attribute removed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param edgeId
+	 *            The edge identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 */
+	public void sendEdgeAttributeRemoved(String sourceId, String edgeId, String attribute) {
+<span class="nc" id="L538">		sendAttributeChangedEvent(sourceId, edgeId, ElementType.EDGE, attribute, AttributeChangeEvent.REMOVE, null,</span>
+<span class="nc" id="L539">				null);</span>
+<span class="nc" id="L540">	}</span>
+
+	/**
+	 * Send a &quot;edge attribute removed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param edgeId
+	 *            The edge identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 */
+	public void sendEdgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L554">		sendAttributeChangedEvent(sourceId, timeId, edgeId, ElementType.EDGE, attribute, AttributeChangeEvent.REMOVE,</span>
+<span class="nc" id="L555">				null, null);</span>
+<span class="nc" id="L556">	}</span>
+
+	/**
+	 * Send a &quot;graph attribute added&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param value
+	 *            The attribute value.
+	 */
+	public void sendGraphAttributeAdded(String sourceId, String attribute, Object value) {
+<span class="nc" id="L569">		sendAttributeChangedEvent(sourceId, null, ElementType.GRAPH, attribute, AttributeChangeEvent.ADD, null, value);</span>
+<span class="nc" id="L570">	}</span>
+
+	/**
+	 * Send a &quot;graph attribute added&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param attribute
+	 *            The attribute name.
+	 * @param value
+	 *            The attribute value.
+	 */
+	public void sendGraphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L584">		sendAttributeChangedEvent(sourceId, timeId, null, ElementType.GRAPH, attribute, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L585">				value);</span>
+<span class="nc" id="L586">	}</span>
+
+	/**
+	 * Send a &quot;graph attribute changed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param oldValue
+	 *            The attribute old value.
+	 * @param newValue
+	 *            The attribute new value.
+	 */
+	public void sendGraphAttributeChanged(String sourceId, String attribute, Object oldValue, Object newValue) {
+<span class="nc" id="L601">		sendAttributeChangedEvent(sourceId, null, ElementType.GRAPH, attribute, AttributeChangeEvent.CHANGE, oldValue,</span>
+<span class="nc" id="L602">				newValue);</span>
+<span class="nc" id="L603">	}</span>
+
+	/**
+	 * Send a &quot;graph attribute changed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param attribute
+	 *            The attribute name.
+	 * @param oldValue
+	 *            The attribute old value.
+	 * @param newValue
+	 *            The attribute new value.
+	 */
+	public void sendGraphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L620">		sendAttributeChangedEvent(sourceId, timeId, null, ElementType.GRAPH, attribute, AttributeChangeEvent.CHANGE,</span>
+<span class="nc" id="L621">				oldValue, newValue);</span>
+<span class="nc" id="L622">	}</span>
+
+	/**
+	 * Send a &quot;graph attribute removed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 */
+	public void sendGraphAttributeRemoved(String sourceId, String attribute) {
+<span class="nc" id="L633">		sendAttributeChangedEvent(sourceId, null, ElementType.GRAPH, attribute, AttributeChangeEvent.REMOVE, null,</span>
+<span class="nc" id="L634">				null);</span>
+<span class="nc" id="L635">	}</span>
+
+	/**
+	 * Send a &quot;graph attribute removed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param attribute
+	 *            The attribute name.
+	 */
+	public void sendGraphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L647">		sendAttributeChangedEvent(sourceId, timeId, null, ElementType.GRAPH, attribute, AttributeChangeEvent.REMOVE,</span>
+<span class="nc" id="L648">				null, null);</span>
+<span class="nc" id="L649">	}</span>
+
+	/**
+	 * Send a &quot;node attribute added&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param nodeId
+	 *            The node identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param value
+	 *            The attribute value.
+	 */
+	public void sendNodeAttributeAdded(String sourceId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L664">		sendAttributeChangedEvent(sourceId, nodeId, ElementType.NODE, attribute, AttributeChangeEvent.ADD, null, value);</span>
+<span class="nc" id="L665">	}</span>
+
+	/**
+	 * Send a &quot;node attribute added&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param nodeId
+	 *            The node identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param value
+	 *            The attribute value.
+	 */
+	public void sendNodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L681">		sendAttributeChangedEvent(sourceId, timeId, nodeId, ElementType.NODE, attribute, AttributeChangeEvent.ADD, null,</span>
+<span class="nc" id="L682">				value);</span>
+<span class="nc" id="L683">	}</span>
+
+	/**
+	 * Send a &quot;node attribute changed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param nodeId
+	 *            The node identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param oldValue
+	 *            The attribute old value.
+	 * @param newValue
+	 *            The attribute new value.
+	 */
+	public void sendNodeAttributeChanged(String sourceId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L701">		sendAttributeChangedEvent(sourceId, nodeId, ElementType.NODE, attribute, AttributeChangeEvent.CHANGE, oldValue,</span>
+<span class="nc" id="L702">				newValue);</span>
+<span class="nc" id="L703">	}</span>
+
+	/**
+	 * Send a &quot;node attribute changed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param nodeId
+	 *            The node identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 * @param oldValue
+	 *            The attribute old value.
+	 * @param newValue
+	 *            The attribute new value.
+	 */
+	public void sendNodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L722">		sendAttributeChangedEvent(sourceId, timeId, nodeId, ElementType.NODE, attribute, AttributeChangeEvent.CHANGE,</span>
+<span class="nc" id="L723">				oldValue, newValue);</span>
+<span class="nc" id="L724">	}</span>
+
+	/**
+	 * Send a &quot;node attribute removed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param nodeId
+	 *            The node identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 */
+	public void sendNodeAttributeRemoved(String sourceId, String nodeId, String attribute) {
+<span class="nc" id="L737">		sendAttributeChangedEvent(sourceId, nodeId, ElementType.NODE, attribute, AttributeChangeEvent.REMOVE, null,</span>
+<span class="nc" id="L738">				null);</span>
+<span class="nc" id="L739">	}</span>
+
+	/**
+	 * Send a &quot;node attribute removed&quot; event to all attribute sinks.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param timeId
+	 * @param nodeId
+	 *            The node identifier.
+	 * @param attribute
+	 *            The attribute name.
+	 */
+	public void sendNodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L753">		sendAttributeChangedEvent(sourceId, timeId, nodeId, ElementType.NODE, attribute, AttributeChangeEvent.REMOVE,</span>
+<span class="nc" id="L754">				null, null);</span>
+<span class="nc" id="L755">	}</span>
+
+	/**
+	 * Send a add/change/remove attribute event on an element. This method is a
+	 * generic way of notifying of an attribute change and is equivalent to
+	 * individual send*Attribute*() methods.
+	 * 
+	 * @param sourceId
+	 *            The source identifier.
+	 * @param eltId
+	 *            The changed element identifier.
+	 * @param eltType
+	 *            The changed element type.
+	 * @param attribute
+	 *            The changed attribute.
+	 * @param event
+	 *            The add/change/remove action.
+	 * @param oldValue
+	 *            The old attribute value (null if the attribute is removed or
+	 *            added).
+	 * @param newValue
+	 *            The new attribute value (null if removed).
+	 */
+	public void sendAttributeChangedEvent(String sourceId, String eltId, ElementType eltType, String attribute,
+			AttributeChangeEvent event, Object oldValue, Object newValue) {
+<span class="nc" id="L780">		sendAttributeChangedEvent(sourceId, sourceTime.newEvent(), eltId, eltType, attribute, event, oldValue,</span>
+<span class="nc" id="L781">				newValue);</span>
+<span class="nc" id="L782">	}</span>
+
+	public void sendAttributeChangedEvent(String sourceId, long timeId, String eltId, ElementType eltType,
+			String attribute, AttributeChangeEvent event, Object oldValue, Object newValue) {
+<span class="nc bnc" id="L786" title="All 2 branches missed.">		if (!eventProcessing) {</span>
+<span class="nc" id="L787">			eventProcessing = true;</span>
+<span class="nc" id="L788">			manageEvents();</span>
+
+<span class="nc bnc" id="L790" title="All 2 branches missed.">			if (event == AttributeChangeEvent.ADD) {</span>
+<span class="nc bnc" id="L791" title="All 2 branches missed.">				if (eltType == ElementType.NODE) {</span>
+<span class="nc bnc" id="L792" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L793">						attrSinks.get(i).nodeAttributeAdded(sourceId, timeId, eltId, attribute, newValue);</span>
+<span class="nc bnc" id="L794" title="All 2 branches missed.">				} else if (eltType == ElementType.EDGE) {</span>
+<span class="nc bnc" id="L795" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L796">						attrSinks.get(i).edgeAttributeAdded(sourceId, timeId, eltId, attribute, newValue);</span>
+<span class="nc" id="L797">				} else {</span>
+<span class="nc bnc" id="L798" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L799">						attrSinks.get(i).graphAttributeAdded(sourceId, timeId, attribute, newValue);</span>
+				}
+<span class="nc bnc" id="L801" title="All 2 branches missed.">			} else if (event == AttributeChangeEvent.REMOVE) {</span>
+<span class="nc bnc" id="L802" title="All 2 branches missed.">				if (eltType == ElementType.NODE) {</span>
+<span class="nc bnc" id="L803" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L804">						attrSinks.get(i).nodeAttributeRemoved(sourceId, timeId, eltId, attribute);</span>
+<span class="nc bnc" id="L805" title="All 2 branches missed.">				} else if (eltType == ElementType.EDGE) {</span>
+<span class="nc bnc" id="L806" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L807">						attrSinks.get(i).edgeAttributeRemoved(sourceId, timeId, eltId, attribute);</span>
+<span class="nc" id="L808">				} else {</span>
+<span class="nc bnc" id="L809" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L810">						attrSinks.get(i).graphAttributeRemoved(sourceId, timeId, attribute);</span>
+				}
+<span class="nc" id="L812">			} else {</span>
+<span class="nc bnc" id="L813" title="All 2 branches missed.">				if (eltType == ElementType.NODE) {</span>
+<span class="nc bnc" id="L814" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L815">						attrSinks.get(i).nodeAttributeChanged(sourceId, timeId, eltId, attribute, oldValue, newValue);</span>
+<span class="nc bnc" id="L816" title="All 2 branches missed.">				} else if (eltType == ElementType.EDGE) {</span>
+<span class="nc bnc" id="L817" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L818">						attrSinks.get(i).edgeAttributeChanged(sourceId, timeId, eltId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L819">				} else {</span>
+<span class="nc bnc" id="L820" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L821">						attrSinks.get(i).graphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+				}
+			}
+
+<span class="nc" id="L825">			manageEvents();</span>
+<span class="nc" id="L826">			eventProcessing = false;</span>
+<span class="nc" id="L827">		} else {</span>
+<span class="nc" id="L828">			eventQueue.add(</span>
+<span class="nc" id="L829">					new AttributeChangedEvent(sourceId, timeId, eltId, eltType, attribute, event, oldValue, newValue));</span>
+		}
+<span class="nc" id="L831">	}</span>
+
+	// Deferred event management
+
+	/**
+	 * If in &quot;event processing mode&quot;, ensure all pending events are processed.
+	 */
+	protected void manageEvents() {
+<span class="pc bpc" id="L839" title="1 of 2 branches missed.">		if (eventProcessing) {</span>
+<span class="pc bpc" id="L840" title="1 of 2 branches missed.">			while (!eventQueue.isEmpty())</span>
+<span class="nc" id="L841">				eventQueue.remove().trigger();</span>
+		}
+<span class="fc" id="L843">	}</span>
+
+	// Events Management
+
+	/**
+	 * Interface that provide general purpose classification for evens involved in
+	 * graph modifications
+	 */
+	abstract class GraphEvent {
+		String sourceId;
+		long timeId;
+
+<span class="nc" id="L855">		GraphEvent(String sourceId, long timeId) {</span>
+<span class="nc" id="L856">			this.sourceId = sourceId;</span>
+<span class="nc" id="L857">			this.timeId = timeId;</span>
+<span class="nc" id="L858">		}</span>
+
+		abstract void trigger();
+	}
+
+	class AfterEdgeAddEvent extends GraphEvent {
+		String edgeId;
+		String fromNodeId;
+		String toNodeId;
+		boolean directed;
+
+		AfterEdgeAddEvent(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+<span class="nc" id="L870">				boolean directed) {</span>
+<span class="nc" id="L871">			super(sourceId, timeId);</span>
+<span class="nc" id="L872">			this.edgeId = edgeId;</span>
+<span class="nc" id="L873">			this.fromNodeId = fromNodeId;</span>
+<span class="nc" id="L874">			this.toNodeId = toNodeId;</span>
+<span class="nc" id="L875">			this.directed = directed;</span>
+<span class="nc" id="L876">		}</span>
+
+		void trigger() {
+<span class="nc bnc" id="L879" title="All 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L880">				eltsSinks.get(i).edgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L881">		}</span>
+	}
+
+	class BeforeEdgeRemoveEvent extends GraphEvent {
+		String edgeId;
+
+<span class="nc" id="L887">		BeforeEdgeRemoveEvent(String sourceId, long timeId, String edgeId) {</span>
+<span class="nc" id="L888">			super(sourceId, timeId);</span>
+<span class="nc" id="L889">			this.edgeId = edgeId;</span>
+<span class="nc" id="L890">		}</span>
+
+		void trigger() {
+<span class="nc bnc" id="L893" title="All 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L894">				eltsSinks.get(i).edgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L895">		}</span>
+	}
+
+	class AfterNodeAddEvent extends GraphEvent {
+		String nodeId;
+
+<span class="nc" id="L901">		AfterNodeAddEvent(String sourceId, long timeId, String nodeId) {</span>
+<span class="nc" id="L902">			super(sourceId, timeId);</span>
+<span class="nc" id="L903">			this.nodeId = nodeId;</span>
+<span class="nc" id="L904">		}</span>
+
+		void trigger() {
+<span class="nc bnc" id="L907" title="All 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L908">				eltsSinks.get(i).nodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L909">		}</span>
+	}
+
+	class BeforeNodeRemoveEvent extends GraphEvent {
+		String nodeId;
+
+<span class="nc" id="L915">		BeforeNodeRemoveEvent(String sourceId, long timeId, String nodeId) {</span>
+<span class="nc" id="L916">			super(sourceId, timeId);</span>
+<span class="nc" id="L917">			this.nodeId = nodeId;</span>
+<span class="nc" id="L918">		}</span>
+
+		void trigger() {
+<span class="nc bnc" id="L921" title="All 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L922">				eltsSinks.get(i).nodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L923">		}</span>
+	}
+
+	class BeforeGraphClearEvent extends GraphEvent {
+<span class="nc" id="L927">		BeforeGraphClearEvent(String sourceId, long timeId) {</span>
+<span class="nc" id="L928">			super(sourceId, timeId);</span>
+<span class="nc" id="L929">		}</span>
+
+		void trigger() {
+<span class="nc bnc" id="L932" title="All 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L933">				eltsSinks.get(i).graphCleared(sourceId, timeId);</span>
+<span class="nc" id="L934">		}</span>
+	}
+
+	class StepBeginsEvent extends GraphEvent {
+		double step;
+
+<span class="nc" id="L940">		StepBeginsEvent(String sourceId, long timeId, double step) {</span>
+<span class="nc" id="L941">			super(sourceId, timeId);</span>
+<span class="nc" id="L942">			this.step = step;</span>
+<span class="nc" id="L943">		}</span>
+
+		void trigger() {
+<span class="nc bnc" id="L946" title="All 2 branches missed.">			for (int i = 0; i &lt; eltsSinks.size(); i++)</span>
+<span class="nc" id="L947">				eltsSinks.get(i).stepBegins(sourceId, timeId, step);</span>
+<span class="nc" id="L948">		}</span>
+	}
+
+	class AttributeChangedEvent extends GraphEvent {
+		ElementType eltType;
+
+		String eltId;
+
+		String attribute;
+
+		AttributeChangeEvent event;
+
+		Object oldValue;
+
+		Object newValue;
+
+		AttributeChangedEvent(String sourceId, long timeId, String eltId, ElementType eltType, String attribute,
+<span class="nc" id="L965">				AttributeChangeEvent event, Object oldValue, Object newValue) {</span>
+<span class="nc" id="L966">			super(sourceId, timeId);</span>
+<span class="nc" id="L967">			this.eltType = eltType;</span>
+<span class="nc" id="L968">			this.eltId = eltId;</span>
+<span class="nc" id="L969">			this.attribute = attribute;</span>
+<span class="nc" id="L970">			this.event = event;</span>
+<span class="nc" id="L971">			this.oldValue = oldValue;</span>
+<span class="nc" id="L972">			this.newValue = newValue;</span>
+<span class="nc" id="L973">		}</span>
+
+		void trigger() {
+<span class="nc bnc" id="L976" title="All 3 branches missed.">			switch (event) {</span>
+			case ADD:
+<span class="nc bnc" id="L978" title="All 3 branches missed.">				switch (eltType) {</span>
+				case NODE:
+<span class="nc bnc" id="L980" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L981">						attrSinks.get(i).nodeAttributeAdded(sourceId, timeId, eltId, attribute, newValue);</span>
+<span class="nc" id="L982">					break;</span>
+				case EDGE:
+<span class="nc bnc" id="L984" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L985">						attrSinks.get(i).edgeAttributeAdded(sourceId, timeId, eltId, attribute, newValue);</span>
+<span class="nc" id="L986">					break;</span>
+				default:
+<span class="nc bnc" id="L988" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L989">						attrSinks.get(i).graphAttributeAdded(sourceId, timeId, attribute, newValue);</span>
+				}
+<span class="nc" id="L991">				break;</span>
+			case REMOVE:
+<span class="nc bnc" id="L993" title="All 3 branches missed.">				switch (eltType) {</span>
+				case NODE:
+<span class="nc bnc" id="L995" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L996">						attrSinks.get(i).nodeAttributeRemoved(sourceId, timeId, eltId, attribute);</span>
+<span class="nc" id="L997">					break;</span>
+				case EDGE:
+<span class="nc bnc" id="L999" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L1000">						attrSinks.get(i).edgeAttributeRemoved(sourceId, timeId, eltId, attribute);</span>
+<span class="nc" id="L1001">					break;</span>
+				default:
+<span class="nc bnc" id="L1003" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L1004">						attrSinks.get(i).graphAttributeRemoved(sourceId, timeId, attribute);</span>
+				}
+<span class="nc" id="L1006">				break;</span>
+			default:
+<span class="nc bnc" id="L1008" title="All 3 branches missed.">				switch (eltType) {</span>
+				case NODE:
+<span class="nc bnc" id="L1010" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L1011">						attrSinks.get(i).nodeAttributeChanged(sourceId, timeId, eltId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L1012">					break;</span>
+				case EDGE:
+<span class="nc bnc" id="L1014" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L1015">						attrSinks.get(i).edgeAttributeChanged(sourceId, timeId, eltId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L1016">					break;</span>
+				default:
+<span class="nc bnc" id="L1018" title="All 2 branches missed.">					for (int i = 0; i &lt; attrSinks.size(); i++)</span>
+<span class="nc" id="L1019">						attrSinks.get(i).graphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+				}
+			}
+<span class="nc" id="L1022">		}</span>
+	}
+
+	class AddToListEvent&lt;T&gt; extends GraphEvent {
+		List&lt;T&gt; l;
+		T obj;
+
+<span class="nc" id="L1029">		AddToListEvent(List&lt;T&gt; l, T obj) {</span>
+<span class="nc" id="L1030">			super(null, -1);</span>
+<span class="nc" id="L1031">			this.l = l;</span>
+<span class="nc" id="L1032">			this.obj = obj;</span>
+<span class="nc" id="L1033">		}</span>
+
+		void trigger() {
+<span class="nc" id="L1036">			l.add(obj);</span>
+<span class="nc" id="L1037">		}</span>
+	}
+
+	class RemoveFromListEvent&lt;T&gt; extends GraphEvent {
+		List&lt;T&gt; l;
+		T obj;
+
+<span class="nc" id="L1044">		RemoveFromListEvent(List&lt;T&gt; l, T obj) {</span>
+<span class="nc" id="L1045">			super(null, -1);</span>
+<span class="nc" id="L1046">			this.l = l;</span>
+<span class="nc" id="L1047">			this.obj = obj;</span>
+<span class="nc" id="L1048">		}</span>
+
+		void trigger() {
+<span class="nc" id="L1051">			l.remove(obj);</span>
+<span class="nc" id="L1052">		}</span>
+	}
+
+	class ClearListEvent&lt;T&gt; extends GraphEvent {
+		List&lt;T&gt; l;
+
+<span class="nc" id="L1058">		ClearListEvent(List&lt;T&gt; l) {</span>
+<span class="nc" id="L1059">			super(null, -1);</span>
+<span class="nc" id="L1060">			this.l = l;</span>
+<span class="nc" id="L1061">		}</span>
+
+		void trigger() {
+<span class="nc" id="L1064">			l.clear();</span>
+<span class="nc" id="L1065">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>

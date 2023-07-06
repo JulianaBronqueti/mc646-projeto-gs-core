@@ -1,0 +1,753 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="pt"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../../../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../../../jacoco-resources/report.gif" type="image/gif"/><title>AbstractGraph.java</title><link rel="stylesheet" href="../../../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../../../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../../../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../../../index.html" class="el_report">src-test (6 de jul. de 2023 19:58:26)</a> &gt; <a href="../../index.html" class="el_group">mc646-projeto-gs-core</a> &gt; <a href="../index.html" class="el_bundle">src</a> &gt; <a href="index.source.html" class="el_package">org.graphstream.graph.implementations</a> &gt; <span class="el_source">AbstractGraph.java</span></div><h1>AbstractGraph.java</h1><pre class="source lang-java linenums">/*
+ * This file is part of GraphStream &lt;http://graphstream-project.org&gt;.
+ *
+ * GraphStream is a library whose purpose is to handle static or dynamic
+ * graph, create them from scratch, file or any source and display them.
+ *
+ * This program is free software distributed under the terms of two licenses, the
+ * CeCILL-C license that fits European law, and the GNU Lesser General Public
+ * License. You can  use, modify and/ or redistribute the software under the terms
+ * of the CeCILL-C license as circulated by CEA, CNRS and INRIA at the following
+ * URL &lt;http://www.cecill.info&gt; or under the terms of the GNU LGPL as published by
+ * the Free Software Foundation, either version 3 of the License, or (at your
+ * option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY
+ * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+ * PARTICULAR PURPOSE.  See the GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see &lt;http://www.gnu.org/licenses/&gt;.
+ *
+ * The fact that you are presently reading this means that you have had
+ * knowledge of the CeCILL-C and LGPL licenses and that you accept their terms.
+ */
+
+/**
+ * @author Stefan Balev &lt;stefan.balev@graphstream-project.org&gt;
+ * @author Richard O. Legendi &lt;richard.legendi@gmail.com&gt;
+ * @author Guilhelm Savin &lt;guilhelm.savin@graphstream-project.org&gt;
+ * @author Yoann Pigné &lt;yoann.pigne@graphstream-project.org&gt;
+ * @author Antoine Dutot &lt;antoine.dutot@graphstream-project.org&gt;
+ * @author Alex Bowen &lt;bowen.a@gmail.com&gt;
+ * @author Hicham Brahimi &lt;hicham.brahimi@graphstream-project.org&gt;
+ * @since 2011-07-22
+ */
+package org.graphstream.graph.implementations;
+
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.stream.Collectors;
+
+import org.graphstream.graph.Edge;
+import org.graphstream.graph.EdgeFactory;
+import org.graphstream.graph.EdgeRejectedException;
+import org.graphstream.graph.ElementNotFoundException;
+import org.graphstream.graph.Graph;
+import org.graphstream.graph.IdAlreadyInUseException;
+import org.graphstream.graph.Node;
+import org.graphstream.graph.NodeFactory;
+import org.graphstream.stream.AttributeSink;
+import org.graphstream.stream.ElementSink;
+import org.graphstream.stream.Replayable;
+import org.graphstream.stream.Sink;
+import org.graphstream.stream.SourceBase;
+import org.graphstream.ui.view.Viewer;
+import org.graphstream.util.Display;
+import org.graphstream.util.GraphListeners;
+import org.graphstream.util.MissingDisplayException;
+
+/**
+ * &lt;p&gt;
+ * This class provides a basic implementation of
+ * {@link org.graphstream.graph.Graph} interface, to minimize the effort
+ * required to implement this interface. It provides event management
+ * implementing all the methods of {@link org.graphstream.stream.Pipe}. It also
+ * manages strict checking and auto-creation policies, as well as other services
+ * as displaying, reading and writing.
+ * &lt;/p&gt;
+ * &lt;p&gt;
+ * &lt;p&gt;
+ * Subclasses have to maintain data structures allowing to efficiently access
+ * graph elements by their id or index and iterating on them. They also have to
+ * maintain coherent indices of the graph elements. When AbstractGraph decides
+ * to add or remove elements, it calls one of the &quot;callbacks&quot;
+ * {@link #addNodeCallback(AbstractNode)},
+ * {@link #addEdgeCallback(AbstractEdge)},
+ * {@link #removeNodeCallback(AbstractNode)},
+ * {@link #removeEdgeCallback(AbstractEdge)}, {@link #clearCallback()}. The role
+ * of these callbacks is to update the data structures and to re-index elements
+ * if necessary.
+ * &lt;/p&gt;
+ */
+public abstract class AbstractGraph extends AbstractElement implements Graph, Replayable {
+	// *** Fields ***
+
+	GraphListeners listeners;
+	private boolean strictChecking;
+	private boolean autoCreate;
+	private NodeFactory&lt;? extends AbstractNode&gt; nodeFactory;
+	private EdgeFactory&lt;? extends AbstractEdge&gt; edgeFactory;
+
+<span class="fc" id="L92">	private double step = 0;</span>
+
+<span class="fc" id="L94">	private long replayId = 0;</span>
+
+	// *** Constructors ***
+
+	/**
+	 * The same as {@code AbstractGraph(id, true, false)}
+	 *
+	 * @param id
+	 * 		Identifier of the graph
+	 * @see #AbstractGraph(String, boolean, boolean)
+	 */
+	public AbstractGraph(String id) {
+<span class="nc" id="L106">		this(id, true, false);</span>
+<span class="nc" id="L107">	}</span>
+
+	/**
+	 * Creates a new graph. Subclasses must create their node and edge factories and
+	 * initialize their data structures in their constructors.
+	 *
+	 * @param id
+	 * @param strictChecking
+	 * @param autoCreate
+	 */
+	public AbstractGraph(String id, boolean strictChecking, boolean autoCreate) {
+<span class="fc" id="L118">		super(id);</span>
+
+<span class="fc" id="L120">		this.strictChecking = strictChecking;</span>
+<span class="fc" id="L121">		this.autoCreate = autoCreate;</span>
+<span class="fc" id="L122">		this.listeners = new GraphListeners(this);</span>
+<span class="fc" id="L123">	}</span>
+
+	// *** Inherited from abstract element
+
+	@Override
+	protected void attributeChanged(AttributeChangeEvent event, String attribute, Object oldValue, Object newValue) {
+<span class="nc" id="L129">		listeners.sendAttributeChangedEvent(id, SourceBase.ElementType.GRAPH, attribute, event, oldValue, newValue);</span>
+<span class="nc" id="L130">	}</span>
+
+	// *** Inherited from graph ***
+
+	/**
+	 * This implementation returns an iterator over nodes.
+	 *
+	 * @see java.lang.Iterable#iterator()
+	 */
+	@Override
+	public Iterator&lt;Node&gt; iterator() {
+<span class="nc" id="L141">		return nodes().iterator();</span>
+	}
+
+	// Factories
+
+	@Override
+	public NodeFactory&lt;? extends Node&gt; nodeFactory() {
+<span class="nc" id="L148">		return nodeFactory;</span>
+	}
+
+	@Override
+	public EdgeFactory&lt;? extends Edge&gt; edgeFactory() {
+<span class="nc" id="L153">		return edgeFactory;</span>
+	}
+
+	@Override
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public void setNodeFactory(NodeFactory&lt;? extends Node&gt; nf) {
+<span class="fc" id="L159">		nodeFactory = (NodeFactory&lt;? extends AbstractNode&gt;) nf;</span>
+<span class="fc" id="L160">	}</span>
+
+	@Override
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public void setEdgeFactory(EdgeFactory&lt;? extends Edge&gt; ef) {
+<span class="fc" id="L165">		edgeFactory = (EdgeFactory&lt;? extends AbstractEdge&gt;) ef;</span>
+<span class="fc" id="L166">	}</span>
+
+	// strict checking, autocreation, etc
+
+	@Override
+	public boolean isStrict() {
+<span class="nc" id="L172">		return strictChecking;</span>
+	}
+
+	@Override
+	public void setStrict(boolean on) {
+<span class="fc" id="L177">		strictChecking = on;</span>
+<span class="fc" id="L178">	}</span>
+
+	@Override
+	public boolean isAutoCreationEnabled() {
+<span class="nc" id="L182">		return autoCreate;</span>
+	}
+
+	@Override
+	public double getStep() {
+<span class="nc" id="L187">		return step;</span>
+	}
+
+	@Override
+	public void setAutoCreate(boolean on) {
+<span class="fc" id="L192">		autoCreate = on;</span>
+<span class="fc" id="L193">	}</span>
+
+	@Override
+	public void stepBegins(double time) {
+<span class="nc" id="L197">		listeners.sendStepBegins(time);</span>
+<span class="nc" id="L198">		this.step = time;</span>
+<span class="nc" id="L199">	}</span>
+
+	// display, read, write
+
+	public Viewer display() {
+<span class="nc" id="L204">		return display(true);</span>
+	}
+
+	public Viewer display(boolean autoLayout) {
+		try {
+<span class="nc" id="L209">			Display display = Display.getDefault();</span>
+<span class="nc" id="L210">			return display.display(this, autoLayout);</span>
+<span class="nc" id="L211">		} catch (MissingDisplayException e) {</span>
+<span class="nc" id="L212">			throw new RuntimeException(&quot;Cannot launch viewer.&quot;, e);</span>
+		}
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.graph.Graph#clear()
+	 */
+	@Override
+	public void clear() {
+<span class="fc" id="L223">		listeners.sendGraphCleared();</span>
+
+<span class="fc" id="L225">		nodes().forEach(n -&gt; ((AbstractNode) n).clearCallback());</span>
+
+<span class="fc" id="L227">		clearCallback();</span>
+<span class="fc" id="L228">		clearAttributesWithNoEvent();</span>
+<span class="fc" id="L229">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.graph.Graph#addNode(java.lang.String)
+	 */
+	@Override
+	public Node addNode(String id) {
+<span class="fc" id="L238">		AbstractNode node = (AbstractNode) getNode(id);</span>
+
+<span class="fc bfc" id="L240" title="All 2 branches covered.">		if (node != null) {</span>
+<span class="pc bpc" id="L241" title="1 of 2 branches missed.">			if (strictChecking)</span>
+<span class="fc" id="L242">				throw new IdAlreadyInUseException(&quot;id \&quot;&quot; + id + &quot;\&quot; already in use. Cannot create a node.&quot;);</span>
+<span class="nc" id="L243">			return node;</span>
+		}
+
+<span class="fc" id="L246">		node = nodeFactory.newInstance(id, this);</span>
+<span class="fc" id="L247">		addNodeCallback(node);</span>
+
+<span class="fc" id="L249">		listeners.sendNodeAdded(id);</span>
+
+<span class="fc" id="L251">		return node;</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.graph.Graph#addEdge(java.lang.String,
+	 * org.graphstream.graph.Node, org.graphstream.graph.Node, boolean)
+	 */
+	@Override
+	public Edge addEdge(String id, Node from, Node to, boolean directed) {
+<span class="fc" id="L262">		return addEdge(id, (AbstractNode) from, from.getId(), (AbstractNode) to, to.getId(), directed);</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.graph.Graph#removeNode(org.graphstream.graph.Node)
+	 */
+	@Override
+	public Node removeNode(Node node) {
+<span class="fc bfc" id="L272" title="All 2 branches covered.">		if (node == null)</span>
+<span class="fc" id="L273">			return null;</span>
+
+<span class="fc" id="L275">		removeNode((AbstractNode) node, true);</span>
+<span class="fc" id="L276">		return node;</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.graph.Graph#removeEdge(org.graphstream.graph.Edge)
+	 */
+	@Override
+	public Edge removeEdge(Edge edge) {
+<span class="nc bnc" id="L286" title="All 2 branches missed.">		if (edge == null)</span>
+<span class="nc" id="L287">			return null;</span>
+
+<span class="nc" id="L289">		removeEdge((AbstractEdge) edge, true, true, true);</span>
+<span class="nc" id="L290">		return edge;</span>
+	}
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.graph.Graph#removeEdge(org.graphstream.graph.Node,
+	 * org.graphstream.graph.Node)
+	 */
+	@Override
+	public Edge removeEdge(Node node1, Node node2) {
+<span class="nc" id="L301">		Edge edge = node1.getEdgeToward(node2);</span>
+
+<span class="nc bnc" id="L303" title="All 2 branches missed.">		if (edge == null) {</span>
+<span class="nc bnc" id="L304" title="All 2 branches missed.">			if (strictChecking)</span>
+<span class="nc" id="L305">				throw new ElementNotFoundException(&quot;There is no edge from \&quot;%s\&quot; to \&quot;%s\&quot;. Cannot remove it.&quot;,</span>
+<span class="nc" id="L306">						node1.getId(), node2.getId());</span>
+<span class="nc" id="L307">			return null;</span>
+		}
+
+<span class="nc" id="L310">		return removeEdge(edge);</span>
+	}
+
+	// *** Sinks, sources etc. ***
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.graph.Graph#attributeSinks()
+	 */
+	@Override
+	public Iterable&lt;AttributeSink&gt; attributeSinks() {
+<span class="nc" id="L322">		return listeners.attributeSinks();</span>
+	}
+
+	/*
+	 * *(non-Javadoc)
+	 *
+	 * @see org.graphstream.graph.Graph#elementSinks()
+	 */
+	@Override
+	public Iterable&lt;ElementSink&gt; elementSinks() {
+<span class="nc" id="L332">		return listeners.elementSinks();</span>
+	}
+
+	/*
+	 * *(non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#addAttributeSink(org.graphstream.stream
+	 * .AttributeSink)
+	 */
+	@Override
+	public void addAttributeSink(AttributeSink sink) {
+<span class="nc" id="L343">		listeners.addAttributeSink(sink);</span>
+<span class="nc" id="L344">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#addElementSink(org.graphstream.stream.
+	 * ElementSink)
+	 */
+	@Override
+	public void addElementSink(ElementSink sink) {
+<span class="nc" id="L354">		listeners.addElementSink(sink);</span>
+<span class="nc" id="L355">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#addSink(org.graphstream.stream.Sink)
+	 */
+	@Override
+	public void addSink(Sink sink) {
+<span class="nc" id="L364">		listeners.addSink(sink);</span>
+<span class="nc" id="L365">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#clearAttributeSinks()
+	 */
+	@Override
+	public void clearAttributeSinks() {
+<span class="nc" id="L374">		listeners.clearAttributeSinks();</span>
+<span class="nc" id="L375">	}</span>
+
+	/*
+	 * *(non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#clearElementSinks()
+	 */
+	@Override
+	public void clearElementSinks() {
+<span class="nc" id="L384">		listeners.clearElementSinks();</span>
+<span class="nc" id="L385">	}</span>
+
+	/*
+	 * *(non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#clearSinks()
+	 */
+	@Override
+	public void clearSinks() {
+<span class="nc" id="L394">		listeners.clearSinks();</span>
+<span class="nc" id="L395">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#removeAttributeSink(org.graphstream.stream
+	 * .AttributeSink)
+	 */
+	@Override
+	public void removeAttributeSink(AttributeSink sink) {
+<span class="nc" id="L405">		listeners.removeAttributeSink(sink);</span>
+<span class="nc" id="L406">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#removeElementSink(org.graphstream.stream
+	 * .ElementSink)
+	 */
+	@Override
+	public void removeElementSink(ElementSink sink) {
+<span class="nc" id="L416">		listeners.removeElementSink(sink);</span>
+<span class="nc" id="L417">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Source#removeSink(org.graphstream.stream.Sink)
+	 */
+	@Override
+	public void removeSink(Sink sink) {
+<span class="nc" id="L426">		listeners.removeSink(sink);</span>
+<span class="nc" id="L427">	}</span>
+
+	@Override
+	public void edgeAttributeAdded(String sourceId, long timeId, String edgeId, String attribute, Object value) {
+<span class="nc" id="L431">		listeners.edgeAttributeAdded(sourceId, timeId, edgeId, attribute, value);</span>
+<span class="nc" id="L432">	}</span>
+
+	@Override
+	public void edgeAttributeChanged(String sourceId, long timeId, String edgeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L437">		listeners.edgeAttributeChanged(sourceId, timeId, edgeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L438">	}</span>
+
+	@Override
+	public void edgeAttributeRemoved(String sourceId, long timeId, String edgeId, String attribute) {
+<span class="nc" id="L442">		listeners.edgeAttributeRemoved(sourceId, timeId, edgeId, attribute);</span>
+<span class="nc" id="L443">	}</span>
+
+	@Override
+	public void graphAttributeAdded(String sourceId, long timeId, String attribute, Object value) {
+<span class="nc" id="L447">		listeners.graphAttributeAdded(sourceId, timeId, attribute, value);</span>
+<span class="nc" id="L448">	}</span>
+
+	@Override
+	public void graphAttributeChanged(String sourceId, long timeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L453">		listeners.graphAttributeChanged(sourceId, timeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L454">	}</span>
+
+	@Override
+	public void graphAttributeRemoved(String sourceId, long timeId, String attribute) {
+<span class="nc" id="L458">		listeners.graphAttributeRemoved(sourceId, timeId, attribute);</span>
+<span class="nc" id="L459">	}</span>
+
+	@Override
+	public void nodeAttributeAdded(String sourceId, long timeId, String nodeId, String attribute, Object value) {
+<span class="nc" id="L463">		listeners.nodeAttributeAdded(sourceId, timeId, nodeId, attribute, value);</span>
+<span class="nc" id="L464">	}</span>
+
+	@Override
+	public void nodeAttributeChanged(String sourceId, long timeId, String nodeId, String attribute, Object oldValue,
+			Object newValue) {
+<span class="nc" id="L469">		listeners.nodeAttributeChanged(sourceId, timeId, nodeId, attribute, oldValue, newValue);</span>
+<span class="nc" id="L470">	}</span>
+
+	@Override
+	public void nodeAttributeRemoved(String sourceId, long timeId, String nodeId, String attribute) {
+<span class="nc" id="L474">		listeners.nodeAttributeRemoved(sourceId, timeId, nodeId, attribute);</span>
+<span class="nc" id="L475">	}</span>
+
+	@Override
+	public void edgeAdded(String sourceId, long timeId, String edgeId, String fromNodeId, String toNodeId,
+			boolean directed) {
+<span class="nc" id="L480">		listeners.edgeAdded(sourceId, timeId, edgeId, fromNodeId, toNodeId, directed);</span>
+<span class="nc" id="L481">	}</span>
+
+	@Override
+	public void edgeRemoved(String sourceId, long timeId, String edgeId) {
+<span class="nc" id="L485">		listeners.edgeRemoved(sourceId, timeId, edgeId);</span>
+<span class="nc" id="L486">	}</span>
+
+	@Override
+	public void graphCleared(String sourceId, long timeId) {
+<span class="nc" id="L490">		listeners.graphCleared(sourceId, timeId);</span>
+<span class="nc" id="L491">	}</span>
+
+	@Override
+	public void nodeAdded(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L495">		listeners.nodeAdded(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L496">	}</span>
+
+	@Override
+	public void nodeRemoved(String sourceId, long timeId, String nodeId) {
+<span class="nc" id="L500">		listeners.nodeRemoved(sourceId, timeId, nodeId);</span>
+<span class="nc" id="L501">	}</span>
+
+	@Override
+	public void stepBegins(String sourceId, long timeId, double step) {
+<span class="nc" id="L505">		listeners.stepBegins(sourceId, timeId, step);</span>
+<span class="nc" id="L506">	}</span>
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see org.graphstream.stream.Replayable#getReplayController()
+	 */
+	@Override
+	public Replayable.Controller getReplayController() {
+<span class="nc" id="L515">		return new GraphReplayController();</span>
+	}
+
+	// *** callbacks maintaining user's data structure
+
+	/**
+	 * This method is automatically called when a new node is created. Subclasses
+	 * must add the new node to their data structure and to set its index correctly.
+	 *
+	 * @param node
+	 * 		the node to be added
+	 */
+	protected abstract void addNodeCallback(AbstractNode node);
+
+	/**
+	 * This method is automatically called when a new edge is created. Subclasses
+	 * must add the new edge to their data structure and to set its index correctly.
+	 *
+	 * @param edge
+	 * 		the edge to be added
+	 */
+	protected abstract void addEdgeCallback(AbstractEdge edge);
+
+	/**
+	 * This method is automatically called when a node is removed. Subclasses must
+	 * remove the node from their data structures and to re-index other node(s) so
+	 * that node indices remain coherent.
+	 *
+	 * @param node
+	 * 		the node to be removed
+	 */
+	protected abstract void removeNodeCallback(AbstractNode node);
+
+	/**
+	 * This method is automatically called when an edge is removed. Subclasses must
+	 * remove the edge from their data structures and re-index other edge(s) so that
+	 * edge indices remain coherent.
+	 *
+	 * @param edge
+	 * 		the edge to be removed
+	 */
+	protected abstract void removeEdgeCallback(AbstractEdge edge);
+
+	/**
+	 * This method is automatically called when the graph is cleared. Subclasses
+	 * must remove all the nodes and all the edges from their data structures.
+	 */
+	protected abstract void clearCallback();
+
+	// *** _ methods ***
+
+	// Why do we pass both the ids and the references of the endpoints here?
+	// When the caller knows the references it's stupid to call getNode(id)
+	// here. If the node does not exist the reference will be null.
+	// And if autoCreate is on, we need also the id. Sad but true!
+	protected Edge addEdge(String edgeId, AbstractNode src, String srcId, AbstractNode dst, String dstId,
+			boolean directed) {
+<span class="fc" id="L572">		AbstractEdge edge = (AbstractEdge) getEdge(edgeId);</span>
+
+<span class="fc bfc" id="L574" title="All 2 branches covered.">		if (edge != null) {</span>
+<span class="pc bpc" id="L575" title="1 of 2 branches missed.">			if (strictChecking)</span>
+<span class="fc" id="L576">				throw new IdAlreadyInUseException(&quot;id \&quot;&quot; + edgeId + &quot;\&quot; already in use. Cannot create an edge.&quot;);</span>
+<span class="nc bnc" id="L577" title="All 6 branches missed.">			if ((edge.getSourceNode() == src &amp;&amp; edge.getTargetNode() == dst) || (!directed</span>
+<span class="nc bnc" id="L578" title="All 4 branches missed.">					&amp;&amp; edge.getTargetNode() == src &amp;&amp; edge.getSourceNode() == dst))</span>
+<span class="nc" id="L579">				return edge;</span>
+<span class="nc" id="L580">			return null;</span>
+		}
+
+<span class="pc bpc" id="L583" title="2 of 4 branches missed.">		if (src == null || dst == null) {</span>
+<span class="nc bnc" id="L584" title="All 2 branches missed.">			if (strictChecking)</span>
+<span class="nc" id="L585">				throw new ElementNotFoundException(</span>
+<span class="nc" id="L586">						String.format(&quot;Cannot create edge %s[%s-%s%s]. Node '%s' does not exist.&quot;, edgeId, srcId,</span>
+<span class="nc bnc" id="L587" title="All 4 branches missed.">								directed ? &quot;&gt;&quot; : &quot;-&quot;, dstId, src == null ? srcId : dstId));</span>
+<span class="nc bnc" id="L588" title="All 2 branches missed.">			if (!autoCreate)</span>
+<span class="nc" id="L589">				return null;</span>
+
+<span class="nc bnc" id="L591" title="All 2 branches missed.">			if (src == null)</span>
+<span class="nc" id="L592">				src = (AbstractNode) addNode(srcId);</span>
+<span class="nc bnc" id="L593" title="All 2 branches missed.">			if (dst == null)</span>
+<span class="nc" id="L594">				dst = (AbstractNode) addNode(dstId);</span>
+		}
+		// at this point edgeId is not in use and both src and dst are not null
+
+<span class="pc bpc" id="L598" title="1 of 4 branches missed.">		if(src.getGraph() != this || dst.getGraph() != this) {</span>
+<span class="fc" id="L599">			throw new ElementNotFoundException(&quot;At least one of two nodes does not belong to the graph.&quot;);</span>
+		}
+<span class="fc" id="L601">		edge = edgeFactory.newInstance(edgeId, src, dst, directed);</span>
+		// see if the endpoints accept the edge
+<span class="pc bpc" id="L603" title="1 of 2 branches missed.">		if (!src.addEdgeCallback(edge)) {</span>
+<span class="nc bnc" id="L604" title="All 2 branches missed.">			if (strictChecking)</span>
+<span class="nc" id="L605">				throw new EdgeRejectedException(&quot;Edge &quot; + edge + &quot; was rejected by node &quot; + src);</span>
+<span class="nc" id="L606">			return null;</span>
+		}
+		// note that for loop edges the callback is called only once
+<span class="pc bpc" id="L609" title="1 of 4 branches missed.">		if (src != dst &amp;&amp; !dst.addEdgeCallback(edge)) {</span>
+			// the edge is accepted by src but rejected by dst
+			// so we have to remove it from src
+<span class="nc" id="L612">			src.removeEdgeCallback(edge);</span>
+<span class="nc bnc" id="L613" title="All 2 branches missed.">			if (strictChecking)</span>
+<span class="nc" id="L614">				throw new EdgeRejectedException(&quot;Edge &quot; + edge + &quot; was rejected by node &quot; + dst);</span>
+<span class="nc" id="L615">			return null;</span>
+		}
+
+		// now we can finally add it
+<span class="fc" id="L619">		addEdgeCallback(edge);</span>
+
+<span class="fc" id="L621">		listeners.sendEdgeAdded(edgeId, srcId, dstId, directed);</span>
+
+<span class="fc" id="L623">		return edge;</span>
+	}
+
+	// helper for removeNode_
+	private void removeAllEdges(AbstractNode node) {
+<span class="fc" id="L628">		Collection&lt;Edge&gt; toRemove = node.edges().collect(Collectors.toList());</span>
+<span class="fc" id="L629">		toRemove.forEach(this::removeEdge);</span>
+<span class="fc" id="L630">	}</span>
+
+	// *** Methods for iterators ***
+
+	/**
+	 * This method is similar to {@link #removeNode(Node)} but allows to control if
+	 * {@link #removeNodeCallback(AbstractNode)} is called or not. It is useful for
+	 * iterators supporting {@link java.util.Iterator#remove()} who want to update
+	 * the data structures by their owns.
+	 *
+	 * @param node
+	 * 		the node to be removed
+	 * @param graphCallback
+	 * 		if {@code false}, {@code removeNodeCallback(node)} is not called
+	 */
+	protected void removeNode(AbstractNode node, boolean graphCallback) {
+<span class="pc bpc" id="L646" title="1 of 2 branches missed.">		if (node == null) {</span>
+<span class="nc" id="L647">			throw new NullPointerException(&quot;node reference is null&quot;);</span>
+		}
+<span class="pc bpc" id="L649" title="1 of 2 branches missed.">		if (node.getGraph() != this){</span>
+<span class="nc" id="L650">			throw new ElementNotFoundException( &quot;Node \&quot;&quot;+node.getId()+&quot;\&quot; does not belong to this graph&quot;);</span>
+		}
+		
+
+<span class="fc" id="L654">		removeAllEdges(node);</span>
+<span class="fc" id="L655">		listeners.sendNodeRemoved(node.getId());</span>
+
+<span class="pc bpc" id="L657" title="1 of 2 branches missed.">		if (graphCallback)</span>
+<span class="fc" id="L658">			removeNodeCallback(node);</span>
+<span class="fc" id="L659">	}</span>
+
+	/**
+	 * This method is similar to {@link #removeEdge(Edge)} but allows to control if
+	 * different callbacks are called or not. It is useful for iterators supporting
+	 * {@link java.util.Iterator#remove()} who want to update the data structures by
+	 * their owns.
+	 *
+	 * @param edge
+	 * 		the edge to be removed
+	 * @param graphCallback
+	 * 		if {@code false}, {@link #removeEdgeCallback(AbstractEdge)} of the
+	 * 		graph is not called
+	 * @param sourceCallback
+	 * 		if {@code false},
+	 * 		{@link AbstractNode#removeEdgeCallback(AbstractEdge)} is not
+	 * 		called for the source node of the edge
+	 * @param targetCallback
+	 * 		if {@code false},
+	 * 		{@link AbstractNode#removeEdgeCallback(AbstractEdge)} is not
+	 * 		called for the target node of the edge
+	 */
+	protected void removeEdge(AbstractEdge edge, boolean graphCallback, boolean sourceCallback,
+			boolean targetCallback) {
+<span class="nc bnc" id="L683" title="All 2 branches missed.">		if (edge == null) {</span>
+<span class="nc" id="L684">			throw new NullPointerException(&quot;edge reference is null&quot;);</span>
+		}
+
+<span class="nc" id="L687">		AbstractNode src = (AbstractNode) edge.getSourceNode();</span>
+<span class="nc" id="L688">		AbstractNode dst = (AbstractNode) edge.getTargetNode();</span>
+		
+<span class="nc bnc" id="L690" title="All 4 branches missed.">		if (src.getGraph() != this || dst.getGraph() != this){</span>
+<span class="nc" id="L691">			throw new ElementNotFoundException( &quot;Edge \&quot;&quot;+edge.getId()+&quot;\&quot; does not belong to this graph&quot;);</span>
+		}
+
+<span class="nc" id="L694">		listeners.sendEdgeRemoved(edge.getId());</span>
+
+<span class="nc bnc" id="L696" title="All 2 branches missed.">		if (sourceCallback)</span>
+<span class="nc" id="L697">			src.removeEdgeCallback(edge);</span>
+
+<span class="nc bnc" id="L699" title="All 4 branches missed.">		if (src != dst &amp;&amp; targetCallback)</span>
+<span class="nc" id="L700">			dst.removeEdgeCallback(edge);</span>
+
+<span class="nc bnc" id="L702" title="All 2 branches missed.">		if (graphCallback)</span>
+<span class="nc" id="L703">			removeEdgeCallback(edge);</span>
+<span class="nc" id="L704">	}</span>
+
+	class GraphReplayController extends SourceBase implements Replayable.Controller {
+<span class="nc" id="L707">		GraphReplayController() {</span>
+<span class="nc" id="L708">			super(AbstractGraph.this.id + &quot;replay&quot;);</span>
+<span class="nc" id="L709">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 *
+		 * @see org.graphstream.stream.Replayable.Controller#replay()
+		 */
+		@Override
+		public void replay() {
+<span class="nc" id="L718">			String sourceId = String.format(&quot;%s-replay-%x&quot;, id, replayId++);</span>
+<span class="nc" id="L719">			replay(sourceId);</span>
+<span class="nc" id="L720">		}</span>
+
+		/*
+		 * (non-Javadoc)
+		 *
+		 * @see org.graphstream.stream.Replayable.Controller#replay(java.lang.String)
+		 */
+		@Override
+		public void replay(String sourceId) {
+<span class="nc" id="L729">			attributeKeys().forEach(key -&gt; sendGraphAttributeAdded(sourceId, key, getAttribute(key)));</span>
+
+<span class="nc bnc" id="L731" title="All 2 branches missed.">			for (int i = 0; i &lt; getNodeCount(); i++) {</span>
+<span class="nc" id="L732">				Node node = getNode(i);</span>
+<span class="nc" id="L733">				String nodeId = node.getId();</span>
+
+<span class="nc" id="L735">				sendNodeAdded(sourceId, nodeId);</span>
+
+<span class="nc" id="L737">				node.attributeKeys()</span>
+<span class="nc" id="L738">						.forEach(key -&gt; sendNodeAttributeAdded(sourceId, nodeId, key, node.getAttribute(key)));</span>
+			}
+
+<span class="nc bnc" id="L741" title="All 2 branches missed.">			for (int i = 0; i &lt; getEdgeCount(); i++) {</span>
+<span class="nc" id="L742">				Edge edge = getEdge(i);</span>
+<span class="nc" id="L743">				String edgeId = edge.getId();</span>
+
+<span class="nc" id="L745">				sendEdgeAdded(sourceId, edgeId, edge.getNode0().getId(), edge.getNode1().getId(), edge.isDirected());</span>
+
+<span class="nc" id="L747">				edge.attributeKeys()</span>
+<span class="nc" id="L748">						.forEach(key -&gt; sendEdgeAttributeAdded(sourceId, edgeId, key, edge.getAttribute(key)));</span>
+			}
+<span class="nc" id="L750">		}</span>
+	}
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.8.202204050719</span>src-test (6 de jul. de 2023 19:58:26)</div></body></html>
