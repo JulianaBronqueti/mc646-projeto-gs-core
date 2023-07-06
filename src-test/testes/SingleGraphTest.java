@@ -110,6 +110,8 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		try {
 			lastEdgeCount = graph.getEdgeCount();
 			newEdgeCount = graph.getEdgeCount();
+			Edge removed_edge = (Edge) graph.getEdge(usedPairs.get(0));
+			System.out.println(removed_edge);
 			graph.removeEdge(usedPairs.get(0));
 			usedPairs.remove(0);
 			edgesIndex = edgesIndex - 1;
@@ -150,6 +152,9 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 	@Override
 	public void v_grafoNaoVazio() {
 		System.out.println("Running v_grafoNaoVazio");
+
+		Assertions.assertNotNull(graph.nodes());
+		Assertions.assertNotNull(graph.edges());
 		switch (cameFrom) {
 			case "e_adicionaAresta":
 				System.out.println("Adding an edge");
@@ -484,6 +489,7 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		e_adicionaAresta();
 		v_grafoNaoVazio();
 		e_adicionaArestaExistente();
+		System.out.println("oioioioioioioioioioio");
 		v_ExcecaoIdJaUsado();
 
 	}
