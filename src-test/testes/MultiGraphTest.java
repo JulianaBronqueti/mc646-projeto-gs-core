@@ -1,4 +1,4 @@
-package main;
+package testes;
 
 import org.graphwalker.core.machine.ExecutionContext;
 import org.graphwalker.core.condition.EdgeCoverage;
@@ -18,32 +18,30 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import org.graphstream.graph.*;
 import org.graphstream.graph.implementations.*;
 
 @GraphWalker(value = "quick_random(edge_coverage(100))", start = "v_inicio")
-public class SingleGraphTest extends ExecutionContext implements SingleGraphTestInterface {
-	Graph graph = new SingleGraph("graph1", true, false, 5, 10);
+public class MultiGraphTest extends ExecutionContext implements MultiGraphTestInterface {
+	Graph graph = new MultiGraph("graph1", true, false, 5, 10);
 	int nodesIndex = 0, edgesIndex = 0, lastEdgeCount = 0, lastNodeCount = 0, newNodeCount = 0, newEdgeCount = 0;
 	String cameFrom = "";
 	boolean jaExistente = false, naoEncontrado = false, arestaRejeitada = false;
 	List<String> usedPairs = new ArrayList<>();
-	
-    public static void removeStringsContainingCharacter(String string, List<String> stringList) {
-        List<String> stringsToRemove = new ArrayList<>();
 
-        for (String str : stringList) {
-            if (str.contains(string)) {
-                stringsToRemove.add(str);
-            }
-        }
+	public static void removeStringsContainingCharacter(String string, List<String> stringList) {
+		List<String> stringsToRemove = new ArrayList<>();
 
-        stringList.removeAll(stringsToRemove);
-    }
+		for (String str : stringList) {
+			if (str.contains(string)) {
+				stringsToRemove.add(str);
+			}
+		}
+
+		stringList.removeAll(stringsToRemove);
+	}
 
 	public static boolean addEdgesToGraph(Graph graph, int numEdges, int pairCount, List<String> usedPairs) {
 		Node[] nodes = graph.nodes().toArray(Node[]::new);
@@ -63,32 +61,27 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 				}
 
 				String pair1 = indexA + "-" + indexB;
-				String pair2 = indexB + "-" + indexA;
 				System.out.println("tentando aresta entre");
 				System.out.println(pair1);
-				System.out.println(pair2);
 
-				// Ensure that both pairs are unique and haven't been used before
-				if (!usedPairs.contains(pair1) && !usedPairs.contains(pair2)) {
-					usedPairs.add(pair1);
+				usedPairs.add(pair1);
 
-					Node nodeA = nodes[indexA];
-					Node nodeB = nodes[indexB];
+				Node nodeA = nodes[indexA];
+				Node nodeB = nodes[indexB];
 
-					String edgeName = "edge" + pairCount;
-					graph.addEdge(edgeName, nodeA, nodeB);
-					System.out.println("aresta entre");
-					System.out.println(nodeA);
-					System.out.println(nodeB);
+				String edgeName = "edge" + pairCount;
+				graph.addEdge(edgeName, nodeA, nodeB);
+				System.out.println("aresta entre");
+				System.out.println(nodeA);
+				System.out.println(nodeB);
 
-					pairCount++;
-				}
-				
+				pairCount++;
+
 				System.out.println(indexB);
 			}
 			System.out.println(indexA);
 		}
-		
+
 		if (numEdges > pairCount) {
 			System.out.println("numero de arestas eh impossivel sem quebrar o grafo");
 			return false;
@@ -106,7 +99,7 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 	@Override
 	public void e_removeAresta() {
 		System.out.println("Running e_removeAresta");
-		
+
 		try {
 			lastEdgeCount = graph.getEdgeCount();
 			newEdgeCount = graph.getEdgeCount();
@@ -139,12 +132,6 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 	@Override
 	public void v_inicio() {
 		System.out.println("Running v_inicio");
-	}
-
-	@Override
-	public void v_ExcecaoArestaRejeitada() {
-		System.out.println("Running v_ExcecaoArestaRejeitada");
-		Assertions.assertTrue(arestaRejeitada);
 	}
 
 	@Override
@@ -197,7 +184,7 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 	@Override
 	public void e_adicionaArestaEmNoInexistente() {
 		System.out.println("Running e_adicionaArestaEmNoInexistente");
-		Graph graph2 = new SingleGraph("graph2", true, false, 5, 10);
+		Graph graph2 = new MultiGraph("graph2", true, false, 5, 10);
 		Node A = graph2.addNode("A");
 		Node B = graph2.addNode("B");
 
@@ -226,25 +213,20 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 	}
 
 	@Override
-	public void e_adicionaArestaEmNoCheio() {
-		System.out.println("Running e_adicionaArestaEmNoCheio");
-		try {
-			graph.addEdge("exception1", graph.getNode(0), graph.getNode(1));
-			graph.addEdge("exception1", graph.getNode(0), graph.getNode(1));
-
-		} catch (Exception e) {
-			arestaRejeitada = true;
-		}
-	}
-
-	@Override
 	public void e_criaGrafo() {
 		System.out.println("Running e_criaGrafo");
-		graph = new SingleGraph("graph1", true, false, 5, 10);
+		graph = new MultiGraph("graph1", true, false, 5, 10);
 		cameFrom = "";
-		jaExistente = false; naoEncontrado = false; arestaRejeitada = false;
+		jaExistente = false;
+		naoEncontrado = false;
+		arestaRejeitada = false;
 		usedPairs = new ArrayList<>();
-		nodesIndex = 0; edgesIndex = 0; lastEdgeCount = 0; lastNodeCount = 0; newNodeCount = 0; newEdgeCount = 0;
+		nodesIndex = 0;
+		edgesIndex = 0;
+		lastEdgeCount = 0;
+		lastNodeCount = 0;
+		newNodeCount = 0;
+		newEdgeCount = 0;
 
 	}
 
@@ -287,7 +269,7 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		Assertions.assertEquals(0, nodes);
 		Assertions.assertEquals(0, edges);
 	}
-	
+
 	@Override
 	public void e_adicionaArestaExistente() {
 		System.out.println("Running e_adicionaArestaExistente");
@@ -305,13 +287,12 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 			jaExistente = true;
 		}
 	}
-	
+
 	@Override
 	public void v_ElementoNaoEncontrado() {
 		System.out.println("Running v_ElementoNaoEncontrado");
 		Assertions.assertTrue(naoEncontrado);
 	}
-	
 
 	@Test
 	public void TestPath() {
@@ -322,12 +303,10 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		v_ElementoNaoEncontrado();
 		e_criaGrafo();
 		v_grafoVazio();
-		e_removeNo();
-		v_ElementoNaoEncontrado();
-		e_criaGrafo();
-		v_grafoVazio();
-		e_removeNo();
-		v_ElementoNaoEncontrado();
+		e_adicionaNo();
+		v_grafoNaoVazio();
+		e_adicionaNoExistente();
+		v_ExcecaoIdJaUsado();
 		e_criaGrafo();
 		v_grafoVazio();
 		e_removeNo();
@@ -338,11 +317,15 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		v_ElementoNaoEncontrado();
 		e_criaGrafo();
 		v_grafoVazio();
-		e_adicionaAresta();
+		e_adicionaNo();
+		v_grafoNaoVazio();
+		e_limpaGrafo();
+		v_grafoVazio();
+		e_removeAresta();
 		v_ElementoNaoEncontrado();
 		e_criaGrafo();
 		v_grafoVazio();
-		e_removeAresta();
+		e_removeNo();
 		v_ElementoNaoEncontrado();
 		e_criaGrafo();
 		v_grafoVazio();
@@ -350,42 +333,23 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		v_grafoNaoVazio();
 		e_adicionaArestaEmNoInexistente();
 		v_ElementoNaoEncontrado();
-		System.out.println("teste");
 		e_criaGrafo();
 		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_removeNoInexistente();
+		e_removeAresta();
+		v_ElementoNaoEncontrado();
+		e_criaGrafo();
+		v_grafoVazio();
+		e_adicionaAresta();
 		v_ElementoNaoEncontrado();
 		e_criaGrafo();
 		v_grafoVazio();
 		e_adicionaNo();
 		v_grafoNaoVazio();
-		e_removeNoInexistente();
+		e_adicionaArestaEmNoInexistente();
 		v_ElementoNaoEncontrado();
 		e_criaGrafo();
 		v_grafoVazio();
 		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_limpaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_removeNoInexistente();
-		v_ElementoNaoEncontrado();
-		e_criaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_removeNo();
-		v_grafoNaoVazio();
-		e_removeNoInexistente();
-		v_ElementoNaoEncontrado();
-		e_criaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_removeNo();
 		v_grafoNaoVazio();
 		e_adicionaNo();
 		v_grafoNaoVazio();
@@ -395,8 +359,24 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		v_grafoVazio();
 		e_adicionaNo();
 		v_grafoNaoVazio();
-		e_removeNoInexistente();
+		e_limpaGrafo();
+		v_grafoVazio();
+		e_adicionaNo();
+		v_grafoNaoVazio();
+		e_adicionaArestaEmNoInexistente();
 		v_ElementoNaoEncontrado();
+		e_criaGrafo();
+		v_grafoVazio();
+		e_adicionaNo();
+		v_grafoNaoVazio();
+		e_removeNo();
+		v_grafoNaoVazio();
+		e_removeUltimoNo();
+		v_grafoVazio();
+		e_adicionaNo();
+		v_grafoNaoVazio();
+		e_adicionaNoExistente();
+		v_ExcecaoIdJaUsado();
 		e_criaGrafo();
 		v_grafoVazio();
 		e_adicionaNo();
@@ -405,7 +385,7 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		v_grafoVazio();
 		e_adicionaNo();
 		v_grafoNaoVazio();
-		e_removeNoInexistente();
+		e_adicionaArestaEmNoInexistente();
 		v_ElementoNaoEncontrado();
 		e_criaGrafo();
 		v_grafoVazio();
@@ -417,21 +397,7 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		v_grafoVazio();
 		e_adicionaNo();
 		v_grafoNaoVazio();
-		e_removeNoInexistente();
-		v_ElementoNaoEncontrado();
-		e_criaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_removeNoInexistente();
-		v_ElementoNaoEncontrado();
-		e_criaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_removeNoInexistente();
-		v_ElementoNaoEncontrado();
-		e_criaGrafo();
+		e_limpaGrafo();
 		v_grafoVazio();
 		e_adicionaNo();
 		v_grafoNaoVazio();
@@ -439,52 +405,25 @@ public class SingleGraphTest extends ExecutionContext implements SingleGraphTest
 		v_grafoNaoVazio();
 		e_adicionaAresta();
 		v_grafoNaoVazio();
-		e_adicionaArestaEmNoCheio();
-		v_ExcecaoArestaRejeitada();
-		e_criaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
 		e_adicionaNo();
 		v_grafoNaoVazio();
 		e_removeAresta();
 		v_grafoNaoVazio();
-		e_adicionaNoExistente();
-		v_ExcecaoIdJaUsado();
-		e_criaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_limpaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_removeUltimoNo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_removeUltimoNo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_limpaGrafo();
-		v_grafoVazio();
-		e_adicionaNo();
-		v_grafoNaoVazio();
-		e_adicionaNoExistente();
-		v_ExcecaoIdJaUsado();
-		e_criaGrafo();
-		v_grafoVazio();
 		e_adicionaNo();
 		v_grafoNaoVazio();
 		e_adicionaAresta();
 		v_grafoNaoVazio();
 		e_adicionaArestaExistente();
 		v_ExcecaoIdJaUsado();
-
+		e_criaGrafo();
+		v_grafoVazio();
+		e_adicionaNo();
+		v_grafoNaoVazio();
+		e_limpaGrafo();
+		v_grafoVazio();
+		e_adicionaNo();
+		v_grafoNaoVazio();
+		e_removeNoInexistente();
+		v_ElementoNaoEncontrado();
 	}
 }

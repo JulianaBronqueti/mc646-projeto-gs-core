@@ -1,4 +1,4 @@
-package main;
+package testes;
 
 import org.graphwalker.core.machine.ExecutionContext;
 import org.graphwalker.core.condition.EdgeCoverage;
