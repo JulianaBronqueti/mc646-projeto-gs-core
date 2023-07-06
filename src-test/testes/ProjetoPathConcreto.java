@@ -70,32 +70,28 @@ public class ProjetoPathConcreto extends ExecutionContext implements ProjetoPath
 	
 	static String geraIdDeTamanho5() {
 		int n = 5;
-        // length is bounded by 256 Character
         byte[] array = new byte[256];
         new Random().nextBytes(array);
   
         String randomString = new String(array, Charset.forName("UTF-8"));
    
-        // Create a StringBuffer to store the result
+        // Resultado
         StringBuffer r = new StringBuffer();
   
-        // Append first 20 alphanumeric characters
-        // from the generated random String into the result
+        // Concatena os 5 caracteres alfanuméricos gerados com a função random
         for (int k = 0; k < randomString.length(); k++) {
-  
             char ch = randomString.charAt(k);
   
             if (((ch >= 'a' && ch <= 'z')
                  || (ch >= 'A' && ch <= 'Z')
                  || (ch >= '0' && ch <= '9'))
                 && (n > 0)) {
-  
                 r.append(ch);
                 n--;
             }
         }
   
-        // return the resultant string
+        // Retorna a string resultante
         return r.toString();
     }
 	
@@ -137,24 +133,24 @@ public class ProjetoPathConcreto extends ExecutionContext implements ProjetoPath
 		imprimeGrafo();
 	};
 	
-	private Edge geraArestaCompativel() {
-		Node no_origem = null;
-		
-		if(!path.empty()) {
-			no_origem = path.peekNode();
-		} else {
-			// Criando novo nó
-			no_origem = geraNoCompativel();
-		}
-		
+private Edge geraArestaCompativel() {
+	Node no_origem = null;
+	
+	if(!path.empty()) {
+		no_origem = path.peekNode();
+	} else {
 		// Criando novo nó
-		Node no_destino = geraNoCompativel();
-		
-		// Criando edge
-		Edge edge = graph.addEdge(no_origem.getId().concat(no_destino.getId()), no_origem, no_destino);
-		
-		return edge;
-	};
+		no_origem = geraNoCompativel();
+	}
+	
+	// Criando novo nó
+	Node no_destino = geraNoCompativel();
+	
+	// Criando edge
+	Edge edge = graph.addEdge(no_origem.getId().concat(no_destino.getId()), no_origem, no_destino);
+	
+	return edge;
+};
 
 	@Override
 	public void e_AdicionaAresta(){
@@ -286,112 +282,18 @@ public class ProjetoPathConcreto extends ExecutionContext implements ProjetoPath
 		v_Inicio();
 		e_CriaCaminho();
 		v_CaminhoVazio();
-		e_DefineRaiz();
-		v_CaminhoComRaiz();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
-		e_RedefineRaiz();
-		v_CaminhoComArestas();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
-		e_AdicionaNoFonteDiferenteUltimoNoDestino();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
 		e_AdicionaNoNaoPresenteEAresta();
 		v_ExcecaoIllegalArgument();
 		e_Reinicia();
 		v_Inicio();
 		e_CriaCaminho();
 		v_CaminhoVazio();
-		e_DefineRaiz();
-		v_CaminhoComRaiz();
-		e_RedefineRaiz();
-		v_CaminhoComRaiz();
-		e_RedefineRaiz();
-		v_CaminhoComRaiz();
-		e_AdicionaNoNaoPresenteEAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaNoNuloEAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaNoNuloEAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaArestaAntesDaRaiz();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_DefineRaiz();
-		v_CaminhoComRaiz();
 		e_AdicionaNoEAresta();
 		v_CaminhoComArestas();
 		e_RedefineRaiz();
 		v_CaminhoComArestas();
 		e_RemoveNo();
 		v_CaminhoComRaiz();
-		e_AdicionaNoEAresta();
-		v_CaminhoComArestas();
-		e_RedefineRaiz();
-		v_CaminhoComArestas();
-		e_RemoveNo();
-		v_CaminhoComRaiz();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
-		e_AdicionaNoEAresta();
-		v_CaminhoComArestas();
-		e_AdicionaNoFonteDiferenteUltimoNoDestino();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_DefineRaiz();
-		v_CaminhoComRaiz();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
-		e_RemoveAresta();
-		v_CaminhoComRaiz();
-		e_AdicionaNoNuloEAresta();
-		v_CaminhoComArestas();
 		e_AdicionaNoFonteDiferenteUltimoNoDestino();
 		v_ExcecaoIllegalArgument();
 		e_Reinicia();
@@ -402,21 +304,11 @@ public class ProjetoPathConcreto extends ExecutionContext implements ProjetoPath
 		v_CaminhoComRaiz();
 		e_AdicionaNoNuloEAresta();
 		v_CaminhoComArestas();
-		e_AdicionaAresta();
+		e_RedefineRaiz();
 		v_CaminhoComArestas();
 		e_RemoveNo();
-		v_CaminhoComArestas();
-		e_RedefineRaiz();
-		v_CaminhoComArestas();
-		e_AdicionaNoNuloEAresta();
-		v_CaminhoComArestas();
-		e_RedefineRaiz();
-		v_CaminhoComArestas();
-		e_RedefineRaiz();
-		v_CaminhoComArestas();
-		e_AdicionaNoNuloEAresta();
-		v_CaminhoComArestas();
-		e_AdicionaNoNaoPresenteEAresta();
+		v_CaminhoComRaiz();
+		e_AdicionaNoFonteDiferenteUltimoNoDestino();
 		v_ExcecaoIllegalArgument();
 		e_Reinicia();
 		v_Inicio();
@@ -424,18 +316,114 @@ public class ProjetoPathConcreto extends ExecutionContext implements ProjetoPath
 		v_CaminhoVazio();
 		e_DefineRaiz();
 		v_CaminhoComRaiz();
-		e_AdicionaNoNuloEAresta();
-		v_CaminhoComArestas();
-		e_AdicionaNoNuloEAresta();
-		v_CaminhoComArestas();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
 		e_AdicionaNoEAresta();
 		v_CaminhoComArestas();
+		e_RemoveNo();
+		v_CaminhoComRaiz();
 		e_AdicionaNoEAresta();
+		v_CaminhoComArestas();
+		e_AdicionaNoNuloEAresta();
 		v_CaminhoComArestas();
 		e_RemoveAresta();
 		v_CaminhoComArestas();
+		e_RemoveAresta();
+		v_CaminhoComRaiz();
+		e_RedefineRaiz();
+		v_CaminhoComRaiz();
+		e_AdicionaNoEAresta();
+		v_CaminhoComArestas();
+		e_AdicionaNoNaoPresenteEAresta();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
+		e_AdicionaNoNuloEAresta();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
+		e_AdicionaNoNuloEAresta();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
+		e_AdicionaNoNaoPresenteEAresta();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
+		e_DefineRaiz();
+		v_CaminhoComRaiz();
+		e_AdicionaAresta();
+		v_CaminhoComArestas();
+		e_AdicionaNoNuloEAresta();
+		v_CaminhoComArestas();
+		e_RemoveAresta();
+		v_CaminhoComArestas();
+		e_RedefineRaiz();
+		v_CaminhoComArestas();
+		e_AdicionaNoFonteDiferenteUltimoNoDestino();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
+		e_DefineRaiz();
+		v_CaminhoComRaiz();
+		e_AdicionaNoEAresta();
+		v_CaminhoComArestas();
+		e_AdicionaNoEAresta();
+		v_CaminhoComArestas();
+		e_RemoveNo();
+		v_CaminhoComArestas();
+		e_RemoveNo();
+		v_CaminhoComRaiz();
+		e_AdicionaAresta();
+		v_CaminhoComArestas();
+		e_RedefineRaiz();
+		v_CaminhoComArestas();
+		e_AdicionaAresta();
+		v_CaminhoComArestas();
+		e_AdicionaAresta();
+		v_CaminhoComArestas();
+		e_AdicionaAresta();
+		v_CaminhoComArestas();
+		e_RemoveNo();
+		v_CaminhoComArestas();
+		e_AdicionaNoEAresta();
+		v_CaminhoComArestas();
+		e_AdicionaNoNaoPresenteEAresta();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
+		e_AdicionaNoEAresta();
+		v_CaminhoComArestas();
+		e_AdicionaNoNaoPresenteEAresta();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
+		e_AdicionaNoNuloEAresta();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
+		e_DefineRaiz();
+		v_CaminhoComRaiz();
+		e_AdicionaNoNaoPresenteEAresta();
+		v_ExcecaoIllegalArgument();
+		e_Reinicia();
+		v_Inicio();
+		e_CriaCaminho();
+		v_CaminhoVazio();
 		e_AdicionaNoNaoPresenteEAresta();
 		v_ExcecaoIllegalArgument();
 		e_Reinicia();
@@ -444,75 +432,6 @@ public class ProjetoPathConcreto extends ExecutionContext implements ProjetoPath
 		v_CaminhoVazio();
 		e_AdicionaArestaAntesDaRaiz();
 		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaNoEAresta();
-		v_CaminhoComArestas();
-		e_RemoveNo();
-		v_CaminhoComRaiz();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
-		e_RedefineRaiz();
-		v_CaminhoComArestas();
-		e_RedefineRaiz();
-		v_CaminhoComArestas();
-		e_AdicionaNoEAresta();
-		v_CaminhoComArestas();
-		e_RemoveAresta();
-		v_CaminhoComArestas();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
-		e_RemoveNo();
-		v_CaminhoComArestas();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
-		e_AdicionaAresta();
-		v_CaminhoComArestas();
-		e_RedefineRaiz();
-		v_CaminhoComArestas();
-		e_AdicionaNoFonteDiferenteUltimoNoDestino();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_DefineRaiz();
-		v_CaminhoComRaiz();
-		e_AdicionaNoNaoPresenteEAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaArestaAntesDaRaiz();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_AdicionaNoNuloEAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_DefineRaiz();
-		v_CaminhoComRaiz();
-		e_AdicionaNoNuloEAresta();
-		v_CaminhoComArestas();
-		e_AdicionaNoNaoPresenteEAresta();
-		v_ExcecaoIllegalArgument();
-		e_Reinicia();
-		v_Inicio();
-		e_CriaCaminho();
-		v_CaminhoVazio();
-		e_DefineRaiz();
-		v_CaminhoComRaiz();
-		e_AdicionaNoFonteDiferenteUltimoNoDestino();
-		v_ExcecaoIllegalArgument();
-
 	}
 
 
