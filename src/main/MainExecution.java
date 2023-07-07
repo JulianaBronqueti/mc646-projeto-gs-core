@@ -91,11 +91,12 @@ public class MainExecution {
 		System.setProperty("org.graphstream.ui", "swing");
 		
 		Graph graph = new SingleGraph("Tutorial 1", true, false, 5, 10);
-		Node A = graph.addNode("oi");
+		Node A = graph.addNode("A");
 		Node B = graph.addNode("B");
+		Node C = null;
+		graph.removeNode(C);
 		
 		Edge AB = graph.addEdge("edgeAB", A, B);
-		Edge CD = graph.addEdge("edgeAB", A, B);
 		
 	}
 }
