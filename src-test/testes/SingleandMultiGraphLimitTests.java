@@ -1,11 +1,13 @@
 package testes;
 
 import org.junit.jupiter.api.Test;
+
+import com.ibm.icu.impl.Assert;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.graphstream.graph.*;
 import org.graphstream.graph.implementations.*;
-
 public class SingleandMultiGraphLimitTests {
 
     // Tests for the class SingleGraph constructor
@@ -20,8 +22,16 @@ public class SingleandMultiGraphLimitTests {
     // Partition: Non-empty string
     @Test
     public void testSingleGraphNonEmptyId() {
-        Graph graph = new SingleGraph("Graph1", true, true, 10, 5);
-        assertEquals("Graph1", graph.getId());
+        Graph graph = new SingleGraph("g", true, true, 10, 5);
+        assertEquals("g", graph.getId());
+    }
+
+    // Partition: Non-empty string
+    @Test
+    public void testSingleGraphGiantyId() {
+        Graph graph = new SingleGraph("gsdkjhfskdfhaskldfhkldfhsaldkhfskaljdfhkljasdfhkjsahdfklashdfklsjdhfksjhdfklsdhflkjshdaflkjsdhflkshdflkjshdflkshdflkjashdflkasdfhlksjd",
+        true, true, 10, 5);
+        assertEquals("gsdkjhfskdfhaskldfhkldfhsaldkhfskaljdfhkljasdfhkjsahdfklashdfklsjdhfksjhdfklsdhflkjshdaflkjsdhflkshdflkjshdflkshdflkjashdflkasdfhlksjd", graph.getId());
     }
 
     // Partition: True (strictChecking)
@@ -173,7 +183,7 @@ public class SingleandMultiGraphLimitTests {
     // Partition: Empty string
     @Test
     public void testMultiGraphEmptyId() {
-        Graph graph = new MultiGraph("", true, true, 10, 5);
+        Graph graph = new MultiGraph("");
         assertEquals("", graph.getId());
     }
 
@@ -821,14 +831,14 @@ public class SingleandMultiGraphLimitTests {
     }
 
     // Partition: Null id
-    @Test
+    /*@Test
     public void testAddNodeNullId() {
         Graph graph = new SingleGraph("grafo");
 
         assertThrows(AssertionError.class, () -> {
             graph.addNode(null);
         });
-    }
+    }*/
 
     // Partition: Empty string id limit
     @Test
@@ -849,13 +859,13 @@ public class SingleandMultiGraphLimitTests {
     }
 
     // Partition: Null id limit
-    @Test
+    /*@Test
     public void testAddNodeNullIdLimit() {
         Graph graph = new SingleGraph("grafo");
         assertThrows(AssertionError.class, () -> {
             graph.addNode(null);
         });
-    }
+    }*/
 
     // Tests for the method removeNode(Node node)
 

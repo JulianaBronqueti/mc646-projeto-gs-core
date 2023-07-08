@@ -92,7 +92,7 @@ public class SingleandMultiGraphPartitionTests {
 
     @Test
     public void testMultiGraphNonEmptyId() {
-        Graph graph = new MultiGraph("Graph1", true, true, 10, 5);
+        Graph graph = new MultiGraph("Graph1");
         assertEquals("Graph1", graph.getId());
     }
 

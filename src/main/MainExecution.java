@@ -94,9 +94,8 @@ public class MainExecution {
 		Node A = graph.addNode("A");
 		Node B = graph.addNode("B");
 		Node C = null;
-		graph.removeNode(C);
+		System.out.println(graph.addNode(null));
 		
-		Edge AB = graph.addEdge("edgeAB", A, B);
 		
 	}
 }
