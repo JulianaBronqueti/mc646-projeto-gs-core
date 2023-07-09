@@ -1,4 +1,4 @@
-package testes;
+package testes.path;
 
 import org.graphwalker.java.annotation.Model;
 import org.graphwalker.java.annotation.Vertex;

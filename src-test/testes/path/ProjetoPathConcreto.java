@@ -1,4 +1,4 @@
-package testes;
+package testes.path;
 
 import org.graphstream.graph.Path;
 
@@ -7,7 +7,6 @@ import org.graphstream.graph.Graph;
 import org.graphstream.graph.Node;
 
 import java.nio.charset.Charset;
-import java.util.List;
 import java.util.Random;
 
 import org.graphstream.graph.Edge;
