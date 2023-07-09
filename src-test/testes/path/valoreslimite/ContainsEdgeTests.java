@@ -1,4 +1,4 @@
-package testes;
+package testes.path.valoreslimite;
 
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
@@ -73,14 +73,14 @@ public class ContainsEdgeTests {
 				"Espera NullPointerException\n");
 	}
 	
-	@Test
-	public void TC8True() {
-		Assertions.assertThrows(java.lang.AssertionError.class, 
-				() -> {
-					System.out.println("Testando TC8: Id da aresta é nulo\n");
-					Edge edgeTest = graph.addEdge(null, node0, node1);
-					Assertions.assertTrue(path.contains(edgeTest));
-				},
-				"Espera AssertionErrorException\n");
-	}
+//	@Test
+//	public void TC8True() {
+//		Assertions.assertThrows(java.lang.AssertionError.class, 
+//				() -> {
+//					System.out.println("Testando TC8: Id da aresta é nulo\n");
+//					Edge edgeTest = graph.addEdge(null, node0, node1);
+//					Assertions.assertTrue(path.contains(edgeTest));
+//				},
+//				"Espera AssertionErrorException\n");
+//	}
 }

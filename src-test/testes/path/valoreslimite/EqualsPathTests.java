@@ -1,4 +1,4 @@
-package testes;
+package testes.path.valoreslimite;
 
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;

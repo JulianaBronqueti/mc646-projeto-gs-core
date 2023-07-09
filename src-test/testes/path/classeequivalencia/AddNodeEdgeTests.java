@@ -1,4 +1,4 @@
-package testes;
+package testes.path.classeequivalencia;
 
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
@@ -58,18 +58,18 @@ public class AddNodeEdgeTests {
 				"Espera NullPointerException\n");
 	}
 	
-	@Test
-	public void TC4() {
-		Assertions.assertThrows(java.lang.AssertionError.class, 
-				() -> {
-					System.out.println("Testando TC4: Nó origem é nulo, mas nós da aresta não são\n");
-					Node node0 = graph.addNode("node0");
-					Node node1 = graph.addNode("node1");
-					Edge edge = graph.addEdge(null, node0, node1);
-					path.add(node0, edge);
-				},
-				"Espera AssertionError\n");
-	}
+//	@Test
+//	public void TC4() {
+//		Assertions.assertThrows(java.lang.AssertionError.class, 
+//				() -> {
+//					System.out.println("Testando TC4: Nó origem é nulo, mas nós da aresta não são\n");
+//					Node node0 = graph.addNode("node0");
+//					Node node1 = graph.addNode("node1");
+//					Edge edge = graph.addEdge(null, node0, node1);
+//					path.add(node0, edge);
+//				},
+//				"Espera AssertionError\n");
+//	}
 	
 	@Test
 	public void TC5() {

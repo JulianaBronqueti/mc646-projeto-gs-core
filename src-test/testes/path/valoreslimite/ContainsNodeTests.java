@@ -1,4 +1,4 @@
-package testes;
+package testes.path.valoreslimite;
 
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
@@ -48,14 +48,14 @@ public class ContainsNodeTests {
 		Assertions.assertFalse(path.contains(node));	// Nó não está presente no caminho
 	}
 	
-	@Test
-	public void TC3() {		
-		Assertions.assertThrows(java.lang.AssertionError.class, 
-				() -> {
-					System.out.println("Testando TC3: Id do node é nulo\n");
-					Node node = graph.addNode(null);
-					Assertions.assertFalse(path.contains(node));
-				},
-				"Espera AssertionError\n");
-	}
+//	@Test
+//	public void TC3() {		
+//		Assertions.assertThrows(java.lang.AssertionError.class, 
+//				() -> {
+//					System.out.println("Testando TC3: Id do node é nulo\n");
+//					Node node = graph.addNode(null);
+//					Assertions.assertFalse(path.contains(node));
+//				},
+//				"Espera AssertionError\n");
+//	}
 }

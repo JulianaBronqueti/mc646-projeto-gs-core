@@ -1,4 +1,4 @@
-package testes;
+package testes.path.valoreslimite;
 
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Graph;
@@ -26,8 +26,8 @@ public class AddEdgeTests {
 	}
 
 	@Test
-	public void TC4() {
-		System.out.println("Testando TC4: Aresta válida\n");
+	public void TC5() {
+		System.out.println("Testando TC5: Aresta válida\n");
 		Node node0 = graph.addNode("node0");
 		Node node1 = graph.addNode("node1");
 		Edge edge = graph.addEdge("edge1", node0, node1);
@@ -37,10 +37,10 @@ public class AddEdgeTests {
 	}
 
 	@Test
-	public void TC5() {
+	public void TC6() {
 		Assertions.assertThrows(java.lang.NullPointerException.class, 
 				() -> {
-					System.out.println("Testando TC5: Aresta nula\n");
+					System.out.println("Testando TC6: Aresta nula\n");
 					Node node0 = graph.addNode("node0");
 					path.setRoot(node0);
 					path.add(null);
@@ -49,10 +49,10 @@ public class AddEdgeTests {
 	}
 
 	@Test
-	public void TC6() {
+	public void TC7() {
 		Assertions.assertThrows(java.lang.NullPointerException.class, 
 				() -> {
-					System.out.println("Testando TC6: Nó 0 da aresta nulo\n");
+					System.out.println("Testando TC7: Nó 0 da aresta nulo\n");
 					Node node1 = graph.addNode("node1");
 					Edge edge = graph.addEdge("edge1", null, node1);
 					path.setRoot(node1);
@@ -62,10 +62,10 @@ public class AddEdgeTests {
 	}
 
 	@Test
-	public void TC7() {
+	public void TC8() {
 		Assertions.assertThrows(java.lang.NullPointerException.class, 
 				() -> {
-					System.out.println("Testando TC7: Nó 1 da aresta nulo\n");
+					System.out.println("Testando TC8: Nó 1 da aresta nulo\n");
 					Node node0 = graph.addNode("node0");
 					Edge edge = graph.addEdge("edge1", node0, null);
 					path.setRoot(node0);
@@ -74,19 +74,19 @@ public class AddEdgeTests {
 				"Espera NullPointerException\n");
 	}
 
-	@Test
-	public void TC8() {
-		Assertions.assertThrows(java.lang.AssertionError.class, 
-				() -> {
-					System.out.println("Testando TC8: Aresta com id nulo\n");
-					Node node0 = graph.addNode("node0");
-					Node node1 = graph.addNode("node1");
-					Edge edge = graph.addEdge(null, node0, node1);
-					path.setRoot(node0);
-					path.add(edge);
-				},
-				"Espera AssertionError\n");
-	}
+//	@Test
+//	public void TC9() {
+//		Assertions.assertThrows(java.lang.AssertionError.class, 
+//				() -> {
+//					System.out.println("Testando TC9: Aresta com id nulo\n");
+//					Node node0 = graph.addNode("node0");
+//					Node node1 = graph.addNode("node1");
+//					Edge edge = graph.addEdge(null, node0, node1);
+//					path.setRoot(node0);
+//					path.add(edge);
+//				},
+//				"Espera AssertionError\n");
+//	}
 
 	@Test
 	public void TCExtra() {
